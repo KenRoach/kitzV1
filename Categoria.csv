@@ -1,0 +1,169 @@
+﻿Code,Item,Modificadores,Categoria,Subcategoria
+IT001PEYA,Ensalada de wakame.,,ROLLING SUSHI,ENSALADAS
+IT010PEYA,Vegan roll.,"Salsa mayo especial.,Salsa dragon.",ROLLING SUSHI,ROLLS
+IT011PEYA,Tentacion.,,ROLLING SUSHI,ROLLS
+IT039PEYA,Zalada fit.,"Salsa mayo.,Salsa Dragon.,Salsa Chipotle.",ZALADA,ENSALADAS
+IT040PEYA,Zalada protein.,"Salsa mayo.,Salsa Chipotle.,Salsa Dragon.",ZALADA,ENSALADAS
+IT012PEYA,Xtrem de salmon roll.,,ROLLING SUSHI,ROLLS
+IT009PEYA,Dragon roll.,,ROLLING SUSHI,ROLLS
+IT007PEYA,California roll.,Salsa mayo especial.,ROLLING SUSHI,ROLLS
+IT013PEYA,Hot roll.,,ROLLING SUSHI,ROLLS
+IT010PEYA,Vegan roll.,,ROLLING SUSHI,ROLLS
+IT039PEYA,Zalada fit.,"Salsa Chipotle.,Salsa mayo.",ZALADA,ENSALADAS
+IT039PEYA,Zalada fit.,"Salsa blue cheese.,Salsa Dragon.",ZALADA,ENSALADAS
+IT039PEYA,Zalada fit.,"Salsa Chipotle.,Salsa Ranch.",ZALADA,ENSALADAS
+IT040PEYA,Zalada protein.,"Salsa blue cheese.,Salsa Chipotle.,Salsa Dragon.,Salsa Ranch.,Salsa mayo.",ZALADA,ENSALADAS
+IT015PEYA,Milla 8 roll.,,ROLLING SUSHI,ROLLS
+IT016PEYA,Raito roll.,,ROLLING SUSHI,ROLLS
+IT008PEYA,Maguro roll.,,ROLLING SUSHI,ROLLS
+IT005PEYA,Hamburguesa de sushi crunch.,,ROLLING SUSHI,PLATOS CALIENTES
+IT017PEYA,Sokudo roll.,,ROLLING SUSHI,ROLLS
+SODAROLLING,Coca Cola,,ROLLING SUSHI,Bebida Rolling
+IT014PEYA,Mar roll.,,ROLLING SUSHI,ROLLS
+IT021PEYA,Nigiri de salmon.,,ROLLING SUSHI,NIGIRIS
+IT049PEYA,Poke mix.,,ZALADA,POKE
+IT002PEYA,Ensalada de wakame suprema.,,ROLLING SUSHI,ENSALADAS
+IT024PEYA,Temaki philadelphia.,,ROLLING SUSHI,TEMAKIS
+IT043PEYA,Zalada mar.,Salsa Ranch.,ZALADA,ENSALADAS
+IT047,Poke salmon,,ZALADA,POKE Z
+IT049,Poke mix,,ZALADA,POKE Z
+IT011,Tentacion,,ROLLING SUSHI,ROLLS
+IT017PEYA,Sokudo roll.,"Salsa mayo especial.,Apanar la proteina de tu roll.",ROLLING SUSHI,ROLLS
+IT050,Poke mar,,ZALADA,POKE Z
+IT017,Sokudo roll,,ROLLING SUSHI,ROLLS
+IT015,Milla 8 roll,,ROLLING SUSHI,ROLLS
+IT014,Mar roll,,ROLLING SUSHI,ROLLS
+IT004,Bubble mix,,ROLLING SUSHI,PLATOS CALIENTES
+IT016,Raito roll,,ROLLING SUSHI,ROLLS
+IT009,Dragon roll,,ROLLING SUSHI,ROLLS
+IT008,Maguro roll,,ROLLING SUSHI,ROLLS
+IT061,Wynz bbq,,WYNZ,Wynz!
+IT006,Philadelphia roll,,ROLLING SUSHI,ROLLS
+IT012,Xtrem de salmon roll,,ROLLING SUSHI,ROLLS
+IT057,Wynz hot,,WYNZ,Wynz!
+IT007,California roll,,ROLLING SUSHI,ROLLS
+IT013,Hot roll,,ROLLING SUSHI,ROLLS
+IT005,Hamburguesa de sushi crunch,,ROLLING SUSHI,PLATOS CALIENTES
+IT039,Zalada fit,,ZALADA,ENSALADA Z
+IT001,Ensalada de wakame,,ROLLING SUSHI,ENSALADA
+IT056,Wynz premium,,WYNZ,Wynz!
+IT059,Wynz clasicas,,WYNZ,Wynz!
+IT009,Dragon roll,Tempurizar la proteina de tu roll,ROLLING SUSHI,ROLLS
+IT017,Sokudo roll,Tempurizar la proteina de tu roll,ROLLING SUSHI,ROLLS
+IT002,Ensalada de wakame suprema,,ROLLING SUSHI,ENSALADA
+IT062,Wynz de la casa,,WYNZ,Wynz!
+IT060,Wynz panko,"Salsa blue cheese,Bañadas",WYNZ,Wynz!
+IT006PEYA,Philadelphia roll.,,ROLLING SUSHI,ROLLS
+IT010,Vegan roll,,ROLLING SUSHI,ROLLS
+IT038,Zalada fresca,,ZALADA,ENSALADA Z
+IT003,Ensalada frehs,,ROLLING SUSHI,ENSALADA
+IT021,Nigiri de salmon,,ROLLING SUSHI,NIGIRI
+IT058,Wynz xtrem hot,,WYNZ,Wynz!
+IT060,Wynz panko,,WYNZ,Wynz!
+IT059PEYA,Wynz clasicas.,,WYNZ PEYA,Wynz
+IT061PEYA,Wynz bbq.,,WYNZ PEYA,Wynz
+IT011,Tentacion,"Apanar tu roll preferido,Apanar la proteina de tu roll",ROLLING SUSHI,ROLLS
+SODAZALAD,Coca Cola.,,ZALADA,BEBIDAS ZALAD
+IT017,Sokudo roll,Topping dinamita,ROLLING SUSHI,ROLLS
+IT062PEYA,Wynz de la casa.,,WYNZ PEYA,Wynz
+IT057PEYA,Wynz hot.,,WYNZ PEYA,Wynz
+IT024,Temaki philadelphia,,ROLLING SUSHI,TEMAKIS.
+IT013,Hot roll,salsa anguila,ROLLING SUSHI,ROLLS
+IT017,Sokudo roll,Salsa mayo especial,ROLLING SUSHI,ROLLS
+IT025,Temaki california,,ROLLING SUSHI,TEMAKIS.
+IT015,Milla 8 roll,"Apanar tu roll preferido,salsa anguila",ROLLING SUSHI,ROLLS
+IT020,Sashimi mix,,ROLLING SUSHI,SASHIMI
+IT059PEYA,Wynz clasicas.,Papa Francesa.,WYNZ PEYA,Wynz
+SODAWYNZ,Coca-cola,,null,BEBIDAS WYNZ
+IT048PEYA,Poke atun.,,ZALADA,POKE
+IT059PEYA,Wynz clasicas.,Salsa blue cheese.,WYNZ PEYA,Wynz
+IT011,Tentacion,Apanar tu roll preferido,ROLLING SUSHI,ROLLS
+IT060PEYA,Wynz panko.,,WYNZ PEYA,Wynz
+IT027,Temaki hot,,ROLLING SUSHI,TEMAKIS.
+IT018,Sashimi de salmon,,ROLLING SUSHI,SASHIMI
+IT017,Sokudo roll,Salsa dragon,ROLLING SUSHI,ROLLS
+IT017,Sokudo roll,Apanar tu roll preferido,ROLLING SUSHI,ROLLS
+IT028,Apanar tu roll preferido,,null,EXTRAS W
+IT030,Apanar la proteina de tu roll,,null,EXTRAS W
+IT048,Poke atun,,ZALADA,POKE Z
+IT009,Dragon roll,Apanar la proteina de tu roll,ROLLING SUSHI,ROLLS
+IT033,Salsa dragon,,null,EXTRAS W
+MK017,roll del dia,,ROLLING SUSHI,PROMO
+MK001,Quexopa roll,,QUEXOPA ROLL,ROLL
+MK013,Dinamita roll,,ROLLING SUSHI,ROLLS
+MK007,Chotin roll,,QUEXOPA ROLL,ROLL
+MK008,Pio Roll,,QUEXOPA ROLL,ROLL
+IT050PEYA,Poke mar.,,ZALADA,POKE
+MK006,Birria roll,,QUEXOPA ROLL,ROLL
+MK011,Crispy chikin roll,,ROLLING SUSHI,ROLLS
+MK002,Cha de salmon roll,,QUEXOPA ROLL,ROLL
+IT004PEYA,Bubble mix.,,ROLLING SUSHI,PLATOS CALIENTES
+IT047PEYA,Poke salmon.,,ZALADA,POKE
+MK014,sesame balls,,ROLLING SUSHI,Entradas
+MK015,donut sushi,,ROLLING SUSHI,ESPECIAL
+N9,Poke camarón crispy,,ZALADA,POKE
+N5,Poke pollo salsa anguila,,ZALADA,POKE
+MK003,Tropicall roll,,QUEXOPA ROLL,ROLL
+MK016,hot dog sushi,,ROLLING SUSHI,PLATOS CALIENTES
+MK010,Chikin roll,,ROLLING SUSHI,ROLLS
+IT018PEYA,Sashimi de salmon.,,ROLLING SUSHI,SASHIMI
+MK012,Hot crispy roll,,ROLLING SUSHI,ROLLS
+MK018,2 sushi burgers,,ROLLING SUSHI,PROMO
+MK005,Ayala roll,,QUEXOPA ROLL,ROLL
+MK019,jueves date,"null,Tentacion",ROLLING SUSHI,PROMO
+N4,Poke mix,,ZALADA,POKE
+MK019,jueves date,"Tentacion,Tentacion",ROLLING SUSHI,PROMO
+M500,Delivery Web,,ROLLING SUSHI,PROMO
+IT017PEYA,Sokudo roll.,Apanar la proteina de tu roll.,ROLLING SUSHI,ROLLS
+MK009,Buco roll,,QUEXOPA ROLL,ROLL
+IT049PEYA,Poke mix.,Salsa mayo.,ZALADA,POKE
+MK019,jueves date,"null,null",ROLLING SUSHI,PROMO
+MK004,Activao roll,,QUEXOPA ROLL,ROLL
+IT003PEYA,Ensalada fresh.,,ROLLING SUSHI,ENSALADAS
+IT015PEYA,Milla 8 roll.,Apanar tu roll preferido.,ROLLING SUSHI,ROLLS
+M165,Poke Pollo Crispy,,ZALADA,POKE
+M170,Gyosas De Cerdo Y Vegetales,,ROLLING SUSHI,Entradas
+M171,Dinamita Hot Roll,,QUEXOPA ROLL,ROLL
+N1,Poke salmon,,ZALADA,POKE
+IT017PEYA,Sokudo roll.,Tempurizar la proteina de tu roll.,ROLLING SUSHI,ROLLS
+M169,Takoyaki,,ROLLING SUSHI,Entradas
+IT014PEYA,Mar roll.,Tempurizar tu roll preferido.,ROLLING SUSHI,ROLLS
+IT016PEYA,Raito roll.,salsa anguila.,ROLLING SUSHI,ROLLS
+N2,Poke mar,,ZALADA,POKE
+IT027PEYA,Temaki hot.,,ROLLING SUSHI,TEMAKIS
+IT009PEYA,Dragon roll.,Apanar tu roll preferido.,ROLLING SUSHI,ROLLS
+IT017PEYA,Sokudo roll.,Apanar tu roll preferido.,ROLLING SUSHI,ROLLS
+mk030,hell roll,,ROLLING SUSHI,PROMO
+M172,Crispy Mar Roll,,QUEXOPA ROLL,ROLL
+M167,Poke Tempura Mix,,ZALADA,POKE
+Sushi Sunday,Domingos locos,"Chotin Roll,Tropical Roll",ROLLING SUSHI,PROMO
+Sushi Sunday,Domingos locos,"Chotin Roll,Tentación Roll",ROLLING SUSHI,PROMO
+Sushi Sunday,Domingos locos,"Tropical Roll,Philadephia Roll",ROLLING SUSHI,PROMO
+Sushi Sunday,Domingos locos,"Tropical Roll,Tentación Roll",ROLLING SUSHI,PROMO
+Sushi Sunday,Domingos locos,"Philadephia Roll,Tentación Roll",ROLLING SUSHI,PROMO
+null,null,,null,Sin Subcategoria
+IT026PEYA,Temaki maguro.,,ROLLING SUSHI,TEMAKIS
+Epica Navidad,Épica Navidad,"Dragon Roll,Milla 8 Roll",ROLLING SUSHI,PROMO
+M181,FRESCA,,ROLLING SUSHI,Bebida Rolling
+Epica Navidad,Épica Navidad,"Tentacion Roll,Dragon Roll",ROLLING SUSHI,PROMO
+Epica Navidad,Épica Navidad,"Milla 8 Roll,Tentacion Roll",ROLLING SUSHI,PROMO
+M184,Saril,,ROLLING SUSHI,Bebida Rolling
+M178,Canada Dry,,ROLLING SUSHI,Bebida Rolling
+M176,Cocacola,,QUEXOPA ROLL,Bebida QueXopa
+M204,Mochi Matcha,,ROLLING SUSHI,Mochi
+M186,Coca Cola Zero,,ROLLING SUSHI,Bebida Rolling
+IT011PEYA,Tentacion.,Jengibre.,ROLLING SUSHI,ROLLS
+Sushi Sunday,Domingos locos,"Tentación Roll,Tentación Roll",ROLLING SUSHI,PROMO
+M183,Crush Uva,,ROLLING SUSHI,Bebida Rolling
+M177,7up,,ROLLING SUSHI,Bebida Rolling
+Sushi Sunday,Domingos locos,"Philadephia Roll,Philadephia Roll",ROLLING SUSHI,PROMO
+M209,Hatsu Blanco,,ROLLING SUSHI,Bebida Rolling
+M210,Hatsu Turquesa,,ROLLING SUSHI,Bebida Rolling
+M180,Squirt,,ROLLING SUSHI,Bebida Rolling
+M212,Pie de Limon,,ZALADA,Postres ZALADAS
+M207,Hatsu Rojo,,ROLLING SUSHI,Bebida Rolling
+M202,Mochi chocolate,,ROLLING SUSHI,Mochi
+MK019,jueves date,"Tentacion,Sokudo Roll",ROLLING SUSHI,PROMO
+IT022PEYA,Nigiri de atun.,,ROLLING SUSHI,NIGIRIS
+MK019,jueves date,"Xtreme Salmon,Birria Roll",ROLLING SUSHI,PROMO
+M213,Matcha Tiramisu,,ROLLING SUSHI,Postres Rolling Sushi

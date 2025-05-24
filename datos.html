@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datos</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="styling/styles.css">
+</head>
+<body>
+    <!-- Topbar -->
+    <nav class="navbar navbar-light bg-light py-2">
+        <div class="container-fluid px-4">
+            <!-- Brand -->
+            <a class="navbar-brand" href="index.html">Mealkitz</a>
+            <!-- Toggler Button (visible on small screens) -->
+            <button class="navbar-toggler d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <!-- Collapsible Content -->
+            <div class="collapse navbar-collapse d-md-flex justify-content-md-end" id="navbarContent">
+                <!-- Action Icons -->
+                <div class="d-flex align-items-center mt-2 mt-md-0">
+                    <button class="btn btn-link text-dark me-3" title="Notificaciones"><i class="bi bi-bell-fill fs-4"></i></button>
+                    <button class="btn btn-link text-dark me-3" title="Compartir"><i class="bi bi-share-fill fs-4"></i></button>
+                    <button class="btn btn-link text-dark me-3" title="Buscar"><i class="bi bi-search fs-4"></i></button>
+                    <button id="cart-btn" class="btn btn-link position-relative invisible" title="Carrito">
+                        <i class="bi bi-cart-fill fs-4"></i>
+                        <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge bg-danger rounded-pill">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <main class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <!-- ... existing code ... -->
+        </div>
+        <div class="text-center mt-3">
+            <a href="#" id="view-details-link" class="btn btn-link">🌐 Ver detalles completos</a>
+        </div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/weekSelect/weekSelect.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize week picker calendar (ensure element exists first)
+            const weekPicker = document.getElementById('week-picker');
+            if(weekPicker) {
+                flatpickr(weekPicker, {
+                    plugins: [new weekSelect({})],
+                    dateFormat: "Y-\\WW",
+                });
+            }
+
+            // Add click handler for the details link
+            const detailsLink = document.getElementById('view-details-link');
+            if (detailsLink) {
+                detailsLink.addEventListener('click', function(e) {
+                    e.preventDefault(); // Prevent jumping to top
+                    alert('Aquí se mostrarían los detalles completos del dashboard.');
+                    // TODO: Implement actual details view (e.g., navigate or show modal)
+                });
+            }
+        });
+    </script>
+</body>
+</html> 

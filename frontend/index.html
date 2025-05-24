@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mealkitz</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Custom Styles -->
+    <style>
+      body {
+        font-family: 'Poppins', sans-serif;
+        background-color: #f8f9fa;
+        padding-top: 1rem;
+      }
+      .navbar {
+        box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        background-color: #fff;
+      }
+      .navbar-brand {
+        font-weight: 600;
+        color: #123A62 !important;
+      }
+      .navbar-toggler {
+        border: none;
+      }
+      .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(18,58,98,0.8)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+      }
+      .btn, .btn-link {
+        outline: none!important;
+        box-shadow: none!important;
+        border: none!important;
+        transition: all 0.3s ease;
+      }
+      .btn-primary {
+        background-color: #123A62;
+        color: #fff;
+        border: 2px solid #123A62 !important;
+      }
+      .btn-primary:hover {
+        background-color: #0e3150;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+      }
+      .btn-outline-primary {
+        background-color: transparent;
+        color: #123A62;
+        border: 2px solid #123A62 !important;
+      }
+      .btn-outline-primary:hover {
+        background-color: #123A62;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+      }
+      .btn-outline-secondary {
+        background-color: transparent;
+        color: #6c757d;
+        border: 2px solid #6c757d !important;
+      }
+      .btn-outline-info {
+        background-color: transparent;
+        color: #0dcaf0;
+        border: 2px solid #0dcaf0 !important;
+      }
+      .btn-outline-info:hover {
+        background-color: #0dcaf0;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+      }
+      .btn-success {
+        background-color: #198754;
+        color: #fff;
+        border: 2px solid #198754 !important;
+      }
+      .btn-success:hover {
+        background-color: #157347;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+      }
+      .lead {
+        color: #6c757d;
+      }
+      main.container {
+        background: #fff;
+        padding: 2rem;
+        border-radius: .5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-top: 1rem;
+      }
+      .table-responsive {
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .btn-secondary {
+        background-color: #6c757d;
+        color: #fff;
+        border: 2px solid #6c757d !important;
+      }
+      .btn-secondary:hover {
+        background-color: #5c636a;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+      }
+      .btn-info {
+        background-color: #0dcaf0;
+        color: #fff;
+        border: 2px solid #0dcaf0 !important;
+      }
+      .btn-info:hover {
+        background-color: #31d2f2;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Responsive Navbar -->
+    <nav class="navbar navbar-light bg-white navbar-expand-md py-2">
+        <div class="container-fluid px-4">
+          <a class="navbar-brand" href="index.html">
+            <img src="Images/mk_logo.jpeg"style="height: 35px; margin-right: 10px;">
+          </a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarIcons" aria-controls="navbarIcons" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarIcons">
+            <div class="d-flex align-items-center ms-auto">
+              <button class="btn btn-link text-dark me-3" title="Notificaciones"><i class="bi bi-bell-fill fs-4"></i></button>
+              <a href="#" id="whatsapp-share-btn" class="btn btn-link text-dark me-3" title="Compartir en WhatsApp">
+                  <i class="bi bi-whatsapp fs-4"></i>
+              </a>
+              <a href="ayuda.html" title="Ayuda y Búsqueda" class="btn btn-link text-dark me-3">
+                <i class="bi bi-search fs-4"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+    <main class="container mt-4">
+      <!-- Main Buttons / Links -->
+      <div id="main-buttons" class="container text-center mb-5">
+        <div class="d-flex flex-column flex-md-row justify-content-center gap-3 px-3">
+          <a href="punto.html" id="pos-btn" class="btn btn-primary btn-lg flex-fill">Punto de Venta</a>
+          <a href="pedidos.html" id="pos-btn" class="btn btn-primary btn-lg flex-fill">Tus Pedidos</a>
+          <a href="config.html" class="btn btn-primary btn-lg flex-fill">Configurar Productos</a>
+          <a href="datos.html" class="btn btn-primary btn-lg flex-fill">Datos de tu Negocio</a>
+          <a href="proveedores.html" class="btn btn-primary btn-lg flex-fill">Proveedores</a>
+          <a href="ayuda.html" class="btn btn-primary btn-lg flex-fill">Ayuda</a>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const shareButtonIndex = document.getElementById('whatsapp-share-btn');
+        if (shareButtonIndex) {
+            shareButtonIndex.addEventListener('click', function(event) {
+                event.preventDefault();
+                const webAppURL = encodeURIComponent(window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1) + 'index.html');
+                // const webAppURL = encodeURIComponent('https://your-actual-webapp-url.com/index.html');
+                const shareText = encodeURIComponent(`¡Echa un vistazo a esta increíble aplicación Mealkitz: ${webAppURL}`);
+                let whatsappLink = `https://wa.me/?text=${shareText}`;
+                if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                    whatsappLink = `whatsapp://send?text=${shareText}`;
+                }
+                window.open(whatsappLink, '_blank');
+            });
+        }
+    });
+    </script>
+  </body>
+</html>

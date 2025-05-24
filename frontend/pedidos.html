@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mealkitz - Tus Pedidos</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Custom Styles -->
+    <style>
+      body { font-family: 'Poppins', sans-serif; background-color: #f8f9fa; padding-top: 1rem; }
+      .navbar { box-shadow: 0 2px 4px rgba(0,0,0,.1); background-color: #fff; }
+      .navbar-brand { font-weight: 600; color: #123A62 !important; }
+      .navbar-toggler { border: none; }
+      .navbar-toggler-icon { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(18,58,98,0.8)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e"); }
+      .btn, .btn-link { outline: none!important; box-shadow: none!important; border: none!important; transition: all 0.3s ease; }
+      .btn-primary { background-color: #123A62; color: #fff; border: 2px solid #123A62 !important; }
+      .btn-primary:hover { background-color: #0e3150; color: #fff; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important; }
+      .btn-outline-primary { background-color: transparent; color: #123A62; border: 2px solid #123A62 !important; }
+      .btn-outline-primary:hover { background-color: #123A62; color: #fff; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important; }
+      .btn-success { background-color: #198754; color: #fff; border: 2px solid #198754 !important; }
+      .btn-success:hover { background-color: #157347; color: #fff; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important; }
+      .btn-secondary { background-color: #6c757d; color: #fff; border: 2px solid #6c757d !important; }
+      .btn-secondary:hover { background-color: #5a6268; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important; }
+      main.container { background: #fff; padding: 2rem; border-radius: .5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-top: 1rem; }
+      .list-group-item { cursor: default; }
+      .btn-group { margin-top: 1rem; }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-light bg-white navbar-expand-md py-2">
+        <div class="container-fluid px-4">
+          <a class="navbar-brand" href="index.html">
+            <img src="Images/mk_logo.jpeg"style="height: 35px; margin-right: 10px;">
+          </a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarIcons" aria-controls="navbarIcons" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarIcons">
+            <div class="d-flex align-items-center ms-auto">
+              <button class="btn btn-link text-dark me-3" title="Notificaciones"><i class="bi bi-bell-fill fs-4"></i></button>
+              <a href="#" id="whatsapp-share-btn" class="btn btn-link text-dark me-3" title="Compartir en WhatsApp">
+                  <i class="bi bi-whatsapp fs-4"></i>
+              </a>
+              <button class="btn btn-link text-dark me-3" title="Buscar"><i class="bi bi-search fs-4"></i></button>
+            </div>
+          </div>
+        </div>
+      </nav> 
+
+    <main class="container mt-4">
+      <div class="text-center mb-4">
+        <h2 class="fs-4 fs-md-2">Últimos 25 Pedidos</h2>
+      </div>
+
+      <div id="order-list" class="list-group mb-4">
+        <!-- Items generados dinámicamente -->
+      </div>
+
+      <div class="text-center">
+        <button id="export-btn" type="button" class="btn btn-primary w-100">
+          <i class="bi bi-file-earmark-spreadsheet me-1"></i>Exportar archivo
+        </button>
+      </div>
+    </main>
+
+    <!-- Modal Añadir/Editar Pedido -->
+    <div class="modal fade" id="orderModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Añadir / Editar Pedido</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="order-form">
+              <div class="mb-3">
+                <label for="client-name" class="form-label">Nombre del Cliente</label>
+                <input type="text" id="client-name" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label for="order-date" class="form-label">Fecha</label>
+                <input type="date" id="order-date" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label for="order-total" class="form-label">Total ($)</label>
+                <input type="number" id="order-total" class="form-control" step="0.01" required>
+              </div>
+              <div class="mb-3">
+                <label for="order-status" class="form-label">Estado</label>
+                <select id="order-status" class="form-select" required>
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Enviado">Enviado</option>
+                  <option value="Entregado">Entregado</option>
+                </select>
+              </div>
+              <input type="hidden" id="order-id">
+              <div class="d-grid">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      let pedidos = JSON.parse(localStorage.getItem('pedidos')) || [];
+      // Datos de ejemplo si no hay pedidos guardados
+      if (!localStorage.getItem('pedidos')) {
+        pedidos = [
+          {id:'1', client:'María Fernández', date:'2025-05-18', total:45.50, status:'Entregado'},
+          {id:'2', client:'Juan Pérez', date:'2025-05-19', total:32.00, status:'Enviado'},
+          {id:'3', client:'Ana Gómez', date:'2025-05-20', total:28.75, status:'Pendiente'},
+          {id:'4', client:'Carlos Ruiz', date:'2025-05-17', total:60.00, status:'Entregado'},
+          {id:'5', client:'Sofía López', date:'2025-05-16', total:22.30, status:'Enviado'},
+          {id:'6', client:'Miguel Torres', date:'2025-05-15', total:55.00, status:'Entregado'},
+          {id:'7', client:'Laura Mendoza', date:'2025-05-14', total:18.90, status:'Pendiente'},
+          {id:'8', client:'Roberto Castro', date:'2025-05-13', total:40.00, status:'Enviado'},
+          {id:'9', client:'Natalia Pérez', date:'2025-05-12', total:29.99, status:'Entregado'},
+          {id:'10', client:'Luis Sánchez', date:'2025-05-11', total:35.75, status:'Pendiente'},
+        ];
+        localStorage.setItem('pedidos', JSON.stringify(pedidos));
+      }
+
+      const listGroup = document.getElementById('order-list');
+      const exportBtn = document.getElementById('export-btn');
+      const form = document.getElementById('order-form');
+      const modal = new bootstrap.Modal(document.getElementById('orderModal'));
+
+      function renderList() {
+        listGroup.innerHTML = '';
+        const last25 = pedidos.slice(-25).reverse();
+        last25.forEach(item => {
+          const el = document.createElement('div');
+          el.className = 'list-group-item';
+          el.innerHTML = `
+            <strong>${item.date}</strong> &mdash; ${item.client}<br>
+            Total: $${item.total.toFixed(2)} &bull; Estado: ${item.status}
+          `;
+          listGroup.appendChild(el);
+        });
+        if (!last25.length) {
+          const empty = document.createElement('div');
+          empty.className = 'list-group-item text-muted';
+          empty.textContent = 'No hay pedidos para mostrar.';
+          listGroup.appendChild(empty);
+        }
+      }
+
+      function exportCsv() {
+        const headers = ['ID','Cliente','Fecha','Total','Estado'];
+        const rows = pedidos.slice(-25).map(p => [p.id, p.client, p.date, p.total.toFixed(2), p.status]);
+        const csvContent = [headers, ...rows].map(r => r.join(',')).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'pedidos.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      exportBtn.addEventListener('click', exportCsv);
+
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        const idField = document.getElementById('order-id');
+        const client = document.getElementById('client-name').value.trim();
+        const date = document.getElementById('order-date').value;
+        const total = parseFloat(document.getElementById('order-total').value);
+        const status = document.getElementById('order-status').value;
+        const id = idField.value || Date.now().toString();
+        const newItem = { id, client, date, total, status };
+        if (idField.value) {
+          const idx = pedidos.findIndex(p => p.id === id);
+          pedidos[idx] = newItem;
+        } else {
+          pedidos.push(newItem);
+        }
+        localStorage.setItem('pedidos', JSON.stringify(pedidos));
+        form.reset();
+        idField.value = '';
+        renderList();
+        modal.hide();
+      });
+
+      document.getElementById('export-btn').addEventListener('click', exportCsv);
+      // Inicializar lista
+      renderList();
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const shareButtonPedidos = document.getElementById('whatsapp-share-btn');
+        if (shareButtonPedidos) {
+          shareButtonPedidos.addEventListener('click', function(event) {
+            event.preventDefault();
+            const webAppURL = encodeURIComponent(window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1) + 'index.html');
+            const shareText = encodeURIComponent(`¡Echa un vistazo a esta increíble aplicación Mealkitz: ${webAppURL}`);
+            let whatsappLink = `https://wa.me/?text=${shareText}`;
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+              whatsappLink = `whatsapp://send?text=${shareText}`;
+            }
+            window.open(whatsappLink, '_blank');
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mealkitz</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Custom Styles -->
+    <style>
+      body {
+        font-family: 'Poppins', sans-serif;
+        background-color: #f8f9fa;
+        padding-top: 1rem;
+      }
+      .navbar {
+        box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        background-color: #fff;
+      }
+      .navbar-brand {
+        font-weight: 600;
+        color: #123A62 !important;
+      }
+      .navbar-toggler {
+        border: none;
+      }
+      .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(18,58,98,0.8)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+      }
+      .btn, .btn-link {
+        outline: none!important;
+        box-shadow: none!important;
+        border: none!important;
+      }
+      .btn-primary {
+        background-color: #123A62;
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background-color: #0e3150;
+        color: #fff;
+      }
+      .lead {
+        color: #6c757d;
+      }
+      main.container {
+        background: #fff;
+        padding: 2rem;
+        border-radius: .5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-top: 1rem;
+      }
+      .table-responsive {
+        max-height: 300px;
+        overflow-y: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Responsive Navbar -->
+    <nav class="navbar navbar-light bg-white navbar-expand-md py-2">
+      <div class="container-fluid px-4">
+        <a class="navbar-brand" href="index.html">
+          <img src="Images/mk_logo.jpeg" style="height: 35px; margin-right: 10px;">
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarIcons">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarIcons">
+          <div class="d-flex align-items-center ms-auto">
+            <button class="btn btn-link text-dark me-3" title="Notificaciones"><i class="bi bi-bell-fill fs-4"></i></button>
+            <a href="#" id="whatsapp-share-btn" class="btn btn-link text-dark me-3" title="Compartir en WhatsApp">
+                <i class="bi bi-whatsapp fs-4"></i>
+            </a>
+            <button class="btn btn-link text-dark" title="Buscar"><i class="bi bi-search fs-4"></i></button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container mt-4">
+      
+
+      <!-- Responsive product grid: 1/2/3 columns -->
+      <div id="productsRow" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4"></div>
+
+    
+
+        <!-- Proveedores -->
+    <section class="container mt-4 p-4">
+      <h3 class="fs-5 text-center mb-3">Agregar Proveedores</h3>
+      <form id="provider-form">
+        <div class="mb-3">
+          <label for="provider-name" class="form-label">Nombre del proveedor</label>
+          <input type="text" id="provider-name" class="form-control" placeholder="Ej. Distribuciones López" required>
+        </div>
+        <div class="mb-3">
+          <label for="provider-contact" class="form-label">Contacto (teléfono o email)</label>
+          <input type="text" id="provider-contact" class="form-control" placeholder="Ej. +507 6000-0000 o correo@ej.com" required>
+        </div>
+        <div class="mb-3">
+          <label for="provider-products" class="form-label">Qué suministra</label>
+          <input type="text" id="provider-products" class="form-control" placeholder="Ej. Verduras, carnes" required>
+        </div>
+        <div class="mb-3">
+          <label for="provider-leadtime" class="form-label">Plazo de entrega (días)</label>
+          <input type="number" id="provider-leadtime" class="form-control" placeholder="Ej. 3" min="1" required>
+        </div>
+        <div class="mb-3">
+          <label for="provider-terms" class="form-label">Términos de pago</label>
+          <input type="text" id="provider-terms" class="form-control" placeholder="Ej. NET30, contra entrega" required>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Guardar Proveedor</button>
+      </form>
+    </section>
+
+    <div class="text-center mt-3">
+      <a href="#" id="view-details-link" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#providerDetailsModal">🌐 Ver Proveedores</a>
+    </div>
+
+    <!-- Provider Details Modal -->
+    <div class="modal fade" id="providerDetailsModal" tabindex="-1" aria-labelledby="providerDetailsModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="providerDetailsModalLabel">Lista de Proveedores</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" id="provider-list">
+            <h5>Distribuciones López</h5>
+            <ul>
+              <li><strong>Teléfono:</strong> +507 6001-2345</li>
+              <li><strong>Email:</strong> contacto@dislopez.com</li>
+              <li><strong>Compras:</strong> Verduras (lechuga, tomate, pepino)</li>
+            </ul>
+            <hr>
+            <h5>Alimentos Frescos S.A.</h5>
+            <ul>
+              <li><strong>Teléfono:</strong> +507 6002-3456</li>
+              <li><strong>Email:</strong> ventas@alifrescos.com</li>
+              <li><strong>Compras:</strong> Carnes (pollo, res, cerdo)</li>
+            </ul>
+            <hr>
+            <h5>Frutas del Valle</h5>
+            <ul>
+              <li><strong>Teléfono:</strong> +507 6003-4567</li>
+              <li><strong>Email:</strong> pedidos@frutasdelvalle.com</li>
+              <li><strong>Compras:</strong> Frutas (bananas, manzanas, fresas)</li>
+            </ul>
+            <hr>
+            <h5>Carnes Selectas</h5>
+            <ul>
+              <li><strong>Teléfono:</strong> +507 6004-5678</li>
+              <li><strong>Email:</strong> info@carnesselectas.com</li>
+              <li><strong>Compras:</strong> Cortes especiales (filete, costillas)</li>
+            </ul>
+            <hr>
+            <h5>Lácteos Premium</h5>
+            <ul>
+              <li><strong>Teléfono:</strong> +507 6005-6789</li>
+              <li><strong>Email:</strong> soporte@lacteospremium.com</li>
+              <li><strong>Compras:</strong> Lácteos (leche, queso, yogurt)</li>
+            </ul>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const shareButton = document.getElementById('whatsapp-share-btn');
+        if (shareButton) {
+            shareButton.addEventListener('click', function(event) {
+                event.preventDefault(); // Prevent default anchor action
+
+                // --- Configuration ---
+                const webAppURL = encodeURIComponent(window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1) + 'index.html');
+                // Or, for a fixed public URL:
+                // const webAppURL = encodeURIComponent('https://your-actual-webapp-url.com/index.html');
+                
+                const shareText = encodeURIComponent(`¡Echa un vistazo a esta increíble aplicación Mealkitz: ${webAppURL}`);
+                // --- End Configuration ---
+
+                let whatsappLink = `https://wa.me/?text=${shareText}`;
+
+                // For mobile, try to open the WhatsApp app directly
+                if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                    whatsappLink = `whatsapp://send?text=${shareText}`;
+                }
+                
+                // Attempt to open the link
+                // Using a new window is often more reliable, especially for the whatsapp:// protocol
+                window.open(whatsappLink, '_blank');
+            });
+        }
+    });
+    </script>
+  </body>
+</html>

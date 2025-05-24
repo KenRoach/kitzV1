@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mealkitz - Configurar Productos</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Custom Styles -->
+    <style>
+      body {
+        font-family: 'Poppins', sans-serif;
+        background-color: #f8f9fa;
+        padding-top: 1rem;
+      }
+      .navbar {
+        box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        background-color: #fff;
+      }
+      .navbar-brand {
+        font-weight: 600;
+        color: #123A62 !important;
+      }
+      .navbar-toggler {
+        border: none;
+      }
+      .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(18,58,98,0.8)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+      }
+      .btn, .btn-link {
+        outline: none!important;
+        box-shadow: none!important;
+        border: none!important;
+        transition: all 0.3s ease;
+      }
+      .btn-primary {
+        background-color: #123A62;
+        color: #fff;
+        border: 2px solid #123A62 !important;
+      }
+      .btn-primary:hover {
+        background-color: #0e3150;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+      }
+      .btn-outline-primary {
+        background-color: transparent;
+        color: #123A62;
+        border: 2px solid #123A62 !important;
+      }
+      .btn-outline-primary:hover {
+        background-color: #123A62;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+      }
+      .btn-success {
+        background-color: #198754;
+        color: #fff;
+        border: 2px solid #198754 !important;
+      }
+      .btn-success:hover {
+        background-color: #157347;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+      }
+      .lead {
+        color: #6c757d;
+      }
+      main.container {
+        background: #fff;
+        padding: 2rem;
+        border-radius: .5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-top: 1rem;
+      }
+      .table-responsive {
+        overflow-y: auto;
+      }
+      .product-image-table { /* Style for images in the table */
+        max-width: 60px; 
+        max-height: 60px;
+        object-fit: cover; 
+        border-radius: .25rem;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Responsive Navbar -->
+    <nav class="navbar navbar-light bg-white navbar-expand-md py-2">
+        <div class="container-fluid px-4">
+          <a class="navbar-brand" href="index.html">
+            <img src="Images/mk_logo.jpeg" style="height: 35px; margin-right: 10px;">
+            </a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarIcons" aria-controls="navbarIcons" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarIcons">
+            <div class="d-flex align-items-center ms-auto">
+              <button class="btn btn-link text-dark me-3" title="Notificaciones"><i class="bi bi-bell-fill fs-4"></i></button>
+              <a href="#" id="whatsapp-share-btn" class="btn btn-link text-dark me-3" title="Compartir en WhatsApp">
+                  <i class="bi bi-whatsapp fs-4"></i>
+              </a>
+              <button class="btn btn-link text-dark me-3" title="Buscar"><i class="bi bi-search fs-4"></i></button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+    <main class="container mt-4">
+      <div class="text-center mb-4">
+        <h2 class="fs-4 fs-md-2">Configurar Productos</h2>
+      </div>
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Imagen</th>
+                      <th>Nombre</th>
+                      <th>Código</th>
+                      <th>Precio</th>
+                    </tr>
+                  </thead>
+                  <tbody id="product-table-body">
+                    <!-- Filas generadas dinámicamente -->
+                  </tbody>
+                </table>
+              </div>
+              <div class="text-center mt-3">
+                <button id="add-product-btn" type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#productModal">
+                  <i class="bi bi-plus-circle-fill me-1"></i>Añadir Producto
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Modal para añadir/editar producto -->
+    <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="productModalTitle">Añadir Producto</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="product-form">
+              <input type="hidden" id="product-id"> <!-- For editing -->
+              <div class="mb-3">
+                <label for="product-image" class="form-label">Imagen del Producto</label>
+                <input type="file" id="product-image" class="form-control" accept="image/*">
+                <!-- Image preview removed from here -->
+              </div>
+              <div class="mb-3">
+                <label for="product-name" class="form-label">Nombre del Producto</label>
+                <input type="text" id="product-name" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label for="product-code" class="form-label">Código de Producto</label>
+                <input type="text" id="product-code" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label for="product-price" class="form-label">Precio ($)</label>
+                <input type="number" id="product-price" class="form-control" min="0" step="0.01" required>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Guardar Producto</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        let productos = JSON.parse(localStorage.getItem('productosConfig')) || [];
+        const tableBody = document.getElementById('product-table-body');
+        const form = document.getElementById('product-form');
+        const productModalElement = document.getElementById('productModal');
+        const productModal = new bootstrap.Modal(productModalElement);
+        const modalTitle = document.getElementById('productModalTitle');
+
+        const productIdInput = document.getElementById('product-id');
+        const productNameInput = document.getElementById('product-name');
+        const productCodeInput = document.getElementById('product-code');
+        const productPriceInput = document.getElementById('product-price');
+        const productImageInput = document.getElementById('product-image');
+        // imagePreview element is no longer needed here
+        let currentImageData = null; 
+
+        // Handle image selection (no preview update needed in modal)
+        productImageInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentImageData = e.target.result; // Store base64 data
+                }
+                reader.readAsDataURL(file);
+            } else {
+                currentImageData = null;
+            }
+        });
+        
+        function resetModalForm() {
+            form.reset();
+            productIdInput.value = '';
+            productImageInput.value = null; // Clear the file input
+            currentImageData = null;
+            modalTitle.textContent = 'Añadir Producto';
+        }
+
+        productModalElement.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            if (button && button.id === 'add-product-btn') {
+                 resetModalForm();
+            }
+        });
+        
+        document.getElementById('add-product-btn').addEventListener('click', () => {
+            resetModalForm();
+        });
+
+
+        function renderTable() {
+            tableBody.innerHTML = '';
+            if (productos.length === 0) {
+                const tr = tableBody.insertRow();
+                const cell = tr.insertCell();
+                cell.colSpan = 4; 
+                cell.textContent = 'No hay productos configurados.';
+                cell.style.textAlign = 'center';
+                return;
+            }
+            productos.forEach((item, index) => {
+                const tr = tableBody.insertRow();
+                tr.innerHTML = `
+                    <td><img src="${item.imageData || 'Images/placeholder.png'}" alt="${item.name || 'Producto'}" class="product-image-table"></td>
+                    <td>${item.name || 'N/A'}</td>
+                    <td>${item.code || 'N/A'}</td>
+                    <td>$${(item.price !== undefined && item.price !== null) ? parseFloat(item.price).toFixed(2) : '0.00'}</td>
+                `;
+            });
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = productIdInput.value; 
+            const name = productNameInput.value.trim();
+            const code = productCodeInput.value.trim();
+            const price = parseFloat(productPriceInput.value);
+
+            if (!name || !code || isNaN(price)) {
+                alert('Por favor, complete todos los campos requeridos (Nombre, Código, Precio).');
+                return;
+            }
+            
+            const productData = {
+                id: id || 'P' + Date.now(), 
+                name: name,
+                code: code,
+                price: price,
+                imageData: currentImageData 
+            };
+
+            if (id) { 
+                const index = productos.findIndex(p => p.id === id);
+                if (index !== -1) {
+                    if (!currentImageData && productos[index].imageData) {
+                        productData.imageData = productos[index].imageData;
+                    }
+                    productos[index] = productData;
+                }
+            } else { 
+                productos.push(productData);
+            }
+
+            localStorage.setItem('productosConfig', JSON.stringify(productos));
+            renderTable();
+            resetModalForm(); 
+            productModal.hide();
+        });
+
+        renderTable();
+
+        const shareButtonConfig = document.getElementById('whatsapp-share-btn');
+        if (shareButtonConfig) {
+            shareButtonConfig.addEventListener('click', function(event) {
+                event.preventDefault();
+                const webAppURL = encodeURIComponent(window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1) + 'index.html');
+                // const webAppURL = encodeURIComponent('https://your-actual-webapp-url.com/index.html');
+                const shareText = encodeURIComponent(`¡Echa un vistazo a esta increíble aplicación Mealkitz: ${webAppURL}`);
+                let whatsappLink = `https://wa.me/?text=${shareText}`;
+                if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                    whatsappLink = `whatsapp://send?text=${shareText}`;
+                }
+                window.open(whatsappLink, '_blank');
+            });
+        }
+      });
+    </script>
+  </body>
+</html>

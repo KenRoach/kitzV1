@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mealkitz</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Custom Styles -->
+    <style>
+      body {
+        font-family: 'Poppins', sans-serif;
+        background-color: #f8f9fa;
+        padding-top: 1rem;
+      }
+      .navbar {
+        box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        background-color: #fff;
+      }
+      .navbar-brand {
+        font-weight: 600;
+        color: #123A62 !important;
+      }
+      .navbar-toggler {
+        border: none;
+      }
+      .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(18,58,98,0.8)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+      }
+      .btn, .btn-link {
+        outline: none!important;
+        box-shadow: none!important;
+        border: none!important;
+      }
+      .btn-primary {
+        background-color: #123A62;
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background-color: #0e3150;
+        color: #fff;
+      }
+      .lead {
+        color: #6c757d;
+      }
+      main.container {
+        background: #fff;
+        padding: 2rem;
+        border-radius: .5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-top: 1rem;
+      }
+      .table-responsive {
+        max-height: 300px;
+        overflow-y: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Responsive Navbar -->
+    <nav class="navbar navbar-light bg-white navbar-expand-md py-2">
+        <div class="container-fluid px-4">
+          <a class="navbar-brand" href="index.html">
+            <img src="Images/mk_logo.jpeg"style="height: 35px; margin-right: 10px;">
+          </a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarIcons" aria-controls="navbarIcons" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarIcons">
+            <div class="d-flex align-items-center ms-auto">
+              <button class="btn btn-link text-dark me-3" title="Notificaciones"><i class="bi bi-bell-fill fs-4"></i></button>
+              <a href="#" id="whatsapp-share-btn" class="btn btn-link text-dark me-3" title="Compartir en WhatsApp">
+                  <i class="bi bi-whatsapp fs-4"></i>
+              </a>
+              <button class="btn btn-link text-dark me-3" title="Buscar"><i class="bi bi-search fs-4"></i></button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+    <main class="container mt-4">
+      <div class="text-center mb-4">
+        <h2 class="fs-4 fs-md-2">Datos de tu Negocio</h2> <!-- Responsive font size -->
+      </div>
+      
+      <div class="border rounded p-4 shadow-sm">
+        <div class="row g-3 justify-content-center text-center">
+          <div class="col-12 col-md-4">
+            <h2 class="card-value" style="font-size:3em; margin-bottom: .5rem; color: #123A62;">$12,345</h2>
+            <p class="card-label mb-0">💰 Ingresos</p>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <h2 class="card-value" style="font-size:3em; margin-bottom: .5rem; color: #123A62;">2,478</h2>
+            <p class="card-label mb-0">⭐ Ganancia</p>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <h2 class="card-value" style="font-size:3em; margin-bottom: .5rem; color: #123A62;">$100</h2>
+            <p class="card-label mb-0">📊 Ticket Promedio</p>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <h2 class="card-value" style="font-size:3em; margin-bottom: .5rem; color: #123A62;">85%</h2>
+            <p class="card-label mb-0">⭐ Satisfacción</p>
+          </div>
+          <div class="col-12 col-md-4">
+            <h2 class="card-value" style="font-size:3em; margin-bottom: .5rem; color: #123A62;">45,343</h2>
+            <p class="card-label mb-0">👀 Vistas</p>
+          </div>
+          <div class="col-12 col-md-4">
+            <h2 class="card-value" style="font-size:3em; margin-bottom: .5rem; color: #123A62;">3,943</h2>
+            <p class="card-label mb-0">❤️ Engagement</p>
+          </div>
+        </div>
+      </div>
+      <!-- AI Mode Button -->
+      <div class="d-flex justify-content-center" style="padding-top: 20px;">
+        <button id="ai-mode-btn" class="btn btn-primary w-100">Recomendaciones</button>
+      </div>
+      <div class="text-center mt-3">
+        <a href="#" id="view-details-link" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#detailsModal">🌐 Ver datos completos</a>
+      </div>
+    </main>
+
+    <!-- Details Modal -->
+    <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="detailsModalLabel">Resumen de Ventas</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p>Lista de ventas individuales realizadas en los últimos 30 días.</p>
+            <div class="table-responsive">
+              <table class="table table-sm table-striped">
+                <thead class="table-light">
+                  <tr>
+                    <th># Orden</th>
+                    <th>Producto(s)</th>
+                    <th>Precio</th>
+                    <th>Margen (%)</th>
+                  </tr>
+                </thead>
+                <tbody id="details-table-body">
+                  <tr><td colspan="5" class="text-center text-muted">Cargando ventas...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Insights Modal -->
+    <div class="modal fade" id="aiModal" tabindex="-1" aria-labelledby="aiModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="aiModalLabel">Recomendaciones</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <ul>
+              <li><strong>Empezar:</strong> Ofrecer un <strong>10% de descuento</strong> en todos los Sushi Rolls durante los próximos 30 días para aumentar las ventas.</li>
+              <li><strong>Detener:</strong> Centrar las promociones solo fuera del horario de almuerzo; no descuidar otras franjas horarias.</li>
+              <li><strong>Continuar:</strong>  
+                <ul>
+                  <li>Promocionar el <strong>Sushi Roll de Atún</strong>, cuyas ventas crecieron un <strong>15%</strong>.</li>
+                  <li>Mantener el impulso en los <strong>Sushi Rolls</strong>, con un aumento del <strong>12%</strong> en los últimos 7 días.</li>
+                </ul>
+              </li>
+            </ul>
+            
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle (Ensure this is present) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // AI Mode Button
+        const aiModeBtn = document.getElementById('ai-mode-btn');
+        const aiModal = new bootstrap.Modal(document.getElementById('aiModal'));
+
+        aiModeBtn.addEventListener('click', function() {
+          aiModal.show();
+        });
+
+        const shareButtonDatos = document.getElementById('whatsapp-share-btn');
+        if (shareButtonDatos) {
+          shareButtonDatos.addEventListener('click', function(event) {
+            event.preventDefault();
+            const webAppURL = encodeURIComponent(window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1) + 'index.html');
+            const shareText = encodeURIComponent(`¡Echa un vistazo a esta increíble aplicación Mealkitz: ${webAppURL}`);
+            let whatsappLink = `https://wa.me/?text=${shareText}`;
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+              whatsappLink = `whatsapp://send?text=${shareText}`;
+            }
+            window.open(whatsappLink, '_blank');
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
