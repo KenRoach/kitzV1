@@ -1,5 +1,5 @@
 # Order-Manager-POS
-# Sistema POS para Gestión de Órdenes de Cocina
+# Sistema POS para Gestión de Órdenes
 
 ![Integraciones](https://img.shields.io/badge/Integraciones-WhatsApp%20%7C%20Sitio_Web-success)
 
