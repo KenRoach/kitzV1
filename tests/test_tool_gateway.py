@@ -94,3 +94,12 @@ def test_all_defined_tool_endpoints_exist():
         assert response.status_code in {200, 403, 422}
 
     assert len(store.audit_events) >= len(routes)
+
+
+def test_failure_is_audited_once_for_gated_endpoint():
+    payload = base_payload("req-invoice-no-approval", "create_invoice")
+    response = client.post("/tools/finance/create_invoice", json=payload)
+
+    assert response.status_code == 403
+    matching = [e for e in store.audit_events if e.get("endpoint") == "finance/create_invoice" and e.get("status") == "failure"]
+    assert len(matching) == 1

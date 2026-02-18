@@ -6,7 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
-from starlette.exceptions import HTTPException as StarletteHTTPException
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List
@@ -46,19 +45,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "detail": {"errors": exc.errors()},
         })
     return JSONResponse(status_code=422, content={"detail": exc.errors()})
-
-
-@app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request: Request, exc: StarletteHTTPException):
-    if request.url.path.startswith("/tools"):
-        tool_gateway_store.add_audit_event({
-            "timestamp": datetime.utcnow().isoformat(),
-            "endpoint": request.url.path,
-            "status": "failure",
-            "error_message": str(exc.detail),
-            "detail": {"status_code": exc.status_code},
-        })
-    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 
 app.add_middleware(

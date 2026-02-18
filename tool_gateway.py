@@ -16,7 +16,7 @@ class InMemoryGatewayStore:
         self._lock = Lock()
         self.audit_events: List[Dict[str, Any]] = []
         self.leads: Dict[str, Dict[str, Any]] = {}
-        self.interactions: List[Dict[str, Any]] = []
+        self.interactions: Dict[str, Dict[str, Any]] = {}
         self.quotes: Dict[str, Dict[str, Any]] = {}
         self.orders: Dict[str, Dict[str, Any]] = {}
         self.invoices: Dict[str, Dict[str, Any]] = {}
@@ -145,14 +145,12 @@ def update_lead(request: ToolRequestBase) -> Dict[str, Any]:
 
 @router.post("/crm/log_interaction")
 def log_interaction(request: ToolRequestBase) -> Dict[str, Any]:
-    response = process_tool_action(
+    return process_tool_action(
         request,
         "crm/log_interaction",
-        {"interactions": {"request_id": request.request_id}},
+        store.interactions,
         write_allowed=True,
     )
-    store.interactions.append(response["record"])
-    return response
 
 
 @router.post("/orders/create_quote")
