@@ -1,0 +1,1 @@
+export const llmHubClient={async complete(taskType:'drafting'|'summarizing'|'search',prompt:string,traceId:string){return {taskType,prompt,traceId,provider:'openai/codex',text:'stubbed completion'};}};

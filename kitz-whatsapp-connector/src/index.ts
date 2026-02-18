@@ -1,0 +1,10 @@
+import Fastify from 'fastify';
+export const health = { status: 'ok' };
+const app = Fastify();
+const templates = new Map<string,string>();
+const consent = new Map<string, boolean>();
+app.post('/webhooks/inbound', async (req:any, reply) => { if (!req.headers['x-provider-signature']) return reply.code(400).send({ok:false}); return {ok:true, event:req.body}; });
+app.post('/send', async (req:any) => ({ queued:true, draftOnly:true, payload:req.body }));
+app.post('/templates/:name', async (req:any) => { templates.set(req.params.name, req.body?.content || ''); return {ok:true}; });
+app.post('/consent/:contact', async (req:any) => { consent.set(req.params.contact, Boolean(req.body?.granted)); return {ok:true}; });
+app.listen({ port: Number(process.env.PORT || 3006), host: '0.0.0.0' });
