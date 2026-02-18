@@ -166,12 +166,12 @@ Request body:
 {
   "input": "Summarize my latest orders.",
   "user_id": "u-1",
-  "aiCredits": 5,
-  "costEstimate": 1.5,
   "model": "gpt-5.2"
 }
 ```
 
 Rules:
-- If `aiCredits <= 0`, request is blocked with `Recharge your AI Battery`.
-- After a successful model response, credits are debited using `costEstimate` and returned as `remaining_ai_credits`.
+- Frontend sends only `input` + `user_id` (and optional `model`) to backend.
+- API key stays server-side in `OPENAI_API_KEY`.
+- If server-side `aiCredits <= 0`, request is blocked with `Recharge your AI Battery`.
+- After a successful model response, server debits credits (`deduct_credits`) and returns `remaining_ai_credits`.
