@@ -5,6 +5,8 @@ import { redact } from './redaction.js';
 import { openai_codex } from './providers/openai_codex.js';
 import { google_gemini } from './providers/google_gemini.js';
 import { perplexity } from './providers/perplexity.js';
+import { lovable } from './providers/lovable.js';
+import { claude_code } from './providers/claude_code.js';
 
 export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
@@ -19,7 +21,11 @@ app.post('/complete', async (req: any) => {
     ? await perplexity(prompt)
     : provider === 'google/gemini'
       ? await google_gemini(prompt)
-      : await openai_codex(prompt);
+      : provider === 'lovable'
+        ? await lovable(prompt)
+        : provider === 'anthropic/claude-code'
+          ? await claude_code(prompt)
+          : await openai_codex(prompt);
 
   return { ...response, taskType, traceId };
 });

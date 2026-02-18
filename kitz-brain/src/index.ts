@@ -5,6 +5,7 @@ import { opsAgent } from './agents/ops.js';
 import { cfoAgent } from './agents/cfo.js';
 import { approvalRequiredActions, toolRegistry } from './tools/registry.js';
 import { llmHubClient } from './llm/hubClient.js';
+import { assertReceiveOnlyAction, financePolicy } from './policy.js';
 
 export const health = { status: 'ok' };
 
@@ -41,7 +42,8 @@ async function runWeekly(): Promise<void> {
   });
 
   await toolRegistry.invoke('orders.getOpenOrders', { includeAging: true }, traceId);
-  await toolRegistry.invoke('payments.createCheckoutLink', { orderId: 'weekly-batch', amount: 19900, currency: 'USD' }, traceId);
+  assertReceiveOnlyAction('create_checkout_link');
+  await toolRegistry.invoke('payments.createCheckoutLink', { orderId: 'weekly-batch', amount: 19900, currency: 'USD', direction: 'incoming' }, traceId);
 
   const response = await llmHubClient.complete('drafting', 'Draft weekly revenue and operations briefing', traceId);
   logRun('weekly.complete', traceId, response);
@@ -50,4 +52,4 @@ async function runWeekly(): Promise<void> {
 cron.schedule('0 8 * * *', runDaily);
 cron.schedule('0 9 * * 1', runWeekly);
 
-console.log('kitz-brain scheduler started');
+console.log('kitz-brain scheduler started', financePolicy);

@@ -80,9 +80,20 @@ app.post('/approvals/request', { preHandler: requireScope('approvals:write') }, 
   return { approvalId: randomUUID(), status: 'pending', traceId: getTraceId(req) };
 });
 
-app.post('/payments/checkout-session', { preHandler: requireScope('payments:write') }, async (req) => {
-  audit('payments.checkout.create', req.body, req);
-  return { sessionId: randomUUID(), mobileCheckoutLink: `https://pay.kitz.local/${randomUUID()}`, traceId: getTraceId(req) };
+app.post('/payments/checkout-session', { preHandler: requireScope('payments:write') }, async (req, reply) => {
+  const payload = (req.body || {}) as { amount?: number; provider?: string; direction?: 'incoming' | 'outgoing' };
+  const provider = payload.provider || 'stripe';
+
+  if (payload.direction === 'outgoing') {
+    return reply.code(403).send(buildError('SPEND_BLOCKED', 'Agents are receive-only; outgoing payments are blocked.', getTraceId(req)));
+  }
+
+  if (!['stripe', 'paypal'].includes(provider)) {
+    return reply.code(400).send(buildError('PROVIDER_NOT_ALLOWED', 'Only Stripe/PayPal receive flows are supported.', getTraceId(req)));
+  }
+
+  audit('payments.checkout.create', { ...payload, provider, direction: 'incoming' }, req);
+  return { sessionId: randomUUID(), provider, mobileCheckoutLink: `https://pay.kitz.local/${randomUUID()}`, traceId: getTraceId(req) };
 });
 
 app.post('/notifications/enqueue', { preHandler: requireScope('notifications:write') }, async (req) => {

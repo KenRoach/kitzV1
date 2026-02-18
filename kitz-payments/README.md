@@ -1,10 +1,8 @@
 # kitz-payments
 
-Part of the Kitz business OS scaffold.
+Billing, AI Battery ledger, subscriptions, checkout sessions, and payment webhooks.
 
-## Local development
-
-```bash
-npm install
-npm run dev
-```
+## Policy
+- Receive money only.
+- Supported receive providers: Stripe and PayPal.
+- Spend operations are blocked (`/spend` returns policy denial).

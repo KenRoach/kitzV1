@@ -1,10 +1,11 @@
 # kitz-llm-hub
 
-Part of the Kitz business OS scaffold.
+Unified interface for LLM providers with task routing, redaction policy, and eval harness.
 
-## Local development
-
-```bash
-npm install
-npm run dev
-```
+## Routed providers
+- Lovable
+- Anthropic Claude Code
+- OpenAI Codex
+- Google Gemini
+- Perplexity
+- DeepSeek (adapter scaffold kept for future routing)
