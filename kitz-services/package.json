@@ -8,14 +8,17 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "compliance:run": "tsx scripts/compliance-run-and-publish.ts",
+    "compliance:local": "tsx -e \"import('./src/compliance-agent/run.ts').then(m=>m.runCompliancePipeline()).then(console.log)\""
   },
   "devDependencies": {
     "@types/node": "^20.12.7",
     "eslint": "^9.0.0",
     "tsx": "^4.7.2",
     "typescript": "^5.4.5",
-    "vitest": "^1.5.0"
+    "vitest": "^1.5.0",
+    "zod": "^3.23.8"
   },
   "dependencies": {
     "fastify": "^4.26.2",

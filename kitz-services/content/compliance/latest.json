@@ -1,0 +1,40 @@
+{
+  "country": "Panama",
+  "updates": [
+    {
+      "country": "Panama",
+      "regulatory_body": "DGI",
+      "update_type": "none",
+      "summary_simple": "No major regulatory change was detected in this run. Keep monitoring official portals.",
+      "operational_impact": "No immediate workflow change required for xyz88.io or Kitz operations.",
+      "required_action": [
+        "Continue regular monitoring and keep records of each run."
+      ],
+      "deadline": null,
+      "risk_level": "Low",
+      "sources": [
+        {
+          "title": "DGI Official Portal",
+          "url": "https://dgi.mef.gob.pa/",
+          "published_at": null
+        },
+        {
+          "title": "Panama Emprende Official Portal",
+          "url": "https://www.panamaemprende.gob.pa/",
+          "published_at": null
+        },
+        {
+          "title": "MITRADEL Official Portal",
+          "url": "https://www.mitradel.gob.pa/",
+          "published_at": null
+        },
+        {
+          "title": "CSS Official Portal",
+          "url": "https://w3.css.gob.pa/",
+          "published_at": null
+        }
+      ],
+      "detected_at": "2026-02-18T22:59:40.216Z"
+    }
+  ]
+}
