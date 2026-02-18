@@ -9,7 +9,7 @@ client = TestClient(app)
 
 def base_payload(request_id: str, requested_action: str):
     return {
-        "agent_name": "openclaw-agent",
+        "agent_name": "brain-agent",
         "reason": "process request",
         "business_context": "tenant operations",
         "requested_action": requested_action,
