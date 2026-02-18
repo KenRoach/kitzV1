@@ -1,10 +1,12 @@
-from fastapi import FastAPI, Depends, HTTPException, Request,APIRouter
+from fastapi import FastAPI, Depends, HTTPException, Request, APIRouter
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List
@@ -12,6 +14,7 @@ from modelo import Base, Order, TicketItem, Payment, CashReturn  ,MenuHomologado
 from pydantic import BaseModel
 import uvicorn
 import models, schema
+from tool_gateway import router as tool_gateway_router, store as tool_gateway_store
 from config import SessionLocal, engine
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker,Session
@@ -23,8 +26,40 @@ origins = [
     # Agrega aquí otros orígenes si es necesario
 ]
 
-models.Base.metadata.create_all(bind=engine)
+try:
+    models.Base.metadata.create_all(bind=engine)
+except Exception:
+    pass
 app = FastAPI(title="Order API", description="API para gestionar órdenes", version="1.0.0")
+
+app.include_router(tool_gateway_router)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    if request.url.path.startswith("/tools"):
+        tool_gateway_store.add_audit_event({
+            "timestamp": datetime.utcnow().isoformat(),
+            "endpoint": request.url.path,
+            "status": "failure",
+            "error_message": "Validation error",
+            "detail": {"errors": exc.errors()},
+        })
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if request.url.path.startswith("/tools"):
+        tool_gateway_store.add_audit_event({
+            "timestamp": datetime.utcnow().isoformat(),
+            "endpoint": request.url.path,
+            "status": "failure",
+            "error_message": str(exc.detail),
+            "detail": {"status_code": exc.status_code},
+        })
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
 
 app.add_middleware(
     CORSMiddleware,
