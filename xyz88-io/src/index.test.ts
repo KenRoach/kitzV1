@@ -1,3 +1,32 @@
-import { describe, it, expect } from 'vitest';
-import { health } from './index.js';
-describe('health',()=>{it('ok',()=>expect(health.status).toBe('ok'));});
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import app, { health } from './index.js';
+
+describe('health', () => {
+  it('ok', () => expect(health.status).toBe('ok'));
+});
+
+describe('ops metrics', () => {
+  beforeAll(async () => {
+    await app.ready();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('returns minimum metrics shape', async () => {
+    await app.inject({ method: 'GET', url: '/leads' });
+    await app.inject({ method: 'GET', url: '/ai-direction' });
+    const response = await app.inject({ method: 'GET', url: '/api/ops/metrics' });
+    expect(response.statusCode).toBe(200);
+
+    const body = response.json();
+    expect(body).toHaveProperty('p95LatencyByRoute');
+    expect(body).toHaveProperty('errorRateByRoute');
+    expect(body).toHaveProperty('authFailures');
+    expect(body).toHaveProperty('conversion');
+    expect(body).toHaveProperty('featureUsageTop10');
+    expect(body.manualModeAlwaysAvailable).toBe(true);
+    expect(body.aiModeGatedByCredits).toBe(true);
+  });
+});
