@@ -3,5 +3,8 @@ requests
 sqlalchemy
 fastapi
 uvicorn
-jinja2 
+jinja2
 python-multipart
+pytest
+httpx
+openai
