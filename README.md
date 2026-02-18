@@ -1,3 +1,24 @@
-# Kitz Organization Scaffold
+# Kitz
 
-This repository contains scaffolds for the Kitz multi-repo platform architecture.
+This workspace contains the **Kitz** platform repositories and starter services.
+
+## Included repositories
+
+- `kitz-services`
+- `xyz88-io`
+- `admin-kitz-services`
+- `kitz-gateway`
+- `kitz-brain`
+- `kitz-whatsapp-connector`
+- `kitz-email-connector`
+- `kitz-payments`
+- `kitz-notifications-queue`
+- `kitz-knowledge-base`
+- `kitz-schemas`
+- `kitz-llm-hub`
+- `kitz-docs`
+
+## Notes
+
+- Branding and naming in this repo use **Kitz**.
+- Legacy/old naming has been removed from this root README.
