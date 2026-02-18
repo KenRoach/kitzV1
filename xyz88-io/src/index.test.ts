@@ -17,6 +17,7 @@ describe('ops metrics', () => {
   it('returns minimum metrics shape', async () => {
     await app.inject({ method: 'GET', url: '/leads' });
     await app.inject({ method: 'GET', url: '/ai-direction' });
+    await app.inject({ method: 'POST', url: '/api/feedback/tag', payload: { tag: 'confusion-checkout' } });
     const response = await app.inject({ method: 'GET', url: '/api/ops/metrics' });
     expect(response.statusCode).toBe(200);
 
@@ -26,7 +27,14 @@ describe('ops metrics', () => {
     expect(body).toHaveProperty('authFailures');
     expect(body).toHaveProperty('conversion');
     expect(body).toHaveProperty('featureUsageTop10');
+    expect(body).toHaveProperty('topFeedbackTags');
     expect(body.manualModeAlwaysAvailable).toBe(true);
     expect(body.aiModeGatedByCredits).toBe(true);
+  });
+
+  it('wires funnel interactions endpoints', async () => {
+    expect((await app.inject({ method: 'POST', url: '/api/funnel/signup' })).statusCode).toBe(200);
+    expect((await app.inject({ method: 'POST', url: '/api/funnel/first-action' })).statusCode).toBe(200);
+    expect((await app.inject({ method: 'POST', url: '/api/funnel/confusing-step' })).statusCode).toBe(200);
   });
 });

@@ -8,7 +8,10 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "ops:export-scorecard": "tsx scripts/export-ops-scorecard.ts",
+    "ops:check-alerts": "tsx scripts/check-alert-thresholds.ts",
+    "ops:update-decision-log": "tsx scripts/update-decision-log-weekly.ts"
   },
   "devDependencies": {
     "@types/node": "^20.12.7",

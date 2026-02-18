@@ -13,3 +13,15 @@
 - **Evidence:** Artifacts were absent in repo.
 - **Expected impact:** Better continuity and auditability of operational decisions.
 - **Rollback:** Remove docs files if process changes.
+
+
+## Weekly Correlation Inputs
+- Feedback tags source: `docs/ops/feedback-tags.json`
+- Metrics source: `GET /api/ops/metrics`
+
+## 2026-02-18 — Weekly feedback/metrics correlation
+- **Feedback tags (top):** confusion-checkout (0), slow-page (0), missing-feature (0)
+- **Metric reference:** confusingStepDropoff=0, visitor→signup=0
+- **Performance reference:** no route sample yet
+- **Usage reference:** no feature usage sample yet
+- **Decision:** Prioritize fixes where feedback tags and drop-off/performance indicate friction.

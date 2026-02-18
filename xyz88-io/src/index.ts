@@ -5,17 +5,13 @@ export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
 const gatewayUrl = process.env.GATEWAY_URL || 'http://localhost:4000';
 
-const page = (title: string, body: string) => `<!doctype html><html><body><h1>${title}</h1>${body}</body></html>`;
+const shell = (title: string, body: string, script = '') => `<!doctype html><html><body><h1>${title}</h1>${body}<script>${script}</script></body></html>`;
 
 type RouteStats = { count: number; errors: number; latencies: number[] };
 const routeStats = new Map<string, RouteStats>();
 const featureUsage = new Map<string, number>();
-const funnel = {
-  visitor: 0,
-  signup: 0,
-  firstAction: 0,
-  confusingStepDropoff: 0
-};
+const feedbackTags = new Map<string, number>();
+const funnel = { visitor: 0, signup: 0, firstAction: 0, confusingStepDropoff: 0 };
 let authFailures = 0;
 
 const trackUsage = (name: string): void => {
@@ -41,27 +37,39 @@ app.addHook('onResponse', async (req, reply) => {
 
 app.get('/leads', async () => {
   trackUsage('leads.view');
-  return page('Leads', '<p>Manual mode is always available. AI suggestions consume AI Battery credits.</p>');
+  return shell(
+    'Leads',
+    '<p>Manual mode is always available. AI suggestions consume AI Battery credits.</p><button id="signup-btn">Start Free</button>',
+    `document.getElementById('signup-btn')?.addEventListener('click',()=>fetch('/api/funnel/signup',{method:'POST'}));`
+  );
 });
 
 app.get('/orders', async () => {
   trackUsage('orders.view');
-  return page('Orders', '<p>Track open orders and update statuses with approval controls.</p>');
+  return shell('Orders', '<p>Track open orders and update statuses with approval controls.</p>');
 });
 
 app.get('/tasks', async () => {
   trackUsage('tasks.view');
-  return page('Tasks', '<p>Create, assign, and close sales/ops tasks.</p>');
+  return shell(
+    'Tasks',
+    '<p>Create, assign, and close sales/ops tasks.</p><button id="confused">This step is confusing</button>',
+    `document.getElementById('confused')?.addEventListener('click',()=>fetch('/api/funnel/confusing-step',{method:'POST'}));`
+  );
 });
 
 app.get('/ai-direction', async () => {
   trackUsage('ai-direction.view');
-  return page('AI Direction', '<button disabled>Run AI Plan (disabled when AI Battery is 0)</button>');
+  return shell('AI Direction', '<button disabled>Run AI Plan (disabled when AI Battery is 0)</button>');
 });
 
 app.get('/checkout-links', async () => {
   trackUsage('checkout-links.view');
-  return page('Checkout Links', '<form method="post" action="/checkout-links/create"><input name="orderId" placeholder="order id"/><input name="amount" placeholder="amount"/><button>Create mobile link</button></form><p>After creation: copy/share via WhatsApp or Email (draft-only via queue).</p>');
+  return shell(
+    'Checkout Links',
+    '<form id="checkout-form" method="post" action="/checkout-links/create"><input name="orderId" placeholder="order id"/><input name="amount" placeholder="amount"/><button>Create mobile link</button></form><p>After creation: copy/share via WhatsApp or Email (draft-only via queue).</p>',
+    `document.getElementById('checkout-form')?.addEventListener('submit',()=>{navigator.sendBeacon('/api/funnel/first-action');});`
+  );
 });
 
 app.post('/api/funnel/signup', async () => {
@@ -77,6 +85,12 @@ app.post('/api/funnel/first-action', async () => {
 app.post('/api/funnel/confusing-step', async () => {
   funnel.confusingStepDropoff += 1;
   return { ok: true };
+});
+
+app.post('/api/feedback/tag', async (req: any) => {
+  const tag = String(req.body?.tag || 'uncategorized').trim().toLowerCase();
+  feedbackTags.set(tag, (feedbackTags.get(tag) || 0) + 1);
+  return { ok: true, tag, count: feedbackTags.get(tag) };
 });
 
 app.get('/api/ai-battery', async () => {
@@ -98,11 +112,7 @@ app.post('/checkout-links/create', async (req: any) => {
   trackUsage('checkout-links.create');
   funnel.firstAction += 1;
   const traceId = randomUUID();
-  const payload = {
-    orderId: req.body?.orderId || 'manual-order',
-    amount: Number(req.body?.amount || 0),
-    currency: 'USD'
-  };
+  const payload = { orderId: req.body?.orderId || 'manual-order', amount: Number(req.body?.amount || 0), currency: 'USD' };
 
   const sessionResponse = await fetch(`${gatewayUrl}/payments/checkout-session`, {
     method: 'POST',
@@ -117,28 +127,18 @@ app.post('/checkout-links/create', async (req: any) => {
   });
 
   const session = await sessionResponse.json();
-  return {
-    ...session,
-    actions: ['copy-link', 'share-whatsapp-draft', 'share-email-draft']
-  };
+  return { ...session, actions: ['copy-link', 'share-whatsapp-draft', 'share-email-draft'] };
 });
 
 app.get('/api/ops/metrics', async () => {
   const routeMetrics = Array.from(routeStats.entries()).map(([route, stats]) => {
     const sorted = [...stats.latencies].sort((a, b) => a - b);
     const p95 = sorted.length ? sorted[Math.floor(sorted.length * 0.95) - 1] || sorted[sorted.length - 1] : 0;
-    return {
-      route,
-      requests: stats.count,
-      errorRate: stats.count ? Number((stats.errors / stats.count).toFixed(4)) : 0,
-      p95LatencyMs: p95
-    };
+    return { route, requests: stats.count, errorRate: stats.count ? Number((stats.errors / stats.count).toFixed(4)) : 0, p95LatencyMs: p95 };
   });
 
-  const topFeatures = Array.from(featureUsage.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([feature, count]) => ({ feature, count }));
+  const topFeatures = Array.from(featureUsage.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([feature, count]) => ({ feature, count }));
+  const topFeedbackTags = Array.from(feedbackTags.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([tag, count]) => ({ tag, count }));
 
   return {
     generatedAt: new Date().toISOString(),
@@ -151,6 +151,7 @@ app.get('/api/ops/metrics', async () => {
       visitorToFirstAction: funnel.visitor ? Number((funnel.firstAction / funnel.visitor).toFixed(4)) : 0
     },
     featureUsageTop10: topFeatures,
+    topFeedbackTags,
     confusingStepDropoff: funnel.confusingStepDropoff,
     manualModeAlwaysAvailable: true,
     aiModeGatedByCredits: true

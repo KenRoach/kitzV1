@@ -1,0 +1,33 @@
+name: xyz88 ops nightly
+
+on:
+  schedule:
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  ops-nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+        working-directory: xyz88-io
+      - run: npm run ops:export-scorecard
+        working-directory: xyz88-io
+        env:
+          NODE_ENV: test
+      - run: npm run ops:check-alerts
+        working-directory: xyz88-io
+        env:
+          NODE_ENV: test
+          ERROR_RATE_ALERT_THRESHOLD: '0.05'
+          AUTH_FAILURE_ALERT_THRESHOLD: '25'
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/ops/weekly-scorecard.md || true
+          git diff --cached --quiet || git commit -m "chore(ops): nightly scorecard snapshot"
+          git push || true

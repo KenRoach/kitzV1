@@ -30,3 +30,17 @@ _Last updated: 2026-02-18_
 ## Links
 - xyz88 metrics: `/api/ops/metrics`
 - Compliance status: `kitz-services/compliance/panama`
+
+
+<!-- NIGHTLY_SNAPSHOT_START -->
+## Nightly Snapshot (2026-02-18T23:11:35.533Z)
+
+- Auth failures: 0
+- Confusing step dropoff: 0
+- Conversion visitor→signup: 0
+- Conversion signup→first-action: 0
+
+### Route performance (top sampled)
+
+### Feature usage (top 10)
+<!-- NIGHTLY_SNAPSHOT_END -->
