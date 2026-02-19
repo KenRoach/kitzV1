@@ -1,0 +1,7 @@
+{
+  "maxActiveInitiatives": 5,
+  "runwayMinMonths": 6,
+  "marginMinPercent": 20,
+  "errorSpikePercent": 30,
+  "authFailureSpikePercent": 25
+}
