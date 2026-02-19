@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "types": ["node", "vitest/globals"],
+    "outDir": "dist"
+  },
+  "include": [
+    "src/index.ts",
+    "src/types.ts",
+    "src/eventBus.ts",
+    "src/ledger/**/*.ts",
+    "src/artifacts/**/*.ts",
+    "src/bots/**/*.ts",
+    "src/cli/**/*.ts",
+    "src/policies/**/*.ts",
+    "test/**/*.ts"
+  ]
+}

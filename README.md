@@ -1,99 +1,188 @@
-# Order-Manager-POS
-# Sistema POS para Gestión de Órdenes
+# Kitz
+AI-Native Business Operating System
 
-![Integraciones](https://img.shields.io/badge/Integraciones-WhatsApp%20%7C%20Sitio_Web-success)
+## 1. What We Are
 
-Sistema punto de venta especializado en gestión de órdenes para cocina, con integración a WhatsApp y sitio web.
+Kitz is an AI-native Business Operating System designed to help small businesses and creators close the technology gap.
 
-## Características Principales
-- 🖥️ Interfaz web para gestión de órdenes
-- 📱 Notificaciones automáticas a WhatsApp (En Construccion)
-- 📊 Panel de visualización de órdenes en tiempo real (En Construccion)
-- 🗃️ Gestión de categorías y productos (En Construccion)
-- 📈 Reportes de ventas básicos [Mealkitz](https://c093-34-133-184-63.ngrok-free.app/dashboard/34)
-- 🔄 Integración con sitios web externos (En Construccion)
+It combines:
+- CRM and customer communication workflows
+- Order and operations management
+- Financial insight and capital discipline
+- AI-powered agents for execution support
+- Educational infrastructure for repeatable learning
 
-## Requisitos
-- Python 3.8+
-- PostgreSQL (opcional)
-- Cuenta de desarrollador de WhatsApp API
+Kitz is built as a practical operating layer, not a demo project. It focuses on reliable execution, auditable decisions, and steady improvement.
 
-## Instalación
-1. Clonar repositorio:
+## 2. Our Mission
+
+Our mission is to close the tech gap for small businesses.
+
+We do that by combining:
+- Simplicity in daily operations
+- Structured execution instead of ad-hoc work
+- AI-assisted growth with human approval gates
+- Long-term durability over short-term optics
+
+## 3. How Kitz Works
+
+Kitz runs as an agent-supported operating model with clear accountability.
+
+It is built around:
+- A core leadership layer of 12 always-on agents
+- Governance agents that enforce review and policy gates
+- Event-driven communication through an Event Bus
+- A shared Work Ledger for tasks, proposals, decisions, and outcomes
+- Institutional Memory stored as auditable records
+- Focus discipline to prevent overloaded execution
+- Incentive alignment checks across growth, risk, and margin
+
+The model includes:
+- Core 12 leadership agents for continuous oversight
+- Ad-hoc digital interns for scoped, temporary problem-solving
+- A Reviewer gate before critical recommendations proceed
+- A Networking Bot that publishes organizational digests
+- A digital board of directors for strategic advisory input
+- External advisory councils in US/US/CN slots for comparative review
+
+## 4. Agent Operating Model
+
+Core principles:
+- Event-driven
+- Proposal-based
+- Review-gated
+- Logged decisions
+- No direct agent chat
+- Structured artifacts only
+
+Execution flow:
+- Events -> Tasks -> Proposals -> Decisions -> Outcomes
+
+Agents do not execute production changes directly. They propose changes through traceable artifacts, and approvals control progression.
+
+## 5. Governance & Capital Philosophy
+
+Kitz applies a clear capital model after:
+
+Revenue - Expenses - R&D
+
+Distribution model:
+- 50% Founder earnings
+- 45% Strategic impact aligned with mission
+- 5% Agent technology improvement
+
+Guardrails:
+- Runway thresholds must be respected before distributions
+- Margin protection takes priority over growth optics
+- Sustainability and resilience are prioritized over short-term narrative wins
+
+## 6. Folder Structure Overview
+
+High-level operating structure:
+- `/aos`: Agent Operating System module (event bus, ledger, policies, bots, CLI, tests)
+- `/org`: organizational policy and structure layer (represented today through `aos/config`)
+- `/agents`: agent role implementations (represented today through `aos/src/agents`)
+- `/ledger`: institutional memory and artifact records (represented today through `aos/src/ledger` and `aos/data`)
+- `/runbooks`: operational procedures and incident/release playbooks (`docs/ops/runbooks`)
+
+Workspace repositories included:
+- `kitz-services`
+- `xyz88-io`
+- `admin-kitz-services`
+- `kitz-gateway`
+- `kitz-brain`
+- `kitz-whatsapp-connector`
+- `kitz-email-connector`
+- `kitz-payments`
+- `kitz-notifications-queue`
+- `kitz-knowledge-base`
+- `kitz-schemas`
+- `kitz-llm-hub`
+- `kitz-docs`
+
+## 7. Development Setup
+
+### Prerequisites
+- Node.js 20+
+- npm
+
+### Install dependencies
+Run per package as needed:
+
 ```bash
-git clone [https://github.com/Mealkitz-Dev/Order-Manager-POS]
-cd nombre-del-repositorio
-
-## Kitz Tool Gateway (v0.1)
-
-This repository now includes a **Tool Access Gateway** for agent calls under `/tools/*`.
-
-### Supported tool routes
-- `POST /tools/crm/create_lead`
-- `POST /tools/crm/update_lead`
-- `POST /tools/crm/log_interaction`
-- `POST /tools/orders/create_quote`
-- `POST /tools/orders/create_order`
-- `POST /tools/orders/update_status`
-- `POST /tools/finance/get_kpis`
-- `POST /tools/finance/create_invoice` (**approval required**)
-- `POST /tools/ai-battery/estimate`
-- `POST /tools/ai-battery/charge` (**approval required**)
-- `POST /tools/audit/log`
-
-### Required request contract (all routes)
-OpenClaw must send these fields on every request:
-- `agent_name`
-- `reason`
-- `business_context`
-- `requested_action`
-- `ai_battery_estimate`
-- `tenant_id`
-- `request_id`
-- `user_id` **or** `account_id`
-
-Optional approval fields:
-- `approval_token`
-- `human_approval_id`
-
-### Approval gate rules
-The gateway enforces approval tokens/ids for:
-- Invoice creation
-- AI battery charging
-- Any action whose `requested_action` contains `refund`, `delete`, or `permission`
-
-### Idempotency
-`request_id` is treated as an idempotency key. Replayed calls return the stored result.
-
-### Auditing
-All tool calls (success and failure, including validation failures) create an audit event.
-You can inspect events with `GET /tools/audit/events` for local testing.
-
-### OpenAPI
-OpenAPI spec snapshot:
-- `docs/tool-gateway-openapi.json`
-
-### Local run and tests
-```bash
-uvicorn main:app --reload
-pytest
+cd <package>
+npm install
 ```
 
-### Example OpenClaw request
-```json
-{
-  "agent_name": "openclaw-agent",
-  "reason": "create invoice for completed order",
-  "business_context": "B2B wholesale flow",
-  "requested_action": "create_invoice",
-  "ai_battery_estimate": 2.1,
-  "tenant_id": "tenant-123",
-  "user_id": "u-991",
-  "request_id": "req-2026-0001",
-  "human_approval_id": "ha-445",
-  "payload": {
-    "order_id": "ord-1001",
-    "amount": 199.99
-  }
-}
+Common packages:
+- `aos`
+- `xyz88-io`
+- `kitz-services`
+- `kitz-gateway`
+
+### Environment variables
+Copy package examples before local runs:
+
+```bash
+cp <package>/.env.example <package>/.env
 ```
+
+Do not commit secrets. Use the Gateway one-time token pattern where credentials are required.
+
+### Run locally
+AOS examples:
+
+```bash
+cd aos
+node run simulate-event BUG_REPORTED
+node run create-sample-ledger
+node run digest
+```
+
+Service examples:
+
+```bash
+cd xyz88-io
+npm run dev
+```
+
+```bash
+cd kitz-services
+npm run dev
+```
+
+### Run tests
+
+```bash
+cd aos
+npm run typecheck
+npm test
+```
+
+```bash
+cd xyz88-io
+npm run validate:full
+```
+
+## 8. Contributing Guidelines
+
+- All material changes must pass Reviewer logic before recommendation or merge progression.
+- No direct deploy actions from agents without explicit approval gates.
+- Add or update tests for every meaningful behavior change.
+- Log decisions and outcomes in institutional memory artifacts.
+- Keep changes small, auditable, and reversible.
+
+## 9. Long-Term Vision
+
+Kitz is designed to be:
+- A durable AI-native company
+- A governed execution machine
+- A compounding knowledge system
+- A mission-aligned economic engine
+
+The long-term goal is disciplined, repeatable performance for operators who need practical systems, not complexity.
+
+## Notes
+
+- Branding and naming in this repo use **Kitz**.
+- Legacy/old naming has been removed from this root README.

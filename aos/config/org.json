@@ -1,0 +1,9 @@
+{
+  "orgName": "Kitz Agent Operating System",
+  "coreTeamMax": 12,
+  "coreAgents": [
+    "CEO","COO","CFO","CTO","CPO","CRO","CMO","HeadEngineering","HeadCustomer","HeadGrowth","HeadEducation","HeadIntelligenceRisk"
+  ],
+  "advisoryOnly": true,
+  "deploymentGate": "PR + Reviewer approval"
+}
