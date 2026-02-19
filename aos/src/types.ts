@@ -1,51 +1,65 @@
 export type EventSeverity = 'low' | 'medium' | 'high' | 'critical';
 
-export type EventType =
+export type AOSMessageType =
   | 'KPI_CHANGED'
   | 'CUSTOMER_FEEDBACK_RECEIVED'
   | 'BUG_REPORTED'
   | 'INCIDENT_DETECTED'
-  | 'PR_OPENED'
   | 'PR_READY_FOR_REVIEW'
-  | 'REVIEW_REJECTED'
-  | 'COMPLIANCE_UPDATE_FOUND'
-  | 'COST_SPIKE_DETECTED'
-  | 'ROADMAP_CHANGE_PROPOSED'
-  | 'CAPITAL_ALLOCATION_CYCLE'
-  | 'BOARD_REVIEW_REQUESTED'
   | 'ORG_DIGEST_READY'
-  | 'EXTERNAL_AUDIT_REPORT_READY'
-  | 'BOARD_REVIEW_COMPLETE'
-  | 'PROPOSAL_CREATED';
+  | string;
 
 export interface AOSEvent {
   id: string;
-  type: EventType | string;
+  type: AOSMessageType;
   source: string;
   severity: EventSeverity;
   timestamp: string;
   payload: Record<string, unknown>;
-  requires_review?: boolean;
   related_ids?: string[];
-  alignmentWarnings?: string[];
 }
 
-export interface AgentConfig {
-  name: string;
-  role: string;
-  reports_to?: string;
-  owns: string[];
-  triggers: string[];
-  allowed_actions: string[];
-  can_spawn_ad_hoc: boolean;
-  max_ad_hoc: number;
-  max_active_ad_hoc: number;
-  approval_required: string[];
+export interface TaskArtifact {
+  id: string;
+  title: string;
+  owner_agent: string;
+  status: 'open' | 'in_progress' | 'blocked' | 'done';
+  created_at: string;
+  related_event_ids: string[];
 }
 
-export interface ProposalRecord {
-  owner: string;
-  issueId: string;
-  proposal: Record<string, unknown>;
-  timestamp: string;
+export interface ProposalArtifact {
+  id: string;
+  task_id: string;
+  owner_agent: string;
+  summary: string;
+  risk: 'low' | 'medium' | 'high';
+  created_at: string;
+  related_event_ids: string[];
 }
+
+export interface DecisionArtifact {
+  id: string;
+  proposal_id: string;
+  decision: 'approved' | 'rejected' | 'needs_changes';
+  decided_by: string;
+  rationale: string;
+  created_at: string;
+  related_event_ids: string[];
+}
+
+export interface OutcomeArtifact {
+  id: string;
+  decision_id: string;
+  owner_agent: string;
+  outcome: string;
+  kpi_impact?: string;
+  created_at: string;
+  related_event_ids: string[];
+}
+
+export type LedgerArtifact =
+  | { kind: 'task'; data: TaskArtifact }
+  | { kind: 'proposal'; data: ProposalArtifact }
+  | { kind: 'decision'; data: DecisionArtifact }
+  | { kind: 'outcome'; data: OutcomeArtifact };

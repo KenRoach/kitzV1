@@ -1,10 +1,5 @@
-export interface FocusState {
-  activeInitiatives: number;
-  maxActiveInitiatives: number;
-}
+import type { AOSEvent } from '../types.js';
 
-export function enforceFocusCapacity(state: FocusState, eventAction?: string): { allowed: boolean; reason?: string } {
-  if (eventAction !== 'start_initiative') return { allowed: true };
-  if (state.activeInitiatives < state.maxActiveInitiatives) return { allowed: true };
-  return { allowed: false, reason: 'Capacity reached: stop something to start something.' };
+export function focusCapacityPolicy(_event: AOSEvent): void {
+  // Placeholder gate for future focus/capacity rules. Intentionally no-op.
 }

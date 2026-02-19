@@ -10,5 +10,15 @@
     "types": ["node", "vitest/globals"],
     "outDir": "dist"
   },
-  "include": ["src/**/*.ts", "test/**/*.ts"]
+  "include": [
+    "src/index.ts",
+    "src/types.ts",
+    "src/eventBus.ts",
+    "src/ledger/**/*.ts",
+    "src/artifacts/**/*.ts",
+    "src/bots/**/*.ts",
+    "src/cli/**/*.ts",
+    "src/policies/**/*.ts",
+    "test/**/*.ts"
+  ]
 }

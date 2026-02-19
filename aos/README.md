@@ -1,60 +1,91 @@
-# Agent Operating System (AOS)
+# AOS: Agent-to-Agent Communication Module
 
-Minimal framework-agnostic orchestration layer for Kitz agents.
+This module implements **event-driven, auditable communication** for agents using:
 
-## What it includes
+1. Event Bus (`publish/subscribe`)
+2. Shared Work Ledger (`task/proposal/decision/outcome` artifacts)
+3. Networking Bot (`ORG_DIGEST_READY` from ledger state)
+4. Structured schemas/contracts for all messages and artifacts
 
-- 12 always-on core agents (C-suite + heads) defined in `config/agents.json`
-- Governance agents for approvals, alignment, feedback coaching, focus/capacity, and capital allocation
-- External audit councils (`US_MODEL_A`, `US_MODEL_B`, `CN_MODEL`) as advisory model slots
-- Digital board members with independent voting stubs
-- Event bus with middleware policy gates and persisted institutional memory (`aos/data/*.ndjson`)
+Agents do **not** chat directly. They communicate via events + ledger records.
 
-## Policy guarantees
+## Structure
 
-- Advisory + PR-based only (`deploy_execute` blocked)
-- Reviewer approval required for submission recommendations
-- CFO + CapitalAllocation required for capital allocation recommendations
-- CTO + Security required for security change recommendations
-- Focus/capacity and ad-hoc spawn limits enforceable (`max_ad_hoc=12`, `max_active_ad_hoc=3`)
-- Incentive conflict warnings appended for KPI conflicts
+```text
+aos/
+  src/
+    index.ts
+    types.ts
+    eventBus.ts
+    ledger/
+      ledgerStore.ts
+      fileStore.ts
+      dbStore.ts
+    artifacts/
+      task.ts
+      proposal.ts
+      decision.ts
+      outcome.ts
+    bots/
+      networkingBot.ts
+    cli/
+      run.ts
+    policies/
+      approvals.ts
+      focusCapacity.ts
+  data/
+    events.ndjson
+    ledger.ndjson
+```
 
-## Event types
+## Event schema
 
+`AOSEvent`:
+- `id`
+- `type`
+- `source`
+- `severity` (`low|medium|high|critical`)
+- `timestamp` (ISO)
+- `payload` (object)
+- `related_ids?`
+
+Minimum supported types:
 - `KPI_CHANGED`
 - `CUSTOMER_FEEDBACK_RECEIVED`
 - `BUG_REPORTED`
 - `INCIDENT_DETECTED`
-- `PR_OPENED`
 - `PR_READY_FOR_REVIEW`
-- `REVIEW_REJECTED`
-- `COMPLIANCE_UPDATE_FOUND`
-- `COST_SPIKE_DETECTED`
-- `ROADMAP_CHANGE_PROPOSED`
-- `CAPITAL_ALLOCATION_CYCLE`
-- `BOARD_REVIEW_REQUESTED`
-- plus advisory outputs: `ORG_DIGEST_READY`, `EXTERNAL_AUDIT_REPORT_READY`, `BOARD_REVIEW_COMPLETE`, `PROPOSAL_CREATED`
+- `ORG_DIGEST_READY`
+
+## Ledger artifacts
+
+- Task
+- Proposal
+- Decision
+- Outcome
+
+All artifacts include IDs, timestamps, ownership, and related event IDs for traceability.
 
 ## Run locally
 
 ```bash
 cd aos
 npm install
-node run daily
-node run weekly-board
-node run simulate --event INCIDENT_DETECTED
+node run simulate-event BUG_REPORTED
+node run create-sample-ledger
+node run digest
 ```
 
-## Tests
+## Testing
 
 ```bash
 cd aos
+npm run typecheck
 npm test
 ```
 
-## Add a new ad-hoc agent
+## Notes
 
-1. Ensure owner core agent has `can_spawn_ad_hoc=true` in `config/agents.json`.
-2. Trigger via medium+ severity event or explicit owner request.
-3. Generate proposal via `ParallelSolutionsAgent.propose(...)`.
-4. Ensure proposal carries TTL and owner sign-off constraints.
+- File-based store is used by default (`aos/data/*.ndjson`).
+- `dbStore.ts` is intentionally a stub unless a DB is introduced in this repo.
+- Policies are currently no-op placeholders (`approvals`, `focusCapacity`) to keep module minimal and framework-agnostic.

@@ -1,39 +1,43 @@
 import { randomUUID } from 'node:crypto';
-import { detectAlignmentWarnings } from './policies/incentiveAlignment.js';
-import type { AOSEvent } from './types.js';
-import { MemoryStore } from './memory/memoryStore.js';
+import type { AOSEvent, AOSMessageType } from './types.js';
+import type { LedgerStore } from './ledger/ledgerStore.js';
 
 type Handler = (event: AOSEvent) => void | Promise<void>;
 
+type Middleware = (event: AOSEvent) => void;
+
 export class EventBus {
-  private readonly subscriptions = new Map<string, Handler[]>();
-  private readonly middleware: Array<(event: AOSEvent) => void> = [];
+  private readonly handlers = new Map<string, Handler[]>();
+  private readonly middleware: Middleware[] = [];
 
-  constructor(private readonly memory: MemoryStore) {}
+  constructor(private readonly ledger: LedgerStore) {}
 
-  use(handler: (event: AOSEvent) => void): void {
-    this.middleware.push(handler);
+  use(middleware: Middleware): void {
+    this.middleware.push(middleware);
   }
 
-  subscribe(eventType: string, handler: Handler): void {
-    const current = this.subscriptions.get(eventType) ?? [];
-    current.push(handler);
-    this.subscriptions.set(eventType, current);
+  subscribe(type: AOSMessageType | '*', handler: Handler): void {
+    const list = this.handlers.get(type) ?? [];
+    list.push(handler);
+    this.handlers.set(type, list);
   }
 
-  async publish(event: Omit<AOSEvent, 'id' | 'timestamp'>): Promise<AOSEvent> {
-    const hydrated: AOSEvent = {
-      ...event,
+  async publish(input: Omit<AOSEvent, 'id' | 'timestamp'>): Promise<AOSEvent> {
+    const event: AOSEvent = {
+      ...input,
       id: randomUUID(),
-      timestamp: new Date().toISOString(),
-      alignmentWarnings: detectAlignmentWarnings(event as AOSEvent)
+      timestamp: new Date().toISOString()
     };
 
-    for (const mw of this.middleware) mw(hydrated);
-    this.memory.writeEvent(hydrated);
+    this.middleware.forEach((entry) => entry(event));
+    this.ledger.appendEvent(event);
 
-    const handlers = [...(this.subscriptions.get(hydrated.type) ?? []), ...(this.subscriptions.get('*') ?? [])];
-    for (const handler of handlers) await handler(hydrated);
-    return hydrated;
+    const typed = this.handlers.get(event.type) ?? [];
+    const any = this.handlers.get('*') ?? [];
+    for (const handler of [...typed, ...any]) {
+      await handler(event);
+    }
+
+    return event;
   }
 }
