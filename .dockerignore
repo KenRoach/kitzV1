@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+*.env.local
+.DS_Store
+.git
+.vscode
+.idea
+coverage
+*.tsbuildinfo
+.mcp.json
+**/auth_state/

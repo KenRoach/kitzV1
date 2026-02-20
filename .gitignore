@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+dist/
+
+# Environment (contains API keys — NEVER commit)
+.env
+*.env.local
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Lock files (generated)
+package-lock.json
+bun.lockb
+
+# IDE
+.vscode/
+.idea/
+
+# MCP config (contains API keys)
+.mcp.json
+
+# WhatsApp Baileys session (contains encryption keys — never commit)
+**/auth_state/
+
+# Build artifacts
+*.tsbuildinfo
+coverage/
+
+# Legacy files
+ProtoType.ipynb
+csv-productos-facebook.csv
+*.csv
+*.json.bak

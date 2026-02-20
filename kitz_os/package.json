@@ -1,0 +1,21 @@
+{
+  "name": "kitz-os",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "node --import tsx --test src/**/*.test.ts"
+  },
+  "dependencies": {
+    "fastify": "^4.24.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "node-cron": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0"
+  }
+}

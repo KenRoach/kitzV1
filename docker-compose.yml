@@ -1,0 +1,227 @@
+# KITZ OS — Docker Compose
+# Usage: docker compose up --build
+# All services connect via Docker network hostnames.
+
+x-service-defaults: &service-defaults
+  build:
+    context: .
+    dockerfile: Dockerfile.service
+  restart: unless-stopped
+  networks:
+    - kitz-net
+
+x-env-common: &env-common
+  NODE_ENV: development
+  DATABASE_URL: postgres://kitz:kitz@postgres:5432/kitz
+
+services:
+  # ── Database ──
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: kitz
+      POSTGRES_PASSWORD: kitz
+      POSTGRES_DB: kitz
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - kitz-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kitz"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Migrations ──
+  migrate:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_DIR: kitz-schemas
+    command: ["node", "--import", "tsx", "migrations/run.ts"]
+    environment:
+      <<: *env-common
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  # ── Gateway (port 4000) ──
+  kitz-gateway:
+    <<: *service-defaults
+    build:
+      args:
+        SERVICE_DIR: kitz-gateway
+    ports:
+      - "4000:4000"
+    environment:
+      <<: *env-common
+      PORT: 4000
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+      DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET:-dev-secret-change-me}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # ── LLM Hub (port 4010) ──
+  kitz-llm-hub:
+    <<: *service-defaults
+    build:
+      args:
+        SERVICE_DIR: kitz-llm-hub
+    ports:
+      - "4010:4010"
+    environment:
+      <<: *env-common
+      PORT: 4010
+      LOVABLE_API_KEY: ${LOVABLE_API_KEY:-}
+
+  # ── Payments (port 3005) ──
+  kitz-payments:
+    <<: *service-defaults
+    build:
+      args:
+        SERVICE_DIR: kitz-payments
+    ports:
+      - "3005:3005"
+    environment:
+      <<: *env-common
+      PORT: 3005
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # ── WhatsApp Connector (port 3006) ──
+  kitz-whatsapp-connector:
+    <<: *service-defaults
+    build:
+      args:
+        SERVICE_DIR: kitz-whatsapp-connector
+    ports:
+      - "3006:3006"
+    environment:
+      <<: *env-common
+      PORT: 3006
+      KITZ_OS_URL: http://kitz-os:3012
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # ── Email Connector (port 3007) ──
+  kitz-email-connector:
+    <<: *service-defaults
+    build:
+      args:
+        SERVICE_DIR: kitz-email-connector
+    ports:
+      - "3007:3007"
+    environment:
+      <<: *env-common
+      PORT: 3007
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # ── Notifications Queue (port 3008) ──
+  kitz-notifications-queue:
+    <<: *service-defaults
+    build:
+      args:
+        SERVICE_DIR: kitz-notifications-queue
+    ports:
+      - "3008:3008"
+    environment:
+      <<: *env-common
+      PORT: 3008
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # ── Content/Compliance Services (port 3010) ──
+  kitz-services:
+    <<: *service-defaults
+    build:
+      args:
+        SERVICE_DIR: kitz-services
+    ports:
+      - "3010:3010"
+    environment:
+      <<: *env-common
+      PORT: 3010
+
+  # ── Admin Services (port 3011) ──
+  admin-kitz-services:
+    <<: *service-defaults
+    build:
+      args:
+        SERVICE_DIR: admin-kitz-services
+    ports:
+      - "3011:3011"
+    environment:
+      <<: *env-common
+      PORT: 3011
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      XYZ88_SUPABASE_URL: ${XYZ88_SUPABASE_URL:-}
+      XYZ88_SUPABASE_SERVICE_KEY: ${XYZ88_SUPABASE_SERVICE_KEY:-}
+      GOD_MODE_USER_ID: ${GOD_MODE_USER_ID:-8787fee9-d06a-442f-91ba-fd082b134ccf}
+      DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET:-dev-secret-change-me}
+
+  # ── KITZ OS (port 3012) ──
+  kitz-os:
+    <<: *service-defaults
+    build:
+      args:
+        SERVICE_DIR: kitz_os
+    ports:
+      - "3012:3012"
+    environment:
+      <<: *env-common
+      PORT: 3012
+      CLAUDE_API_KEY: ${CLAUDE_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-gpt-4o-mini}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      XYZ88_MCP_URL: ${XYZ88_MCP_URL:-}
+      XYZ88_MCP_KEY: ${XYZ88_MCP_KEY:-}
+      GOD_MODE_USER_ID: ${GOD_MODE_USER_ID:-8787fee9-d06a-442f-91ba-fd082b134ccf}
+      BUSINESS_ID: ${BUSINESS_ID:-134f52d0-90a3-4806-a1bd-c37ef31d4f6f}
+      WA_CONNECTOR_URL: http://kitz-whatsapp-connector:3006
+      KILL_SWITCH: ${KILL_SWITCH:-false}
+      DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET:-dev-secret-change-me}
+    depends_on:
+      - kitz-gateway
+      - kitz-llm-hub
+
+  # ── Brain (cron — no port) ──
+  kitz-brain:
+    build:
+      context: .
+      dockerfile: Dockerfile.brain
+    restart: unless-stopped
+    networks:
+      - kitz-net
+    environment:
+      <<: *env-common
+      GATEWAY_URL: http://kitz-gateway:4000
+      LLM_HUB_URL: http://kitz-llm-hub:4010
+      DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET:-dev-secret-change-me}
+      MCP_URL: ${MCP_URL:-}
+      MCP_API_KEY: ${MCP_API_KEY:-}
+      BUSINESS_ID: ${BUSINESS_ID:-134f52d0-90a3-4806-a1bd-c37ef31d4f6f}
+    depends_on:
+      - kitz-gateway
+      - kitz-llm-hub
+
+networks:
+  kitz-net:
+    driver: bridge
+
+volumes:
+  pgdata:

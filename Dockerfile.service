@@ -1,0 +1,27 @@
+# Dockerfile.service — Shared builder for all Fastify microservices
+ARG SERVICE_DIR
+
+FROM node:20-alpine AS builder
+ARG SERVICE_DIR
+WORKDIR /app
+
+# Copy shared schemas first (for workspace deps)
+COPY kitz-schemas/package.json kitz-schemas/
+COPY kitz-schemas/src/ kitz-schemas/src/
+
+# Copy service
+COPY ${SERVICE_DIR}/package.json ${SERVICE_DIR}/
+RUN cd ${SERVICE_DIR} && npm install --production
+
+COPY ${SERVICE_DIR}/ ${SERVICE_DIR}/
+
+FROM node:20-alpine
+ARG SERVICE_DIR
+ENV SERVICE_DIR=${SERVICE_DIR}
+WORKDIR /app
+
+COPY --from=builder /app/ .
+
+EXPOSE 3000-4100
+
+CMD ["sh", "-c", "cd ${SERVICE_DIR} && npx tsx src/index.ts"]

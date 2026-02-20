@@ -1,0 +1,10 @@
+{
+  "required": [
+    "p95_latency",
+    "error_rate_by_route",
+    "auth_failures",
+    "visitor_signup_first_action_funnel",
+    "feature_usage_top10",
+    "confusing_step_dropoff"
+  ]
+}

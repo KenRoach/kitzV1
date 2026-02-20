@@ -1,0 +1,11 @@
+# Dockerfile.brain — kitz-brain (cron scheduler, no HTTP port)
+FROM node:20-alpine
+WORKDIR /app
+
+COPY kitz-brain/package.json kitz-brain/
+RUN cd kitz-brain && npm install --production
+
+COPY kitz-brain/ kitz-brain/
+COPY kitz-schemas/ kitz-schemas/
+
+CMD ["sh", "-c", "cd kitz-brain && npx tsx src/index.ts"]
