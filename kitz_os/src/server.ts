@@ -14,6 +14,9 @@
  *   POST /api/payments/webhook/paypal    — PayPal payment webhook
  *   POST /api/payments/webhook/yappy     — Yappy payment webhook (Panama)
  *   POST /api/payments/webhook/bac       — BAC Compra Click webhook (Central America)
+ *   POST /api/kitz/voice/speak           — Text-to-Speech (ElevenLabs)
+ *   GET  /api/kitz/voice/config          — Voice configuration
+ *   GET  /api/kitz/voice/widget          — Voice widget HTML snippet
  *
  * Port: 3012
  */
@@ -22,6 +25,7 @@ import Fastify from 'fastify';
 import type { KitzKernel } from './kernel.js';
 import { parseWhatsAppCommand } from './interfaces/whatsapp/commandParser.js';
 import { routeWithAI } from './interfaces/whatsapp/semanticRouter.js';
+import { textToSpeech, getKitzVoiceConfig, getWidgetSnippet, isElevenLabsConfigured } from './llm/elevenLabsClient.js';
 
 export async function createServer(kernel: KitzKernel) {
   const app = Fastify({ logger: false });
@@ -74,9 +78,12 @@ export async function createServer(kernel: KitzKernel) {
                 `• *self-heal: [file]* — Regenerate missing files\n` +
                 `• *lovable projects* — List connected Lovable projects\n` +
                 `• *payments* — Payment summary & transactions\n` +
+                `• *voice note [phone] [text]* — Send voice note\n` +
+                `• *call [phone] [purpose]* — Make WhatsApp call\n` +
+                `• *say this aloud* — Get voice reply\n` +
                 `• *report daily/weekly* — Get report\n` +
                 `• *help* — This menu\n\n` +
-                `Or just ask in natural language!`,
+                `Or just ask in natural language! 🎙️`,
             };
           }
 
@@ -413,6 +420,73 @@ export async function createServer(kernel: KitzKernel) {
       return { received: true, trace_id: traceId, result };
     }
   );
+
+  // ── Voice API Endpoints (ElevenLabs) ──
+
+  // Text-to-Speech — generate audio from text
+  app.post<{ Body: { text: string; voice_id?: string; output_format?: string } }>(
+    '/api/kitz/voice/speak',
+    async (req, reply) => {
+      if (!isElevenLabsConfigured()) {
+        return reply.code(503).send({ error: 'ElevenLabs not configured. Set ELEVENLABS_API_KEY.' });
+      }
+      const { text, voice_id, output_format } = req.body || {};
+      if (!text) return reply.code(400).send({ error: 'text required' });
+      if (text.length > 5000) return reply.code(400).send({ error: 'text too long (max 5000 chars)' });
+
+      try {
+        const result = await textToSpeech({
+          text,
+          voiceId: voice_id,
+          outputFormat: output_format as 'mp3_44100_128' | 'mp3_22050_32' | undefined,
+        });
+        return {
+          audio_base64: result.audioBase64,
+          mime_type: result.mimeType,
+          character_count: result.characterCount,
+          voice_id: result.voiceId,
+        };
+      } catch (err) {
+        return reply.code(500).send({ error: (err as Error).message });
+      }
+    }
+  );
+
+  // Voice config — current KITZ voice settings
+  app.get('/api/kitz/voice/config', async () => {
+    return getKitzVoiceConfig();
+  });
+
+  // Voice widget — HTML snippet for embedding
+  app.get('/api/kitz/voice/widget', async () => {
+    const snippet = getWidgetSnippet();
+    return { html: snippet, configured: isElevenLabsConfigured() };
+  });
+
+  // Voice assistant page — embeddable page with widget
+  app.get('/voice-assistant', async (req, reply) => {
+    const snippet = getWidgetSnippet();
+    reply.type('text/html');
+    return `<!doctype html>
+<html>
+<head><title>KITZ Voice Assistant</title>
+<style>body{font-family:system-ui;max-width:800px;margin:0 auto;padding:2rem;background:#0a0a0a;color:#e0e0e0;}
+h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
+<body>
+  <h1>🎙️ KITZ Voice Assistant</h1>
+  <p>Click the voice button in the bottom-right corner to talk to KITZ.<br>
+  KITZ speaks with a warm, professional female voice. Multilingual: Spanish, English, Portuguese.</p>
+  <p><strong>Try saying:</strong></p>
+  <ul>
+    <li>"Show me my contacts"</li>
+    <li>"How are we doing today?"</li>
+    <li>"Create an invoice for Maria, 250 dollars"</li>
+    <li>"What's on my calendar?"</li>
+  </ul>
+  ${snippet}
+</body>
+</html>`;
+  });
 
   await app.listen({ port: PORT, host: '0.0.0.0' });
   console.log(`[server] KITZ OS listening on port ${PORT}`);

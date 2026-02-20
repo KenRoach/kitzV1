@@ -5,7 +5,12 @@ export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
 const gatewayUrl = process.env.GATEWAY_URL || 'http://localhost:4000';
 
-const shell = (title: string, body: string, script = '') => `<!doctype html><html><body><h1>${title}</h1>${body}<script>${script}</script></body></html>`;
+const ELEVENLABS_AGENT_ID = process.env.ELEVENLABS_AGENT_ID || '';
+const voiceWidget = ELEVENLABS_AGENT_ID
+  ? `<script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script><elevenlabs-convai agent-id="${ELEVENLABS_AGENT_ID}"></elevenlabs-convai>`
+  : '';
+
+const shell = (title: string, body: string, script = '') => `<!doctype html><html><body><h1>${title}</h1>${body}${voiceWidget}<script>${script}</script></body></html>`;
 
 type RouteStats = { count: number; errors: number; latencies: number[] };
 const routeStats = new Map<string, RouteStats>();

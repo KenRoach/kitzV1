@@ -7,12 +7,18 @@ import { readHistory, readLatest } from './compliance-agent/storage.js';
 
 export const health = { status: 'ok' };
 
+const ELEVENLABS_AGENT_ID = process.env.ELEVENLABS_AGENT_ID || '';
+const voiceWidget = ELEVENLABS_AGENT_ID
+  ? `<script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script><elevenlabs-convai agent-id="${ELEVENLABS_AGENT_ID}"></elevenlabs-convai>`
+  : '';
+
 const complianceHtml = (countryMarkdown: string, latestAt: string): string => `<!doctype html>
 <html>
   <body>
     <h1>Compliance</h1>
     <p>Last updated: ${latestAt}</p>
     <pre>${countryMarkdown.replace(/</g, '&lt;')}</pre>
+    ${voiceWidget}
   </body>
 </html>`;
 

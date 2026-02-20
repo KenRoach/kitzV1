@@ -13,8 +13,8 @@
  *   - OpenAI gpt-4o-mini for transactional tool-routing (cheapest)
  *   - Bidirectional fallbacks on failure
  *
- * 61+ tools across CRM, Orders, Storefronts, Products, Dashboard,
- * Email, Brain Dump, Doc Scan, Fact Check, Calendar, Agents, Outbound, Payments.
+ * 68+ tools across CRM, Orders, Storefronts, Products, Dashboard,
+ * Email, Brain Dump, Doc Scan, Fact Check, Calendar, Agents, Outbound, Payments, Voice.
  */
 
 import { chatCompletion, type ChatMessage, type ToolDef } from '../../llm/aiClient.js';
@@ -74,6 +74,10 @@ const DIRECT_EXECUTE_TOOLS = new Set([
   'lovable_removeProject', 'lovable_pushArtifact', 'lovable_linkProjects',
   // Payment receiver tools
   'payments_processWebhook', 'payments_summary',
+  // Voice tools (ElevenLabs)
+  'voice_speak', 'voice_listVoices', 'voice_getConfig', 'voice_getWidget', 'voice_getSignedUrl',
+  // WhatsApp voice + call tools
+  'outbound_sendVoiceNote', 'outbound_makeCall',
 ]);
 
 // ── System Prompt ──
@@ -97,6 +101,7 @@ CAPABILITIES:
 - **ARTIFACTS** — Generate code, documents, tools, SQL migrations, and push to Lovable. Self-healing: regenerate missing files.
 - **LOVABLE** — Manage Lovable.dev projects: add, list, link, remove projects. Push artifacts to specific projects. Send prompts to Lovable AI chat.
 - **PAYMENTS** — View payment transactions by provider (Stripe, PayPal, Yappy, BAC), status, or date range. Get revenue summaries (today/week/month). Receive-only — never send money outbound.
+- **VOICE** — KITZ has a female voice (ElevenLabs). Convert text to speech audio. Send voice notes via WhatsApp. Make WhatsApp calls. Get voice widget for websites.
 
 RULES:
 1. Execute READ operations directly — no confirmation needed.
@@ -118,7 +123,11 @@ RULES:
 17. For pushing frontend code to Lovable, use artifact_pushToLovable.
 18. For payment queries ("today's payments", "revenue", "how much did we make"), use payments_summary.
 19. For payment history or details, use payments_listTransactions or payments_getTransaction.
-20. NEVER initiate outbound payments. Only receive and record incoming payments.`;
+20. NEVER initiate outbound payments. Only receive and record incoming payments.
+21. For voice responses, use voice_speak to generate audio, then outbound_sendVoiceNote to deliver via WhatsApp.
+22. For WhatsApp calls, use outbound_makeCall. Calls use KITZ's female voice (ElevenLabs TTS).
+23. When user says "say that" or "read this aloud" or "voice note", use voice_speak + outbound_sendVoiceNote.
+24. KITZ's voice is female, warm, professional, and multilingual (Spanish-first, English fluent).`;
 }
 
 // ── Execute a tool ──

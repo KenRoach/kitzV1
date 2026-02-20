@@ -69,6 +69,7 @@ export class OsToolRegistry {
       import('./artifactTools.js'),
       import('./lovableTools.js'),
       import('./paymentTools.js'),
+      import('./voiceTools.js'),
     ]);
 
     const getterNames = [
@@ -85,6 +86,7 @@ export class OsToolRegistry {
       'getAllArtifactTools',
       'getAllLovableTools',
       'getAllPaymentTools',
+      'getAllVoiceTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {

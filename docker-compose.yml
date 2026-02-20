@@ -152,6 +152,7 @@ services:
     environment:
       <<: *env-common
       PORT: 3010
+      ELEVENLABS_AGENT_ID: ${ELEVENLABS_AGENT_ID:-}
 
   # ── Admin Services (port 3011) ──
   admin-kitz-services:
@@ -170,6 +171,7 @@ services:
       XYZ88_SUPABASE_SERVICE_KEY: ${XYZ88_SUPABASE_SERVICE_KEY:-}
       GOD_MODE_USER_ID: ${GOD_MODE_USER_ID:-8787fee9-d06a-442f-91ba-fd082b134ccf}
       DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET:-dev-secret-change-me}
+      ELEVENLABS_AGENT_ID: ${ELEVENLABS_AGENT_ID:-}
 
   # ── KITZ OS (port 3012) ──
   kitz-os:
@@ -199,6 +201,10 @@ services:
       PAYPAL_WEBHOOK_ID: ${PAYPAL_WEBHOOK_ID:-}
       YAPPY_WEBHOOK_SECRET: ${YAPPY_WEBHOOK_SECRET:-}
       BAC_WEBHOOK_SECRET: ${BAC_WEBHOOK_SECRET:-}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      ELEVENLABS_VOICE_ID: ${ELEVENLABS_VOICE_ID:-21m00Tcm4TlvDq8ikWAM}
+      ELEVENLABS_MODEL_ID: ${ELEVENLABS_MODEL_ID:-eleven_multilingual_v2}
+      ELEVENLABS_AGENT_ID: ${ELEVENLABS_AGENT_ID:-}
     depends_on:
       - kitz-gateway
       - kitz-llm-hub
