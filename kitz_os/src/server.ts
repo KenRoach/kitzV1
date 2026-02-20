@@ -64,6 +64,10 @@ export async function createServer(kernel: KitzKernel) {
                 `• *storefronts* — List storefronts\n` +
                 `• *products* — List products\n` +
                 `• *brain dump: [idea]* — Process idea\n` +
+                `• *generate code: [description]* — Create code with AI\n` +
+                `• *generate doc: [topic]* — Create document with AI\n` +
+                `• *self-heal: [file]* — Regenerate missing files\n` +
+                `• *lovable projects* — List connected Lovable projects\n` +
                 `• *report daily/weekly* — Get report\n` +
                 `• *help* — This menu\n\n` +
                 `Or just ask in natural language!`,

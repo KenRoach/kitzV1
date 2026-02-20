@@ -62,6 +62,13 @@ const DIRECT_EXECUTE_TOOLS = new Set([
   'agent_chat',
   'outbound_sendWhatsApp', 'outbound_sendEmail',
   'calendar_listEvents', 'calendar_addEvent',
+  // Artifact creation tools
+  'artifact_generateCode', 'artifact_generateDocument', 'artifact_generateTool',
+  'artifact_selfHeal', 'artifact_generateMigration', 'artifact_pushToLovable',
+  'artifact_list', 'artifact_readFile',
+  // Lovable project management
+  'lovable_listProjects', 'lovable_addProject', 'lovable_updateProject',
+  'lovable_removeProject', 'lovable_pushArtifact', 'lovable_linkProjects',
 ]);
 
 // ── System Prompt ──
@@ -82,6 +89,8 @@ CAPABILITIES:
 - **FACT CHECK** — Validate outbound messages against real business data before sending.
 - **CALENDAR** — List upcoming events, add new events (requires Google OAuth setup).
 - **AGENTS** — Route to specialized agents (CEO, Sales, Ops, CFO, etc.) for strategic thinking.
+- **ARTIFACTS** — Generate code, documents, tools, SQL migrations, and push to Lovable. Self-healing: regenerate missing files.
+- **LOVABLE** — Manage Lovable.dev projects: add, list, link, remove projects. Push artifacts to specific projects. Send prompts to Lovable AI chat.
 
 RULES:
 1. Execute READ operations directly — no confirmation needed.
@@ -95,7 +104,12 @@ RULES:
 9. For brain dump / idea processing, use braindump_process tool.
 10. For dashboard/metrics/how-are-we-doing, use dashboard_metrics.
 11. When asked about multiple things, use multiple tools in sequence.
-12. If the request is unclear, ask ONE clarifying question.`;
+12. If the request is unclear, ask ONE clarifying question.
+13. For code generation, use artifact_generateCode. For document generation, use artifact_generateDocument.
+14. For self-healing / rebuilding missing files, use artifact_selfHeal.
+15. For SQL migrations, use artifact_generateMigration.
+16. For creating new KITZ OS tools, use artifact_generateTool.
+17. For pushing frontend code to Lovable, use artifact_pushToLovable.`;
 }
 
 // ── Execute a tool ──

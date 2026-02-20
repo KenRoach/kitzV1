@@ -66,6 +66,8 @@ export class OsToolRegistry {
       import('./agentTools.js'),
       import('./outboundTools.js'),
       import('./calendarTools.js'),
+      import('./artifactTools.js'),
+      import('./lovableTools.js'),
     ]);
 
     const getterNames = [
@@ -79,6 +81,8 @@ export class OsToolRegistry {
       'getAllAgentTools',
       'getAllOutboundTools',
       'getAllCalendarTools',
+      'getAllArtifactTools',
+      'getAllLovableTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {

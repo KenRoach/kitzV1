@@ -1,0 +1,22 @@
+{
+  "projects": [
+    {
+      "id": "0dd377df-8e0b-4ff3-84e5-220c400737d6",
+      "name": "xyz88-io",
+      "url": "https://lovable.dev/projects/0dd377df-8e0b-4ff3-84e5-220c400737d6",
+      "supabase_project_id": "mqkjbejuuedauygeccbj",
+      "supabase_url": "https://mqkjbejuuedauygeccbj.supabase.co",
+      "github_repo": "KenRoach/xyz88-io",
+      "description": "Lite CRM + Order Dashboard + Mobile Checkout Links — Main KITZ frontend",
+      "added_at": "2026-02-20T12:00:00.000Z"
+    },
+    {
+      "id": "94dd5926-87ed-4eef-be1e-94eba7fcf3fb",
+      "name": "kitz-project-2",
+      "url": "https://lovable.dev/projects/94dd5926-87ed-4eef-be1e-94eba7fcf3fb",
+      "description": "Second KITZ Lovable project",
+      "added_at": "2026-02-20T12:00:00.000Z"
+    }
+  ],
+  "default_project_id": "0dd377df-8e0b-4ff3-84e5-220c400737d6"
+}
