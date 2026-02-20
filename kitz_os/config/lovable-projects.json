@@ -12,9 +12,11 @@
     },
     {
       "id": "94dd5926-87ed-4eef-be1e-94eba7fcf3fb",
-      "name": "kitz-project-2",
+      "name": "build-it-bright",
       "url": "https://lovable.dev/projects/94dd5926-87ed-4eef-be1e-94eba7fcf3fb",
-      "description": "Second KITZ Lovable project",
+      "supabase_project_id": "swmyvpqowqphhbprfziy",
+      "supabase_url": "https://swmyvpqowqphhbprfziy.supabase.co",
+      "description": "Kitz Landing Page + Marketing Site — 'Stop losing customers in the chat'",
       "added_at": "2026-02-20T12:00:00.000Z"
     }
   ],
