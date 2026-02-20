@@ -14,7 +14,7 @@ interface SubscriptionRecord {
 
 const ledger: AIBatteryLedgerEntry[] = [];
 const subscriptions = new Map<string, SubscriptionRecord>();
-const allowedReceiveProviders = new Set(['stripe', 'paypal']);
+const allowedReceiveProviders = new Set(['stripe', 'paypal', 'yappy', 'bac']);
 
 app.post('/checkout-session', async (req: any, reply) => {
   const traceId = String(req.headers['x-trace-id'] || randomUUID());

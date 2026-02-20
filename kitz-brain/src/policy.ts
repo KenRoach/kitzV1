@@ -5,7 +5,7 @@ export const llmProvidersAllowed = [
   'google/gemini'
 ] as const;
 
-export const paymentProvidersAllowed = ['stripe', 'paypal'] as const;
+export const paymentProvidersAllowed = ['stripe', 'paypal', 'yappy', 'bac'] as const;
 
 export const financePolicy = {
   mode: 'receive_only',

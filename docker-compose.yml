@@ -195,6 +195,10 @@ services:
       WA_CONNECTOR_URL: http://kitz-whatsapp-connector:3006
       KILL_SWITCH: ${KILL_SWITCH:-false}
       DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET:-dev-secret-change-me}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      PAYPAL_WEBHOOK_ID: ${PAYPAL_WEBHOOK_ID:-}
+      YAPPY_WEBHOOK_SECRET: ${YAPPY_WEBHOOK_SECRET:-}
+      BAC_WEBHOOK_SECRET: ${BAC_WEBHOOK_SECRET:-}
     depends_on:
       - kitz-gateway
       - kitz-llm-hub

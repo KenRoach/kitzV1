@@ -13,8 +13,8 @@
  *   - OpenAI gpt-4o-mini for transactional tool-routing (cheapest)
  *   - Bidirectional fallbacks on failure
  *
- * 49+ tools across CRM, Orders, Storefronts, Products, Dashboard,
- * Email, Brain Dump, Doc Scan, Fact Check, Calendar, Agents, Outbound.
+ * 61+ tools across CRM, Orders, Storefronts, Products, Dashboard,
+ * Email, Brain Dump, Doc Scan, Fact Check, Calendar, Agents, Outbound, Payments.
  */
 
 import { chatCompletion, type ChatMessage, type ToolDef } from '../../llm/aiClient.js';
@@ -51,6 +51,9 @@ const TOOL_TO_MCP: Record<string, string> = {
   'dashboard_metrics': 'dashboard_metrics',
   // Email
   'email_listInbox': 'list_inbox_messages',
+  // Payments
+  'payments_listTransactions': 'list_payment_transactions',
+  'payments_getTransaction': 'get_payment_transaction',
 };
 
 // Tools the AI can call directly (not through MCP)
@@ -69,6 +72,8 @@ const DIRECT_EXECUTE_TOOLS = new Set([
   // Lovable project management
   'lovable_listProjects', 'lovable_addProject', 'lovable_updateProject',
   'lovable_removeProject', 'lovable_pushArtifact', 'lovable_linkProjects',
+  // Payment receiver tools
+  'payments_processWebhook', 'payments_summary',
 ]);
 
 // ── System Prompt ──
@@ -91,6 +96,7 @@ CAPABILITIES:
 - **AGENTS** — Route to specialized agents (CEO, Sales, Ops, CFO, etc.) for strategic thinking.
 - **ARTIFACTS** — Generate code, documents, tools, SQL migrations, and push to Lovable. Self-healing: regenerate missing files.
 - **LOVABLE** — Manage Lovable.dev projects: add, list, link, remove projects. Push artifacts to specific projects. Send prompts to Lovable AI chat.
+- **PAYMENTS** — View payment transactions by provider (Stripe, PayPal, Yappy, BAC), status, or date range. Get revenue summaries (today/week/month). Receive-only — never send money outbound.
 
 RULES:
 1. Execute READ operations directly — no confirmation needed.
@@ -109,7 +115,10 @@ RULES:
 14. For self-healing / rebuilding missing files, use artifact_selfHeal.
 15. For SQL migrations, use artifact_generateMigration.
 16. For creating new KITZ OS tools, use artifact_generateTool.
-17. For pushing frontend code to Lovable, use artifact_pushToLovable.`;
+17. For pushing frontend code to Lovable, use artifact_pushToLovable.
+18. For payment queries ("today's payments", "revenue", "how much did we make"), use payments_summary.
+19. For payment history or details, use payments_listTransactions or payments_getTransaction.
+20. NEVER initiate outbound payments. Only receive and record incoming payments.`;
 }
 
 // ── Execute a tool ──

@@ -68,13 +68,48 @@ export interface CheckoutSession {
   traceId: string;
 }
 
+// ── Payment Providers ──
+export type PaymentProvider = 'stripe' | 'paypal' | 'yappy' | 'bac';
+export type PaymentTransactionStatus = 'pending' | 'completed' | 'failed' | 'refunded';
+
 export interface PaymentWebhookEvent {
-  provider: 'stripe' | 'local';
+  provider: PaymentProvider;
   eventType: string;
   sessionId: string;
   orgId: string;
   traceId: string;
   raw: unknown;
+}
+
+// Persistent payment transaction record
+export interface PaymentTransaction {
+  id: string;
+  user_id: string;
+  storefront_id?: string | null;
+  order_id?: string | null;
+  provider: PaymentProvider;
+  provider_transaction_id: string;
+  amount: number;
+  currency: string;
+  status: PaymentTransactionStatus;
+  fiscal_invoice_id?: string | null;
+  metadata: Record<string, unknown>;
+  webhook_received_at: string;
+  created_at: string;
+}
+
+// Normalized input for process_payment_webhook MCP tool
+export interface ProcessPaymentWebhookInput {
+  provider: PaymentProvider;
+  provider_transaction_id: string;
+  amount: number;
+  currency: string;
+  status: PaymentTransactionStatus;
+  storefront_id?: string;
+  buyer_name?: string;
+  buyer_email?: string;
+  buyer_phone?: string;
+  metadata: Record<string, unknown>;
 }
 
 export const createTraceId = (): string => randomUUID();
