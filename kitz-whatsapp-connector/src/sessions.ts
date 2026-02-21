@@ -207,14 +207,26 @@ class SessionManager {
 
         this.emit(session, 'disconnected', JSON.stringify({ statusCode }));
 
+        // Always close the dead socket fully
+        try { sock.ws.close(); } catch {}
+        try { sock.end(undefined); } catch {}
+        session.socket = null;
+
         if (shouldReconnect && session.reconnectAttempts < MAX_RECONNECT) {
           session.reconnectAttempts++;
           const delay = Math.min(session.reconnectAttempts * 2000, 10_000);
           console.log(`[session:${userId}] Reconnecting in ${delay / 1000}s (attempt ${session.reconnectAttempts}/${MAX_RECONNECT})`);
           setTimeout(() => this.connectBaileys(session), delay);
         } else if (statusCode === DisconnectReason.loggedOut) {
-          console.log(`[session:${userId}] Logged out. Session auth will be cleared on next connect.`);
+          console.log(`[session:${userId}] Logged out — cleaning up session`);
           this.emit(session, 'logged_out', '');
+          session.listeners.clear();
+          this.sessions.delete(userId);
+        } else {
+          // Max reconnect attempts reached — clean up fully
+          console.log(`[session:${userId}] Max reconnect attempts — removing session`);
+          session.listeners.clear();
+          this.sessions.delete(userId);
         }
       }
 
@@ -412,13 +424,16 @@ class SessionManager {
     if (!session) return false;
 
     if (session.socket) {
+      try { session.socket.ws.close(); } catch {}
       try { session.socket.end(undefined); } catch {}
       session.socket = null;
     }
     session.isConnected = false;
     session.lastQr = null;
     this.emit(session, 'disconnected', '');
+    session.listeners.clear();
     this.sessions.delete(userId);
+    console.log(`[session:${userId}] Stopped and cleaned up`);
     return true;
   }
 
