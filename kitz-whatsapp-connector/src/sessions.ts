@@ -490,24 +490,34 @@ class SessionManager {
     }
   }
 
-  /** Boot: reconnect any sessions that have persisted auth dirs */
+  /** Boot: reconnect any sessions that have persisted auth dirs with valid creds */
   async restoreSessions(): Promise<void> {
-    const { readdir } = await import('node:fs/promises');
+    const { readdir, access } = await import('node:fs/promises');
     try {
       await mkdir(AUTH_ROOT, { recursive: true });
       const dirs = await readdir(AUTH_ROOT, { withFileTypes: true });
+      let restored = 0;
       for (const d of dirs) {
-        if (d.isDirectory()) {
-          const userId = d.name;
-          console.log(`[sessions] Restoring session: ${userId}`);
-          try {
-            await this.startSession(userId);
-          } catch (err) {
-            console.error(`[sessions] Failed to restore ${userId}:`, (err as Error).message);
-          }
+        if (!d.isDirectory()) continue;
+        const userId = d.name;
+        const credsPath = join(AUTH_ROOT, userId, 'creds.json');
+        try {
+          await access(credsPath);
+        } catch {
+          // No valid creds — this was a failed/incomplete scan, clean it up
+          console.log(`[sessions] Skipping ${userId} — no valid creds, removing stale auth dir`);
+          await rm(join(AUTH_ROOT, userId), { recursive: true, force: true });
+          continue;
+        }
+        console.log(`[sessions] Restoring session: ${userId}`);
+        try {
+          await this.startSession(userId);
+          restored++;
+        } catch (err) {
+          console.error(`[sessions] Failed to restore ${userId}:`, (err as Error).message);
         }
       }
-      console.log(`[sessions] Restored ${dirs.filter(d => d.isDirectory()).length} session(s)`);
+      console.log(`[sessions] Restored ${restored} session(s)`);
     } catch {
       console.log('[sessions] No previous sessions to restore');
     }
