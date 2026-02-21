@@ -287,12 +287,32 @@ const LOGIN_HTML = `<!DOCTYPE html>
       font-size: 14px;
       margin-bottom: 32px;
     }
+    #qr-wrapper {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 16px;
+    }
+    #countdown-ring {
+      position: absolute;
+      top: -6px;
+      left: -6px;
+      pointer-events: none;
+    }
+    #countdown-ring circle {
+      fill: none;
+      stroke-width: 4;
+    }
+    #countdown-ring .track { stroke: #222; }
+    #countdown-ring .progress {
+      stroke: #00d4aa;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1s linear;
+    }
     #qr-container {
       background: #fff;
       border-radius: 16px;
       padding: 24px;
       display: inline-block;
-      margin-bottom: 24px;
       min-width: 280px;
       min-height: 280px;
       position: relative;
@@ -304,8 +324,15 @@ const LOGIN_HTML = `<!DOCTYPE html>
     #status {
       font-size: 16px;
       color: #00d4aa;
-      margin-bottom: 16px;
+      margin-bottom: 4px;
       min-height: 24px;
+    }
+    #countdown-text {
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 16px;
+      min-height: 20px;
+      font-variant-numeric: tabular-nums;
     }
     .instructions {
       color: #666;
@@ -346,11 +373,21 @@ const LOGIN_HTML = `<!DOCTYPE html>
     <div class="subtitle">Connect your WhatsApp to your AI Business OS</div>
 
     <div id="scan-view">
-      <div id="qr-container">
-        <div class="spinner" id="spinner"></div>
-        <canvas id="qr-canvas"></canvas>
+      <div id="qr-wrapper">
+        <svg id="countdown-ring" width="292" height="292" viewBox="0 0 292 292" style="display:none;">
+          <circle class="track" cx="146" cy="146" r="143"/>
+          <circle class="progress" id="ring-progress" cx="146" cy="146" r="143"
+            stroke-dasharray="898.5"
+            stroke-dashoffset="0"
+            transform="rotate(-90 146 146)"/>
+        </svg>
+        <div id="qr-container">
+          <div class="spinner" id="spinner"></div>
+          <canvas id="qr-canvas"></canvas>
+        </div>
       </div>
       <div id="status">Generating QR code...</div>
+      <div id="countdown-text"></div>
       <div class="instructions">
         <strong>1.</strong> Open WhatsApp on your phone<br>
         <strong>2.</strong> Go to Settings &gt; Linked Devices<br>
@@ -379,6 +416,46 @@ const LOGIN_HTML = `<!DOCTYPE html>
     const spinner = document.getElementById('spinner');
     const canvas = document.getElementById('qr-canvas');
     const phoneEl = document.getElementById('phone-number');
+    const countdownText = document.getElementById('countdown-text');
+    const ring = document.getElementById('countdown-ring');
+    const ringProgress = document.getElementById('ring-progress');
+
+    const QR_LIFETIME = 60;
+    const CIRCUMFERENCE = 898.5;
+    let countdownInterval = null;
+    let secondsLeft = QR_LIFETIME;
+
+    function startCountdown() {
+      secondsLeft = QR_LIFETIME;
+      ring.style.display = 'block';
+      ringProgress.style.strokeDashoffset = '0';
+      updateCountdownDisplay();
+
+      if (countdownInterval) clearInterval(countdownInterval);
+      countdownInterval = setInterval(() => {
+        secondsLeft--;
+        if (secondsLeft <= 0) {
+          clearInterval(countdownInterval);
+          countdownText.textContent = 'New QR loading...';
+          ringProgress.style.strokeDashoffset = CIRCUMFERENCE;
+          return;
+        }
+        updateCountdownDisplay();
+      }, 1000);
+    }
+
+    function updateCountdownDisplay() {
+      const pct = 1 - (secondsLeft / QR_LIFETIME);
+      ringProgress.style.strokeDashoffset = (pct * CIRCUMFERENCE).toFixed(1);
+
+      if (secondsLeft > 10) {
+        countdownText.textContent = secondsLeft + 's remaining';
+        ringProgress.style.stroke = '#00d4aa';
+      } else {
+        countdownText.textContent = secondsLeft + 's \u2014 scan now!';
+        ringProgress.style.stroke = '#ff6b6b';
+      }
+    }
 
     const evtSource = new EventSource('/whatsapp/connect');
 
@@ -390,14 +467,17 @@ const LOGIN_HTML = `<!DOCTYPE html>
     evtSource.addEventListener('qr', (e) => {
       spinner.style.display = 'none';
       statusEl.textContent = 'Scan with WhatsApp';
+      statusEl.classList.remove('error');
       QRCode.toCanvas(canvas, e.data, {
         width: 256,
         margin: 0,
         color: { dark: '#000', light: '#fff' },
       });
+      startCountdown();
     });
 
     evtSource.addEventListener('connected', (e) => {
+      if (countdownInterval) clearInterval(countdownInterval);
       const data = JSON.parse(e.data);
       scanView.style.display = 'none';
       connView.style.display = 'block';

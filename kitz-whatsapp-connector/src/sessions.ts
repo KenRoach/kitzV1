@@ -176,7 +176,7 @@ class SessionManager {
       logger: baileysLogger as any,
       browser: ['KITZ', 'Chrome', '120.0.0'],
       connectTimeoutMs: 60_000,
-      qrTimeout: 40_000,
+      qrTimeout: 60_000,
     });
 
     session.socket = sock;
