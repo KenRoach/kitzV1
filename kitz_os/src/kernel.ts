@@ -10,6 +10,7 @@
 
 import { createServer } from './server.js';
 import { OsToolRegistry } from './tools/registry.js';
+import { getBatteryStatus, type BatteryStatus } from './aiBattery.js';
 
 export interface KernelStatus {
   status: 'booting' | 'online' | 'degraded' | 'killed';
@@ -17,6 +18,7 @@ export interface KernelStatus {
   uptime: number;
   lastRun?: string;
   killSwitch: boolean;
+  aiBattery: BatteryStatus;
 }
 
 export interface RunResult {
@@ -76,6 +78,7 @@ export class KitzKernel {
       toolCount: this.tools.count(),
       uptime: Math.floor((Date.now() - this.bootTime) / 1000),
       killSwitch: process.env.KILL_SWITCH === 'true',
+      aiBattery: getBatteryStatus(),
     };
   }
 

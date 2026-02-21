@@ -17,9 +17,10 @@
  * Email, Brain Dump, Doc Scan, Fact Check, Calendar, Agents, Outbound, Payments, Voice.
  */
 
-import { chatCompletion, type ChatMessage, type ToolDef } from '../../llm/aiClient.js';
+import { chatCompletion, getAiModel, type ChatMessage, type ToolDef } from '../../llm/aiClient.js';
 import { callXyz88Mcp } from '../../tools/mcpClient.js';
 import type { OsToolRegistry } from '../../tools/registry.js';
+import { recordLLMSpend, hasBudget, getBatteryStatus } from '../../aiBattery.js';
 
 // ── Tool-to-MCP Mapping ──
 // Maps KITZ OS tool names to xyz88-io MCP tool names for direct execution
@@ -103,6 +104,14 @@ CAPABILITIES:
 - **PAYMENTS** — View payment transactions by provider (Stripe, PayPal, Yappy, BAC), status, or date range. Get revenue summaries (today/week/month). Receive-only — never send money outbound.
 - **VOICE** — KITZ has a female voice (ElevenLabs). Convert text to speech audio. Send voice notes via WhatsApp. Make WhatsApp calls. Get voice widget for websites.
 
+RESPONSE STYLE:
+- Default replies: 5-7 words. Keep it tight.
+- If more detail needed: 15-23 words max.
+- Complex topics: break into chunks of 30 words max.
+- If it truly requires more detail: say "I'll send the details by email" and use email tool.
+- Tone: cool, chill, confident. Never mad, never rude. Good vibes only.
+- Think of yourself as a calm, capable friend who runs businesses.
+
 RULES:
 1. Execute READ operations directly — no confirmation needed.
 2. For WRITE operations (create/update), confirm what you did.
@@ -160,9 +169,23 @@ export async function routeWithAI(
   registry: OsToolRegistry,
   traceId: string,
   mediaContext?: { media_base64: string; mime_type: string },
-): Promise<{ response: string; toolsUsed: string[] }> {
+): Promise<{ response: string; toolsUsed: string[]; creditsConsumed: number }> {
+  // ── AI Battery check — block if depleted ──
+  if (!hasBudget(0.5)) {
+    const battery = getBatteryStatus();
+    return {
+      response: `⚡ AI Battery depleted (${battery.todayCredits}/${battery.dailyLimit} credits used today). ` +
+        `Read operations still work. To recharge, type "recharge [amount]".`,
+      toolsUsed: [],
+      creditsConsumed: 0,
+    };
+  }
+
   const toolDefs: ToolDef[] = registry.toOpenAITools();
   const toolsUsed: string[] = [];
+  let totalCreditsConsumed = 0;
+  const aiModel = getAiModel();
+  const aiProvider = aiModel.startsWith('claude') ? 'claude' as const : 'openai' as const;
 
   const systemPrompt = buildSystemPrompt(registry.count());
 
@@ -181,14 +204,28 @@ export async function routeWithAI(
   for (let loop = 0; loop < MAX_LOOPS; loop++) {
     const result = await chatCompletion(messages, toolDefs, traceId);
 
+    // ── Track LLM token spend ──
+    if (result.usage && result.finishReason !== 'error') {
+      const entry = await recordLLMSpend({
+        provider: aiProvider,
+        model: aiModel,
+        promptTokens: result.usage.prompt_tokens || 0,
+        completionTokens: result.usage.completion_tokens || 0,
+        totalTokens: result.usage.total_tokens || 0,
+        traceId,
+        toolContext: `semantic_router_loop_${loop}`,
+      });
+      totalCreditsConsumed += entry.credits;
+    }
+
     // If error, return the error message
     if (result.finishReason === 'error') {
-      return { response: result.message.content || 'Something went wrong.', toolsUsed };
+      return { response: result.message.content || 'Something went wrong.', toolsUsed, creditsConsumed: totalCreditsConsumed };
     }
 
     // If no tool calls, we have the final response
     if (!result.message.tool_calls || result.message.tool_calls.length === 0) {
-      return { response: result.message.content || 'Done.', toolsUsed };
+      return { response: result.message.content || 'Done.', toolsUsed, creditsConsumed: totalCreditsConsumed };
     }
 
     // Add assistant message with tool calls
@@ -227,5 +264,5 @@ export async function routeWithAI(
   }
 
   // If we hit max loops, return whatever we have
-  return { response: 'Reached maximum processing steps. Please try a simpler request.', toolsUsed };
+  return { response: 'Reached maximum processing steps. Please try a simpler request.', toolsUsed, creditsConsumed: totalCreditsConsumed };
 }

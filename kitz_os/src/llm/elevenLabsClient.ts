@@ -16,6 +16,8 @@
  *   - Model: eleven_multilingual_v2 (32+ languages)
  */
 
+import { recordTTSSpend } from '../aiBattery.js';
+
 // ── Config ────────────────────────────────────────────────
 
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY || '';
@@ -152,13 +154,24 @@ export async function textToSpeech(options: TTSOptions): Promise<TTSResult> {
     : outputFormat.startsWith('ulaw') ? 'audio/basic'
     : 'audio/mpeg';
 
-  return {
+  const ttsResult: TTSResult = {
     audioBase64,
     mimeType,
     characterCount: options.text.length,
     voiceId,
     modelId,
   };
+
+  // ── Track ElevenLabs spend in AI Battery ──
+  recordTTSSpend({
+    characterCount: ttsResult.characterCount,
+    voiceId: ttsResult.voiceId,
+    modelId: ttsResult.modelId,
+    traceId: crypto.randomUUID(), // TTS calls may not have a traceId
+    toolContext: 'textToSpeech',
+  }).catch(() => { /* non-blocking */ });
+
+  return ttsResult;
 }
 
 /**

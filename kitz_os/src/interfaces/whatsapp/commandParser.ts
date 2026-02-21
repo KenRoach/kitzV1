@@ -7,7 +7,7 @@
 
 export type CommandAction =
   | 'status' | 'help' | 'greeting' | 'kill_switch' | 'resume'
-  | 'report' | 'recharge'
+  | 'report' | 'recharge' | 'battery'
   | 'list_contacts' | 'get_contact' | 'create_contact' | 'update_contact'
   | 'list_orders' | 'get_order' | 'create_order' | 'update_order'
   | 'business_summary'
@@ -128,6 +128,15 @@ export function parseWhatsAppCommand(text: string): KitzCommand | null {
   if (/^(brain\s*dump|idea|brainstorm)[\s:]/i.test(lower)) {
     const transcript = raw.replace(/^(brain\s*dump|idea|brainstorm)[\s:]*/i, '').trim();
     return { action: 'braindump', raw, transcript };
+  }
+
+  // ── AI Battery ──
+  if (/^(battery|bateria|credits|creditos)$/i.test(lower)) {
+    return { action: 'battery', raw };
+  }
+  if (/^recharge\s+(\d+)/i.test(lower)) {
+    const match = lower.match(/^recharge\s+(\d+)/i);
+    return { action: 'recharge', raw, credits: Number(match?.[1] || 10) };
   }
 
   // ── Reports ──

@@ -1,6 +1,21 @@
+/**
+ * KITZ WhatsApp Connector — Fastify API + Multi-Session Baileys Bridge
+ *
+ * This service:
+ *   1. Runs a Fastify REST API for outbound messaging (port 3006)
+ *   2. Manages multiple WhatsApp sessions (one per user)
+ *   3. Serves a web login page at /whatsapp/login for QR scanning
+ *   4. Streams QR codes via SSE at /whatsapp/connect
+ *
+ * Users visit /whatsapp/login, scan the QR with WhatsApp, and their
+ * messages flow through their own Baileys session to KITZ OS.
+ */
+
 import Fastify from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { EventEnvelope } from 'kitz-schemas';
+import { startBaileys, getConnectionStatus, sendWhatsAppMessage, sendWhatsAppAudio } from './baileys.js';
+import { sessionManager } from './sessions.js';
 
 export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
@@ -18,6 +33,96 @@ const audit = (event: string, payload: unknown, traceId: string): EventEnvelope 
   ts: new Date().toISOString()
 });
 
+// ── Health + WhatsApp status ──
+app.get('/health', async () => ({
+  status: 'ok',
+  service: 'kitz-whatsapp-connector',
+  whatsapp: getConnectionStatus(),
+}));
+
+// ── WhatsApp connection status ──
+app.get('/whatsapp/status', async () => getConnectionStatus());
+
+// ═══════════════════════════════════════════
+//  Multi-Session Endpoints
+// ═══════════════════════════════════════════
+
+// ── Login page — serves HTML for QR scanning ──
+app.get('/whatsapp/login', async (_req, reply) => {
+  reply.type('text/html').send(LOGIN_HTML);
+});
+
+// ── SSE: Stream QR codes for a new session ──
+app.get('/whatsapp/connect', async (req: any, reply) => {
+  const userId = (req.query as any).userId || randomUUID();
+
+  reply.raw.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*',
+  });
+
+  // Send the userId so the client knows its session ID
+  reply.raw.write(`event: session\ndata: ${JSON.stringify({ userId })}\n\n`);
+
+  // SSE listener — forwards session events to the client
+  const listener = (event: string, data: string) => {
+    reply.raw.write(`event: ${event}\ndata: ${data}\n\n`);
+  };
+
+  // Start the session (generates QR)
+  try {
+    const session = await sessionManager.startSession(userId);
+    sessionManager.addListener(userId, listener);
+
+    // If there's already a QR queued, send it immediately
+    if (session.lastQr) {
+      reply.raw.write(`event: qr\ndata: ${session.lastQr}\n\n`);
+    }
+
+    // If already connected, send connected event
+    if (session.isConnected) {
+      reply.raw.write(`event: connected\ndata: ${JSON.stringify({ phone: session.phoneNumber })}\n\n`);
+    }
+  } catch (err) {
+    reply.raw.write(`event: error\ndata: ${JSON.stringify({ error: (err as Error).message })}\n\n`);
+  }
+
+  // Clean up on disconnect
+  req.raw.on('close', () => {
+    sessionManager.removeListener(userId, listener);
+  });
+});
+
+// ── List all sessions ──
+app.get('/whatsapp/sessions', async () => {
+  return { sessions: sessionManager.listSessions() };
+});
+
+// ── Session status ──
+app.get('/whatsapp/sessions/:userId/status', async (req: any) => {
+  const session = sessionManager.getSession(req.params.userId);
+  if (!session) return { error: 'Session not found' };
+  return {
+    userId: session.userId,
+    isConnected: session.isConnected,
+    phoneNumber: session.phoneNumber,
+    hasQr: !!session.lastQr,
+  };
+});
+
+// ── Disconnect a session ──
+app.delete('/whatsapp/sessions/:userId', async (req: any) => {
+  const deleted = await sessionManager.deleteSession(req.params.userId);
+  return { ok: deleted, userId: req.params.userId };
+});
+
+// ═══════════════════════════════════════════
+//  Legacy Outbound Endpoints (unchanged)
+// ═══════════════════════════════════════════
+
+// ── Inbound webhook (legacy — kept for gateway compatibility) ──
 app.post('/webhooks/inbound', async (req: any, reply) => {
   if (!req.headers['x-provider-signature']) {
     return reply.code(400).send({ ok: false, message: 'Missing signature (placeholder validator)' });
@@ -28,48 +133,88 @@ app.post('/webhooks/inbound', async (req: any, reply) => {
   return { ok: true, traceId };
 });
 
+// ── Outbound text message ──
 app.post('/outbound/send', async (req: any, reply) => {
   const traceId = String(req.headers['x-trace-id'] || randomUUID());
-  const draftOnly = Boolean(req.body?.draftOnly ?? true);
-  if (!draftOnly) {
-    return reply.code(412).send({ ok: false, message: 'Draft-first policy enabled; approval required', traceId });
+  const { phone, message, draftOnly: draftOnlyParam, userId } = req.body || {};
+  const draftOnly = Boolean(draftOnlyParam ?? false);
+
+  if (draftOnly) {
+    app.log.info(audit('whatsapp.outbound.draft', req.body, traceId));
+    return { queued: true, provider: 'draft', draftOnly: true, traceId };
   }
-  app.log.info(audit('whatsapp.outbound.draft', req.body, traceId));
-  return { queued: true, provider: 'stub', draftOnly, traceId };
+
+  if (phone && message) {
+    const jid = phone.includes('@') ? phone : `${phone.replace(/\D/g, '')}@s.whatsapp.net`;
+
+    // If userId specified, send through that specific session
+    if (userId) {
+      const sent = await sessionManager.sendMessage(userId, jid, message);
+      return { ok: sent, provider: 'baileys', userId, traceId };
+    }
+
+    // Otherwise use legacy (first connected session)
+    const sent = await sendWhatsAppMessage(jid, message);
+
+    app.log.info(audit('whatsapp.outbound.send', {
+      phone, jid, sent,
+      message_length: (message as string).length,
+    }, traceId));
+
+    return { ok: sent, provider: 'baileys', traceId };
+  }
+
+  return reply.code(400).send({ ok: false, message: 'phone and message required', traceId });
 });
 
+// ── Templates (legacy) ──
 app.post('/templates/:name', async (req: any) => {
   templates.set(req.params.name, req.body?.content || '');
   return { ok: true, count: templates.size };
 });
 
+// ── Consent (legacy) ──
 app.post('/consent/:contact', async (req: any) => {
   consent.set(req.params.contact, Boolean(req.body?.granted));
   return { ok: true, contact: req.params.contact };
 });
 
 // ── Voice Note Sending ──
-// Receives TTS audio from kitz_os and sends as WhatsApp voice message
 app.post('/outbound/send-voice', async (req: any) => {
   const traceId = String(req.headers['x-trace-id'] || req.body?.trace_id || randomUUID());
-  const { phone, audio_base64, mime_type, caption } = req.body || {};
+  const { phone, audio_base64, mime_type, caption, userId } = req.body || {};
 
   if (!phone || !audio_base64) {
     return { ok: false, error: 'phone and audio_base64 required' };
   }
 
   app.log.info(audit('whatsapp.outbound.voice_note', {
-    phone,
-    mime_type,
+    phone, mime_type,
     audio_size_bytes: Math.round((audio_base64 as string).length * 0.75),
     caption: (caption as string)?.slice(0, 100),
   }, traceId));
 
-  // TODO: Integrate with Baileys/WhatsApp Business API to send voice message
-  // For now: log and acknowledge
+  const jid = phone.includes('@') ? phone : `${phone.replace(/\D/g, '')}@s.whatsapp.net`;
+
+  // If userId specified, send through that session
+  if (userId) {
+    const sent = await sessionManager.sendAudio(userId, jid, audio_base64, mime_type || 'audio/mpeg');
+    if (sent && caption) {
+      await sessionManager.sendMessage(userId, jid, caption);
+    }
+    return { ok: sent, provider: 'baileys', userId, traceId };
+  }
+
+  const sent = await sendWhatsAppAudio(jid, audio_base64, mime_type || 'audio/mpeg');
+
+  if (sent && caption) {
+    await sendWhatsAppMessage(jid, caption);
+  }
+
   return {
-    ok: true,
-    status: 'sent',
+    ok: sent,
+    status: sent ? 'sent' : 'failed',
+    provider: 'baileys',
     phone,
     mime_type: mime_type || 'audio/mpeg',
     audio_size_kb: Math.round((audio_base64 as string).length * 0.75 / 1024),
@@ -78,35 +223,220 @@ app.post('/outbound/send-voice', async (req: any) => {
 });
 
 // ── WhatsApp Call ──
-// Initiates a voice call using KITZ's AI voice agent
 app.post('/outbound/call', async (req: any) => {
   const traceId = String(req.headers['x-trace-id'] || req.body?.trace_id || randomUUID());
-  const { phone, purpose, script, language, max_duration_minutes, voice } = req.body || {};
+  const { phone, purpose, language, max_duration_minutes, voice } = req.body || {};
 
   if (!phone || !purpose) {
     return { ok: false, error: 'phone and purpose required' };
   }
 
   app.log.info(audit('whatsapp.outbound.call', {
-    phone,
-    purpose,
+    phone, purpose,
     language: language || 'es',
     max_duration: max_duration_minutes || 5,
     voice: voice || 'kitz_female',
   }, traceId));
 
-  // TODO: Integrate with ElevenLabs Conversational AI + Twilio/WhatsApp Business API
-  // For now: queue the call and acknowledge
   return {
-    ok: true,
-    status: 'queued',
+    ok: false,
+    status: 'unsupported',
+    message: 'Voice calls require WhatsApp Business API (Twilio). Use voice notes instead.',
     call_id: traceId,
-    phone,
-    purpose,
-    language: language || 'es',
-    voice: voice || 'kitz_female',
-    traceId,
+    phone, purpose, traceId,
   };
 });
 
-app.listen({ port: Number(process.env.PORT || 3006), host: '0.0.0.0' });
+// ═══════════════════════════════════════════
+//  Login Page HTML
+// ═══════════════════════════════════════════
+
+const LOGIN_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KITZ \u2014 Connect WhatsApp</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      text-align: center;
+      max-width: 420px;
+      padding: 40px 24px;
+    }
+    .logo {
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #00d4aa, #00b4d8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+    #qr-container {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      display: inline-block;
+      margin-bottom: 24px;
+      min-width: 280px;
+      min-height: 280px;
+      position: relative;
+    }
+    #qr-container canvas {
+      display: block;
+      margin: 0 auto;
+    }
+    #status {
+      font-size: 16px;
+      color: #00d4aa;
+      margin-bottom: 16px;
+      min-height: 24px;
+    }
+    .instructions {
+      color: #666;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .instructions strong { color: #aaa; }
+    .connected {
+      display: none;
+      text-align: center;
+    }
+    .connected .check {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+    .connected .phone {
+      font-size: 20px;
+      font-weight: 600;
+      color: #00d4aa;
+      margin-bottom: 8px;
+    }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid #333;
+      border-top-color: #00d4aa;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 100px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error { color: #ff6b6b; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">KITZ</div>
+    <div class="subtitle">Connect your WhatsApp to your AI Business OS</div>
+
+    <div id="scan-view">
+      <div id="qr-container">
+        <div class="spinner" id="spinner"></div>
+        <canvas id="qr-canvas"></canvas>
+      </div>
+      <div id="status">Generating QR code...</div>
+      <div class="instructions">
+        <strong>1.</strong> Open WhatsApp on your phone<br>
+        <strong>2.</strong> Go to Settings &gt; Linked Devices<br>
+        <strong>3.</strong> Tap "Link a Device"<br>
+        <strong>4.</strong> Scan this QR code
+      </div>
+    </div>
+
+    <div class="connected" id="connected-view">
+      <div class="check">\u2705</div>
+      <div class="phone" id="phone-number"></div>
+      <div id="status2">WhatsApp connected to KITZ</div>
+      <br>
+      <div class="instructions">
+        Messages to your number are now powered by KITZ AI.<br>
+        You can close this page.
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"><\/script>
+  <script>
+    const scanView = document.getElementById('scan-view');
+    const connView = document.getElementById('connected-view');
+    const statusEl = document.getElementById('status');
+    const spinner = document.getElementById('spinner');
+    const canvas = document.getElementById('qr-canvas');
+    const phoneEl = document.getElementById('phone-number');
+
+    const evtSource = new EventSource('/whatsapp/connect');
+
+    evtSource.addEventListener('session', (e) => {
+      const data = JSON.parse(e.data);
+      console.log('Session ID:', data.userId);
+    });
+
+    evtSource.addEventListener('qr', (e) => {
+      spinner.style.display = 'none';
+      statusEl.textContent = 'Scan with WhatsApp';
+      QRCode.toCanvas(canvas, e.data, {
+        width: 256,
+        margin: 0,
+        color: { dark: '#000', light: '#fff' },
+      });
+    });
+
+    evtSource.addEventListener('connected', (e) => {
+      const data = JSON.parse(e.data);
+      scanView.style.display = 'none';
+      connView.style.display = 'block';
+      phoneEl.textContent = '+' + (data.phone || 'Connected');
+      evtSource.close();
+    });
+
+    evtSource.addEventListener('error', (e) => {
+      statusEl.textContent = 'Connection error \u2014 refresh to retry';
+      statusEl.classList.add('error');
+    });
+
+    evtSource.addEventListener('logged_out', () => {
+      statusEl.textContent = 'Session expired \u2014 refresh to reconnect';
+      statusEl.classList.add('error');
+    });
+
+    evtSource.onerror = () => {
+      statusEl.textContent = 'Server disconnected \u2014 refresh to retry';
+      statusEl.classList.add('error');
+    };
+  <\/script>
+</body>
+</html>`;
+
+// ── Start everything ──
+async function boot() {
+  // 1. Start Fastify REST API
+  const port = Number(process.env.PORT || 3006);
+  await app.listen({ port, host: '0.0.0.0' });
+  console.log('[connector] REST API listening on port ' + port);
+
+  // 2. Restore existing WhatsApp sessions
+  try {
+    await startBaileys();
+  } catch (err) {
+    console.error('[connector] Session restore failed:', (err as Error).message);
+    console.error('[connector] REST API is still running — users can connect via /whatsapp/login');
+  }
+}
+
+boot();

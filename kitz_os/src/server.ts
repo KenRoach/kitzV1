@@ -17,6 +17,9 @@
  *   POST /api/kitz/voice/speak           — Text-to-Speech (ElevenLabs)
  *   GET  /api/kitz/voice/config          — Voice configuration
  *   GET  /api/kitz/voice/widget          — Voice widget HTML snippet
+ *   GET  /api/kitz/battery               — AI Battery status & spend tracking
+ *   GET  /api/kitz/battery/ledger        — Spend history ledger
+ *   POST /api/kitz/battery/recharge      — Manual credit recharge (founder-only)
  *
  * Port: 3012
  */
@@ -26,6 +29,7 @@ import type { KitzKernel } from './kernel.js';
 import { parseWhatsAppCommand } from './interfaces/whatsapp/commandParser.js';
 import { routeWithAI } from './interfaces/whatsapp/semanticRouter.js';
 import { textToSpeech, getKitzVoiceConfig, getWidgetSnippet, isElevenLabsConfigured } from './llm/elevenLabsClient.js';
+import { getBatteryStatus, recordRecharge, getLedger } from './aiBattery.js';
 
 export async function createServer(kernel: KitzKernel) {
   const app = Fastify({ logger: false });
@@ -55,9 +59,19 @@ export async function createServer(kernel: KitzKernel) {
         switch (command.action) {
           case 'status': {
             const s = kernel.getStatus();
+            const b = s.aiBattery;
             return {
               command: 'status',
-              response: `*KITZ OS*\nStatus: ${s.status}\nTools: ${s.toolCount}\nUptime: ${s.uptime}s\nKill Switch: ${s.killSwitch ? '🔴 ON' : '🟢 OFF'}`,
+              response: `*KITZ OS*\n` +
+                `Status: ${s.status}\n` +
+                `Tools: ${s.toolCount}\n` +
+                `Uptime: ${s.uptime}s\n` +
+                `Kill Switch: ${s.killSwitch ? '🔴 ON' : '🟢 OFF'}\n\n` +
+                `⚡ *AI Battery*\n` +
+                `Credits: ${b.remaining}/${b.dailyLimit} remaining\n` +
+                `Today: ${b.todayCredits} credits (${b.todayCalls} calls)\n` +
+                `Tokens: ${b.todayTokens.toLocaleString()} | TTS: ${b.todayTtsChars.toLocaleString()} chars\n` +
+                `${b.depleted ? '🔴 DEPLETED — recharge needed' : '🟢 Active'}`,
             };
           }
 
@@ -81,6 +95,8 @@ export async function createServer(kernel: KitzKernel) {
                 `• *voice note [phone] [text]* — Send voice note\n` +
                 `• *call [phone] [purpose]* — Make WhatsApp call\n` +
                 `• *say this aloud* — Get voice reply\n` +
+                `• *battery* — AI Battery status & spend\n` +
+                `• *recharge [amount]* — Add credits (1-100)\n` +
                 `• *report daily/weekly* — Get report\n` +
                 `• *help* — This menu\n\n` +
                 `Or just ask in natural language! 🎙️`,
@@ -88,9 +104,16 @@ export async function createServer(kernel: KitzKernel) {
           }
 
           case 'greeting': {
+            const s = kernel.getStatus();
             return {
               command: 'greeting',
-              response: `Hey! 👋 KITZ OS online. ${kernel.getStatus().toolCount} tools ready. What do you need?`,
+              response:
+                `Hey boss 👋\n\n` +
+                `KITZ is online and ready.\n` +
+                `${s.toolCount} tools loaded across CRM, orders, storefronts, payments, and more.\n\n` +
+                `⚡ Battery: ${s.aiBattery.remaining}/${s.aiBattery.dailyLimit} credits\n\n` +
+                `What are we working on?\n` +
+                `Type *help* for the full menu.`,
             };
           }
 
@@ -99,6 +122,37 @@ export async function createServer(kernel: KitzKernel) {
             return {
               command: 'kill_switch',
               response: command.value ? '🔴 Kill switch ENGAGED. All operations halted.' : '🟢 Kill switch disengaged. System resuming.',
+            };
+          }
+
+          case 'battery': {
+            const bat = getBatteryStatus();
+            return {
+              command: 'battery',
+              response: `⚡ *AI Battery*\n\n` +
+                `Credits: *${bat.remaining}* / ${bat.dailyLimit} remaining\n` +
+                `Spent today: ${bat.todayCredits} credits (${bat.todayCalls} API calls)\n\n` +
+                `📊 *Breakdown*\n` +
+                `• OpenAI: ${bat.byProvider.openai.toFixed(2)} credits\n` +
+                `• Claude: ${bat.byProvider.claude.toFixed(2)} credits\n` +
+                `• ElevenLabs: ${bat.byProvider.elevenlabs.toFixed(2)} credits\n\n` +
+                `📈 *Usage*\n` +
+                `• LLM tokens: ${bat.todayTokens.toLocaleString()}\n` +
+                `• TTS characters: ${bat.todayTtsChars.toLocaleString()}\n\n` +
+                `${bat.depleted ? '🔴 DEPLETED — type "recharge [amount]"' : '🟢 Battery active'}`,
+            };
+          }
+
+          case 'recharge': {
+            const credits = command.credits || 10;
+            if (credits < 1 || credits > 100) {
+              return { command: 'recharge', response: '⚠️ Recharge amount must be 1-100 credits.' };
+            }
+            await recordRecharge(credits, traceId);
+            const newBat = getBatteryStatus();
+            return {
+              command: 'recharge',
+              response: `⚡ Recharged *${credits} credits*!\nRemaining: ${newBat.remaining}/${newBat.dailyLimit}`,
             };
           }
 
@@ -149,7 +203,7 @@ export async function createServer(kernel: KitzKernel) {
       if (hasAI) {
         try {
           const result = await routeWithAI(message, kernel.tools, traceId);
-          return { command: 'ai', response: result.response, tools_used: result.toolsUsed };
+          return { command: 'ai', response: result.response, tools_used: result.toolsUsed, credits_consumed: result.creditsConsumed };
         } catch (err) {
           console.error('[server] AI routing error:', (err as Error).message);
           return { command: 'error', response: `Something went wrong. Try again or type "help".` };
@@ -487,6 +541,45 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
 </body>
 </html>`;
   });
+
+  // ── AI Battery Endpoints ──
+
+  // Get current battery status
+  app.get('/api/kitz/battery', async () => {
+    return getBatteryStatus();
+  });
+
+  // Get battery ledger (spend history)
+  app.get<{ Querystring: { limit?: string } }>(
+    '/api/kitz/battery/ledger',
+    async (req) => {
+      const limit = Math.min(Number(req.query.limit) || 50, 200);
+      const entries = getLedger();
+      return {
+        entries: entries.slice(-limit),
+        total: entries.length,
+        battery: getBatteryStatus(),
+      };
+    }
+  );
+
+  // Recharge battery (founder-only)
+  app.post<{ Body: { credits: number } }>(
+    '/api/kitz/battery/recharge',
+    async (req, reply) => {
+      const secret = req.headers['x-dev-secret'];
+      if (secret !== process.env.DEV_TOKEN_SECRET) {
+        return reply.code(401).send({ error: 'unauthorized — only the founder can recharge' });
+      }
+      const credits = Number(req.body?.credits || 0);
+      if (credits <= 0 || credits > 100) {
+        return reply.code(400).send({ error: 'credits must be 1-100' });
+      }
+      const traceId = crypto.randomUUID();
+      await recordRecharge(credits, traceId);
+      return { recharged: credits, battery: getBatteryStatus() };
+    }
+  );
 
   await app.listen({ port: PORT, host: '0.0.0.0' });
   console.log(`[server] KITZ OS listening on port ${PORT}`);

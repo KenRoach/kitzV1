@@ -12,13 +12,18 @@
   },
   "devDependencies": {
     "@types/node": "^20.12.7",
+    "@types/qrcode-terminal": "^0.12.2",
     "eslint": "^9.0.0",
     "tsx": "^4.7.2",
     "typescript": "^5.4.5",
     "vitest": "^1.5.0"
   },
   "dependencies": {
+    "@hapi/boom": "^10.0.1",
+    "@whiskeysockets/baileys": "^7.0.0-rc.9",
     "fastify": "^4.26.2",
-    "kitz-schemas": "file:../kitz-schemas"
+    "kitz-schemas": "file:../kitz-schemas",
+    "pino": "^10.3.1",
+    "qrcode-terminal": "^0.12.0"
   }
 }
