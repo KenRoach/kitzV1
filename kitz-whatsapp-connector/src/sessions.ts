@@ -10,8 +10,9 @@
  */
 
 import makeWASocket, {
-  Browsers,
   DisconnectReason,
+  fetchLatestBaileysVersion,
+  makeCacheableSignalKeyStore,
   useMultiFileAuthState,
   downloadMediaMessage,
   type WASocket,
@@ -171,11 +172,17 @@ class SessionManager {
   private async connectBaileys(session: UserSession): Promise<void> {
     const { userId, authDir } = session;
     const { state, saveCreds } = await useMultiFileAuthState(authDir);
+    const { version } = await fetchLatestBaileysVersion();
 
     const sock = makeWASocket({
-      auth: state,
+      auth: {
+        creds: state.creds,
+        keys: makeCacheableSignalKeyStore(state.keys, baileysLogger as any),
+      },
+      version,
       logger: baileysLogger as any,
-      browser: Browsers.ubuntu('Chrome'),
+      printQRInTerminal: false,
+      browser: ['KITZ', 'Chrome', '4.0.0'],
       connectTimeoutMs: 120_000,
       qrTimeout: 60_000,
       markOnlineOnConnect: false,
@@ -184,6 +191,13 @@ class SessionManager {
     });
 
     session.socket = sock;
+
+    // Prevent unhandled WebSocket errors from crashing the process (OpenClaw pattern)
+    if (sock.ws && typeof (sock.ws as any).on === 'function') {
+      (sock.ws as any).on('error', (err: Error) => {
+        console.error(`[session:${userId}] WebSocket error:`, err.message);
+      });
+    }
 
     // ── Connection updates ──
     sock.ev.on('connection.update', async (update) => {
