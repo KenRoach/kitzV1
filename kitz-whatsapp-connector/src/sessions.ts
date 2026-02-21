@@ -10,6 +10,7 @@
  */
 
 import makeWASocket, {
+  Browsers,
   DisconnectReason,
   useMultiFileAuthState,
   downloadMediaMessage,
@@ -174,7 +175,7 @@ class SessionManager {
     const sock = makeWASocket({
       auth: state,
       logger: baileysLogger as any,
-      browser: ['KITZ', 'Safari', '3.0'],
+      browser: Browsers.ubuntu('Chrome'),
       connectTimeoutMs: 120_000,
       qrTimeout: 60_000,
       markOnlineOnConnect: false,
