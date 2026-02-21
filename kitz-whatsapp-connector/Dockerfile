@@ -2,6 +2,8 @@
 # Build context must be the kitzV1 root (so kitz-schemas is accessible)
 FROM node:20-alpine
 
+RUN apk add --no-cache git
+
 WORKDIR /app
 
 # Copy shared schemas (needed for file: dependency)
