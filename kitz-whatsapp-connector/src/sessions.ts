@@ -174,6 +174,9 @@ class SessionManager {
     const sock = makeWASocket({
       auth: state,
       logger: baileysLogger as any,
+      browser: ['KITZ', 'Chrome', '120.0.0'],
+      connectTimeoutMs: 60_000,
+      qrTimeout: 40_000,
     });
 
     session.socket = sock;

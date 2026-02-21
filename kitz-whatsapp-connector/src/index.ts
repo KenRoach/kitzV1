@@ -371,7 +371,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"><\/script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"><\/script>
   <script>
     const scanView = document.getElementById('scan-view');
     const connView = document.getElementById('connected-view');
