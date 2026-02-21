@@ -71,17 +71,11 @@ app.get('/whatsapp/connect', async (req: any, reply) => {
     reply.raw.write(`event: ${event}\ndata: ${data}\n\n`);
   };
 
-  // Start the session (generates QR)
+  // Start the session — listener is wired BEFORE Baileys connects (prevents race condition)
   try {
-    const session = await sessionManager.startSession(userId);
-    sessionManager.addListener(userId, listener);
+    const session = await sessionManager.startSession(userId, { onEvent: listener });
 
-    // If there's already a QR queued, send it immediately
-    if (session.lastQr) {
-      reply.raw.write(`event: qr\ndata: ${session.lastQr}\n\n`);
-    }
-
-    // If already connected, send connected event
+    // If already connected (restored session), notify immediately
     if (session.isConnected) {
       reply.raw.write(`event: connected\ndata: ${JSON.stringify({ phone: session.phoneNumber })}\n\n`);
     }

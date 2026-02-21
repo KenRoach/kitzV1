@@ -34,6 +34,14 @@ const MAX_RECONNECT = 5;
 
 const baileysLogger = P({ level: 'warn' });
 
+// ── Queued credential saves (OpenClaw pattern — prevents concurrent writes during handshake) ──
+let credsSaveQueue: Promise<void> = Promise.resolve();
+function enqueueSaveCreds(saveCreds: () => Promise<void> | void): void {
+  credsSaveQueue = credsSaveQueue
+    .then(() => Promise.resolve(saveCreds()))
+    .catch((err) => console.error('[sessions] creds save error:', err));
+}
+
 // ── Response rules sent to KITZ OS ──
 const RESPONSE_RULES = {
   default_words: '5-7',
@@ -52,16 +60,24 @@ function typingDelayMs(response: string): number {
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 // ── Types ──
+export type SessionListener = (event: string, data: string) => void;
+
+export interface StartSessionOpts {
+  /** Pre-wire an event listener BEFORE Baileys connects (prevents race condition) */
+  onEvent?: SessionListener;
+}
+
 export interface UserSession {
   userId: string;
   socket: WASocket | null;
   authDir: string;
   isConnected: boolean;
   lastQr: string | null;
+  lastEmittedQr: string | null;
   phoneNumber: string | null;
   reconnectAttempts: number;
   /** Listeners waiting for QR/connection updates (SSE clients) */
-  listeners: Set<(event: string, data: string) => void>;
+  listeners: Set<SessionListener>;
 }
 
 // ── Forward message to KITZ OS ──
@@ -137,14 +153,18 @@ class SessionManager {
   private sessions = new Map<string, UserSession>();
 
   /** Start (or restart) a Baileys session for a user */
-  async startSession(userId: string): Promise<UserSession> {
+  async startSession(userId: string, opts?: StartSessionOpts): Promise<UserSession> {
     // If session already exists and is connected, return it
     const existing = this.sessions.get(userId);
-    if (existing?.isConnected) return existing;
+    if (existing?.isConnected) {
+      // Still wire the listener so caller gets events
+      if (opts?.onEvent) existing.listeners.add(opts.onEvent);
+      return existing;
+    }
 
     // If session exists but disconnected, clean up socket
     if (existing?.socket) {
-      try { existing.socket.end(undefined); } catch {}
+      try { existing.socket.ws?.close(); } catch {}
       existing.socket = null;
     }
 
@@ -157,12 +177,16 @@ class SessionManager {
       authDir,
       isConnected: false,
       lastQr: null,
+      lastEmittedQr: null,
       phoneNumber: null,
       reconnectAttempts: 0,
       listeners: new Set(),
     };
 
     if (!existing) this.sessions.set(userId, session);
+
+    // CRITICAL: Wire listener BEFORE connecting so no events are missed
+    if (opts?.onEvent) session.listeners.add(opts.onEvent);
 
     await this.connectBaileys(session);
     return session;
@@ -174,6 +198,7 @@ class SessionManager {
     const { state, saveCreds } = await useMultiFileAuthState(authDir);
     const { version } = await fetchLatestBaileysVersion();
 
+    // Minimal config matching OpenClaw's proven pattern — no aggressive timeouts
     const sock = makeWASocket({
       auth: {
         creds: state.creds,
@@ -183,110 +208,94 @@ class SessionManager {
       logger: baileysLogger as any,
       printQRInTerminal: false,
       browser: ['KITZ', 'Chrome', '4.0.0'],
-      connectTimeoutMs: 120_000,
-      qrTimeout: 60_000,
-      markOnlineOnConnect: false,
       syncFullHistory: false,
-      defaultQueryTimeoutMs: 60_000,
+      markOnlineOnConnect: false,
     });
 
     session.socket = sock;
+    session.lastEmittedQr = null;
 
-    // Prevent unhandled WebSocket errors from crashing the process (OpenClaw pattern)
-    if (sock.ws && typeof (sock.ws as any).on === 'function') {
-      (sock.ws as any).on('error', (err: Error) => {
-        console.error(`[session:${userId}] WebSocket error:`, err.message);
-      });
-    }
+    // ── Event registration order matters — match OpenClaw ──
 
-    // ── Connection updates ──
-    sock.ev.on('connection.update', async (update) => {
-      const { connection, lastDisconnect, qr } = update;
+    // 1. Credential saves (queued to prevent concurrent writes during handshake)
+    sock.ev.on('creds.update', () => enqueueSaveCreds(saveCreds));
 
-      if (qr) {
-        session.lastQr = qr;
-        this.emit(session, 'qr', qr);
-        console.log(`[session:${userId}] QR code generated — waiting for scan`);
-      }
+    // 2. Connection updates — SYNC handler (no async — critical for Baileys state machine)
+    sock.ev.on('connection.update', (update) => {
+      try {
+        const { connection, lastDisconnect, qr } = update;
 
-      if (connection === 'close') {
-        session.isConnected = false;
-        session.lastQr = null;
-
-        const error = (lastDisconnect?.error as Boom)?.output;
-        const statusCode = error?.statusCode;
-
-        // 428 = QR timeout (not scanned), 408 = connection timeout
-        // 401 = logged out, 440 = replaced by another device
-        // Only reconnect for transient errors (500, 515, etc.) when session was previously connected
-        const isQrTimeout = statusCode === 428 || statusCode === 408;
-        const isLoggedOut = statusCode === DisconnectReason.loggedOut;
-        const wasConnected = !!session.phoneNumber; // had a successful connection before
-        const shouldReconnect = !isLoggedOut && !isQrTimeout && wasConnected;
-
-        console.log(JSON.stringify({
-          ts: new Date().toISOString(),
-          module: 'sessions',
-          userId,
-          action: 'connection_closed',
-          statusCode,
-          shouldReconnect,
-          wasConnected,
-        }));
-
-        this.emit(session, 'disconnected', JSON.stringify({ statusCode }));
-
-        // Always close the dead socket fully
-        try { sock.ws.close(); } catch {}
-        try { sock.end(undefined); } catch {}
-        session.socket = null;
-
-        if (isQrTimeout) {
-          // QR expired without scan — clean up completely, user must re-initiate
-          console.log(`[session:${userId}] QR timeout (${statusCode}) — cleaning up`);
-          const authDir = join(AUTH_ROOT, userId);
-          await rm(authDir, { recursive: true, force: true }).catch(() => {});
-          session.listeners.clear();
-          this.sessions.delete(userId);
-        } else if (shouldReconnect && session.reconnectAttempts < MAX_RECONNECT) {
-          session.reconnectAttempts++;
-          const delay = Math.min(session.reconnectAttempts * 2000, 10_000);
-          console.log(`[session:${userId}] Reconnecting in ${delay / 1000}s (attempt ${session.reconnectAttempts}/${MAX_RECONNECT})`);
-          setTimeout(() => this.connectBaileys(session), delay);
-        } else if (isLoggedOut) {
-          console.log(`[session:${userId}] Logged out — cleaning up session`);
-          this.emit(session, 'logged_out', '');
-          const authDir = join(AUTH_ROOT, userId);
-          await rm(authDir, { recursive: true, force: true }).catch(() => {});
-          session.listeners.clear();
-          this.sessions.delete(userId);
-        } else {
-          // Max reconnect attempts reached — clean up fully
-          console.log(`[session:${userId}] Max reconnect attempts — removing session`);
-          session.listeners.clear();
-          this.sessions.delete(userId);
-        }
-      }
-
-      if (connection === 'open') {
-        session.isConnected = true;
-        session.lastQr = null;
-        session.reconnectAttempts = 0;
-
-        // Extract phone number from socket
-        const me = sock.user;
-        if (me?.id) {
-          session.phoneNumber = me.id.split(':')[0].split('@')[0];
+        // ── QR code received ──
+        if (qr) {
+          // Deduplicate: don't re-emit the same QR (prevents frontend re-render during handshake)
+          if (qr !== session.lastEmittedQr) {
+            session.lastQr = qr;
+            session.lastEmittedQr = qr;
+            this.emit(session, 'qr', qr);
+            console.log(`[session:${userId}] QR code generated — waiting for scan`);
+          }
         }
 
-        console.log(`[session:${userId}] CONNECTED as +${session.phoneNumber}`);
-        this.emit(session, 'connected', JSON.stringify({ phone: session.phoneNumber }));
+        // ── Connection opened ──
+        if (connection === 'open') {
+          session.isConnected = true;
+          session.lastQr = null;
+          session.lastEmittedQr = null;
+          session.reconnectAttempts = 0;
+
+          const me = sock.user;
+          if (me?.id) {
+            session.phoneNumber = me.id.split(':')[0].split('@')[0];
+          }
+
+          console.log(`[session:${userId}] CONNECTED as +${session.phoneNumber}`);
+          this.emit(session, 'connected', JSON.stringify({ phone: session.phoneNumber }));
+        }
+
+        // ── Connection closed ──
+        if (connection === 'close') {
+          session.isConnected = false;
+          session.lastQr = null;
+          session.lastEmittedQr = null;
+
+          const error = (lastDisconnect?.error as Boom)?.output;
+          const statusCode = error?.statusCode;
+
+          const isQrTimeout = statusCode === 428 || statusCode === 408;
+          const isLoggedOut = statusCode === DisconnectReason.loggedOut;
+          const wasConnected = !!session.phoneNumber;
+          const shouldReconnect = !isLoggedOut && !isQrTimeout && wasConnected;
+
+          console.log(JSON.stringify({
+            ts: new Date().toISOString(),
+            module: 'sessions',
+            userId,
+            action: 'connection_closed',
+            statusCode,
+            shouldReconnect,
+            wasConnected,
+          }));
+
+          this.emit(session, 'disconnected', JSON.stringify({ statusCode }));
+
+          // Close dead socket — only ws.close(), NOT sock.end() (too aggressive, breaks handshake)
+          try { sock.ws?.close(); } catch {}
+          session.socket = null;
+
+          // Fire-and-forget cleanup (not in the sync handler's critical path)
+          this.handleDisconnectCleanup(session, userId, {
+            isQrTimeout,
+            isLoggedOut,
+            shouldReconnect,
+            statusCode,
+          });
+        }
+      } catch (err) {
+        console.error(`[session:${userId}] connection.update handler error:`, (err as Error).message);
       }
     });
 
-    sock.ev.on('creds.update', saveCreds);
-
-    // ── Handle incoming messages ──
+    // 3. Handle incoming messages
     sock.ev.on('messages.upsert', async ({ messages, type }) => {
       if (type !== 'notify') return;
 
@@ -298,6 +307,46 @@ class SessionManager {
         }
       }
     });
+
+    // 4. WebSocket error handler — LAST (after all event handlers, matching OpenClaw)
+    if (sock.ws && typeof (sock.ws as any).on === 'function') {
+      (sock.ws as any).on('error', (err: Error) => {
+        console.error(`[session:${userId}] WebSocket error:`, err.message);
+      });
+    }
+  }
+
+  /** Fire-and-forget disconnect cleanup (called outside sync handler) */
+  private handleDisconnectCleanup(
+    session: UserSession,
+    userId: string,
+    flags: { isQrTimeout: boolean; isLoggedOut: boolean; shouldReconnect: boolean; statusCode?: number },
+  ): void {
+    const { isQrTimeout, isLoggedOut, shouldReconnect, statusCode } = flags;
+
+    if (isQrTimeout) {
+      console.log(`[session:${userId}] QR timeout (${statusCode}) — cleaning up`);
+      const dir = join(AUTH_ROOT, userId);
+      rm(dir, { recursive: true, force: true }).catch(() => {});
+      session.listeners.clear();
+      this.sessions.delete(userId);
+    } else if (shouldReconnect && session.reconnectAttempts < MAX_RECONNECT) {
+      session.reconnectAttempts++;
+      const delay = Math.min(session.reconnectAttempts * 2000, 10_000);
+      console.log(`[session:${userId}] Reconnecting in ${delay / 1000}s (attempt ${session.reconnectAttempts}/${MAX_RECONNECT})`);
+      setTimeout(() => this.connectBaileys(session), delay);
+    } else if (isLoggedOut) {
+      console.log(`[session:${userId}] Logged out — cleaning up session`);
+      this.emit(session, 'logged_out', '');
+      const dir = join(AUTH_ROOT, userId);
+      rm(dir, { recursive: true, force: true }).catch(() => {});
+      session.listeners.clear();
+      this.sessions.delete(userId);
+    } else {
+      console.log(`[session:${userId}] Max reconnect attempts — removing session`);
+      session.listeners.clear();
+      this.sessions.delete(userId);
+    }
   }
 
   /** Handle an incoming WhatsApp message for a specific session */
@@ -462,12 +511,12 @@ class SessionManager {
     if (!session) return false;
 
     if (session.socket) {
-      try { session.socket.ws.close(); } catch {}
-      try { session.socket.end(undefined); } catch {}
+      try { session.socket.ws?.close(); } catch {}
       session.socket = null;
     }
     session.isConnected = false;
     session.lastQr = null;
+    session.lastEmittedQr = null;
     this.emit(session, 'disconnected', '');
     session.listeners.clear();
     this.sessions.delete(userId);
