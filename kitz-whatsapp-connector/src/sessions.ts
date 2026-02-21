@@ -174,15 +174,18 @@ class SessionManager {
     const sock = makeWASocket({
       auth: state,
       logger: baileysLogger as any,
-      browser: ['KITZ', 'Chrome', '120.0.0'],
-      connectTimeoutMs: 60_000,
+      browser: ['KITZ', 'Safari', '3.0'],
+      connectTimeoutMs: 120_000,
       qrTimeout: 60_000,
+      markOnlineOnConnect: false,
+      syncFullHistory: false,
+      defaultQueryTimeoutMs: 60_000,
     });
 
     session.socket = sock;
 
     // ── Connection updates ──
-    sock.ev.on('connection.update', (update) => {
+    sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update;
 
       if (qr) {
@@ -197,7 +200,14 @@ class SessionManager {
 
         const error = (lastDisconnect?.error as Boom)?.output;
         const statusCode = error?.statusCode;
-        const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+
+        // 428 = QR timeout (not scanned), 408 = connection timeout
+        // 401 = logged out, 440 = replaced by another device
+        // Only reconnect for transient errors (500, 515, etc.) when session was previously connected
+        const isQrTimeout = statusCode === 428 || statusCode === 408;
+        const isLoggedOut = statusCode === DisconnectReason.loggedOut;
+        const wasConnected = !!session.phoneNumber; // had a successful connection before
+        const shouldReconnect = !isLoggedOut && !isQrTimeout && wasConnected;
 
         console.log(JSON.stringify({
           ts: new Date().toISOString(),
@@ -206,6 +216,7 @@ class SessionManager {
           action: 'connection_closed',
           statusCode,
           shouldReconnect,
+          wasConnected,
         }));
 
         this.emit(session, 'disconnected', JSON.stringify({ statusCode }));
@@ -215,14 +226,23 @@ class SessionManager {
         try { sock.end(undefined); } catch {}
         session.socket = null;
 
-        if (shouldReconnect && session.reconnectAttempts < MAX_RECONNECT) {
+        if (isQrTimeout) {
+          // QR expired without scan — clean up completely, user must re-initiate
+          console.log(`[session:${userId}] QR timeout (${statusCode}) — cleaning up`);
+          const authDir = join(AUTH_ROOT, userId);
+          await rm(authDir, { recursive: true, force: true }).catch(() => {});
+          session.listeners.clear();
+          this.sessions.delete(userId);
+        } else if (shouldReconnect && session.reconnectAttempts < MAX_RECONNECT) {
           session.reconnectAttempts++;
           const delay = Math.min(session.reconnectAttempts * 2000, 10_000);
           console.log(`[session:${userId}] Reconnecting in ${delay / 1000}s (attempt ${session.reconnectAttempts}/${MAX_RECONNECT})`);
           setTimeout(() => this.connectBaileys(session), delay);
-        } else if (statusCode === DisconnectReason.loggedOut) {
+        } else if (isLoggedOut) {
           console.log(`[session:${userId}] Logged out — cleaning up session`);
           this.emit(session, 'logged_out', '');
+          const authDir = join(AUTH_ROOT, userId);
+          await rm(authDir, { recursive: true, force: true }).catch(() => {});
           session.listeners.clear();
           this.sessions.delete(userId);
         } else {
@@ -503,6 +523,15 @@ class SessionManager {
         const credsPath = join(AUTH_ROOT, userId, 'creds.json');
         try {
           await access(credsPath);
+          // Validate creds has completed auth (me field present)
+          const { readFile } = await import('node:fs/promises');
+          const credsRaw = await readFile(credsPath, 'utf-8');
+          const creds = JSON.parse(credsRaw);
+          if (!creds.me?.id) {
+            console.log(`[sessions] Skipping ${userId} — creds.json exists but auth incomplete (no me.id)`);
+            await rm(join(AUTH_ROOT, userId), { recursive: true, force: true });
+            continue;
+          }
         } catch {
           // No valid creds — this was a failed/incomplete scan, clean it up
           console.log(`[sessions] Skipping ${userId} — no valid creds, removing stale auth dir`);
