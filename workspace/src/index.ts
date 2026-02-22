@@ -412,10 +412,15 @@ const startPage = (formHtml: string, bottomLink: string, error = '') => `<!DOCTY
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KITZ OS — Connect WhatsApp</title>
+  <title>workspace.kitz.services — Start</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0a;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+    .url-bar{display:inline-flex;align-items:center;gap:6px;background:#111;border:1px solid #1a1a1a;border-radius:20px;padding:6px 16px;margin-bottom:24px;font-size:13px;color:#555;font-family:'SF Mono',Monaco,'Cascadia Code',monospace}
+    .url-bar .lock{color:#00d4aa;font-size:11px}
+    .url-bar .domain{color:#999}
+    .url-bar .path{color:#00d4aa;font-weight:600}
     .brand{text-align:center;margin-bottom:32px}
     .brand-logo{font-size:48px;font-weight:900;letter-spacing:-2px;background:linear-gradient(135deg,#00d4aa,#00b4d8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
     .brand-sub{font-size:14px;color:#555;margin-top:4px;letter-spacing:2px;text-transform:uppercase}
@@ -439,12 +444,19 @@ const startPage = (formHtml: string, bottomLink: string, error = '') => `<!DOCTY
     .step{font-size:11px;color:#444;padding:4px 10px;border-radius:12px;border:1px solid #1a1a1a}
     .step.active{color:#00d4aa;border-color:#00d4aa44;background:#00d4aa08}
     .footer{margin-top:32px;text-align:center;font-size:12px;color:#333}
+    .footer a{color:#444;text-decoration:none}
+    .footer a:hover{color:#00d4aa}
   </style>
 </head>
 <body>
+  <div class="url-bar">
+    <span class="lock">&#x1f512;</span>
+    <span class="domain">workspace.kitz.services</span>
+    <span class="path">/start</span>
+  </div>
   <div class="brand">
-    <div class="brand-logo">KITZ OS</div>
-    <div class="brand-sub">Business Operating System</div>
+    <div class="brand-logo">KITZ</div>
+    <div class="brand-sub">workspace</div>
     <div class="brand-tagline">Your hustle deserves <strong>infrastructure</strong>.</div>
   </div>
   <div class="steps">
@@ -461,7 +473,9 @@ const startPage = (formHtml: string, bottomLink: string, error = '') => `<!DOCTY
     ${formHtml}
   </div>
   <div class="bottom">${bottomLink}</div>
-  <div class="footer">Free for early testers. No credit card.</div>
+  <div class="footer">
+    <a href="https://workspace.kitz.services">workspace.kitz.services</a> &mdash; Free for early testers. No credit card.
+  </div>
 </body>
 </html>`;
 
