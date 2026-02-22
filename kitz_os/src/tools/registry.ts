@@ -70,6 +70,9 @@ export class OsToolRegistry {
       import('./lovableTools.js'),
       import('./paymentTools.js'),
       import('./voiceTools.js'),
+      import('./mediaUnderstandingTools.js'),
+      import('./memoryTools.js'),
+      import('./webTools.js'),
     ]);
 
     const getterNames = [
@@ -87,6 +90,9 @@ export class OsToolRegistry {
       'getAllLovableTools',
       'getAllPaymentTools',
       'getAllVoiceTools',
+      'getAllMediaUnderstandingTools',
+      'getAllMemoryTools',
+      'getAllWebTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {

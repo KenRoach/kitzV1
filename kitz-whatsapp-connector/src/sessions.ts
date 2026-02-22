@@ -6,7 +6,8 @@
  *   - Auth directory (persisted across restarts)
  *   - Connection state + QR stream
  *
- * Sessions are stored in a Map keyed by userId (UUID).
+ * OpenClaw-hardened: credential backup, error 515, exponential backoff,
+ * watchdog, heartbeat, dedup, read receipts, reply context, access control.
  */
 
 import makeWASocket, {
@@ -23,22 +24,41 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { rm, mkdir } from 'node:fs/promises';
 import P from 'pino';
+import { backupCredsBeforeSave, maybeRestoreCredsFromBackup, getCredsAgeMs } from './creds-backup.js';
+import { computeBackoff, DEFAULT_RECONNECT_POLICY } from './backoff.js';
+import { isDuplicateMessage, buildDedupeKey } from './dedupe.js';
+import { extractReplyContext, extractLocationData, formatLocationText } from './extract.js';
+import { checkAccess, type AccessMode } from './access-control.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ── Config ──
 const KITZ_OS_URL = process.env.KITZ_OS_URL || 'http://localhost:3012';
 const AUTH_ROOT = join(__dirname, '..', 'auth_info_baileys');
-const MAX_MEDIA_SIZE = 100_000;
-const MAX_RECONNECT = 5;
+const MAX_MEDIA_SIZE = 15_000_000;  // ~10MB raw (base64 is ~33% larger than raw)
+const WATCHDOG_INTERVAL_MS = 30 * 60 * 1000;  // 30 minutes
+const HEARTBEAT_INTERVAL_MS = 60 * 1000;       // 60 seconds
+const BACKOFF_RESET_MS = 60 * 1000;            // Reset attempts after 60s of healthy connection
+const ACCESS_MODE: AccessMode = 'open';         // Default: allow all senders
 
 const baileysLogger = P({ level: 'warn' });
 
+// ── Track Kitz-sent message IDs to prevent echo loops in self-chat ──
+const kitzSentIds = new Set<string>();
+const KITZ_SENT_TTL_MS = 30_000; // Forget after 30s
+function trackKitzSent(msgId: string): void {
+  kitzSentIds.add(msgId);
+  setTimeout(() => kitzSentIds.delete(msgId), KITZ_SENT_TTL_MS);
+}
+
 // ── Queued credential saves (OpenClaw pattern — prevents concurrent writes during handshake) ──
 let credsSaveQueue: Promise<void> = Promise.resolve();
-function enqueueSaveCreds(saveCreds: () => Promise<void> | void): void {
+function enqueueSaveCreds(authDir: string, saveCreds: () => Promise<void> | void): void {
   credsSaveQueue = credsSaveQueue
-    .then(() => Promise.resolve(saveCreds()))
+    .then(() => {
+      backupCredsBeforeSave(authDir);
+      return Promise.resolve(saveCreds());
+    })
     .catch((err) => console.error('[sessions] creds save error:', err));
 }
 
@@ -51,13 +71,20 @@ const RESPONSE_RULES = {
   overflow: 'email',
 };
 
-// ── Typing delay: simulate natural typing ──
+// ── Typing delay: brief pause so reply doesn't feel robotic ──
 function typingDelayMs(response: string): number {
   const wordCount = response.split(/\s+/).length;
-  if (wordCount <= 7) return 3000 + Math.random() * 4000;
-  return 12000 + Math.random() * 6000;
+  if (wordCount <= 7) return 800 + Math.random() * 700;    // 0.8–1.5s
+  if (wordCount <= 25) return 1200 + Math.random() * 800;  // 1.2–2.0s
+  return 1500 + Math.random() * 1000;                      // 1.5–2.5s
 }
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+// ── Kitz response prefix — visual marker in self-chat ──
+const KITZ_PREFIX = '⚡ *KITZ*\n─────────\n';
+function kitzReply(text: string): string {
+  return `${KITZ_PREFIX}${text}`;
+}
 
 // ── Types ──
 export type SessionListener = (event: string, data: string) => void;
@@ -76,6 +103,12 @@ export interface UserSession {
   lastEmittedQr: string | null;
   phoneNumber: string | null;
   reconnectAttempts: number;
+  connectedAtMs: number;
+  lastMessageAtMs: number;
+  restartAttempted: boolean;  // Error 515 — only retry once
+  watchdogTimer: ReturnType<typeof setInterval> | null;
+  heartbeatTimer: ReturnType<typeof setInterval> | null;
+  backoffResetTimer: ReturnType<typeof setTimeout> | null;
   /** Listeners waiting for QR/connection updates (SSE clients) */
   listeners: Set<SessionListener>;
 }
@@ -86,6 +119,7 @@ async function forwardToKitzOs(
   senderJid: string,
   userId: string,
   traceId: string,
+  extra?: { replyContext?: { id: string; body: string | null; sender: string | null }; location?: string },
 ): Promise<string> {
   try {
     const res = await fetch(`${KITZ_OS_URL}/api/kitz`, {
@@ -97,6 +131,8 @@ async function forwardToKitzOs(
         user_id: userId,
         trace_id: traceId,
         response_rules: RESPONSE_RULES,
+        reply_context: extra?.replyContext,
+        location: extra?.location,
       }),
       signal: AbortSignal.timeout(30_000),
     });
@@ -151,6 +187,8 @@ async function forwardMediaToKitzOs(
 // ── Session Manager ──
 class SessionManager {
   private sessions = new Map<string, UserSession>();
+  private groupMetaCache = new Map<string, { subject?: string; participants?: string[]; expires: number }>();
+  private static GROUP_META_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
   /** Start (or restart) a Baileys session for a user */
   async startSession(userId: string, opts?: StartSessionOpts): Promise<UserSession> {
@@ -180,6 +218,12 @@ class SessionManager {
       lastEmittedQr: null,
       phoneNumber: null,
       reconnectAttempts: 0,
+      connectedAtMs: 0,
+      lastMessageAtMs: 0,
+      restartAttempted: false,
+      watchdogTimer: null,
+      heartbeatTimer: null,
+      backoffResetTimer: null,
       listeners: new Set(),
     };
 
@@ -195,6 +239,10 @@ class SessionManager {
   /** Internal: wire up a Baileys socket for a session */
   private async connectBaileys(session: UserSession): Promise<void> {
     const { userId, authDir } = session;
+
+    // Restore from backup if creds corrupted
+    maybeRestoreCredsFromBackup(authDir);
+
     const { state, saveCreds } = await useMultiFileAuthState(authDir);
     const { version } = await fetchLatestBaileysVersion();
 
@@ -214,11 +262,12 @@ class SessionManager {
 
     session.socket = sock;
     session.lastEmittedQr = null;
+    session.restartAttempted = false;
 
     // ── Event registration order matters — match OpenClaw ──
 
-    // 1. Credential saves (queued to prevent concurrent writes during handshake)
-    sock.ev.on('creds.update', () => enqueueSaveCreds(saveCreds));
+    // 1. Credential saves (queued with backup before save)
+    sock.ev.on('creds.update', () => enqueueSaveCreds(authDir, saveCreds));
 
     // 2. Connection updates — SYNC handler (no async — critical for Baileys state machine)
     sock.ev.on('connection.update', (update) => {
@@ -227,7 +276,6 @@ class SessionManager {
 
         // ── QR code received ──
         if (qr) {
-          // Deduplicate: don't re-emit the same QR (prevents frontend re-render during handshake)
           if (qr !== session.lastEmittedQr) {
             session.lastQr = qr;
             session.lastEmittedQr = qr;
@@ -242,6 +290,9 @@ class SessionManager {
           session.lastQr = null;
           session.lastEmittedQr = null;
           session.reconnectAttempts = 0;
+          session.connectedAtMs = Date.now();
+          session.lastMessageAtMs = Date.now();
+          session.restartAttempted = false;
 
           const me = sock.user;
           if (me?.id) {
@@ -250,6 +301,36 @@ class SessionManager {
 
           console.log(`[session:${userId}] CONNECTED as +${session.phoneNumber}`);
           this.emit(session, 'connected', JSON.stringify({ phone: session.phoneNumber }));
+
+          // Start watchdog + heartbeat
+          this.startWatchdog(session);
+          this.startHeartbeat(session);
+
+          // Backoff reset: if connected for 60s, reset reconnect counter
+          session.backoffResetTimer = setTimeout(() => {
+            if (session.isConnected) {
+              session.reconnectAttempts = 0;
+            }
+          }, BACKOFF_RESET_MS);
+
+          // Send confirmation message to the connected user
+          // Baileys v7: sock.user.id = "50769524232:XX@s.whatsapp.net"
+          // To message yourself, need just "50769524232@s.whatsapp.net"
+          const myNumber = me?.id?.split(':')[0]?.split('@')[0];
+          const selfJid = myNumber ? `${myNumber}@s.whatsapp.net` : null;
+          if (selfJid) {
+            setTimeout(async () => {
+              try {
+                const sent = await sock.sendMessage(selfJid, {
+                  text: 'Kitz connected. You\'re live. 🟢',
+                });
+                if (sent?.key?.id) trackKitzSent(sent.key.id);
+                console.log(`[session:${userId}] Confirmation sent to ${selfJid}`);
+              } catch (err) {
+                console.error(`[session:${userId}] Failed to send confirmation:`, (err as Error).message);
+              }
+            }, 3000);
+          }
         }
 
         // ── Connection closed ──
@@ -257,14 +338,19 @@ class SessionManager {
           session.isConnected = false;
           session.lastQr = null;
           session.lastEmittedQr = null;
+          this.clearTimers(session);
 
           const error = (lastDisconnect?.error as Boom)?.output;
           const statusCode = error?.statusCode;
 
-          const isQrTimeout = statusCode === 428 || statusCode === 408;
           const isLoggedOut = statusCode === DisconnectReason.loggedOut;
+          const is515Restart = statusCode === 515;
           const wasConnected = !!session.phoneNumber;
-          const shouldReconnect = !isLoggedOut && !isQrTimeout && wasConnected;
+          // 408/428 is QR timeout ONLY if the session was never connected
+          // If we were already connected, treat 408 as a transient disconnect → reconnect
+          const isQrTimeout = (statusCode === 428 || statusCode === 408) && !wasConnected;
+          // Self-healing: always reconnect if we were previously connected (except logout)
+          const shouldReconnect = wasConnected && !isLoggedOut && !isQrTimeout && !is515Restart;
 
           console.log(JSON.stringify({
             ts: new Date().toISOString(),
@@ -274,13 +360,22 @@ class SessionManager {
             statusCode,
             shouldReconnect,
             wasConnected,
+            is515Restart,
           }));
 
           this.emit(session, 'disconnected', JSON.stringify({ statusCode }));
 
-          // Close dead socket — only ws.close(), NOT sock.end() (too aggressive, breaks handshake)
+          // Close dead socket
           try { sock.ws?.close(); } catch {}
           session.socket = null;
+
+          // Error 515: WhatsApp asked for restart after pairing — retry once
+          if (is515Restart && !session.restartAttempted) {
+            session.restartAttempted = true;
+            console.log(`[session:${userId}] Error 515 — restarting socket once (WhatsApp pairing restart)`);
+            setTimeout(() => this.connectBaileys(session), 1000);
+            return;
+          }
 
           // Fire-and-forget cleanup (not in the sync handler's critical path)
           this.handleDisconnectCleanup(session, userId, {
@@ -295,11 +390,22 @@ class SessionManager {
       }
     });
 
-    // 3. Handle incoming messages
+    // 3. Handle incoming messages — with read receipts for append (history) type
     sock.ev.on('messages.upsert', async ({ messages, type }) => {
-      if (type !== 'notify') return;
-
       for (const msg of messages) {
+        const remoteJid = msg.key?.remoteJid;
+        const msgId = msg.key?.id;
+
+        // Read receipts for ALL message types (including history catchup)
+        if (remoteJid && msgId && !msg.key.fromMe) {
+          try {
+            await sock.readMessages([{ remoteJid, id: msgId, fromMe: false }]);
+          } catch {}
+        }
+
+        // Only process live messages (not history/offline catchup)
+        if (type !== 'notify') continue;
+
         try {
           await this.handleMessage(session, msg);
         } catch (err) {
@@ -313,6 +419,68 @@ class SessionManager {
       (sock.ws as any).on('error', (err: Error) => {
         console.error(`[session:${userId}] WebSocket error:`, err.message);
       });
+    }
+  }
+
+  // ── Watchdog: detect zombie connections ──
+  private startWatchdog(session: UserSession): void {
+    if (session.watchdogTimer) clearInterval(session.watchdogTimer);
+    session.watchdogTimer = setInterval(() => {
+      if (!session.isConnected) return;
+      const silenceMs = Date.now() - session.lastMessageAtMs;
+      if (silenceMs > WATCHDOG_INTERVAL_MS) {
+        console.log(`[session:${session.userId}] Watchdog: no messages for ${Math.round(silenceMs / 60000)}m — force reconnecting`);
+        this.forceReconnect(session);
+      }
+    }, 60_000); // Check every minute
+    session.watchdogTimer.unref();
+  }
+
+  // ── Heartbeat: periodic health logging ──
+  private startHeartbeat(session: UserSession): void {
+    if (session.heartbeatTimer) clearInterval(session.heartbeatTimer);
+    session.heartbeatTimer = setInterval(() => {
+      if (!session.isConnected) return;
+      const uptimeMs = Date.now() - session.connectedAtMs;
+      const authAge = getCredsAgeMs(session.authDir);
+      console.log(JSON.stringify({
+        ts: new Date().toISOString(),
+        module: 'heartbeat',
+        userId: session.userId,
+        phone: session.phoneNumber,
+        connected: true,
+        uptimeMin: Math.round(uptimeMs / 60000),
+        reconnectAttempts: session.reconnectAttempts,
+        authAgeMin: authAge ? Math.round(authAge / 60000) : null,
+      }));
+    }, HEARTBEAT_INTERVAL_MS);
+    session.heartbeatTimer.unref();
+  }
+
+  // ── Clear all timers for a session ──
+  private clearTimers(session: UserSession): void {
+    if (session.watchdogTimer) { clearInterval(session.watchdogTimer); session.watchdogTimer = null; }
+    if (session.heartbeatTimer) { clearInterval(session.heartbeatTimer); session.heartbeatTimer = null; }
+    if (session.backoffResetTimer) { clearTimeout(session.backoffResetTimer); session.backoffResetTimer = null; }
+  }
+
+  // ── Force reconnect (used by watchdog) ──
+  private forceReconnect(session: UserSession): void {
+    if (session.socket) {
+      try { session.socket.ws?.close(); } catch {}
+      session.socket = null;
+    }
+    session.isConnected = false;
+    this.clearTimers(session);
+    session.reconnectAttempts++;
+    if (session.reconnectAttempts <= DEFAULT_RECONNECT_POLICY.maxAttempts) {
+      const delay = computeBackoff(session.reconnectAttempts - 1);
+      console.log(`[session:${session.userId}] Watchdog reconnect in ${Math.round(delay / 1000)}s (attempt ${session.reconnectAttempts}/${DEFAULT_RECONNECT_POLICY.maxAttempts})`);
+      setTimeout(() => this.connectBaileys(session), delay);
+    } else {
+      console.log(`[session:${session.userId}] Max reconnect attempts after watchdog — removing session`);
+      session.listeners.clear();
+      this.sessions.delete(session.userId);
     }
   }
 
@@ -330,10 +498,10 @@ class SessionManager {
       rm(dir, { recursive: true, force: true }).catch(() => {});
       session.listeners.clear();
       this.sessions.delete(userId);
-    } else if (shouldReconnect && session.reconnectAttempts < MAX_RECONNECT) {
+    } else if (shouldReconnect && session.reconnectAttempts < DEFAULT_RECONNECT_POLICY.maxAttempts) {
       session.reconnectAttempts++;
-      const delay = Math.min(session.reconnectAttempts * 2000, 10_000);
-      console.log(`[session:${userId}] Reconnecting in ${delay / 1000}s (attempt ${session.reconnectAttempts}/${MAX_RECONNECT})`);
+      const delay = computeBackoff(session.reconnectAttempts - 1);
+      console.log(`[session:${userId}] Reconnecting in ${Math.round(delay / 1000)}s (attempt ${session.reconnectAttempts}/${DEFAULT_RECONNECT_POLICY.maxAttempts})`);
       setTimeout(() => this.connectBaileys(session), delay);
     } else if (isLoggedOut) {
       console.log(`[session:${userId}] Logged out — cleaning up session`);
@@ -342,8 +510,14 @@ class SessionManager {
       rm(dir, { recursive: true, force: true }).catch(() => {});
       session.listeners.clear();
       this.sessions.delete(userId);
+    } else if (flags.statusCode && session.phoneNumber) {
+      // Self-healing: even after max attempts, if we had a valid session, wait and retry
+      session.reconnectAttempts = 0;
+      const healDelay = 60_000; // 1 minute cooldown, then restart backoff cycle
+      console.log(`[session:${userId}] Max reconnect attempts — self-healing in 60s`);
+      setTimeout(() => this.connectBaileys(session), healDelay);
     } else {
-      console.log(`[session:${userId}] Max reconnect attempts — removing session`);
+      console.log(`[session:${userId}] Session removed — no phone number or unknown state`);
       session.listeners.clear();
       this.sessions.delete(userId);
     }
@@ -352,45 +526,136 @@ class SessionManager {
   /** Handle an incoming WhatsApp message for a specific session */
   private async handleMessage(session: UserSession, msg: WAMessage): Promise<void> {
     if (!msg.message) return;
-    if (msg.key.fromMe) return;
     if (msg.key.remoteJid === 'status@broadcast') return;
 
-    const senderJid = msg.key.remoteJid || '';
     const { userId } = session;
-    const sock = session.socket!;
+    const myNumber = session.phoneNumber;
+    const senderJid = msg.key.remoteJid || '';
+    const senderNumber = senderJid.split('@')[0];
 
-    // Block group messages — Kitz OS is 1:1 only
-    if (senderJid.endsWith('@g.us')) return;
+    // Log EVERY message that arrives (before any filtering)
+    console.log(`[session:${userId}] RAW MSG: fromMe=${msg.key.fromMe} remoteJid=${senderJid} myNumber=${myNumber} keys=[${Object.keys(msg.message || {}).join(',')}]`);
+
+    // ── ACCESS MODEL: Only the logged-in user can talk to Kitz ──
+    // Kitz lives in the self-chat ("Me" / "Notes to self").
+    // Messages from other people are IGNORED — the user interacts with them normally.
+    // Self-chat messages arrive as fromMe=true with remoteJid = own number (or own LID).
+    const isSelfChat = myNumber && (senderNumber === myNumber || senderJid.endsWith('@lid'));
+    if (!isSelfChat) return;
+
+    // Skip Kitz's own replies echoing back (prevents infinite loops)
+    if (msg.key.id && kitzSentIds.has(msg.key.id)) {
+      console.log(`[session:${userId}] Skipping Kitz echo (msg ${msg.key.id})`);
+      return;
+    }
+
+    // Unwrap Baileys message wrappers — some messages arrive inside containers
+    const innerMessage = msg.message?.ephemeralMessage?.message
+      || msg.message?.viewOnceMessage?.message
+      || msg.message?.viewOnceMessageV2?.message
+      || msg.message?.documentWithCaptionMessage?.message
+      || msg.message;
+
+    // Skip protocol-only messages (read receipts, key changes, etc.)
+    const msgKeys = Object.keys(innerMessage || {});
+    const isProtocolOnly = msgKeys.length <= 2 && msgKeys.every(k => ['protocolMessage', 'messageContextInfo', 'senderKeyDistributionMessage'].includes(k));
+    if (isProtocolOnly) return;
+
+    // Replace msg.message with the unwrapped version for all downstream processing
+    (msg as any).message = innerMessage;
+
+    const sock = session.socket!;
+    const messageId = msg.key.id || '';
+
+    // Update watchdog timestamp
+    session.lastMessageAtMs = Date.now();
+
+    // ── Message deduplication ──
+    if (messageId && isDuplicateMessage(buildDedupeKey(userId, senderJid, messageId))) {
+      return;
+    }
+
+    // ── Access control (timestamp gating only — owner already verified above) ──
+    const messageTimestampMs = msg.messageTimestamp ? Number(msg.messageTimestamp) * 1000 : undefined;
+    const access = checkAccess({
+      senderJid,
+      mode: ACCESS_MODE,
+      messageTimestampMs,
+      connectedAtMs: session.connectedAtMs,
+      isFromMe: !!msg.key.fromMe,
+      isGroup: false,
+    });
+    if (!access.allowed) {
+      if (access.reason === 'pre_connection_message') {
+        console.log(`[session:${userId}] Skipping pre-connection message`);
+      }
+      return;
+    }
 
     const traceId = crypto.randomUUID();
 
-    const hasText = !!msg.message?.conversation || !!msg.message?.extendedTextMessage;
+    // Always reply to canonical self-chat JID (not LID)
+    const replyJid = myNumber ? `${myNumber}@s.whatsapp.net` : senderJid;
+
+    // ── Extract reply context and location ──
+    const replyContext = extractReplyContext(msg) ?? undefined;
+    const locationData = extractLocationData(msg.message);
+    const locationText = locationData ? formatLocationText(locationData) : undefined;
+
+    // Debug: log message keys
+    const debugKeys = Object.keys(msg.message || {});
+    console.log(`[session:${userId}] msg.message keys: [${debugKeys.join(', ')}]`);
+
+    const hasText = !!msg.message?.conversation || !!msg.message?.extendedTextMessage?.text;
     const hasImage = !!msg.message?.imageMessage;
     const hasDocument = !!msg.message?.documentMessage;
     const hasAudio = !!msg.message?.audioMessage;
+    const hasLocation = !!locationData;
 
-    if (hasText || hasImage || hasDocument || hasAudio) {
-      console.log(JSON.stringify({
-        ts: new Date().toISOString(),
-        module: 'sessions',
-        userId,
-        action: 'message_received',
-        sender: senderJid,
-        trace_id: traceId,
-        has_text: hasText,
-        has_image: hasImage,
-        has_document: hasDocument,
-        has_audio: hasAudio,
-      }));
-    }
+    console.log(JSON.stringify({
+      ts: new Date().toISOString(),
+      module: 'sessions',
+      userId,
+      action: 'message_received',
+      sender: senderJid,
+      trace_id: traceId,
+      has_text: hasText,
+      has_image: hasImage,
+      has_document: hasDocument,
+      has_audio: hasAudio,
+      has_location: hasLocation,
+      has_reply: !!replyContext,
+      msg_keys: debugKeys,
+    }));
 
-    // Helper: type then reply scoped to this session's socket
+    // Helper: type then reply in self-chat (tracks sent ID to prevent echo loops)
     const typeThenReply = async (text: string) => {
-      try { await sock.sendPresenceUpdate('composing', senderJid); } catch {}
+      const prefixed = kitzReply(text);
+      try { await sock.sendPresenceUpdate('composing', replyJid); } catch {}
       await sleep(typingDelayMs(text));
-      try { await sock.sendPresenceUpdate('available', senderJid); } catch {}
-      try { await sock.sendMessage(senderJid, { text }); } catch {}
+      try { await sock.sendPresenceUpdate('available', replyJid); } catch {}
+      try {
+        const sent = await sock.sendMessage(replyJid, { text: prefixed });
+        if (sent?.key?.id) trackKitzSent(sent.key.id);
+        console.log(`[session:${userId}] Reply sent to self-chat`);
+      } catch (err) {
+        console.error(`[session:${userId}] Reply FAILED:`, (err as Error).message);
+      }
     };
+
+    // ── Location-only messages ──
+    if (hasLocation && !hasText && !hasImage && !hasDocument && !hasAudio) {
+      try { await sock.sendPresenceUpdate('composing', replyJid); } catch {}
+      const response = await forwardToKitzOs(
+        locationText || 'Location shared',
+        replyJid, userId, traceId,
+        { location: locationText },
+      );
+      await sleep(typingDelayMs(response));
+      try { await sock.sendPresenceUpdate('available', replyJid); } catch {}
+      try { await sock.sendMessage(replyJid, { text: kitzReply(response) }); } catch {}
+      return;
+    }
 
     // ── Text messages ──
     const text =
@@ -399,11 +664,23 @@ class SessionManager {
       '';
 
     if (text) {
-      try { await sock.sendPresenceUpdate('composing', senderJid); } catch {}
-      const response = await forwardToKitzOs(text, senderJid, userId, traceId);
+      const fullText = locationText ? `${text}\n${locationText}` : text;
+      try { await sock.sendPresenceUpdate('composing', replyJid); } catch {}
+      console.log(`[session:${userId}] Forwarding text to kitz_os: "${fullText.slice(0, 50)}"`);
+      const response = await forwardToKitzOs(fullText, replyJid, userId, traceId, {
+        replyContext,
+        location: locationText,
+      });
+      console.log(`[session:${userId}] kitz_os response: "${response.slice(0, 80)}"`);
       await sleep(typingDelayMs(response));
-      try { await sock.sendPresenceUpdate('available', senderJid); } catch {}
-      try { await sock.sendMessage(senderJid, { text: response }); } catch {}
+      try { await sock.sendPresenceUpdate('available', replyJid); } catch {}
+      try {
+        const sent = await sock.sendMessage(replyJid, { text: kitzReply(response) });
+        if (sent?.key?.id) trackKitzSent(sent.key.id);
+        console.log(`[session:${userId}] Reply sent to self-chat`);
+      } catch (sendErr) {
+        console.error(`[session:${userId}] Reply FAILED:`, (sendErr as Error).message);
+      }
       return;
     }
 
@@ -411,19 +688,22 @@ class SessionManager {
     const imageMsg = msg.message?.imageMessage;
     if (imageMsg) {
       try {
-        await sock.sendPresenceUpdate('composing', senderJid);
+        await sock.sendPresenceUpdate('composing', replyJid);
         const buffer = await downloadMediaMessage(msg, 'buffer', {});
         const base64 = (buffer as Buffer).toString('base64');
+        const rawSizeKB = Math.round(buffer.length / 1024);
+        console.log(`[session:${userId}] Image received: ${rawSizeKB}KB raw, ${Math.round(base64.length / 1024)}KB base64`);
         if (base64.length > MAX_MEDIA_SIZE) {
-          await typeThenReply('Image too large \u2014 send a smaller one.');
+          await typeThenReply(`Image too large (${rawSizeKB}KB) — max ~10MB supported.`);
           return;
         }
         const caption = imageMsg.caption || '';
         const mimeType = imageMsg.mimetype || 'image/jpeg';
-        const response = await forwardMediaToKitzOs(base64, mimeType, caption, senderJid, userId, traceId);
+        const response = await forwardMediaToKitzOs(base64, mimeType, caption, replyJid, userId, traceId);
         await sleep(typingDelayMs(response));
-        try { await sock.sendPresenceUpdate('available', senderJid); } catch {}
-        try { await sock.sendMessage(senderJid, { text: response }); } catch {}
+        try { await sock.sendPresenceUpdate('available', replyJid); } catch {}
+        const sent = await sock.sendMessage(replyJid, { text: kitzReply(response) });
+        if (sent?.key?.id) trackKitzSent(sent.key.id);
       } catch (err) {
         console.error(`[session:${userId}] Image download failed:`, (err as Error).message);
         await typeThenReply('Could not download that image. Try again.');
@@ -435,19 +715,22 @@ class SessionManager {
     const docMsg = msg.message?.documentMessage;
     if (docMsg) {
       try {
-        await sock.sendPresenceUpdate('composing', senderJid);
+        await sock.sendPresenceUpdate('composing', replyJid);
         const buffer = await downloadMediaMessage(msg, 'buffer', {});
         const base64 = (buffer as Buffer).toString('base64');
+        const rawSizeKB = Math.round(buffer.length / 1024);
+        console.log(`[session:${userId}] Document received: ${rawSizeKB}KB raw, ${Math.round(base64.length / 1024)}KB base64`);
         if (base64.length > MAX_MEDIA_SIZE) {
-          await typeThenReply('Doc too large \u2014 max ~75KB supported.');
+          await typeThenReply(`Doc too large (${rawSizeKB}KB) — max ~10MB supported.`);
           return;
         }
         const caption = docMsg.caption || docMsg.fileName || '';
         const mimeType = docMsg.mimetype || 'application/pdf';
-        const response = await forwardMediaToKitzOs(base64, mimeType, caption, senderJid, userId, traceId);
+        const response = await forwardMediaToKitzOs(base64, mimeType, caption, replyJid, userId, traceId);
         await sleep(typingDelayMs(response));
-        try { await sock.sendPresenceUpdate('available', senderJid); } catch {}
-        try { await sock.sendMessage(senderJid, { text: response }); } catch {}
+        try { await sock.sendPresenceUpdate('available', replyJid); } catch {}
+        const sent = await sock.sendMessage(replyJid, { text: kitzReply(response) });
+        if (sent?.key?.id) trackKitzSent(sent.key.id);
       } catch (err) {
         console.error(`[session:${userId}] Document download failed:`, (err as Error).message);
         await typeThenReply('Could not download that document.');
@@ -459,18 +742,21 @@ class SessionManager {
     const audioMsg = msg.message?.audioMessage;
     if (audioMsg) {
       try {
-        await sock.sendPresenceUpdate('composing', senderJid);
+        await sock.sendPresenceUpdate('composing', replyJid);
         const buffer = await downloadMediaMessage(msg, 'buffer', {});
         const base64 = (buffer as Buffer).toString('base64');
+        const rawSizeKB = Math.round(buffer.length / 1024);
+        console.log(`[session:${userId}] Audio received: ${rawSizeKB}KB raw`);
         const mimeType = audioMsg.mimetype || 'audio/ogg; codecs=opus';
         const response = await forwardMediaToKitzOs(
           base64, mimeType,
-          'Voice note received \u2014 transcribe and process as brain dump',
-          senderJid, userId, traceId,
+          'Voice note received — transcribe and process as brain dump',
+          replyJid, userId, traceId,
         );
         await sleep(typingDelayMs(response));
-        try { await sock.sendPresenceUpdate('available', senderJid); } catch {}
-        try { await sock.sendMessage(senderJid, { text: response }); } catch {}
+        try { await sock.sendPresenceUpdate('available', replyJid); } catch {}
+        const sent = await sock.sendMessage(replyJid, { text: kitzReply(response) });
+        if (sent?.key?.id) trackKitzSent(sent.key.id);
       } catch (err) {
         console.error(`[session:${userId}] Audio download failed:`, (err as Error).message);
         await typeThenReply('Could not process that voice note.');
@@ -510,6 +796,7 @@ class SessionManager {
     const session = this.sessions.get(userId);
     if (!session) return false;
 
+    this.clearTimers(session);
     if (session.socket) {
       try { session.socket.ws?.close(); } catch {}
       session.socket = null;
@@ -574,6 +861,81 @@ class SessionManager {
     }
   }
 
+  /** Send an image through a user's session */
+  async sendImage(userId: string, jid: string, buffer: Buffer, mimeType: string, caption?: string): Promise<boolean> {
+    const session = this.sessions.get(userId);
+    if (!session?.socket || !session.isConnected) return false;
+    try {
+      await session.socket.sendMessage(jid, {
+        image: buffer,
+        mimetype: mimeType,
+        caption: caption || undefined,
+      });
+      return true;
+    } catch { return false; }
+  }
+
+  /** Send a video through a user's session */
+  async sendVideo(userId: string, jid: string, buffer: Buffer, mimeType: string, caption?: string, gifPlayback = false): Promise<boolean> {
+    const session = this.sessions.get(userId);
+    if (!session?.socket || !session.isConnected) return false;
+    try {
+      await session.socket.sendMessage(jid, {
+        video: buffer,
+        mimetype: mimeType,
+        caption: caption || undefined,
+        ...(gifPlayback ? { gifPlayback: true } : {}),
+      });
+      return true;
+    } catch { return false; }
+  }
+
+  /** Send a document through a user's session */
+  async sendDocument(userId: string, jid: string, buffer: Buffer, mimeType: string, fileName: string, caption?: string): Promise<boolean> {
+    const session = this.sessions.get(userId);
+    if (!session?.socket || !session.isConnected) return false;
+    try {
+      await session.socket.sendMessage(jid, {
+        document: buffer,
+        mimetype: mimeType,
+        fileName,
+        caption: caption || undefined,
+      });
+      return true;
+    } catch { return false; }
+  }
+
+  /** Send a poll through a user's session */
+  async sendPoll(userId: string, jid: string, question: string, options: string[], maxSelections = 1): Promise<boolean> {
+    const session = this.sessions.get(userId);
+    if (!session?.socket || !session.isConnected) return false;
+    try {
+      await session.socket.sendMessage(jid, {
+        poll: {
+          name: question,
+          values: options,
+          selectableCount: maxSelections,
+        },
+      } as any);
+      return true;
+    } catch { return false; }
+  }
+
+  /** Send a reaction to a specific message */
+  async sendReaction(userId: string, jid: string, emoji: string, messageId: string, fromMe = false): Promise<boolean> {
+    const session = this.sessions.get(userId);
+    if (!session?.socket || !session.isConnected) return false;
+    try {
+      await session.socket.sendMessage(jid, {
+        react: {
+          text: emoji,
+          key: { remoteJid: jid, id: messageId, fromMe },
+        },
+      } as any);
+      return true;
+    } catch { return false; }
+  }
+
   /** Boot: reconnect any sessions that have persisted auth dirs with valid creds */
   async restoreSessions(): Promise<void> {
     const { readdir, access } = await import('node:fs/promises');
@@ -584,10 +946,14 @@ class SessionManager {
       for (const d of dirs) {
         if (!d.isDirectory()) continue;
         const userId = d.name;
-        const credsPath = join(AUTH_ROOT, userId, 'creds.json');
+        const authDir = join(AUTH_ROOT, userId);
+
+        // Restore from backup if creds corrupted
+        maybeRestoreCredsFromBackup(authDir);
+
+        const credsPath = join(authDir, 'creds.json');
         try {
           await access(credsPath);
-          // Validate creds has completed auth (me field present)
           const { readFile } = await import('node:fs/promises');
           const credsRaw = await readFile(credsPath, 'utf-8');
           const creds = JSON.parse(credsRaw);
@@ -597,7 +963,6 @@ class SessionManager {
             continue;
           }
         } catch {
-          // No valid creds — this was a failed/incomplete scan, clean it up
           console.log(`[sessions] Skipping ${userId} — no valid creds, removing stale auth dir`);
           await rm(join(AUTH_ROOT, userId), { recursive: true, force: true });
           continue;

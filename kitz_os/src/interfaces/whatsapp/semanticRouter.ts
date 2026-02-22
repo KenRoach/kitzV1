@@ -65,7 +65,8 @@ const DIRECT_EXECUTE_TOOLS = new Set([
   'compliance_factCheck',
   'agent_chat',
   'outbound_sendWhatsApp', 'outbound_sendEmail',
-  'calendar_listEvents', 'calendar_addEvent',
+  'calendar_listEvents', 'calendar_addEvent', 'calendar_updateEvent',
+  'calendar_deleteEvent', 'calendar_findSlot', 'calendar_addTask', 'calendar_today',
   // Artifact creation tools
   'artifact_generateCode', 'artifact_generateDocument', 'artifact_generateTool',
   'artifact_selfHeal', 'artifact_generateMigration', 'artifact_pushToLovable',
@@ -79,6 +80,8 @@ const DIRECT_EXECUTE_TOOLS = new Set([
   'voice_speak', 'voice_listVoices', 'voice_getConfig', 'voice_getWidget', 'voice_getSignedUrl',
   // WhatsApp voice + call tools
   'outbound_sendVoiceNote', 'outbound_makeCall',
+  // Web scraping + search tools
+  'web_scrape', 'web_search', 'web_summarize', 'web_extract',
 ]);
 
 // ── System Prompt ──
@@ -97,12 +100,13 @@ CAPABILITIES:
 - **BRAIN DUMP** — Process voice/text ideas into structured reports with key points, pros, cons, next steps. Saves to knowledge base.
 - **DOC SCAN** — Scan images/PDFs (business cards, invoices, receipts) → extract structured data → update CRM.
 - **FACT CHECK** — Validate outbound messages against real business data before sending.
-- **CALENDAR** — List upcoming events, add new events (requires Google OAuth setup).
+- **CALENDAR** — Full Google Calendar management: list events, add/update/delete events, add tasks, find free slots, view today's schedule. Use calendar_today for quick daily view, calendar_addEvent for scheduling, calendar_addTask for reminders/to-dos, calendar_findSlot for availability, calendar_updateEvent/calendar_deleteEvent to modify existing events.
 - **AGENTS** — Route to specialized agents (CEO, Sales, Ops, CFO, etc.) for strategic thinking.
 - **ARTIFACTS** — Generate code, documents, tools, SQL migrations, and push to Lovable. Self-healing: regenerate missing files.
 - **LOVABLE** — Manage Lovable.dev projects: add, list, link, remove projects. Push artifacts to specific projects. Send prompts to Lovable AI chat.
 - **PAYMENTS** — View payment transactions by provider (Stripe, PayPal, Yappy, BAC), status, or date range. Get revenue summaries (today/week/month). Receive-only — never send money outbound.
 - **VOICE** — KITZ has a female voice (ElevenLabs). Convert text to speech audio. Send voice notes via WhatsApp. Make WhatsApp calls. Get voice widget for websites.
+- **WEB** — Browse the internet: web_search (Google search), web_scrape (fetch any URL), web_summarize (AI-summarize a page), web_extract (pull prices, contacts, data from pages). Use for research, competitive analysis, price checking, or finding information online.
 
 RESPONSE STYLE:
 - Default replies: 5-7 words. Keep it tight.

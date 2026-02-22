@@ -11,6 +11,7 @@
 import { createServer } from './server.js';
 import { OsToolRegistry } from './tools/registry.js';
 import { getBatteryStatus, type BatteryStatus } from './aiBattery.js';
+import { CadenceEngine } from './cadence/engine.js';
 
 export interface KernelStatus {
   status: 'booting' | 'online' | 'degraded' | 'killed';
@@ -33,6 +34,7 @@ export class KitzKernel {
   private bootTime = Date.now();
   public tools = new OsToolRegistry();
   private server: Awaited<ReturnType<typeof createServer>> | null = null;
+  private cadence: CadenceEngine | null = null;
 
   async boot(): Promise<void> {
     // 1. Check kill switch
@@ -60,6 +62,10 @@ export class KitzKernel {
     // 4. Start Fastify control plane
     this.server = await createServer(this);
     this.status = hasAI ? 'online' : 'degraded';
+
+    // 5. Start cadence engine (cron-based reports)
+    this.cadence = new CadenceEngine(this);
+    this.cadence.start();
   }
 
   async run(opts: { goal: string; agent?: string; mode?: string; context?: Record<string, unknown> }): Promise<RunResult> {
@@ -83,6 +89,7 @@ export class KitzKernel {
   }
 
   async shutdown(): Promise<void> {
+    if (this.cadence) this.cadence.stop();
     if (this.server) {
       await this.server.close();
     }

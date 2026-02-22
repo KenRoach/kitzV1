@@ -5,6 +5,7 @@
  * wires all tools, and begins cadence scheduling.
  */
 
+import 'dotenv/config';
 import { KitzKernel } from './kernel.js';
 
 const kernel = new KitzKernel();

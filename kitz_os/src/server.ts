@@ -20,6 +20,10 @@
  *   GET  /api/kitz/battery               — AI Battery status & spend tracking
  *   GET  /api/kitz/battery/ledger        — Spend history ledger
  *   POST /api/kitz/battery/recharge      — Manual credit recharge (founder-only)
+ *   GET  /api/kitz/oauth/google/status   — Check Google OAuth status
+ *   GET  /api/kitz/oauth/google/authorize — Start Google OAuth flow
+ *   GET  /api/kitz/oauth/google/callback  — OAuth callback (Google redirects here)
+ *   POST /api/kitz/oauth/google/revoke    — Revoke Google Calendar access
  *
  * Port: 3012
  */
@@ -30,10 +34,17 @@ import { parseWhatsAppCommand } from './interfaces/whatsapp/commandParser.js';
 import { routeWithAI } from './interfaces/whatsapp/semanticRouter.js';
 import { textToSpeech, getKitzVoiceConfig, getWidgetSnippet, isElevenLabsConfigured } from './llm/elevenLabsClient.js';
 import { getBatteryStatus, recordRecharge, getLedger } from './aiBattery.js';
+import { initMemory, storeMessage, buildContextWindow } from './memory/manager.js';
+import { isGoogleOAuthConfigured, getAuthUrl, exchangeCode, hasStoredTokens, revokeTokens } from './auth/googleOAuth.js';
 
 export async function createServer(kernel: KitzKernel) {
-  const app = Fastify({ logger: false });
+  const app = Fastify({ logger: false, bodyLimit: 20_000_000 });  // 20MB for media payloads
   const PORT = Number(process.env.PORT) || 3012;
+
+  // Initialize memory system
+  try { initMemory(); } catch (err) {
+    console.warn('[server] Memory init failed (non-fatal):', (err as Error).message);
+  }
 
   // ── Health check ──
   app.get('/health', async () => ({ status: 'ok', service: 'kitz-os' }));
@@ -44,13 +55,20 @@ export async function createServer(kernel: KitzKernel) {
   });
 
   // ── Main WhatsApp webhook ──
-  app.post<{ Body: { message: string; sender?: string; trace_id?: string } }>(
+  app.post<{ Body: { message: string; sender?: string; user_id?: string; trace_id?: string; reply_context?: unknown; location?: string } }>(
     '/api/kitz',
     async (req, reply) => {
-      const { message, sender, trace_id } = req.body || {};
+      const { message, sender, user_id, trace_id } = req.body || {};
       if (!message) return reply.code(400).send({ error: 'message required' });
 
       const traceId = trace_id || crypto.randomUUID();
+      const userId = user_id || 'default';
+      const senderJid = sender || 'unknown';
+
+      // Store inbound message in memory
+      try {
+        storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'user', content: message, traceId });
+      } catch { /* non-blocking */ }
 
       // 1. Try regex command parser first (fast, no AI cost)
       const command = parseWhatsAppCommand(message);
@@ -203,6 +221,10 @@ export async function createServer(kernel: KitzKernel) {
       if (hasAI) {
         try {
           const result = await routeWithAI(message, kernel.tools, traceId);
+          // Store AI response in memory
+          try {
+            storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'assistant', content: result.response, traceId });
+          } catch { /* non-blocking */ }
           return { command: 'ai', response: result.response, tools_used: result.toolsUsed, credits_consumed: result.creditsConsumed };
         } catch (err) {
           console.error('[server] AI routing error:', (err as Error).message);
@@ -580,6 +602,61 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
       return { recharged: credits, battery: getBatteryStatus() };
     }
   );
+
+  // ── Google Calendar OAuth Endpoints ──────────────────────
+
+  // Check OAuth status
+  app.get('/api/kitz/oauth/google/status', async () => {
+    return {
+      configured: isGoogleOAuthConfigured(),
+      authenticated: await hasStoredTokens(),
+      authorize_url: isGoogleOAuthConfigured() ? getAuthUrl() : null,
+    };
+  });
+
+  // Start OAuth flow — redirects to Google consent screen
+  app.get('/api/kitz/oauth/google/authorize', async (_req: any, reply: any) => {
+    if (!isGoogleOAuthConfigured()) {
+      return reply.status(500).send({
+        error: 'Google OAuth not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env',
+      });
+    }
+    const url = getAuthUrl();
+    return reply.redirect(url);
+  });
+
+  // OAuth callback — Google redirects here after consent
+  app.get('/api/kitz/oauth/google/callback', async (req: any, reply: any) => {
+    const code = req.query?.code as string;
+    if (!code) {
+      return reply.status(400).send({ error: 'No authorization code received' });
+    }
+    try {
+      await exchangeCode(code);
+      console.log('[server] Google Calendar OAuth completed successfully');
+      return reply.type('text/html').send(`
+        <!DOCTYPE html>
+        <html><head><title>Kitz — Calendar Connected</title></head>
+        <body style="font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#0a0a0a;color:#fff;">
+          <div style="text-align:center;">
+            <h1>🟢 Google Calendar Connected</h1>
+            <p>You can now manage your calendar from WhatsApp via Kitz.</p>
+            <p style="color:#888;">Try: "what's on my calendar today?"</p>
+            <p style="margin-top:2em;color:#555;">You can close this tab.</p>
+          </div>
+        </body></html>
+      `);
+    } catch (err) {
+      console.error('[server] Google OAuth error:', (err as Error).message);
+      return reply.status(500).send({ error: `OAuth failed: ${(err as Error).message}` });
+    }
+  });
+
+  // Revoke OAuth tokens
+  app.post('/api/kitz/oauth/google/revoke', async () => {
+    await revokeTokens();
+    return { status: 'revoked', message: 'Google Calendar disconnected.' };
+  });
 
   await app.listen({ port: PORT, host: '0.0.0.0' });
   console.log(`[server] KITZ OS listening on port ${PORT}`);

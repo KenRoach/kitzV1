@@ -25,6 +25,10 @@ bun.lockb
 
 # WhatsApp Baileys session (contains encryption keys — never commit)
 **/auth_state/
+**/auth_info_baileys/
+
+# Runtime data (battery ledger, tokens, logs)
+**/data/
 
 # Build artifacts
 *.tsbuildinfo

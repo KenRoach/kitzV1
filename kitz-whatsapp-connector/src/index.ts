@@ -216,6 +216,88 @@ app.post('/outbound/send-voice', async (req: any) => {
   };
 });
 
+// ── Outbound media (image, video, document, poll, reaction) ──
+app.post('/outbound/send-media', async (req: any, reply) => {
+  const traceId = String(req.headers['x-trace-id'] || randomUUID());
+  const {
+    phone, userId, mediaType, mediaBase64, caption, fileName,
+    gifPlayback, draftOnly: draftOnlyParam,
+    // Poll-specific
+    poll,
+    // Reaction-specific
+    reaction,
+  } = req.body || {};
+
+  const draftOnly = Boolean(draftOnlyParam ?? true); // Draft-first by default
+
+  if (draftOnly) {
+    app.log.info(audit('whatsapp.outbound.media.draft', {
+      phone, mediaType, draftOnly: true,
+      ...(poll ? { poll_question: poll.question } : {}),
+      ...(reaction ? { reaction_emoji: reaction.emoji } : {}),
+    }, traceId));
+    return { queued: true, provider: 'draft', draftOnly: true, traceId };
+  }
+
+  if (!userId) {
+    return reply.code(400).send({ ok: false, error: 'userId required', traceId });
+  }
+
+  const session = sessionManager.getSession(userId);
+  if (!session?.isConnected) {
+    return reply.code(503).send({ ok: false, error: 'Session not connected', traceId });
+  }
+
+  // ── Reaction ──
+  if (reaction) {
+    const { emoji, messageId, fromMe, remoteJid } = reaction;
+    if (!emoji || !messageId) {
+      return reply.code(400).send({ ok: false, error: 'reaction.emoji and reaction.messageId required', traceId });
+    }
+    const jid = remoteJid || (phone?.includes('@') ? phone : `${phone?.replace(/\D/g, '')}@s.whatsapp.net`);
+    const sent = await sessionManager.sendReaction(userId, jid, emoji, messageId, Boolean(fromMe));
+    return { ok: sent, provider: 'baileys', type: 'reaction', traceId };
+  }
+
+  // ── Poll ──
+  if (poll) {
+    const { question, options, maxSelections } = poll;
+    if (!question || !options || options.length < 2) {
+      return reply.code(400).send({ ok: false, error: 'poll.question and poll.options (>=2) required', traceId });
+    }
+    const jid = phone?.includes('@') ? phone : `${phone?.replace(/\D/g, '')}@s.whatsapp.net`;
+    const sent = await sessionManager.sendPoll(userId, jid, question, options.slice(0, 12), maxSelections ?? 1);
+    return { ok: sent, provider: 'baileys', type: 'poll', traceId };
+  }
+
+  // ── Media (image, video, document) ──
+  if (!phone || !mediaBase64 || !mediaType) {
+    return reply.code(400).send({ ok: false, error: 'phone, mediaBase64, and mediaType required', traceId });
+  }
+
+  const jid = phone.includes('@') ? phone : `${phone.replace(/\D/g, '')}@s.whatsapp.net`;
+  const buffer = Buffer.from(mediaBase64, 'base64');
+
+  let sent = false;
+  if (mediaType.startsWith('image/')) {
+    sent = await sessionManager.sendImage(userId, jid, buffer, mediaType, caption);
+  } else if (mediaType.startsWith('audio/')) {
+    sent = await sessionManager.sendAudio(userId, jid, mediaBase64, mediaType);
+  } else if (mediaType.startsWith('video/')) {
+    sent = await sessionManager.sendVideo(userId, jid, buffer, mediaType, caption, Boolean(gifPlayback));
+  } else {
+    sent = await sessionManager.sendDocument(userId, jid, buffer, mediaType, fileName || 'file', caption);
+  }
+
+  app.log.info(audit('whatsapp.outbound.media.send', {
+    phone, jid, sent, mediaType,
+    size_kb: Math.round(buffer.length / 1024),
+    has_caption: !!caption,
+  }, traceId));
+
+  return { ok: sent, provider: 'baileys', type: 'media', mediaType, traceId };
+});
+
 // ── WhatsApp Call ──
 app.post('/outbound/call', async (req: any) => {
   const traceId = String(req.headers['x-trace-id'] || req.body?.trace_id || randomUUID());
