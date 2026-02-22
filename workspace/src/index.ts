@@ -40,6 +40,14 @@ const voiceWidget = ELEVENLABS_AGENT_ID
 await app.register(cookie);
 await app.register(formbody);
 
+/* ── Auto-detect HTML responses and set correct Content-Type ── */
+app.addHook('onSend', async (_req, reply, payload) => {
+  if (typeof payload === 'string' && payload.trimStart().startsWith('<!DOCTYPE html>')) {
+    reply.header('content-type', 'text/html; charset=utf-8');
+  }
+  return payload;
+});
+
 /* ── In-Memory Stores (MVP) ── */
 
 interface Session { userId: string; email: string; name: string; token: string; orgId: string; }
@@ -536,8 +544,8 @@ app.post('/auth/start-login', async (req: any, reply: any) => {
 
 /* ── Standard Auth Pages (existing) ── */
 
-app.get('/login', async (req: any) => {
-  if (getSession(req)) return (req as any).server.redirect('/leads');
+app.get('/login', async (req: any, reply: any) => {
+  if (getSession(req)) return reply.redirect('/leads');
   const error = (req.query as any)?.error;
   return authPage('Log In', `
     ${error ? `<div class="alert alert-warn" style="margin-bottom:12px">${error === 'invalid' ? 'Invalid email or password' : 'Please log in'}</div>` : ''}
@@ -549,8 +557,8 @@ app.get('/login', async (req: any) => {
   `, `Don't have an account? <a href="/register" style="color:#00d4aa">Sign up free</a>`);
 });
 
-app.get('/register', async (req: any) => {
-  if (getSession(req)) return (req as any).server.redirect('/leads');
+app.get('/register', async (req: any, reply: any) => {
+  if (getSession(req)) return reply.redirect('/leads');
   const error = (req.query as any)?.error;
   return authPage('Sign Up', `
     ${error === 'exists' ? `<div class="alert alert-warn" style="margin-bottom:12px">That email is already registered. <a href="/login" style="color:#00d4aa">Log in instead?</a></div>` : ''}
@@ -1361,13 +1369,21 @@ app.get('/api/ops/metrics', async () => {
 
 app.get('/health', async () => health);
 
+/* ── 404 catch-all — redirect unknown routes to /start ── */
+app.setNotFoundHandler(async (_req: any, reply: any) => {
+  return reply.redirect('/start');
+});
+
 /** Escape HTML to prevent XSS */
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 if (process.env.NODE_ENV !== 'test') {
-  app.listen({ port: Number(process.env.PORT || 3001), host: '0.0.0.0' });
+  app.listen({ port: Number(process.env.PORT || 3001), host: '0.0.0.0' }).catch((err) => {
+    console.error('FATAL: workspace failed to start', err);
+    process.exit(1);
+  });
 }
 
 export default app;
