@@ -397,6 +397,66 @@ const shell = (title: string, body: string, session: Session | null, script = ''
 </body>
 </html>`;
 
+/* ── Branded Onboarding Page (/start) ── */
+
+const startPage = (formHtml: string, bottomLink: string, error = '') => `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KITZ OS — Connect WhatsApp</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0a;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+    .brand{text-align:center;margin-bottom:32px}
+    .brand-logo{font-size:48px;font-weight:900;letter-spacing:-2px;background:linear-gradient(135deg,#00d4aa,#00b4d8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .brand-sub{font-size:14px;color:#555;margin-top:4px;letter-spacing:2px;text-transform:uppercase}
+    .brand-tagline{font-size:16px;color:#888;margin-top:12px;line-height:1.5}
+    .brand-tagline strong{color:#00d4aa}
+    .card{background:#111;border:1px solid #1a1a1a;border-radius:16px;padding:28px;max-width:380px;width:100%}
+    .wa-badge{display:inline-flex;align-items:center;gap:8px;background:#25d36622;color:#25d366;font-size:13px;font-weight:600;padding:6px 14px;border-radius:20px;margin-bottom:20px}
+    .wa-badge svg{width:18px;height:18px;fill:#25d366}
+    .form-group{margin-bottom:14px}
+    .form-label{display:block;font-size:12px;color:#666;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px}
+    input{width:100%;padding:12px 14px;background:#0a0a0a;border:1px solid #222;border-radius:10px;color:#fff;font-size:15px;font-family:inherit}
+    input:focus{outline:none;border-color:#00d4aa}
+    input::placeholder{color:#444}
+    .btn{display:block;width:100%;padding:14px;border-radius:10px;border:none;font-size:15px;font-weight:700;cursor:pointer;text-align:center;transition:all 0.2s}
+    .btn-primary{background:linear-gradient(135deg,#00d4aa,#00b4d8);color:#000}
+    .btn-primary:hover{opacity:0.9;transform:translateY(-1px)}
+    .bottom{text-align:center;font-size:13px;color:#555;margin-top:20px}
+    .bottom a{color:#00d4aa;text-decoration:none}
+    .alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;background:#ff6b6b12;color:#ff6b6b;border:1px solid #ff6b6b22}
+    .steps{display:flex;gap:8px;margin-bottom:20px;justify-content:center}
+    .step{font-size:11px;color:#444;padding:4px 10px;border-radius:12px;border:1px solid #1a1a1a}
+    .step.active{color:#00d4aa;border-color:#00d4aa44;background:#00d4aa08}
+    .footer{margin-top:32px;text-align:center;font-size:12px;color:#333}
+  </style>
+</head>
+<body>
+  <div class="brand">
+    <div class="brand-logo">KITZ OS</div>
+    <div class="brand-sub">Business Operating System</div>
+    <div class="brand-tagline">Your hustle deserves <strong>infrastructure</strong>.</div>
+  </div>
+  <div class="steps">
+    <div class="step active">1. Sign Up</div>
+    <div class="step">2. Connect WhatsApp</div>
+    <div class="step">3. You're Live</div>
+  </div>
+  <div class="card">
+    <div class="wa-badge">
+      <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.61.609l4.458-1.495A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.24 0-4.31-.726-5.993-1.957l-.418-.312-2.647.887.887-2.647-.312-.418A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+      Connect via WhatsApp
+    </div>
+    ${error}
+    ${formHtml}
+  </div>
+  <div class="bottom">${bottomLink}</div>
+  <div class="footer">Free for early testers. No credit card.</div>
+</body>
+</html>`;
+
 /* ── Auth Pages ── */
 
 const authPage = (title: string, formHtml: string, bottomLink: string) => shell(title, `
@@ -407,6 +467,74 @@ const authPage = (title: string, formHtml: string, bottomLink: string) => shell(
     <p style="text-align:center;font-size:13px;color:#555;margin-top:16px">${bottomLink}</p>
   </div>
 `, null);
+
+/* ── /start — branded shareable onboarding link ── */
+
+app.get('/start', async (req: any, reply: any) => {
+  const session = getSession(req);
+  if (session) return reply.redirect('/whatsapp');
+  const error = (req.query as any)?.error;
+  const errorHtml = error === 'exists'
+    ? `<div class="alert">That email is already registered. <a href="/start?mode=login" style="color:#00d4aa">Log in instead</a></div>`
+    : error === 'validation'
+    ? `<div class="alert">All fields are required. Password min 6 chars.</div>`
+    : error === 'invalid'
+    ? `<div class="alert">Invalid email or password.</div>`
+    : '';
+  const mode = (req.query as any)?.mode;
+  if (mode === 'login') {
+    return startPage(`
+      <form method="POST" action="/auth/start-login">
+        <div class="form-group"><label class="form-label">Email</label><input name="email" type="email" placeholder="you@example.com" required autofocus/></div>
+        <div class="form-group"><label class="form-label">Password</label><input name="password" type="password" placeholder="Your password" required/></div>
+        <button class="btn btn-primary" type="submit">Log In & Connect</button>
+      </form>
+    `, `New here? <a href="/start">Create a free account</a>`, errorHtml);
+  }
+  return startPage(`
+    <form method="POST" action="/auth/start-register">
+      <div class="form-group"><label class="form-label">Your Name</label><input name="name" placeholder="Maria Garcia" required autofocus/></div>
+      <div class="form-group"><label class="form-label">Email</label><input name="email" type="email" placeholder="you@example.com" required/></div>
+      <div class="form-group"><label class="form-label">Password</label><input name="password" type="password" placeholder="Min 6 characters" minlength="6" required/></div>
+      <button class="btn btn-primary" type="submit">Create Account & Connect WhatsApp</button>
+    </form>
+  `, `Already have an account? <a href="/start?mode=login">Log in</a>`, errorHtml);
+});
+
+/* /start auth handlers — redirect to /whatsapp instead of /leads */
+
+app.post('/auth/start-register', async (req: any, reply: any) => {
+  const { name, email, password } = req.body || {};
+  if (!name || !email || !password || password.length < 6) return reply.redirect('/start?error=validation');
+  const key = email.toLowerCase();
+  if (registeredUsers.has(key)) return reply.redirect('/start?error=exists');
+  const userId = randomUUID();
+  const orgId = randomUUID();
+  registeredUsers.set(key, { id: userId, email: key, name, passwordHash: hashPw(password), orgId });
+  const token = mintJwt(userId, orgId);
+  const sessionId = randomUUID();
+  sessions.set(sessionId, { userId, email: key, name, token, orgId });
+  funnel.signup += 1;
+  reply.setCookie(COOKIE_NAME, sessionId, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
+  return reply.redirect('/whatsapp');
+});
+
+app.post('/auth/start-login', async (req: any, reply: any) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) return reply.redirect('/start?mode=login&error=invalid');
+  const user = registeredUsers.get(email.toLowerCase());
+  if (!user || user.passwordHash !== hashPw(password)) {
+    authFailures += 1;
+    return reply.redirect('/start?mode=login&error=invalid');
+  }
+  const token = mintJwt(user.id, user.orgId);
+  const sessionId = randomUUID();
+  sessions.set(sessionId, { userId: user.id, email: user.email, name: user.name, token, orgId: user.orgId });
+  reply.setCookie(COOKIE_NAME, sessionId, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
+  return reply.redirect('/whatsapp');
+});
+
+/* ── Standard Auth Pages (existing) ── */
 
 app.get('/login', async (req: any) => {
   if (getSession(req)) return (req as any).server.redirect('/leads');
