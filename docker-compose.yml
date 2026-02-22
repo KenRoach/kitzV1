@@ -209,6 +209,22 @@ services:
       - kitz-gateway
       - kitz-llm-hub
 
+  # ── Workspace (port 3001) ──
+  workspace:
+    <<: *service-defaults
+    build:
+      args:
+        SERVICE_DIR: workspace
+    ports:
+      - "3001:3001"
+    environment:
+      <<: *env-common
+      PORT: 3001
+      GATEWAY_URL: http://kitz-gateway:4000
+      ELEVENLABS_AGENT_ID: ${ELEVENLABS_AGENT_ID:-}
+    depends_on:
+      - kitz-gateway
+
   # ── Brain (cron — no port) ──
   kitz-brain:
     build:
