@@ -3,7 +3,7 @@
  * Same pattern as workspace/src/mcp.ts and kitz_os/src/tools/mcpClient.ts.
  */
 
-const WORKSPACE_MCP_URL = process.env.WORKSPACE_MCP_URL || '';
+const WORKSPACE_MCP_URL = process.env.WORKSPACE_MCP_URL || 'https://mqkjbejuuedauygeccbj.supabase.co/functions/v1/mcp-server/mcp';
 const WORKSPACE_MCP_KEY = process.env.WORKSPACE_MCP_KEY || '';
 const GOD_MODE_USER_ID = process.env.GOD_MODE_USER_ID || '8787fee9-d06a-442f-91ba-fd082b134ccf';
 

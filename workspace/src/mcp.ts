@@ -5,7 +5,7 @@
  * Passes the caller's userId for Supabase RLS enforcement.
  */
 
-const WORKSPACE_MCP_URL = process.env.WORKSPACE_MCP_URL || '';
+const WORKSPACE_MCP_URL = process.env.WORKSPACE_MCP_URL || 'https://mqkjbejuuedauygeccbj.supabase.co/functions/v1/mcp-server/mcp';
 const WORKSPACE_MCP_KEY = process.env.WORKSPACE_MCP_KEY || '';
 
 interface McpResponse {
