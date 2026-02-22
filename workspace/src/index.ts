@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import formbody from '@fastify/formbody';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash, createHmac } from 'node:crypto';
 import { callMcp, mcpConfigured } from './mcp.js';
 
 export const health = { status: 'ok' };
@@ -9,6 +9,28 @@ const app = Fastify({ logger: true });
 const gatewayUrl = process.env.GATEWAY_URL || 'http://localhost:4000';
 const waConnectorUrl = process.env.WA_CONNECTOR_URL || 'http://localhost:3006';
 const COOKIE_NAME = 'kitz_session';
+const JWT_SECRET = process.env.JWT_SECRET || process.env.DEV_TOKEN_SECRET || 'kitz-dev-secret';
+
+/* ── Inline Auth (no gateway round-trip) ── */
+
+interface UserRecord { id: string; email: string; name: string; passwordHash: string; orgId: string; }
+const registeredUsers = new Map<string, UserRecord>(); // email → user
+
+function hashPw(pw: string): string { return createHash('sha256').update(pw).digest('hex'); }
+
+function b64url(buf: Buffer): string { return buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+
+function mintJwt(userId: string, orgId: string): string {
+  const now = Math.floor(Date.now() / 1000);
+  const header = b64url(Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })));
+  const payload = b64url(Buffer.from(JSON.stringify({
+    sub: userId, org_id: orgId,
+    scopes: ['battery:read', 'payments:write', 'tools:invoke', 'events:write', 'notifications:write', 'messages:write'],
+    iat: now, exp: now + 604800,
+  })));
+  const sig = b64url(createHmac('sha256', JWT_SECRET).update(`${header}.${payload}`).digest());
+  return `${header}.${payload}.${sig}`;
+}
 
 const ELEVENLABS_AGENT_ID = process.env.ELEVENLABS_AGENT_ID || '';
 const voiceWidget = ELEVENLABS_AGENT_ID
@@ -420,26 +442,22 @@ app.post('/auth/register', async (req: any, reply: any) => {
     return reply.redirect('/register?error=validation');
   }
 
-  try {
-    const res = await fetch(`${gatewayUrl}/auth/signup`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-trace-id': randomUUID() },
-      body: JSON.stringify({ name, email, password }),
-    });
-    const data = await res.json() as any;
-    if (!res.ok) {
-      return reply.redirect(data.code === 'USER_EXISTS' ? '/register?error=exists' : '/register?error=validation');
-    }
-
-    const sessionId = randomUUID();
-    sessions.set(sessionId, { userId: data.userId, email, name, token: data.token, orgId: data.orgId });
-    funnel.signup += 1;
-
-    reply.setCookie(COOKIE_NAME, sessionId, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
-    return reply.redirect('/leads');
-  } catch {
-    return reply.redirect('/register?error=validation');
+  const key = email.toLowerCase();
+  if (registeredUsers.has(key)) {
+    return reply.redirect('/register?error=exists');
   }
+
+  const userId = randomUUID();
+  const orgId = randomUUID();
+  registeredUsers.set(key, { id: userId, email: key, name, passwordHash: hashPw(password), orgId });
+
+  const token = mintJwt(userId, orgId);
+  const sessionId = randomUUID();
+  sessions.set(sessionId, { userId, email: key, name, token, orgId });
+  funnel.signup += 1;
+
+  reply.setCookie(COOKIE_NAME, sessionId, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
+  return reply.redirect('/leads');
 });
 
 app.post('/auth/login', async (req: any, reply: any) => {
@@ -448,26 +466,18 @@ app.post('/auth/login', async (req: any, reply: any) => {
     return reply.redirect('/login?error=invalid');
   }
 
-  try {
-    const res = await fetch(`${gatewayUrl}/auth/token`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-trace-id': randomUUID() },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json() as any;
-    if (!res.ok) {
-      authFailures += 1;
-      return reply.redirect('/login?error=invalid');
-    }
-
-    const sessionId = randomUUID();
-    sessions.set(sessionId, { userId: data.userId, email, name: data.name, token: data.token, orgId: data.orgId });
-
-    reply.setCookie(COOKIE_NAME, sessionId, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
-    return reply.redirect('/leads');
-  } catch {
+  const user = registeredUsers.get(email.toLowerCase());
+  if (!user || user.passwordHash !== hashPw(password)) {
+    authFailures += 1;
     return reply.redirect('/login?error=invalid');
   }
+
+  const token = mintJwt(user.id, user.orgId);
+  const sessionId = randomUUID();
+  sessions.set(sessionId, { userId: user.id, email: user.email, name: user.name, token, orgId: user.orgId });
+
+  reply.setCookie(COOKIE_NAME, sessionId, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
+  return reply.redirect('/leads');
 });
 
 app.get('/auth/logout', async (_req: any, reply: any) => {
