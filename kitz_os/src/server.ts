@@ -220,7 +220,7 @@ export async function createServer(kernel: KitzKernel) {
 
       if (hasAI) {
         try {
-          const result = await routeWithAI(message, kernel.tools, traceId);
+          const result = await routeWithAI(message, kernel.tools, traceId, undefined, userId);
           // Store AI response in memory
           try {
             storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'assistant', content: result.response, traceId });
@@ -287,17 +287,18 @@ export async function createServer(kernel: KitzKernel) {
   );
 
   // ── Media endpoint (for doc scan / brain dump voice) ──
-  app.post<{ Body: { media_base64: string; mime_type: string; caption?: string; sender_jid?: string; trace_id?: string } }>(
+  app.post<{ Body: { media_base64: string; mime_type: string; caption?: string; sender_jid?: string; user_id?: string; trace_id?: string } }>(
     '/api/kitz/media',
     async (req) => {
-      const { media_base64, mime_type, caption, trace_id } = req.body || {};
+      const { media_base64, mime_type, caption, user_id, trace_id } = req.body || {};
       if (!media_base64) return { error: 'media_base64 required' };
       // Route through semantic router with media context
       const traceId = trace_id || crypto.randomUUID();
+      const userId = user_id || 'default';
       const mediaPrompt = caption || `[MEDIA:${mime_type}] Process this ${mime_type.startsWith('audio') ? 'voice note' : 'document/image'}`;
       const hasAI = !!(process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.AI_API_KEY);
       if (hasAI) {
-        const result = await routeWithAI(mediaPrompt, kernel.tools, traceId, { media_base64, mime_type });
+        const result = await routeWithAI(mediaPrompt, kernel.tools, traceId, { media_base64, mime_type }, userId);
         return { response: result.response };
       }
       return { error: 'AI not configured' };

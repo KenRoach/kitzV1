@@ -10,7 +10,7 @@
 
 import { createServer } from './server.js';
 import { OsToolRegistry } from './tools/registry.js';
-import { getBatteryStatus, type BatteryStatus } from './aiBattery.js';
+import { getBatteryStatus, initBattery, type BatteryStatus } from './aiBattery.js';
 import { CadenceEngine } from './cadence/engine.js';
 
 export interface KernelStatus {
@@ -44,11 +44,16 @@ export class KitzKernel {
       return;
     }
 
-    // 2. Register all tools
+    // 2. Restore AI Battery ledger from persistent storage
+    await initBattery().catch(err => {
+      console.warn('[kernel] Battery restore failed (non-fatal):', (err as Error).message);
+    });
+
+    // 3. Register all tools
     await this.tools.registerDefaults();
     console.log(`[kernel] ${this.tools.count()} tools registered`);
 
-    // 3. Check AI availability
+    // 4. Check AI availability
     const hasAI = !!(
       process.env.CLAUDE_API_KEY ||
       process.env.ANTHROPIC_API_KEY ||
@@ -59,11 +64,11 @@ export class KitzKernel {
       console.warn('[kernel] No AI keys configured — running in degraded mode');
     }
 
-    // 4. Start Fastify control plane
+    // 5. Start Fastify control plane
     this.server = await createServer(this);
     this.status = hasAI ? 'online' : 'degraded';
 
-    // 5. Start cadence engine (cron-based reports)
+    // 6. Start cadence engine (cron-based reports)
     this.cadence = new CadenceEngine(this);
     this.cadence.start();
   }

@@ -8,25 +8,51 @@ import type {
   ToolCallRequest,
   ToolCallResponse
 } from 'kitz-schemas';
+import { verifyJwt } from './jwt.js';
 
 export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
 
 await app.register(rateLimit, { max: 120, timeWindow: '1 minute' });
 
+const JWT_SECRET = process.env.JWT_SECRET || process.env.DEV_TOKEN_SECRET || '';
+
 const buildError = (code: string, message: string, traceId: string): StandardError => ({ code, message, traceId });
 const getTraceId = (req: FastifyRequest): string => String(req.headers['x-trace-id']);
 const getOrgId = (req: FastifyRequest): string => String(req.headers['x-org-id']);
 
 const requireAuth = async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
-  if (!req.headers.authorization) {
-    return reply.code(401).send(buildError('AUTH_REQUIRED', 'JWT verification placeholder', getTraceId(req)));
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return reply.code(401).send(buildError('AUTH_REQUIRED', 'Authorization header required', getTraceId(req)));
+  }
+
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+
+  if (!JWT_SECRET) {
+    // If no secret configured, reject all tokens in production
+    if (process.env.NODE_ENV === 'production') {
+      return reply.code(500).send(buildError('AUTH_CONFIG', 'JWT_SECRET not configured', getTraceId(req)));
+    }
+    // In dev mode, allow passthrough with header presence check only
+    return;
+  }
+
+  try {
+    const claims = verifyJwt(token, JWT_SECRET);
+
+    // Inject verified claims into headers for downstream use
+    if (claims.sub) req.headers['x-user-id'] = claims.sub;
+    if (claims.org_id) req.headers['x-org-id'] = claims.org_id;
+    if (claims.scopes) req.headers['x-scopes'] = claims.scopes.join(',');
+  } catch (err) {
+    return reply.code(401).send(buildError('AUTH_INVALID', (err as Error).message, getTraceId(req)));
   }
 };
 
 const requireOrg = async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
   if (!req.headers['x-org-id']) {
-    return reply.code(400).send(buildError('ORG_REQUIRED', 'x-org-id header required', getTraceId(req)));
+    return reply.code(400).send(buildError('ORG_REQUIRED', 'x-org-id header required (set in JWT org_id claim or x-org-id header)', getTraceId(req)));
   }
 };
 

@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  kitz-schemas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+        working-directory: kitz-schemas
+      - run: npm run typecheck
+        working-directory: kitz-schemas
+      - run: npm test
+        working-directory: kitz-schemas
+
+  kitz-gateway:
+    needs: kitz-schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+        working-directory: kitz-schemas
+      - run: npm ci
+        working-directory: kitz-gateway
+      - run: npm run typecheck
+        working-directory: kitz-gateway
+      - run: npm test
+        working-directory: kitz-gateway
+
+  kitz-os:
+    needs: kitz-schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+        working-directory: kitz-schemas
+      - run: npm install
+        working-directory: kitz_os
+      - run: npx tsc --noEmit
+        working-directory: kitz_os
+      - run: node --import tsx --test src/aiBattery.test.ts
+        working-directory: kitz_os
+
+  kitz-payments:
+    needs: kitz-schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+        working-directory: kitz-schemas
+      - run: npm ci
+        working-directory: kitz-payments
+      - run: npm run typecheck
+        working-directory: kitz-payments
+
+  kitz-whatsapp-connector:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+        working-directory: kitz-whatsapp-connector
+      - run: npm run typecheck
+        working-directory: kitz-whatsapp-connector
+
+  kitz-notifications-queue:
+    needs: kitz-schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+        working-directory: kitz-schemas
+      - run: npm ci
+        working-directory: kitz-notifications-queue
+      - run: npm run typecheck
+        working-directory: kitz-notifications-queue
+
+  workspace:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+        working-directory: workspace
+      - run: npm run typecheck
+        working-directory: workspace
