@@ -116,7 +116,7 @@ export function getAllLovableTools(): ToolSchema[] {
           },
           github_repo: {
             type: 'string',
-            description: 'Optional GitHub repo (e.g., "KenRoach/xyz88-io")',
+            description: 'Optional GitHub repo (e.g., "KenRoach/workspace")',
           },
           description: {
             type: 'string',

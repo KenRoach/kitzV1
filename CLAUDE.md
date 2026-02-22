@@ -21,7 +21,7 @@ TypeScript monorepo with 13+ microservices on Fastify. GitHub: `KenRoach/kitzV1`
 | `admin-kitz-services` | 3011 | Admin dashboard, API keys, credits, WhatsApp QR proxy | Stub |
 | `kitz_os` | 3012 | Core AI engine — 68+ tools, semantic router, cadence, AI Battery | Functional |
 | `kitz-brain` | cron | Scheduled AI agents (daily 8am, weekly Mon 9am) | Stub |
-| `xyz88-io` | 3001 | workspace.kitz.services — Free manual workspace (CRM, orders, checkout links, tasks, AI direction) for users + AI agents | Functional |
+| `workspace` | 3001 | workspace.kitz.services — Free manual workspace (CRM, orders, checkout links, tasks, AI direction) for users + AI agents | Functional |
 | `kitz-schemas` | lib | Shared TypeScript contracts + trace helpers | Functional |
 | `aos` | — | Agent-to-agent OS layer (30+ agent roles, event bus, ledger) | Stub |
 | `kitz-docs` | — | Architecture docs, threat model, approval matrix, runbooks | Docs |
@@ -37,7 +37,7 @@ User (WhatsApp/Web)
       → kitz-llm-hub (AI provider routing)
       → kitz-payments (credit check/deduction)
       → kitz-whatsapp-connector (reply)  ← also called directly by kitz_os
-      → xyz88-io MCP (CRM/orders via Supabase edge function)
+      → workspace MCP (CRM/orders via Supabase edge function)
 ```
 Note: `kitz_os` calls `kitz-whatsapp-connector` directly at `WA_CONNECTOR_URL` (port 3006), bypassing gateway. `kitz-brain` also calls gateway and LLM hub directly via `fetch`.
 
@@ -125,7 +125,7 @@ Task → Proposal → Decision → Outcome. Every artifact has: `id`, `owner_age
 | `AI_BATTERY_DAILY_LIMIT` | Daily credit cap (default: 5) |
 | `WA_CONNECTOR_URL` | WhatsApp connector URL (port 3006) |
 | `KITZ_OS_URL` | kitz_os URL (port 3012) |
-| `XYZ88_MCP_URL` | xyz88-io MCP Supabase edge function |
+| `WORKSPACE_MCP_URL` | workspace MCP Supabase edge function |
 
 ## Dev Commands
 ```bash

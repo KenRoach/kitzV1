@@ -4,8 +4,8 @@ _Last updated: 2026-02-18_
 
 ## Reliability
 - Uptime: TBD (wire from monitoring)
-- Error rate: tracked via `GET /api/ops/metrics` in xyz88-io (workspace.kitz.services)
-- p95 latency: tracked via `GET /api/ops/metrics` in xyz88-io (workspace.kitz.services)
+- Error rate: tracked via `GET /api/ops/metrics` in workspace (workspace.kitz.services)
+- p95 latency: tracked via `GET /api/ops/metrics` in workspace (workspace.kitz.services)
 - Deploy count: TBD
 - Incidents: TBD
 
@@ -28,7 +28,7 @@ _Last updated: 2026-02-18_
 - Optimization actions this week: TBD
 
 ## Links
-- xyz88 metrics: `/api/ops/metrics`
+- workspace metrics: `/api/ops/metrics`
 - Compliance status: `kitz-services/compliance/panama`
 
 

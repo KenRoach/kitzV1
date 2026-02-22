@@ -1,5 +1,5 @@
 /**
- * Payment Receiver Tools — Webhook processing + query via xyz88-io MCP.
+ * Payment Receiver Tools — Webhook processing + query via workspace MCP.
  *
  * 4 tools:
  *   - payments_processWebhook  (DIRECT_EXECUTE, high)  — normalize & persist incoming payment
@@ -10,7 +10,7 @@
  * Receive-only policy: amount must be positive. No outbound payments.
  */
 
-import { callXyz88Mcp } from './mcpClient.js';
+import { callWorkspaceMcp } from './mcpClient.js';
 import type { ToolSchema } from './registry.js';
 
 export function getAllPaymentTools(): ToolSchema[] {
@@ -67,7 +67,7 @@ export function getAllPaymentTools(): ToolSchema[] {
           return { error: 'Amount must be positive. Receive-only policy: agents can only receive money.' };
         }
 
-        return callXyz88Mcp(
+        return callWorkspaceMcp(
           'process_payment_webhook',
           {
             provider: args.provider,
@@ -119,7 +119,7 @@ export function getAllPaymentTools(): ToolSchema[] {
         },
       },
       riskLevel: 'low',
-      execute: async (args, traceId) => callXyz88Mcp('list_payment_transactions', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('list_payment_transactions', args, traceId),
     },
 
     // ── 3. Get Transaction ──
@@ -138,7 +138,7 @@ export function getAllPaymentTools(): ToolSchema[] {
         required: ['transaction_id'],
       },
       riskLevel: 'low',
-      execute: async (args, traceId) => callXyz88Mcp('get_payment_transaction', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('get_payment_transaction', args, traceId),
     },
 
     // ── 4. Payment Summary ──
@@ -181,7 +181,7 @@ export function getAllPaymentTools(): ToolSchema[] {
           }
         }
 
-        const txns = (await callXyz88Mcp(
+        const txns = (await callWorkspaceMcp(
           'list_payment_transactions',
           { from_date: fromDate, to_date: now.toISOString(), limit: 500 },
           traceId,

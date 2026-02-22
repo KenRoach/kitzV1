@@ -2,7 +2,7 @@
 
 ```text
 Clients/UI
-├─ xyz88-io / workspace.kitz.services (CRM + Orders + Checkout Links)
+├─ workspace / workspace.kitz.services (CRM + Orders + Checkout Links)
 ├─ admin-kitz-services / admin.kitz.services (Agent command center, API keys, credits, approvals, audit)
 └─ kitz-services / kitz.services (Landing page + marketing site)
 

@@ -1,5 +1,5 @@
 -- workspace.kitz.services core tables
--- Apply to xyz88-io Supabase project (mqkjbejuuedauygeccbj) via SQL Editor.
+-- Apply to workspace Supabase project (mqkjbejuuedauygeccbj) via SQL Editor.
 
 -- Contacts (CRM)
 CREATE TABLE IF NOT EXISTS contacts (

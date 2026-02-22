@@ -2,7 +2,7 @@
  * Fact Check Tools — Validate outbound message content against real KITZ data.
  * Uses Claude Haiku for claim extraction.
  */
-import { callXyz88Mcp } from './mcpClient.js';
+import { callWorkspaceMcp } from './mcpClient.js';
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -56,10 +56,10 @@ export function getAllFactCheckTools(): ToolSchema[] {
         for (const claim of claims) {
           // Verify against real data
           if (claim.type === 'order_amount' || claim.type === 'order_status') {
-            const orders = await callXyz88Mcp('list_orders', { limit: 5 }, traceId) as { data?: unknown[] };
+            const orders = await callWorkspaceMcp('list_orders', { limit: 5 }, traceId) as { data?: unknown[] };
             flags.push({ claim: `${claim.type}: ${claim.value}`, verified: !!orders?.data?.length, source: 'orders' });
           } else if (claim.type === 'contact_name') {
-            const contacts = await callXyz88Mcp('list_contacts', { search: claim.value, limit: 1 }, traceId) as { data?: unknown[] };
+            const contacts = await callWorkspaceMcp('list_contacts', { search: claim.value, limit: 1 }, traceId) as { data?: unknown[] };
             flags.push({ claim: `contact: ${claim.value}`, verified: !!contacts?.data?.length, source: 'contacts' });
           } else {
             flags.push({ claim: `${claim.type}: ${claim.value}`, verified: false, source: 'unverifiable' });

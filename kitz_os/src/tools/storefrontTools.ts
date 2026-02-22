@@ -1,7 +1,7 @@
 /**
- * Storefront & Product Tools — CRUD via xyz88-io MCP.
+ * Storefront & Product Tools — CRUD via workspace MCP.
  */
-import { callXyz88Mcp } from './mcpClient.js';
+import { callWorkspaceMcp } from './mcpClient.js';
 import type { ToolSchema } from './registry.js';
 
 export function getAllStorefrontTools(): ToolSchema[] {
@@ -11,7 +11,7 @@ export function getAllStorefrontTools(): ToolSchema[] {
       description: 'List storefronts/payment links',
       parameters: { type: 'object', properties: { status: { type: 'string' }, limit: { type: 'number' } } },
       riskLevel: 'low',
-      execute: async (args, traceId) => callXyz88Mcp('list_storefronts', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('list_storefronts', args, traceId),
     },
     {
       name: 'storefronts_create',
@@ -29,7 +29,7 @@ export function getAllStorefrontTools(): ToolSchema[] {
         required: ['title', 'price'],
       },
       riskLevel: 'medium',
-      execute: async (args, traceId) => callXyz88Mcp('create_storefront', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('create_storefront', args, traceId),
     },
     {
       name: 'storefronts_update',
@@ -40,7 +40,7 @@ export function getAllStorefrontTools(): ToolSchema[] {
         required: ['storefront_id'],
       },
       riskLevel: 'medium',
-      execute: async (args, traceId) => callXyz88Mcp('update_storefront', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('update_storefront', args, traceId),
     },
     {
       name: 'storefronts_markPaid',
@@ -51,7 +51,7 @@ export function getAllStorefrontTools(): ToolSchema[] {
         required: ['storefront_id'],
       },
       riskLevel: 'high',
-      execute: async (args, traceId) => callXyz88Mcp('mark_storefront_paid', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('mark_storefront_paid', args, traceId),
     },
     {
       name: 'storefronts_send',
@@ -62,7 +62,7 @@ export function getAllStorefrontTools(): ToolSchema[] {
         required: ['storefront_id'],
       },
       riskLevel: 'medium',
-      execute: async (args, traceId) => callXyz88Mcp('send_storefront', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('send_storefront', args, traceId),
     },
     {
       name: 'storefronts_delete',
@@ -77,7 +77,7 @@ export function getAllStorefrontTools(): ToolSchema[] {
         if (!args.approval_token) {
           return { pending: true, message: 'Delete requires email approval. Approval request will be sent.' };
         }
-        return callXyz88Mcp('delete_storefront', args, traceId);
+        return callWorkspaceMcp('delete_storefront', args, traceId);
       },
     },
     {
@@ -85,7 +85,7 @@ export function getAllStorefrontTools(): ToolSchema[] {
       description: 'List catalog products',
       parameters: { type: 'object', properties: { limit: { type: 'number' } } },
       riskLevel: 'low',
-      execute: async (args, traceId) => callXyz88Mcp('list_products', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('list_products', args, traceId),
     },
     {
       name: 'products_create',
@@ -96,7 +96,7 @@ export function getAllStorefrontTools(): ToolSchema[] {
         required: ['name', 'price'],
       },
       riskLevel: 'medium',
-      execute: async (args, traceId) => callXyz88Mcp('create_product', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('create_product', args, traceId),
     },
     {
       name: 'products_update',
@@ -107,7 +107,7 @@ export function getAllStorefrontTools(): ToolSchema[] {
         required: ['product_id'],
       },
       riskLevel: 'medium',
-      execute: async (args, traceId) => callXyz88Mcp('update_product', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('update_product', args, traceId),
     },
     {
       name: 'products_delete',
@@ -122,7 +122,7 @@ export function getAllStorefrontTools(): ToolSchema[] {
         if (!args.approval_token) {
           return { pending: true, message: 'Delete requires email approval. Approval request will be sent.' };
         }
-        return callXyz88Mcp('delete_product', args, traceId);
+        return callWorkspaceMcp('delete_product', args, traceId);
       },
     },
   ];

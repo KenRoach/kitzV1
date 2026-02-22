@@ -5,7 +5,7 @@ This workspace contains the **Kitz** platform repositories and starter services.
 ## Included repositories
 
 - `kitz-services`
-- `xyz88-io`
+- `workspace`
 - `admin-kitz-services`
 - `kitz-gateway`
 - `kitz-brain`

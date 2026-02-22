@@ -1,4 +1,4 @@
-name: xyz88 ops nightly
+name: workspace ops nightly
 
 on:
   schedule:
@@ -14,15 +14,15 @@ jobs:
         with:
           node-version: '20'
       - run: npm ci
-        working-directory: xyz88-io
+        working-directory: workspace
       - run: npm run ops:export-scorecard
-        working-directory: xyz88-io
+        working-directory: workspace
         env:
           NODE_ENV: test
           LOVABLE_WEBHOOK_URL: ${{ secrets.LOVABLE_WEBHOOK_URL }}
           LOVABLE_WEBHOOK_TOKEN: ${{ secrets.LOVABLE_WEBHOOK_TOKEN }}
       - run: npm run ops:check-alerts
-        working-directory: xyz88-io
+        working-directory: workspace
         env:
           NODE_ENV: test
           LOVABLE_WEBHOOK_URL: ${{ secrets.LOVABLE_WEBHOOK_URL }}
