@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import formbody from '@fastify/formbody';
 import { randomUUID } from 'node:crypto';
+import { callMcp, mcpConfigured } from './mcp.js';
 
 export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
@@ -502,8 +503,20 @@ app.get('/leads', async (req: any, reply: any) => {
   if (!session) return;
   trackUsage('leads.view');
 
-  const leads = userLeads.get(session.userId) || [];
+  // Fetch from MCP (Supabase) with in-memory fallback
+  let leads: Lead[] = userLeads.get(session.userId) || [];
+  if (mcpConfigured) {
+    const result = await callMcp('list_contacts', { limit: 100 }, session.userId) as any;
+    if (result && !result.error && Array.isArray(result)) {
+      leads = result.map((c: any) => ({
+        id: c.id, name: c.name || '', phone: c.phone || '', email: c.email || '',
+        notes: c.notes || '', createdAt: c.created_at || new Date().toISOString(),
+      }));
+    }
+  }
+
   const thisWeek = leads.filter(l => Date.now() - new Date(l.createdAt).getTime() < 604800000).length;
+  const active = leads.filter(l => !(l as any).status || (l as any).status !== 'inactive').length;
 
   const listHtml = leads.length
     ? leads.map(l => `<div class="list-item">
@@ -514,10 +527,10 @@ app.get('/leads', async (req: any, reply: any) => {
 
   return shell('Leads', `
     <h1 class="page-title">Leads & Contacts</h1>
-    <p class="page-desc">Track your leads and customers. Manual mode is always free.</p>
+    <p class="page-desc">Track your leads and customers. Manual mode is always free.${mcpConfigured ? '' : ' <span style="color:#555">(offline mode)</span>'}</p>
     <div class="stats-row">
       <div class="stat"><div class="stat-value">${leads.length}</div><div class="stat-label">Total Leads</div></div>
-      <div class="stat"><div class="stat-value">${leads.length}</div><div class="stat-label">Active</div></div>
+      <div class="stat"><div class="stat-value">${active}</div><div class="stat-label">Active</div></div>
       <div class="stat"><div class="stat-value">${thisWeek}</div><div class="stat-label">This Week</div></div>
     </div>
     <div class="card">
@@ -547,6 +560,11 @@ app.post('/leads/add', async (req: any, reply: any) => {
   const { name, phone, email, notes } = req.body || {};
   if (!name) return reply.redirect('/leads');
 
+  // Write to MCP (Supabase)
+  if (mcpConfigured) {
+    await callMcp('create_contact', { name, phone: phone || undefined, email: email || undefined, notes: notes || undefined, status: 'lead' }, session.userId);
+  }
+  // Also keep in-memory for instant reads
   const leads = userLeads.get(session.userId) || [];
   leads.push({ id: randomUUID(), name, phone: phone || '', email: email || '', notes: notes || '', createdAt: new Date().toISOString() });
   userLeads.set(session.userId, leads);
@@ -558,6 +576,10 @@ app.post('/leads/delete', async (req: any, reply: any) => {
   const session = requireSession(req, reply);
   if (!session) return;
   const { id } = req.body || {};
+  // Mark inactive in MCP (no hard delete tool)
+  if (mcpConfigured && id) {
+    await callMcp('update_contact', { contact_id: id, status: 'inactive' }, session.userId);
+  }
   const leads = userLeads.get(session.userId) || [];
   userLeads.set(session.userId, leads.filter(l => l.id !== id));
   return reply.redirect('/leads');
@@ -570,7 +592,20 @@ app.get('/orders', async (req: any, reply: any) => {
   if (!session) return;
   trackUsage('orders.view');
 
-  const orders = userOrders.get(session.userId) || [];
+  // Fetch from MCP (Supabase) with in-memory fallback
+  let orders: Order[] = userOrders.get(session.userId) || [];
+  if (mcpConfigured) {
+    const result = await callMcp('list_orders', { limit: 100 }, session.userId) as any;
+    if (result && !result.error && Array.isArray(result)) {
+      orders = result.map((o: any) => ({
+        id: o.id, customer: o.contact_name || o.notes || 'Customer',
+        amount: Number(o.total) || 0, description: o.notes || '',
+        status: o.payment_status === 'completed' ? 'completed' : 'open',
+        createdAt: o.created_at || new Date().toISOString(),
+      }));
+    }
+  }
+
   const openOrders = orders.filter(o => o.status === 'open');
   const totalRevenue = orders.filter(o => o.status === 'completed').reduce((sum, o) => sum + o.amount, 0);
   const completed = orders.filter(o => o.status === 'completed').length;
@@ -620,6 +655,22 @@ app.post('/orders/add', async (req: any, reply: any) => {
   const { customer, amount, description } = req.body || {};
   if (!customer || !amount) return reply.redirect('/orders');
 
+  // Write to MCP: create contact first (orders require contact_id), then order
+  if (mcpConfigured) {
+    // Find or create contact
+    let contactId: string | null = null;
+    const existing = await callMcp('list_contacts', { search: customer, limit: 1 }, session.userId) as any;
+    if (existing && !existing.error && Array.isArray(existing) && existing.length > 0) {
+      contactId = existing[0].id;
+    } else {
+      const created = await callMcp('create_contact', { name: customer, status: 'active' }, session.userId) as any;
+      if (created && !created.error) contactId = created.id;
+    }
+    if (contactId) {
+      await callMcp('create_order', { contact_id: contactId, total: Number(amount), notes: description || customer }, session.userId);
+    }
+  }
+  // Also keep in-memory
   const orders = userOrders.get(session.userId) || [];
   orders.push({ id: randomUUID(), customer, amount: Number(amount), description: description || '', status: 'open', createdAt: new Date().toISOString() });
   userOrders.set(session.userId, orders);
@@ -631,6 +682,10 @@ app.post('/orders/complete', async (req: any, reply: any) => {
   const session = requireSession(req, reply);
   if (!session) return;
   const { id } = req.body || {};
+  // Update in MCP
+  if (mcpConfigured && id) {
+    await callMcp('update_order', { order_id: id, payment_status: 'completed', fulfillment_status: 'delivered' }, session.userId);
+  }
   const orders = userOrders.get(session.userId) || [];
   const order = orders.find(o => o.id === id);
   if (order) order.status = 'completed';
@@ -717,8 +772,21 @@ app.get('/checkout-links', async (req: any, reply: any) => {
   if (!session) return;
   trackUsage('checkout-links.view');
 
-  const links = userCheckoutLinks.get(session.userId) || [];
-  const totalCollected = links.reduce((sum, l) => sum + l.amount, 0);
+  // Fetch from MCP (Supabase storefronts) with in-memory fallback
+  let links: CheckoutLink[] = userCheckoutLinks.get(session.userId) || [];
+  if (mcpConfigured) {
+    const result = await callMcp('list_storefronts', { limit: 100 }, session.userId) as any;
+    if (result && !result.error && Array.isArray(result)) {
+      links = result.map((s: any) => ({
+        id: s.id, orderId: s.title || 'Payment',
+        amount: Number(s.price || s.amount) || 0,
+        url: s.short_url || `https://workspace.kitz.services/pay/${(s.id || '').slice(0, 8)}`,
+        createdAt: s.created_at || new Date().toISOString(),
+      }));
+    }
+  }
+
+  const totalValue = links.reduce((sum, l) => sum + l.amount, 0);
 
   const listHtml = links.length
     ? links.map(l => `<div class="list-item">
@@ -735,7 +803,7 @@ app.get('/checkout-links', async (req: any, reply: any) => {
     <p class="page-desc">Create mobile payment links. Share via WhatsApp or copy the URL.</p>
     <div class="stats-row">
       <div class="stat"><div class="stat-value">${links.length}</div><div class="stat-label">Active Links</div></div>
-      <div class="stat"><div class="stat-value">$${totalCollected.toFixed(2)}</div><div class="stat-label">Total Value</div></div>
+      <div class="stat"><div class="stat-value">$${totalValue.toFixed(2)}</div><div class="stat-label">Total Value</div></div>
     </div>
     <div class="card">
       <div class="card-header">
@@ -764,16 +832,16 @@ app.post('/checkout-links/create', async (req: any, reply: any) => {
   trackUsage('checkout-links.create');
   funnel.firstAction += 1;
 
-  // Call gateway for checkout session
   let checkoutUrl = `https://workspace.kitz.services/pay/${randomUUID().slice(0, 8)}`;
-  try {
-    const data = await gatewayFetch(session, '/payments/checkout-session', {
-      method: 'POST',
-      body: JSON.stringify({ orderId, amount: Number(amount), currency: 'USD' }),
-    });
-    if (data.mobileCheckoutLink) checkoutUrl = data.mobileCheckoutLink;
-  } catch { /* use fallback URL */ }
 
+  // Write to MCP (Supabase storefronts)
+  if (mcpConfigured) {
+    const result = await callMcp('create_storefront', { title: orderId, price: Number(amount) }, session.userId) as any;
+    if (result && !result.error && result.short_url) checkoutUrl = result.short_url;
+    else if (result && !result.error && result.id) checkoutUrl = `https://workspace.kitz.services/pay/${result.id.slice(0, 8)}`;
+  }
+
+  // Also keep in-memory
   const links = userCheckoutLinks.get(session.userId) || [];
   links.push({ id: randomUUID(), orderId, amount: Number(amount), url: checkoutUrl, createdAt: new Date().toISOString() });
   userCheckoutLinks.set(session.userId, links);

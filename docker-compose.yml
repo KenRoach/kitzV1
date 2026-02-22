@@ -221,6 +221,8 @@ services:
       <<: *env-common
       PORT: 3001
       GATEWAY_URL: http://kitz-gateway:4000
+      WORKSPACE_MCP_URL: ${WORKSPACE_MCP_URL:-}
+      WORKSPACE_MCP_KEY: ${WORKSPACE_MCP_KEY:-}
       ELEVENLABS_AGENT_ID: ${ELEVENLABS_AGENT_ID:-}
     depends_on:
       - kitz-gateway
