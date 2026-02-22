@@ -197,7 +197,7 @@ export function getAllVoiceTools(): ToolSchema[] {
           html: snippet,
           instructions: 'Add this snippet before </body> in your HTML. The widget appears as a floating button in the bottom-right corner.',
           targets: [
-            'kitz.io (xyz88-io)',
+            'workspace.kitz.services',
             'kitz.services',
             'admin.kitz.services',
           ],

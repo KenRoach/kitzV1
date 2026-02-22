@@ -14,7 +14,7 @@ describe('compliance schema', () => {
       regulatory_body: 'DGI',
       update_type: 'none',
       summary_simple: 'No major regulatory change was detected in this run.',
-      operational_impact: 'No immediate workflow change required for xyz88.io or Kitz operations.',
+      operational_impact: 'No immediate workflow change required for workspace.kitz.services or Kitz operations.',
       required_action: ['Continue regular monitoring and keep records of each run.'],
       deadline: null,
       risk_level: 'Low',

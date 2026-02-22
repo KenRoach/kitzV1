@@ -4,8 +4,8 @@ _Last updated: 2026-02-18_
 
 ## Reliability
 - Uptime: TBD (wire from monitoring)
-- Error rate: tracked via `GET /api/ops/metrics` in xyz88-io
-- p95 latency: tracked via `GET /api/ops/metrics` in xyz88-io
+- Error rate: tracked via `GET /api/ops/metrics` in xyz88-io (workspace.kitz.services)
+- p95 latency: tracked via `GET /api/ops/metrics` in xyz88-io (workspace.kitz.services)
 - Deploy count: TBD
 - Incidents: TBD
 

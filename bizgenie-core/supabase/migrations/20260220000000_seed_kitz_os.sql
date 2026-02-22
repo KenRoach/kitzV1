@@ -11,20 +11,20 @@ VALUES (
   'kitz',
   'AI Business Operating System',
   'technology',
-  'https://kitz.io'
+  'https://kitz.services'
 ) ON CONFLICT (id) DO NOTHING;
 
 -- 2. Agent configurations
 INSERT INTO public.agent_configurations (business_id, agent_type, name, system_prompt, is_active, config)
 VALUES
-  ('134f52d0-90a3-4806-a1bd-c37ef31d4f6f', 'ceo', 'CEO Agent', 'You are the CEO strategic advisor. Focus on vision, strategy, and high-impact decisions.', true, '{"email_identity":{"address":"ceo@agents.kitz.io","can_write_email":false}}'::jsonb),
-  ('134f52d0-90a3-4806-a1bd-c37ef31d4f6f', 'sales', 'Sales Agent', 'You are the Sales Agent. Focus on pipeline, follow-ups, and conversion.', true, '{"email_identity":{"address":"sales@agents.kitz.io","can_write_email":false}}'::jsonb),
-  ('134f52d0-90a3-4806-a1bd-c37ef31d4f6f', 'ops', 'Ops Agent', 'You are the Operations Agent. Focus on fulfillment, delivery, and efficiency.', true, '{"email_identity":{"address":"ops@agents.kitz.io","can_write_email":false}}'::jsonb),
-  ('134f52d0-90a3-4806-a1bd-c37ef31d4f6f', 'cfo', 'CFO Agent', 'You are the CFO Agent. Focus on revenue, margins, and financial health.', true, '{"email_identity":{"address":"cfo@agents.kitz.io","can_write_email":false}}'::jsonb),
-  ('134f52d0-90a3-4806-a1bd-c37ef31d4f6f', 'support', 'Support Agent', 'You are the Support Agent. Focus on customer satisfaction and retention.', true, '{"email_identity":{"address":"support@agents.kitz.io","can_write_email":false}}'::jsonb),
-  ('134f52d0-90a3-4806-a1bd-c37ef31d4f6f', 'marketing', 'Marketing Agent', 'You are the Marketing Agent. Focus on growth, content, and brand.', true, '{"email_identity":{"address":"marketing@agents.kitz.io","can_write_email":false}}'::jsonb),
-  ('134f52d0-90a3-4806-a1bd-c37ef31d4f6f', 'admin_assistant', 'Administrative Assistant', 'You are the Administrative Assistant. You are the SOLE agent authorized to compose and send emails. All email operations are logged.', true, '{"email_identity":{"address":"admin@agents.kitz.io","can_write_email":true},"permissions":["email:write","email:read","audit:read","braindump:process"]}'::jsonb),
-  ('134f52d0-90a3-4806-a1bd-c37ef31d4f6f', 'fact_checker', 'Compliance Fact-Checker', 'You are the Compliance Fact-Checker. Verify outbound messages contain ONLY truthful, verifiable information.', true, '{"email_identity":{"address":"compliance@agents.kitz.io","can_write_email":false},"permissions":["data:read","compliance:validate"]}'::jsonb)
+  ('134f52d0-90a3-4806-a1bd-c37ef31d4f6f', 'ceo', 'CEO Agent', 'You are the CEO strategic advisor. Focus on vision, strategy, and high-impact decisions.', true, '{"email_identity":{"address":"ceo@agents.kitz.services","can_write_email":false}}'::jsonb),
+  ('134f52d0-90a3-4806-a1bd-c37ef31d4f6f', 'sales', 'Sales Agent', 'You are the Sales Agent. Focus on pipeline, follow-ups, and conversion.', true, '{"email_identity":{"address":"sales@agents.kitz.services","can_write_email":false}}'::jsonb),
+  ('134f52d0-90a3-4806-a1bd-c37ef31d4f6f', 'ops', 'Ops Agent', 'You are the Operations Agent. Focus on fulfillment, delivery, and efficiency.', true, '{"email_identity":{"address":"ops@agents.kitz.services","can_write_email":false}}'::jsonb),
+  ('134f52d0-90a3-4806-a1bd-c37ef31d4f6f', 'cfo', 'CFO Agent', 'You are the CFO Agent. Focus on revenue, margins, and financial health.', true, '{"email_identity":{"address":"cfo@agents.kitz.services","can_write_email":false}}'::jsonb),
+  ('134f52d0-90a3-4806-a1bd-c37ef31d4f6f', 'support', 'Support Agent', 'You are the Support Agent. Focus on customer satisfaction and retention.', true, '{"email_identity":{"address":"support@agents.kitz.services","can_write_email":false}}'::jsonb),
+  ('134f52d0-90a3-4806-a1bd-c37ef31d4f6f', 'marketing', 'Marketing Agent', 'You are the Marketing Agent. Focus on growth, content, and brand.', true, '{"email_identity":{"address":"marketing@agents.kitz.services","can_write_email":false}}'::jsonb),
+  ('134f52d0-90a3-4806-a1bd-c37ef31d4f6f', 'admin_assistant', 'Administrative Assistant', 'You are the Administrative Assistant. You are the SOLE agent authorized to compose and send emails. All email operations are logged.', true, '{"email_identity":{"address":"admin@agents.kitz.services","can_write_email":true},"permissions":["email:write","email:read","audit:read","braindump:process"]}'::jsonb),
+  ('134f52d0-90a3-4806-a1bd-c37ef31d4f6f', 'fact_checker', 'Compliance Fact-Checker', 'You are the Compliance Fact-Checker. Verify outbound messages contain ONLY truthful, verifiable information.', true, '{"email_identity":{"address":"compliance@agents.kitz.services","can_write_email":false},"permissions":["data:read","compliance:validate"]}'::jsonb)
 ON CONFLICT DO NOTHING;
 
 -- 3. Emergency controls

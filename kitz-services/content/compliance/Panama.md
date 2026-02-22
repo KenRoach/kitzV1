@@ -6,7 +6,7 @@ Last updated: 2026-02-18T22:59:40.216Z
 No major regulatory change was detected in this run. Keep monitoring official portals.
 
 ## Operational impact
-No immediate workflow change required for xyz88.io or Kitz operations.
+No immediate workflow change required for workspace.kitz.services or Kitz operations.
 
 ## What you need to do
 - [ ] Continue regular monitoring and keep records of each run.

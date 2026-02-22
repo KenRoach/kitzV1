@@ -11,7 +11,7 @@ const summarize = (finding: RawFinding): ComplianceUpdate => ({
   regulatory_body: finding.regulatory_body,
   update_type: finding.update_type,
   summary_simple: `The ${finding.regulatory_body} posted an update: ${finding.title}. Please review the official source link below.`,
-  operational_impact: `Kitz operations in Panama should verify if this affects billing, labor processes, or business filing steps in xyz88.io and admin workflows.`,
+  operational_impact: `Kitz operations in Panama should verify if this affects billing, labor processes, or business filing steps in workspace.kitz.services and admin workflows.`,
   required_action: [
     'Open the official source and confirm if the update applies to your business.',
     'Record impacted workflow in admin-kitz-services approvals/audit.',
@@ -32,7 +32,7 @@ export const normalizeFindings = (findings: RawFinding[]): ComplianceUpdate[] =>
         regulatory_body: 'DGI',
         update_type: 'none',
         summary_simple: 'No major regulatory change was detected in this run. Keep monitoring official portals.',
-        operational_impact: 'No immediate workflow change required for xyz88.io or Kitz operations.',
+        operational_impact: 'No immediate workflow change required for workspace.kitz.services or Kitz operations.',
         required_action: ['Continue regular monitoring and keep records of each run.'],
         deadline: null,
         risk_level: 'Low',
