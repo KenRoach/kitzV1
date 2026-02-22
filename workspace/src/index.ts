@@ -7,6 +7,7 @@ import { callMcp, mcpConfigured } from './mcp.js';
 export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
 const gatewayUrl = process.env.GATEWAY_URL || 'http://localhost:4000';
+const waConnectorUrl = process.env.WA_CONNECTOR_URL || 'http://localhost:3006';
 const COOKIE_NAME = 'kitz_session';
 
 const ELEVENLABS_AGENT_ID = process.env.ELEVENLABS_AGENT_ID || '';
@@ -79,12 +80,13 @@ function requireSession(req: any, reply: any): Session | null {
 
 /* ── HTML Shell ── */
 
-const shell = (title: string, body: string, session: Session | null, script = '') => `<!DOCTYPE html>
+const shell = (title: string, body: string, session: Session | null, script = '', extraHead = '') => `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KITZ \u2014 ${title}</title>
+  ${extraHead}
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -355,6 +357,7 @@ const shell = (title: string, body: string, session: Session | null, script = ''
     <a href="/orders" class="${title === 'Orders' ? 'active' : ''}">Orders</a>
     <a href="/tasks" class="${title === 'Tasks' ? 'active' : ''}">Tasks</a>
     <a href="/checkout-links" class="${title === 'Checkout Links' ? 'active' : ''}">Checkout</a>
+    <a href="/whatsapp" class="${title === 'WhatsApp' ? 'active' : ''}">WhatsApp</a>
     <a href="/ai-direction" class="${title === 'AI Direction' ? 'active' : ''}">AI</a>
   </nav>` : ''}
   <div class="main">${body}</div>
@@ -847,6 +850,254 @@ app.post('/checkout-links/create', async (req: any, reply: any) => {
   userCheckoutLinks.set(session.userId, links);
 
   return reply.redirect('/checkout-links');
+});
+
+/* ── WhatsApp Page ── */
+
+app.get('/whatsapp', async (req: any, reply: any) => {
+  const session = requireSession(req, reply);
+  if (!session) return;
+  trackUsage('whatsapp.view');
+
+  // Check current connection status from the connector
+  let waStatus: { isConnected: boolean; phoneNumber: string | null } = { isConnected: false, phoneNumber: null };
+  try {
+    const res = await fetch(`${waConnectorUrl}/whatsapp/sessions/${session.userId}/status`, {
+      signal: AbortSignal.timeout(3000),
+    });
+    if (res.ok) {
+      const data = await res.json() as any;
+      if (!data.error) {
+        waStatus = { isConnected: !!data.isConnected, phoneNumber: data.phoneNumber || null };
+      }
+    }
+  } catch {}
+
+  return shell('WhatsApp', `
+    <h1 class="page-title">WhatsApp</h1>
+    <p class="page-desc">Connect your WhatsApp to KITZ. Messages to yourself become AI-powered commands.</p>
+
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-value" style="color:${waStatus.isConnected ? '#00d4aa' : '#ff6b6b'}" id="wa-status-dot">${waStatus.isConnected ? 'Connected' : 'Offline'}</div>
+        <div class="stat-label">Status</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="wa-phone">${waStatus.phoneNumber ? '+' + waStatus.phoneNumber : '--'}</div>
+        <div class="stat-label">Phone</div>
+      </div>
+    </div>
+
+    <div id="connected-view" style="display:${waStatus.isConnected ? 'block' : 'none'}">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">WhatsApp Connected</span>
+          <span class="card-badge" style="background:#00d4aa22;color:#00d4aa">LIVE</span>
+        </div>
+        <p style="color:#888;font-size:14px;line-height:1.6;margin-bottom:16px;">
+          Your WhatsApp is connected to KITZ. Open WhatsApp and send a message to yourself (your own chat) to interact with your AI business assistant.
+        </p>
+        <p style="color:#666;font-size:13px;">Try sending: <strong style="color:#ccc">"show my leads"</strong> or <strong style="color:#ccc">"create order for Maria $25"</strong></p>
+      </div>
+      <button class="btn btn-secondary btn-sm" id="btn-reconnect" style="margin-top:12px">Reconnect / New QR</button>
+    </div>
+
+    <div id="scan-view" style="display:${waStatus.isConnected ? 'none' : 'block'}">
+      <div class="card" style="text-align:center">
+        <div class="card-header" style="justify-content:center">
+          <span class="card-title">Scan QR Code</span>
+        </div>
+        <div id="qr-wrapper" style="position:relative;display:inline-block;margin:16px 0">
+          <svg id="countdown-ring" width="292" height="292" viewBox="0 0 292 292" style="position:absolute;top:-6px;left:-6px;pointer-events:none;display:none;">
+            <circle fill="none" stroke-width="4" stroke="#222" cx="146" cy="146" r="143"/>
+            <circle fill="none" stroke-width="4" stroke="#00d4aa" stroke-linecap="round" id="ring-progress" cx="146" cy="146" r="143"
+              stroke-dasharray="898.5" stroke-dashoffset="0" transform="rotate(-90 146 146)"/>
+          </svg>
+          <div id="qr-container" style="background:#fff;border-radius:16px;padding:24px;display:inline-block;min-width:280px;min-height:280px;">
+            <div id="spinner" style="width:48px;height:48px;border:3px solid #333;border-top-color:#00d4aa;border-radius:50%;animation:spin 0.8s linear infinite;margin:100px auto;"></div>
+            <canvas id="qr-canvas"></canvas>
+          </div>
+        </div>
+        <div id="qr-status" style="font-size:16px;color:#00d4aa;margin-bottom:4px;min-height:24px;">Connecting...</div>
+        <div id="countdown-text" style="font-size:13px;color:#555;margin-bottom:16px;min-height:20px;font-variant-numeric:tabular-nums;"></div>
+        <div style="color:#666;font-size:13px;line-height:1.6;text-align:left;max-width:320px;margin:0 auto;">
+          <strong style="color:#aaa">1.</strong> Open WhatsApp on your phone<br>
+          <strong style="color:#aaa">2.</strong> Go to Settings &rarr; Linked Devices<br>
+          <strong style="color:#aaa">3.</strong> Tap "Link a Device"<br>
+          <strong style="color:#aaa">4.</strong> Point your camera at this QR code
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-info" style="margin-top:16px;">
+      KITZ uses the self-chat model: only messages you send to yourself trigger AI. All other chats stay private.
+    </div>
+  `, session, `
+    var scanView = document.getElementById('scan-view');
+    var connView = document.getElementById('connected-view');
+    var qrStatus = document.getElementById('qr-status');
+    var spinner = document.getElementById('spinner');
+    var canvas = document.getElementById('qr-canvas');
+    var ring = document.getElementById('countdown-ring');
+    var ringProgress = document.getElementById('ring-progress');
+    var countdownText = document.getElementById('countdown-text');
+    var statusDot = document.getElementById('wa-status-dot');
+    var phoneEl = document.getElementById('wa-phone');
+    var evtSource = null;
+    var countdownInterval = null;
+    var QR_LIFETIME = 60;
+    var CIRCUMFERENCE = 898.5;
+    var secondsLeft = QR_LIFETIME;
+
+    function startCountdown() {
+      secondsLeft = QR_LIFETIME;
+      ring.style.display = 'block';
+      ringProgress.style.strokeDashoffset = '0';
+      updateCountdown();
+      if (countdownInterval) clearInterval(countdownInterval);
+      countdownInterval = setInterval(function() {
+        secondsLeft--;
+        if (secondsLeft <= 0) {
+          clearInterval(countdownInterval);
+          countdownText.textContent = 'New QR loading...';
+          ringProgress.style.strokeDashoffset = CIRCUMFERENCE;
+          return;
+        }
+        updateCountdown();
+      }, 1000);
+    }
+
+    function updateCountdown() {
+      var pct = 1 - (secondsLeft / QR_LIFETIME);
+      ringProgress.style.strokeDashoffset = (pct * CIRCUMFERENCE).toFixed(1);
+      if (secondsLeft > 10) {
+        countdownText.textContent = secondsLeft + 's remaining';
+        ringProgress.style.stroke = '#00d4aa';
+      } else {
+        countdownText.textContent = secondsLeft + 's — scan now!';
+        ringProgress.style.stroke = '#ff6b6b';
+      }
+    }
+
+    function startSSE() {
+      if (evtSource) { evtSource.close(); }
+      scanView.style.display = 'block';
+      connView.style.display = 'none';
+      spinner.style.display = 'block';
+      canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+      qrStatus.textContent = 'Connecting...';
+      qrStatus.style.color = '#00d4aa';
+
+      evtSource = new EventSource('/whatsapp/proxy-connect');
+
+      evtSource.addEventListener('qr', function(e) {
+        spinner.style.display = 'none';
+        qrStatus.textContent = 'Scan with WhatsApp';
+        qrStatus.style.color = '#00d4aa';
+        QRCode.toCanvas(canvas, e.data, { width: 256, margin: 0, color: { dark: '#000', light: '#fff' } });
+        startCountdown();
+      });
+
+      evtSource.addEventListener('connected', function(e) {
+        if (countdownInterval) clearInterval(countdownInterval);
+        var data = JSON.parse(e.data);
+        scanView.style.display = 'none';
+        connView.style.display = 'block';
+        statusDot.textContent = 'Connected';
+        statusDot.style.color = '#00d4aa';
+        phoneEl.textContent = '+' + (data.phone || 'Connected');
+        evtSource.close();
+        showToast('WhatsApp connected!');
+      });
+
+      evtSource.addEventListener('error', function() {
+        qrStatus.textContent = 'Connection error — retrying...';
+        qrStatus.style.color = '#ff6b6b';
+      });
+
+      evtSource.addEventListener('logged_out', function() {
+        qrStatus.textContent = 'Session expired — click Reconnect';
+        qrStatus.style.color = '#ff6b6b';
+      });
+
+      evtSource.onerror = function() {
+        qrStatus.textContent = 'Server disconnected — click Reconnect';
+        qrStatus.style.color = '#ff6b6b';
+      };
+    }
+
+    // Start SSE only if not already connected
+    if (!${waStatus.isConnected}) {
+      startSSE();
+    }
+
+    document.getElementById('btn-reconnect')?.addEventListener('click', function() {
+      startSSE();
+    });
+  `, '<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js" async><\/script>');
+});
+
+// ── WhatsApp SSE proxy — forwards QR stream from connector with workspace userId ──
+app.get('/whatsapp/proxy-connect', async (req: any, reply: any) => {
+  const session = getSession(req);
+  if (!session) return reply.code(401).send({ error: 'Not authenticated' });
+
+  reply.raw.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+  });
+
+  try {
+    const upstream = await fetch(`${waConnectorUrl}/whatsapp/connect?userId=${session.userId}`, {
+      headers: { Accept: 'text/event-stream' },
+      signal: AbortSignal.timeout(120_000),
+    });
+
+    if (!upstream.ok || !upstream.body) {
+      reply.raw.write(`event: error\ndata: ${JSON.stringify({ error: 'WhatsApp connector unavailable' })}\n\n`);
+      reply.raw.end();
+      return;
+    }
+
+    const reader = upstream.body.getReader();
+    const decoder = new TextDecoder();
+
+    const pump = async () => {
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          reply.raw.write(decoder.decode(value, { stream: true }));
+        }
+      } catch {}
+      reply.raw.end();
+    };
+
+    pump();
+
+    req.raw.on('close', () => {
+      try { reader.cancel(); } catch {}
+    });
+  } catch {
+    reply.raw.write(`event: error\ndata: ${JSON.stringify({ error: 'Cannot reach WhatsApp connector' })}\n\n`);
+    reply.raw.end();
+  }
+});
+
+// ── WhatsApp status API ──
+app.get('/api/whatsapp/status', async (req: any) => {
+  const session = getSession(req);
+  if (!session) return { error: 'Not authenticated' };
+  try {
+    const res = await fetch(`${waConnectorUrl}/whatsapp/sessions/${session.userId}/status`, {
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!res.ok) return { isConnected: false, phoneNumber: null };
+    return await res.json();
+  } catch {
+    return { isConnected: false, phoneNumber: null, error: 'connector_offline' };
+  }
 });
 
 /* ── AI Direction Page ── */

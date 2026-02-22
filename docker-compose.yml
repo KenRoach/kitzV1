@@ -221,11 +221,13 @@ services:
       <<: *env-common
       PORT: 3001
       GATEWAY_URL: http://kitz-gateway:4000
+      WA_CONNECTOR_URL: http://kitz-whatsapp-connector:3006
       WORKSPACE_MCP_URL: ${WORKSPACE_MCP_URL:-}
       WORKSPACE_MCP_KEY: ${WORKSPACE_MCP_KEY:-}
       ELEVENLABS_AGENT_ID: ${ELEVENLABS_AGENT_ID:-}
     depends_on:
       - kitz-gateway
+      - kitz-whatsapp-connector
 
   # ── Brain (cron — no port) ──
   kitz-brain:
