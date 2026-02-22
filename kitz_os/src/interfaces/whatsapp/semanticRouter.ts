@@ -84,6 +84,72 @@ const DIRECT_EXECUTE_TOOLS = new Set([
   'web_scrape', 'web_search', 'web_summarize', 'web_extract',
 ]);
 
+// ── Draft-First Classification ──
+// Write tools that MUST go through draft approval before execution.
+// Read-only tools execute immediately. This is a safety-critical list.
+const WRITE_TOOLS = new Set([
+  // CRM writes
+  'crm_createContact', 'crm_updateContact',
+  // Order writes
+  'orders_createOrder', 'orders_updateOrder',
+  // Storefront writes
+  'storefronts_create', 'storefronts_update', 'storefronts_delete',
+  'storefronts_markPaid', 'storefronts_send',
+  // Product writes
+  'products_create', 'products_update', 'products_delete',
+  // Outbound messages (highest risk — sends to real humans)
+  'outbound_sendWhatsApp', 'outbound_sendEmail',
+  'outbound_sendVoiceNote', 'outbound_makeCall',
+  // Email compose/send
+  'email_compose', 'email_sendApprovalRequest',
+  // Calendar writes
+  'calendar_addEvent', 'calendar_updateEvent', 'calendar_deleteEvent', 'calendar_addTask',
+  // Artifact writes
+  'artifact_generateCode', 'artifact_generateDocument', 'artifact_generateTool',
+  'artifact_selfHeal', 'artifact_generateMigration', 'artifact_pushToLovable',
+  // Lovable writes
+  'lovable_addProject', 'lovable_updateProject', 'lovable_removeProject',
+  'lovable_pushArtifact', 'lovable_linkProjects',
+]);
+
+// In-memory draft queue: traceId → pending drafts
+interface DraftAction {
+  toolName: string;
+  args: Record<string, unknown>;
+  traceId: string;
+  userId?: string;
+  createdAt: string;
+  status: 'pending' | 'approved' | 'rejected';
+}
+const draftQueue = new Map<string, DraftAction[]>();
+
+export function getDraftQueue(): Map<string, DraftAction[]> { return draftQueue; }
+
+export function approveDraft(traceId: string, index: number): DraftAction | null {
+  const drafts = draftQueue.get(traceId);
+  if (!drafts || !drafts[index]) return null;
+  drafts[index].status = 'approved';
+  return drafts[index];
+}
+
+export function rejectDraft(traceId: string, index: number): DraftAction | null {
+  const drafts = draftQueue.get(traceId);
+  if (!drafts || !drafts[index]) return null;
+  drafts[index].status = 'rejected';
+  return drafts[index];
+}
+
+function isWriteTool(toolName: string): boolean {
+  return WRITE_TOOLS.has(toolName);
+}
+
+function formatDraftSummary(drafts: DraftAction[]): string {
+  const lines = drafts.map((d, i) =>
+    `${i + 1}. *${d.toolName}*${d.args ? ` — ${JSON.stringify(d.args).slice(0, 80)}` : ''}`
+  );
+  return `📋 *Draft Actions* (approval required)\n\n${lines.join('\n')}\n\nReply "approve" to execute or "reject" to cancel.`;
+}
+
 // ── System Prompt ──
 function buildSystemPrompt(toolCount: number): string {
   return `You are KITZ, an AI Business Operating System responding via WhatsApp.
@@ -237,7 +303,9 @@ export async function routeWithAI(
     // Add assistant message with tool calls
     messages.push(result.message);
 
-    // Execute each tool call
+    // Execute each tool call — draft-first for writes
+    const pendingDrafts: DraftAction[] = [];
+
     for (const tc of result.message.tool_calls) {
       const toolName = tc.function.name;
       let args: Record<string, unknown> = {};
@@ -252,20 +320,60 @@ export async function routeWithAI(
       console.log(JSON.stringify({
         ts: new Date().toISOString(),
         module: 'semanticRouter',
-        action: 'tool_call',
+        action: isWriteTool(toolName) ? 'tool_draft' : 'tool_call',
         tool: toolName,
         loop,
         trace_id: traceId,
       }));
 
-      const toolResult = await executeTool(toolName, args, registry, traceId, userId);
+      // Draft-first: write tools are queued, not executed
+      if (isWriteTool(toolName)) {
+        const draft: DraftAction = {
+          toolName,
+          args,
+          traceId,
+          userId,
+          createdAt: new Date().toISOString(),
+          status: 'pending',
+        };
+        pendingDrafts.push(draft);
 
-      messages.push({
-        role: 'tool',
-        content: toolResult,
-        tool_call_id: tc.id,
-        name: toolName,
-      });
+        // Return a draft confirmation to the AI so it knows the action is pending
+        messages.push({
+          role: 'tool',
+          content: JSON.stringify({ status: 'drafted', message: `Action "${toolName}" queued as draft. Awaiting user approval.` }),
+          tool_call_id: tc.id,
+          name: toolName,
+        });
+      } else {
+        // Read-only tools execute immediately
+        const toolResult = await executeTool(toolName, args, registry, traceId, userId);
+        messages.push({
+          role: 'tool',
+          content: toolResult,
+          tool_call_id: tc.id,
+          name: toolName,
+        });
+      }
+    }
+
+    // If any writes were drafted, store them and break the loop to inform user
+    if (pendingDrafts.length > 0) {
+      const existing = draftQueue.get(traceId) || [];
+      existing.push(...pendingDrafts);
+      draftQueue.set(traceId, existing);
+
+      // Let AI generate a final response acknowledging the drafts
+      // then append the draft summary
+      const draftSummary = formatDraftSummary(pendingDrafts);
+      if (!result.message.content) {
+        return { response: draftSummary, toolsUsed, creditsConsumed: totalCreditsConsumed };
+      }
+      return {
+        response: `${result.message.content}\n\n${draftSummary}`,
+        toolsUsed,
+        creditsConsumed: totalCreditsConsumed,
+      };
     }
   }
 

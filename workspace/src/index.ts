@@ -702,7 +702,19 @@ app.get('/tasks', async (req: any, reply: any) => {
   if (!session) return;
   trackUsage('tasks.view');
 
-  const tasks = userTasks.get(session.userId) || [];
+  // Fetch from MCP (Supabase) with in-memory fallback
+  let tasks: Task[] = userTasks.get(session.userId) || [];
+  if (mcpConfigured) {
+    const result = await callMcp('list_tasks', { limit: 100 }, session.userId) as any;
+    if (result && !result.error && Array.isArray(result)) {
+      tasks = result.map((t: any) => ({
+        id: t.id,
+        title: t.title || t.description || '',
+        status: t.status || 'todo',
+        createdAt: t.created_at || new Date().toISOString(),
+      }));
+    }
+  }
   const todo = tasks.filter(t => t.status === 'todo').length;
   const inProgress = tasks.filter(t => t.status === 'in_progress').length;
   const done = tasks.filter(t => t.status === 'done').length;
@@ -722,7 +734,7 @@ app.get('/tasks', async (req: any, reply: any) => {
 
   return shell('Tasks', `
     <h1 class="page-title">Tasks</h1>
-    <p class="page-desc">Create, assign, and close sales & ops tasks.</p>
+    <p class="page-desc">Create, assign, and close sales & ops tasks.${mcpConfigured ? '' : ' <span style="color:#555">(offline mode)</span>'}</p>
     <div class="stats-row">
       <div class="stat"><div class="stat-value">${todo}</div><div class="stat-label">To Do</div></div>
       <div class="stat"><div class="stat-value">${inProgress}</div><div class="stat-label">In Progress</div></div>
@@ -751,6 +763,11 @@ app.post('/tasks/add', async (req: any, reply: any) => {
   const { title } = req.body || {};
   if (!title) return reply.redirect('/tasks');
 
+  // Write to MCP (Supabase)
+  if (mcpConfigured) {
+    await callMcp('create_task', { title, status: 'todo' }, session.userId);
+  }
+  // Also keep in-memory for instant reads
   const tasks = userTasks.get(session.userId) || [];
   tasks.push({ id: randomUUID(), title, status: 'todo', createdAt: new Date().toISOString() });
   userTasks.set(session.userId, tasks);
@@ -762,6 +779,10 @@ app.post('/tasks/done', async (req: any, reply: any) => {
   const session = requireSession(req, reply);
   if (!session) return;
   const { id } = req.body || {};
+  // Update in MCP
+  if (mcpConfigured && id) {
+    await callMcp('update_task', { task_id: id, status: 'done' }, session.userId);
+  }
   const tasks = userTasks.get(session.userId) || [];
   const task = tasks.find(t => t.id === id);
   if (task) task.status = 'done';
@@ -1126,9 +1147,11 @@ app.get('/ai-direction', async (req: any, reply: any) => {
     <div class="alert alert-info">Manual mode is always free. AI costs 0.5\u20132 credits per task.</div>
   `, session, `fetch('/api/ai-battery').then(function(r){return r.json()}).then(function(d){
     var c=d.credits||0;
-    document.getElementById('battery-credits').textContent=c;
-    document.getElementById('battery-status').textContent=c>0?'Active':'Depleted';
-    if(c>0){document.getElementById('run-ai').disabled=false;}
+    var limit=d.dailyLimit||5;
+    var depleted=d.depleted||false;
+    document.getElementById('battery-credits').textContent=c+'/'+limit;
+    document.getElementById('battery-status').textContent=depleted?'Depleted':(d.status==='kitz_os_offline'?'Offline':'Active');
+    if(!depleted&&c>0){document.getElementById('run-ai').disabled=false;}
     else{document.getElementById('battery-warn').style.display='block';}
   }).catch(function(){
     document.getElementById('battery-credits').textContent='?';

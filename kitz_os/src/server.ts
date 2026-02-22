@@ -31,7 +31,7 @@
 import Fastify from 'fastify';
 import type { KitzKernel } from './kernel.js';
 import { parseWhatsAppCommand } from './interfaces/whatsapp/commandParser.js';
-import { routeWithAI } from './interfaces/whatsapp/semanticRouter.js';
+import { routeWithAI, getDraftQueue, approveDraft, rejectDraft } from './interfaces/whatsapp/semanticRouter.js';
 import { textToSpeech, getKitzVoiceConfig, getWidgetSnippet, isElevenLabsConfigured } from './llm/elevenLabsClient.js';
 import { getBatteryStatus, recordRecharge, getLedger } from './aiBattery.js';
 import { initMemory, storeMessage, buildContextWindow } from './memory/manager.js';
@@ -207,6 +207,75 @@ export async function createServer(kernel: KitzKernel) {
             };
           }
 
+          case 'approve': {
+            // Find the most recent pending drafts for this user
+            const queue = getDraftQueue();
+            let targetTraceId: string | null = null;
+            let pendingDrafts: Array<{ toolName: string; status: string }> = [];
+
+            for (const [tid, drafts] of queue) {
+              const pending = drafts.filter(d => d.status === 'pending' && (!d.userId || d.userId === userId));
+              if (pending.length > 0) {
+                targetTraceId = tid;
+                pendingDrafts = pending;
+                break;
+              }
+            }
+
+            if (!targetTraceId || pendingDrafts.length === 0) {
+              return { command: 'approve', response: 'No pending drafts to approve.' };
+            }
+
+            // Approve and execute all pending drafts
+            const allDrafts = queue.get(targetTraceId)!;
+            const executed: string[] = [];
+            for (let i = 0; i < allDrafts.length; i++) {
+              if (allDrafts[i].status !== 'pending') continue;
+              const draft = approveDraft(targetTraceId, i);
+              if (draft) {
+                try {
+                  await kernel.tools.invoke(draft.toolName, draft.args, draft.traceId);
+                  executed.push(draft.toolName);
+                } catch (err) {
+                  executed.push(`${draft.toolName} (failed: ${(err as Error).message})`);
+                }
+              }
+            }
+
+            return {
+              command: 'approve',
+              response: `✅ *Approved & executed ${executed.length} action(s):*\n${executed.map(t => `• ${t}`).join('\n')}`,
+            };
+          }
+
+          case 'reject': {
+            const queue2 = getDraftQueue();
+            let targetTraceId2: string | null = null;
+
+            for (const [tid, drafts] of queue2) {
+              const pending = drafts.filter(d => d.status === 'pending' && (!d.userId || d.userId === userId));
+              if (pending.length > 0) { targetTraceId2 = tid; break; }
+            }
+
+            if (!targetTraceId2) {
+              return { command: 'reject', response: 'No pending drafts to reject.' };
+            }
+
+            const allDrafts2 = queue2.get(targetTraceId2)!;
+            let rejectedCount = 0;
+            for (let i = 0; i < allDrafts2.length; i++) {
+              if (allDrafts2[i].status === 'pending') {
+                rejectDraft(targetTraceId2, i);
+                rejectedCount++;
+              }
+            }
+
+            return {
+              command: 'reject',
+              response: `❌ Rejected ${rejectedCount} pending draft(s). No actions taken.`,
+            };
+          }
+
           default:
             break;
         }
@@ -253,7 +322,66 @@ export async function createServer(kernel: KitzKernel) {
     }
   );
 
-  // ── Approve a run ──
+  // ── Draft approval (draft-first enforcement) ──
+  app.post<{ Body: { trace_id: string; action: 'approve' | 'reject'; index?: number } }>(
+    '/api/kitz/drafts/decide',
+    async (req, reply) => {
+      const { trace_id, action, index } = req.body || {};
+      if (!trace_id) return reply.code(400).send({ error: 'trace_id required' });
+
+      const drafts = getDraftQueue().get(trace_id);
+      if (!drafts || drafts.length === 0) {
+        return reply.code(404).send({ error: 'No pending drafts for this trace_id' });
+      }
+
+      // If index is specified, approve/reject one draft. Otherwise, all pending.
+      const indices = index !== undefined ? [index] : drafts.map((_, i) => i).filter(i => drafts[i].status === 'pending');
+      const results: Array<{ index: number; toolName: string; status: string; result?: string }> = [];
+
+      for (const i of indices) {
+        if (action === 'approve') {
+          const draft = approveDraft(trace_id, i);
+          if (draft) {
+            // Execute the approved tool
+            const { routeWithAI: _, ...rest } = { routeWithAI: null }; // avoid unused
+            try {
+              const toolResult = await kernel.tools.invoke(draft.toolName, draft.args, draft.traceId);
+              results.push({ index: i, toolName: draft.toolName, status: 'executed', result: typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult) });
+            } catch (err) {
+              results.push({ index: i, toolName: draft.toolName, status: 'error', result: (err as Error).message });
+            }
+          }
+        } else {
+          const draft = rejectDraft(trace_id, i);
+          if (draft) {
+            results.push({ index: i, toolName: draft.toolName, status: 'rejected' });
+          }
+        }
+      }
+
+      return { trace_id, action, results };
+    }
+  );
+
+  // ── List pending drafts ──
+  app.get<{ Querystring: { trace_id?: string } }>(
+    '/api/kitz/drafts',
+    async (req) => {
+      const traceId = req.query.trace_id;
+      if (traceId) {
+        return { trace_id: traceId, drafts: getDraftQueue().get(traceId) || [] };
+      }
+      // Return all pending drafts across all traces
+      const all: Array<{ trace_id: string; drafts: unknown[] }> = [];
+      for (const [tid, drafts] of getDraftQueue()) {
+        const pending = drafts.filter(d => d.status === 'pending');
+        if (pending.length > 0) all.push({ trace_id: tid, drafts: pending });
+      }
+      return { pending_count: all.reduce((n, e) => n + e.drafts.length, 0), traces: all };
+    }
+  );
+
+  // ── Legacy approve endpoint (kept for backward compat) ──
   app.post<{ Body: { run_id: string; approved: boolean; notes?: string } }>(
     '/api/kitz/approve',
     async (req) => {
