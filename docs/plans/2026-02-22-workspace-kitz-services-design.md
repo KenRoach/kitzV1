@@ -53,7 +53,7 @@ All tables use `business_id` tenant key with RLS: `business_id IN (SELECT id FRO
 - **Data**: supabase-js client (direct connection, RLS for security)
 - **Auth**: Supabase Auth (magic link + email/password)
 - **Deploy**: Lovable preview URL -> point `workspace.kitz.services` CNAME to it
-- **Sync**: Code syncs to `KenRoach/xyz88-io` GitHub repo via Lovable
+- **Sync**: Code syncs to `KenRoach/workspace` GitHub repo via Lovable
 
 ## Infrastructure Identifiers
 
@@ -63,5 +63,5 @@ All tables use `business_id` tenant key with RLS: `business_id IN (SELECT id FRO
 - **Supabase URL:** https://yjustozltqpsroxkjobf.supabase.co
 - **Lovable preview:** https://preview--bizgenie-core.lovable.app
 - **Lovable published:** https://bizgenie-core.lovable.app
-- **GitHub repo:** KenRoach/xyz88-io
+- **GitHub repo:** KenRoach/workspace
 - **Custom domains:** workspace.kitz.services, admin.kitz.services

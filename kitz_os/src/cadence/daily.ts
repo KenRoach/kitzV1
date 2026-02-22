@@ -4,7 +4,7 @@
 
 import type { KitzKernel } from '../kernel.js';
 import type { CadenceReport } from './engine.js';
-import { callXyz88Mcp } from '../tools/mcpClient.js';
+import { callWorkspaceMcp } from '../tools/mcpClient.js';
 
 export async function generateDailyBrief(kernel: KitzKernel): Promise<CadenceReport> {
   const now = new Date();
@@ -15,11 +15,11 @@ export async function generateDailyBrief(kernel: KitzKernel): Promise<CadenceRep
   let orders: Record<string, unknown> = {};
 
   try {
-    summary = await callXyz88Mcp('business_summary', {}) as Record<string, unknown>;
+    summary = await callWorkspaceMcp('business_summary', {}) as Record<string, unknown>;
   } catch { /* use empty */ }
 
   try {
-    orders = await callXyz88Mcp('list_orders', { limit: 5 }) as Record<string, unknown>;
+    orders = await callWorkspaceMcp('list_orders', { limit: 5 }) as Record<string, unknown>;
   } catch { /* use empty */ }
 
   const sections = [

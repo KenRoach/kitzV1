@@ -1,4 +1,4 @@
-# xyz88-io
+# workspace
 
 Lite CRM + order dashboard + mobile checkout links (draft send via queue).
 

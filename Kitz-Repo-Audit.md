@@ -88,7 +88,7 @@ This audit was performed against the current local checkout that mirrors the `Ki
 ### Implemented
 - Added inbound signature check placeholder, draft-only outbound route, suppression check, unsubscribe endpoint, and trace-audited logs.
 
-## 8) xyz88-io (workspace.kitz.services)
+## 8) workspace (workspace.kitz.services)
 ### Existing
 - Minimal HTML routes for Leads/Orders/Tasks/AI Direction/Checkout Links.
 ### Missing vs target

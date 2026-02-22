@@ -19,7 +19,7 @@
  */
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { callXyz88Mcp } from './mcpClient.js';
+import { callWorkspaceMcp } from './mcpClient.js';
 import type { ToolSchema } from './registry.js';
 
 // ── Config ──
@@ -34,7 +34,7 @@ const LOVABLE_WEBHOOK_TOKEN = process.env.LOVABLE_WEBHOOK_TOKEN || '';
 
 // Sandbox root — artifacts can only be written inside this directory
 const SANDBOX_ROOT = path.resolve(process.cwd(), '..');
-const ALLOWED_DIRS = ['kitz_os', 'xyz88-io', 'kitz-brain', 'scripts', 'docs'];
+const ALLOWED_DIRS = ['kitz_os', 'workspace', 'kitz-brain', 'scripts', 'docs'];
 
 // ── LLM Call ──
 async function generateWithLLM(
@@ -229,7 +229,7 @@ export function getAllArtifactTools(): ToolSchema[] {
 
 Rules:
 - Output ONLY the code, no markdown fences, no explanations before/after
-- Follow existing KITZ OS patterns: ToolSchema interface, callXyz88Mcp for MCP, claudeChat for LLM
+- Follow existing KITZ OS patterns: ToolSchema interface, callWorkspaceMcp for MCP, claudeChat for LLM
 - Use ESM imports (import/export, .js extensions)
 - Include JSDoc comments for public functions
 - Handle errors gracefully
@@ -262,7 +262,7 @@ ${context ? `\nCodebase context:\n${context}` : ''}`;
 
         // Save to knowledge base
         try {
-          await callXyz88Mcp('add_knowledge', {
+          await callWorkspaceMcp('add_knowledge', {
             title: `Generated Code: ${description.slice(0, 80)}`,
             content: code.slice(0, 5000),
             category: 'artifact_code',
@@ -356,7 +356,7 @@ ${context ? `\nBusiness context:\n${context}` : ''}`;
         }
 
         try {
-          await callXyz88Mcp('add_knowledge', {
+          await callWorkspaceMcp('add_knowledge', {
             title: `${docType.charAt(0).toUpperCase() + docType.slice(1)}: ${topic.slice(0, 80)}`,
             content: doc.slice(0, 5000),
             category: `artifact_${docType}`,
@@ -420,7 +420,7 @@ The tool must follow this exact pattern:
 
 \`\`\`typescript
 import type { ToolSchema } from './registry.js';
-${usesMcp ? "import { callXyz88Mcp } from './mcpClient.js';" : ''}
+${usesMcp ? "import { callWorkspaceMcp } from './mcpClient.js';" : ''}
 
 export function getAllXxxTools(): ToolSchema[] {
   return [
@@ -449,7 +449,7 @@ Rules:
 - Return structured objects, not strings
 - Use structured JSON logging (no console.log)
 - TypeScript strict mode compatible
-${usesMcp ? '- Use callXyz88Mcp() for data operations' : ''}
+${usesMcp ? '- Use callWorkspaceMcp() for data operations' : ''}
 ${usesLlm ? '- Include Claude API calls with OpenAI fallback (same pattern as braindumpTools.ts)' : ''}`;
 
         const code = await generateWithLLM(systemPrompt, purpose, 4096, 0.2);
@@ -691,7 +691,7 @@ ${tables.length ? `\nTables to create/modify: ${tables.join(', ')}` : ''}`;
         const limit = (args.limit as number) || 10;
 
         try {
-          const results = await callXyz88Mcp('list_knowledge', {
+          const results = await callWorkspaceMcp('list_knowledge', {
             limit,
             category: args.category !== 'all' ? args.category : undefined,
           }, traceId);

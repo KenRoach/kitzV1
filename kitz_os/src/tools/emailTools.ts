@@ -1,7 +1,7 @@
 /**
  * Email Tools — Inbox read (all agents) + compose/send (admin_assistant ONLY).
  */
-import { callXyz88Mcp } from './mcpClient.js';
+import { callWorkspaceMcp } from './mcpClient.js';
 import type { ToolSchema } from './registry.js';
 
 export function getAllEmailTools(): ToolSchema[] {
@@ -18,7 +18,7 @@ export function getAllEmailTools(): ToolSchema[] {
         },
       },
       riskLevel: 'low',
-      execute: async (args, traceId) => callXyz88Mcp('list_inbox_messages', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('list_inbox_messages', args, traceId),
     },
     {
       name: 'email_compose',

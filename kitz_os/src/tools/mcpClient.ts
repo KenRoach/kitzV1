@@ -1,11 +1,11 @@
 /**
- * MCP Client — JSON-RPC 2.0 HTTP client for xyz88-io MCP server.
+ * MCP Client — JSON-RPC 2.0 HTTP client for workspace MCP server.
  *
  * Injects GOD_MODE_USER_ID into every tool call for service-role access.
  */
 
-const XYZ88_MCP_URL = process.env.XYZ88_MCP_URL || 'https://mqkjbejuuedauygeccbj.supabase.co/functions/v1/mcp-server/mcp';
-const XYZ88_MCP_KEY = process.env.XYZ88_MCP_KEY || '';
+const WORKSPACE_MCP_URL = process.env.WORKSPACE_MCP_URL || 'https://mqkjbejuuedauygeccbj.supabase.co/functions/v1/mcp-server/mcp';
+const WORKSPACE_MCP_KEY = process.env.WORKSPACE_MCP_KEY || '';
 const GOD_MODE_USER_ID = process.env.GOD_MODE_USER_ID || '8787fee9-d06a-442f-91ba-fd082b134ccf';
 
 interface McpResponse {
@@ -15,7 +15,7 @@ interface McpResponse {
   error?: { code: number; message: string };
 }
 
-export async function callXyz88Mcp(
+export async function callWorkspaceMcp(
   toolName: string,
   args: Record<string, unknown> = {},
   traceId?: string,
@@ -33,8 +33,8 @@ export async function callXyz88Mcp(
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
-  if (XYZ88_MCP_KEY) {
-    headers['x-api-key'] = XYZ88_MCP_KEY;
+  if (WORKSPACE_MCP_KEY) {
+    headers['x-api-key'] = WORKSPACE_MCP_KEY;
   }
   if (traceId) {
     headers['x-trace-id'] = traceId;
@@ -49,7 +49,7 @@ export async function callXyz88Mcp(
   }));
 
   try {
-    const res = await fetch(XYZ88_MCP_URL, {
+    const res = await fetch(WORKSPACE_MCP_URL, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),

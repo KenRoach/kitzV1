@@ -4,7 +4,7 @@
  * Uses Claude Sonnet for analysis (mid-tier thinking).
  * Falls back to OpenAI gpt-4o if Claude unavailable.
  */
-import { callXyz88Mcp } from './mcpClient.js';
+import { callWorkspaceMcp } from './mcpClient.js';
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -111,7 +111,7 @@ export function getAllBraindumpTools(): ToolSchema[] {
 
         // Save to knowledge base
         try {
-          await callXyz88Mcp('add_knowledge', {
+          await callWorkspaceMcp('add_knowledge', {
             title: parsed.title || 'Brain Dump',
             content: JSON.stringify(parsed),
             category: 'brain_dump',

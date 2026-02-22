@@ -18,12 +18,12 @@
  */
 
 import { chatCompletion, getAiModel, type ChatMessage, type ToolDef } from '../../llm/aiClient.js';
-import { callXyz88Mcp } from '../../tools/mcpClient.js';
+import { callWorkspaceMcp } from '../../tools/mcpClient.js';
 import type { OsToolRegistry } from '../../tools/registry.js';
 import { recordLLMSpend, hasBudget, getBatteryStatus } from '../../aiBattery.js';
 
 // ── Tool-to-MCP Mapping ──
-// Maps KITZ OS tool names to xyz88-io MCP tool names for direct execution
+// Maps KITZ OS tool names to workspace MCP tool names for direct execution
 const TOOL_TO_MCP: Record<string, string> = {
   // CRM
   'crm_listContacts': 'list_contacts',
@@ -153,7 +153,7 @@ async function executeTool(
   // Check if tool maps to MCP
   const mcpToolName = TOOL_TO_MCP[toolName];
   if (mcpToolName) {
-    const result = await callXyz88Mcp(mcpToolName, args, traceId);
+    const result = await callWorkspaceMcp(mcpToolName, args, traceId);
     return typeof result === 'string' ? result : JSON.stringify(result);
   }
 

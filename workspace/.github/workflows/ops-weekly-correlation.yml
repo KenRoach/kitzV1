@@ -1,4 +1,4 @@
-name: xyz88 weekly feedback-metrics correlation
+name: workspace weekly feedback-metrics correlation
 
 on:
   schedule:
@@ -14,9 +14,9 @@ jobs:
         with:
           node-version: '20'
       - run: npm ci
-        working-directory: xyz88-io
+        working-directory: workspace
       - run: npm run ops:update-decision-log
-        working-directory: xyz88-io
+        working-directory: workspace
         env:
           NODE_ENV: test
           LOVABLE_WEBHOOK_URL: ${{ secrets.LOVABLE_WEBHOOK_URL }}

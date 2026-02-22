@@ -4,7 +4,7 @@
 
 import type { KitzKernel } from '../kernel.js';
 import type { CadenceReport } from './engine.js';
-import { callXyz88Mcp } from '../tools/mcpClient.js';
+import { callWorkspaceMcp } from '../tools/mcpClient.js';
 
 export async function generateWeeklyScorecard(kernel: KitzKernel): Promise<CadenceReport> {
   const now = new Date();
@@ -13,7 +13,7 @@ export async function generateWeeklyScorecard(kernel: KitzKernel): Promise<Caden
 
   let summary: Record<string, unknown> = {};
   try {
-    summary = await callXyz88Mcp('business_summary', {}) as Record<string, unknown>;
+    summary = await callWorkspaceMcp('business_summary', {}) as Record<string, unknown>;
   } catch { /* use empty */ }
 
   const sections = [

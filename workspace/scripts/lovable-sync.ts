@@ -3,7 +3,7 @@ import path from 'node:path';
 
 type LovablePayload = {
   type: 'ops_update';
-  source: 'xyz88-io';
+  source: 'workspace';
   timestamp: string;
   summary: string;
   changed_files: string[];
@@ -27,7 +27,7 @@ const writeQueueFallback = async (payload: LovablePayload): Promise<void> => {
 export const pushUpdateToLovable = async (summary: string, changedFiles: string[]): Promise<void> => {
   const payload: LovablePayload = {
     type: 'ops_update',
-    source: 'xyz88-io',
+    source: 'workspace',
     timestamp: new Date().toISOString(),
     summary,
     changed_files: changedFiles

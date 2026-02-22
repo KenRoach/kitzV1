@@ -1,6 +1,6 @@
 -- Payment Transactions table
 -- Stores every incoming payment confirmation from any provider.
--- Apply to xyz88-io Supabase project (mqkjbejuuedauygeccbj) via SQL Editor.
+-- Apply to workspace Supabase project (mqkjbejuuedauygeccbj) via SQL Editor.
 --
 -- KITZ OS receive-only policy: only incoming payments are recorded.
 -- amount CHECK > 0 enforces this at the DB level.

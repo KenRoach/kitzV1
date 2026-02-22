@@ -1,11 +1,11 @@
 /**
- * CRM & Order Tools — CRUD operations via xyz88-io MCP.
+ * CRM & Order Tools — CRUD operations via workspace MCP.
  *
  * 9 tools: contacts (list, get, create, update), orders (list, get, create, update), business summary.
  * All use GOD_MODE_USER_ID for service-role access.
  */
 
-import { callXyz88Mcp } from './mcpClient.js';
+import { callWorkspaceMcp } from './mcpClient.js';
 import type { ToolSchema } from './registry.js';
 
 export function getAllCrmTools(): ToolSchema[] {
@@ -22,7 +22,7 @@ export function getAllCrmTools(): ToolSchema[] {
         },
       },
       riskLevel: 'low',
-      execute: async (args, traceId) => callXyz88Mcp('list_contacts', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('list_contacts', args, traceId),
     },
     {
       name: 'crm_getContact',
@@ -35,7 +35,7 @@ export function getAllCrmTools(): ToolSchema[] {
         required: ['contact_id'],
       },
       riskLevel: 'low',
-      execute: async (args, traceId) => callXyz88Mcp('get_contact', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('get_contact', args, traceId),
     },
     {
       name: 'crm_createContact',
@@ -53,7 +53,7 @@ export function getAllCrmTools(): ToolSchema[] {
         required: ['name'],
       },
       riskLevel: 'medium',
-      execute: async (args, traceId) => callXyz88Mcp('create_contact', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('create_contact', args, traceId),
     },
     {
       name: 'crm_updateContact',
@@ -73,7 +73,7 @@ export function getAllCrmTools(): ToolSchema[] {
         required: ['contact_id'],
       },
       riskLevel: 'medium',
-      execute: async (args, traceId) => callXyz88Mcp('update_contact', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('update_contact', args, traceId),
     },
     {
       name: 'orders_listOrders',
@@ -87,7 +87,7 @@ export function getAllCrmTools(): ToolSchema[] {
         },
       },
       riskLevel: 'low',
-      execute: async (args, traceId) => callXyz88Mcp('list_orders', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('list_orders', args, traceId),
     },
     {
       name: 'orders_getOrder',
@@ -100,7 +100,7 @@ export function getAllCrmTools(): ToolSchema[] {
         required: ['order_id'],
       },
       riskLevel: 'low',
-      execute: async (args, traceId) => callXyz88Mcp('get_order', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('get_order', args, traceId),
     },
     {
       name: 'orders_createOrder',
@@ -120,7 +120,7 @@ export function getAllCrmTools(): ToolSchema[] {
         required: ['contact_id', 'total'],
       },
       riskLevel: 'medium',
-      execute: async (args, traceId) => callXyz88Mcp('create_order', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('create_order', args, traceId),
     },
     {
       name: 'orders_updateOrder',
@@ -138,14 +138,14 @@ export function getAllCrmTools(): ToolSchema[] {
         required: ['order_id'],
       },
       riskLevel: 'medium',
-      execute: async (args, traceId) => callXyz88Mcp('update_order', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('update_order', args, traceId),
     },
     {
       name: 'crm_businessSummary',
       description: 'Get a business overview: contact count, order count, revenue summary',
       parameters: { type: 'object', properties: {} },
       riskLevel: 'low',
-      execute: async (args, traceId) => callXyz88Mcp('business_summary', args, traceId),
+      execute: async (args, traceId) => callWorkspaceMcp('business_summary', args, traceId),
     },
   ];
 }
