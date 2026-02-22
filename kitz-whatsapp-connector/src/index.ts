@@ -466,21 +466,21 @@ const LOGIN_HTML = `<!DOCTYPE html>
       <div id="countdown-text"></div>
       <div class="instructions">
         <strong>1.</strong> Open WhatsApp on your phone<br>
-        <strong>2.</strong> Go to Settings &gt; Linked Devices<br>
+        <strong>2.</strong> Go to Settings \u2192 Linked Devices<br>
         <strong>3.</strong> Tap "Link a Device"<br>
-        <strong>4.</strong> Scan this QR code
+        <strong>4.</strong> Point your camera at this QR code
       </div>
     </div>
 
     <div class="connected" id="connected-view">
       <div class="check">\u2705</div>
       <div class="phone" id="phone-number"></div>
-      <div id="status2">WhatsApp connected to KITZ</div>
-      <br>
-      <div class="instructions">
+      <div id="status2" style="color:#00d4aa;font-size:16px;margin-bottom:16px;">WhatsApp connected to KITZ</div>
+      <div class="instructions" style="margin-bottom:24px;">
         Messages to your number are now powered by KITZ AI.<br>
-        You can close this page.
+        Try sending "hola" to yourself to test it.
       </div>
+      <button onclick="location.reload()" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;border:1px solid #222;background:#111;color:#ccc;font-size:14px;font-weight:600;cursor:pointer;">Connect Another Device</button>
     </div>
   </div>
 

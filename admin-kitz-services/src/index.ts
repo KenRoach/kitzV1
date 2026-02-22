@@ -334,6 +334,15 @@ const ADMIN_HTML = `<!DOCTYPE html>
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     .error { color: #ff6b6b !important; }
+    .btn-sm { padding: 6px 14px; font-size: 12px; }
+    .tab {
+      background: transparent;
+      color: #555;
+      border: 1px solid transparent;
+      border-radius: 6px;
+    }
+    .tab:hover { color: #ccc; background: #111; }
+    .tab.active { color: #00d4aa; background: #00d4aa12; border-color: #00d4aa22; }
 
     /* Connected state in modal */
     .modal-connected {
@@ -387,38 +396,116 @@ const ADMIN_HTML = `<!DOCTYPE html>
   </div>
 
   <div class="main">
-    <!-- WhatsApp Section -->
-    <div class="wa-section">
-      <div class="wa-header">
-        <h3>WhatsApp</h3>
-        <div class="wa-status" id="wa-status">
-          <span class="dot" id="wa-dot"></span>
-          <span id="wa-status-text">Checking...</span>
+    <!-- Tab Navigation -->
+    <div style="display:flex;gap:2px;margin-bottom:28px;overflow-x:auto;">
+      <button class="btn btn-sm tab active" data-tab="overview" onclick="switchTab('overview')">Overview</button>
+      <button class="btn btn-sm tab" data-tab="whatsapp" onclick="switchTab('whatsapp')">WhatsApp</button>
+      <button class="btn btn-sm tab" data-tab="api-keys" onclick="switchTab('api-keys')">API Keys</button>
+      <button class="btn btn-sm tab" data-tab="audit" onclick="switchTab('audit')">Audit Log</button>
+    </div>
+
+    <!-- Overview Tab -->
+    <div id="tab-overview">
+      <h2>Overview</h2>
+      <div class="cards">
+        <div class="card">
+          <div class="card-label">AI Battery</div>
+          <div class="card-value" id="dash-credits">100</div>
+          <div class="card-sub">credits remaining</div>
+        </div>
+        <div class="card">
+          <div class="card-label">WhatsApp</div>
+          <div class="card-value" id="dash-wa-count">0</div>
+          <div class="card-sub" id="dash-wa-sub">sessions</div>
+        </div>
+        <div class="card">
+          <div class="card-label">API Keys</div>
+          <div class="card-value" id="dash-keys">0</div>
+          <div class="card-sub">configured</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Approvals</div>
+          <div class="card-value" id="dash-approvals">0</div>
+          <div class="card-sub">pending</div>
         </div>
       </div>
-      <div id="sessions-list" class="session-list"></div>
-      <div style="margin-top: 16px">
-        <button class="btn btn-primary" id="connect-btn" onclick="openQrModal()">Connect WhatsApp</button>
+
+      <!-- Quick WhatsApp Status -->
+      <div class="wa-section">
+        <div class="wa-header">
+          <h3>WhatsApp</h3>
+          <div class="wa-status" id="wa-status">
+            <span class="dot" id="wa-dot"></span>
+            <span id="wa-status-text">Checking...</span>
+          </div>
+        </div>
+        <div id="sessions-list" class="session-list"></div>
+        <div style="margin-top: 16px">
+          <button class="btn btn-primary" id="connect-btn" onclick="openQrModal()">Connect WhatsApp</button>
+        </div>
       </div>
     </div>
 
-    <!-- Dashboard Cards -->
-    <h2>Overview</h2>
-    <div class="cards">
-      <div class="card">
-        <div class="card-label">AI Battery</div>
-        <div class="card-value">100</div>
-        <div class="card-sub">credits remaining</div>
+    <!-- WhatsApp Tab (hidden) -->
+    <div id="tab-whatsapp" style="display:none;">
+      <h2>WhatsApp Sessions</h2>
+      <div class="wa-section">
+        <div class="wa-header">
+          <h3>Active Sessions</h3>
+          <div class="wa-status" id="wa-status-2">
+            <span class="dot" id="wa-dot-2"></span>
+            <span id="wa-status-text-2">Checking...</span>
+          </div>
+        </div>
+        <div id="sessions-list-2" class="session-list"></div>
+        <div style="margin-top: 16px">
+          <button class="btn btn-primary" onclick="openQrModal()">Connect New Device</button>
+        </div>
       </div>
-      <div class="card">
-        <div class="card-label">API Keys</div>
-        <div class="card-value">0</div>
-        <div class="card-sub">providers configured</div>
+      <div class="card" style="margin-top:16px;padding:16px;">
+        <div class="card-label" style="margin-bottom:8px;">How It Works</div>
+        <div style="color:#666;font-size:13px;line-height:1.6;">
+          Each WhatsApp account gets its own session via Baileys.<br>
+          Messages flow: WhatsApp \u2192 Connector \u2192 KITZ OS \u2192 AI Response \u2192 WhatsApp.<br>
+          Sessions persist across restarts (auth stored locally).
+        </div>
       </div>
-      <div class="card">
-        <div class="card-label">Approvals</div>
-        <div class="card-value">0</div>
-        <div class="card-sub">pending</div>
+    </div>
+
+    <!-- API Keys Tab (hidden) -->
+    <div id="tab-api-keys" style="display:none;">
+      <h2>API Keys</h2>
+      <div class="cards">
+        <div class="card">
+          <div class="card-label">Anthropic / Claude</div>
+          <div class="card-value" style="font-size:16px;" id="key-anthropic">\u2022\u2022\u2022</div>
+          <div class="card-sub">Haiku, Sonnet, Opus</div>
+        </div>
+        <div class="card">
+          <div class="card-label">OpenAI</div>
+          <div class="card-value" style="font-size:16px;" id="key-openai">\u2022\u2022\u2022</div>
+          <div class="card-sub">GPT-4o-mini</div>
+        </div>
+        <div class="card">
+          <div class="card-label">ElevenLabs</div>
+          <div class="card-value" style="font-size:16px;" id="key-elevenlabs">\u2022\u2022\u2022</div>
+          <div class="card-sub">TTS voice</div>
+        </div>
+      </div>
+      <div class="card" style="padding:16px;margin-top:8px;">
+        <div style="color:#666;font-size:13px;">API keys are set via environment variables on Railway. Edit them in your deployment settings.</div>
+      </div>
+    </div>
+
+    <!-- Audit Tab (hidden) -->
+    <div id="tab-audit" style="display:none;">
+      <h2>Audit Log</h2>
+      <div class="card" style="padding:16px;">
+        <div style="color:#555;font-size:13px;text-align:center;padding:32px 0;">
+          <div style="font-size:24px;margin-bottom:8px;opacity:0.4;">\uD83D\uDD0D</div>
+          Audit log streams from kitz_os trace events.<br>
+          Recent activity will appear here when the system processes requests.
+        </div>
       </div>
     </div>
   </div>
@@ -554,6 +641,44 @@ const ADMIN_HTML = `<!DOCTYPE html>
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') closeQrModal();
     });
+
+    function switchTab(name) {
+      document.querySelectorAll('[id^="tab-"]').forEach(function(el) { el.style.display = 'none'; });
+      document.querySelectorAll('.tab').forEach(function(el) { el.classList.remove('active'); });
+      var tab = document.getElementById('tab-' + name);
+      if (tab) tab.style.display = 'block';
+      var btn = document.querySelector('.tab[data-tab="' + name + '"]');
+      if (btn) btn.classList.add('active');
+      if (name === 'whatsapp') loadSessionsTab2();
+    }
+
+    function loadSessionsTab2() {
+      fetch('/whatsapp/sessions').then(function(r) { return r.json(); }).then(function(data) {
+        var sessions = data.sessions || [];
+        var connected = sessions.filter(function(s) { return s.isConnected; });
+        var d2 = document.getElementById('wa-dot-2');
+        var t2 = document.getElementById('wa-status-text-2');
+        if (connected.length > 0) { d2.className = 'dot on'; t2.textContent = connected.length + ' connected'; }
+        else { d2.className = 'dot off'; t2.textContent = 'Not connected'; }
+        var list2 = document.getElementById('sessions-list-2');
+        list2.innerHTML = sessions.map(function(s) {
+          return '<div class="session-item"><div class="session-info"><span class="dot ' + (s.isConnected ? 'on' : 'off') + '"></span><span class="session-phone">' + (s.phoneNumber ? '+' + s.phoneNumber : 'Connecting...') + '</span><span class="session-id">' + s.userId.slice(0, 8) + '</span></div><button class="btn btn-danger" onclick="disconnectSession(\\''+s.userId+'\\')">Disconnect</button></div>';
+        }).join('');
+      }).catch(function() {});
+    }
+
+    // Load dashboard data
+    fetch('/dashboard').then(function(r) { return r.json(); }).then(function(d) {
+      if (d.credits !== undefined) document.getElementById('dash-credits').textContent = d.credits;
+      if (d.approvalsPending !== undefined) document.getElementById('dash-approvals').textContent = d.approvalsPending;
+      if (d.apiKeysConfigured !== undefined) document.getElementById('dash-keys').textContent = d.apiKeysConfigured;
+    }).catch(function() {});
+
+    // Detect API keys from env
+    fetch('/api-keys').then(function(r) { return r.json(); }).then(function(d) {
+      var configured = d.configured || [];
+      document.getElementById('dash-keys').textContent = configured.length;
+    }).catch(function() {});
 
     // Load on page load
     loadSessions();
