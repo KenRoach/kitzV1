@@ -2,12 +2,16 @@ import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import formbody from '@fastify/formbody';
 import { randomUUID } from 'node:crypto';
+import { callMcp, mcpConfigured } from './mcp.js';
 
 export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
 
 const WA_CONNECTOR_URL = process.env.WA_CONNECTOR_URL || 'http://localhost:3006';
 const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:4000';
+const KITZ_OS_URL = process.env.KITZ_OS_URL || 'http://localhost:3012';
+const PAYMENTS_URL = process.env.PAYMENTS_URL || 'http://localhost:3005';
+const NOTIFICATIONS_URL = process.env.NOTIFICATIONS_URL || 'http://localhost:3008';
 const DEV_TOKEN_SECRET = process.env.DEV_TOKEN_SECRET || 'dev-secret-change-me';
 const ADMIN_COOKIE = 'kitz_admin';
 
@@ -82,12 +86,41 @@ app.get('/dashboard', async (req: any, reply: any) => {
     }
   } catch {}
 
+  // Fetch AI Battery from kitz_os
+  let batteryRemaining = '--';
+  let batteryLimit = '--';
+  let todayCalls = 0;
+  try {
+    const res = await fetch(`${KITZ_OS_URL}/api/kitz/battery`, { signal: AbortSignal.timeout(3000) });
+    if (res.ok) {
+      const bat = await res.json() as any;
+      batteryRemaining = bat.remaining ?? '--';
+      batteryLimit = bat.dailyLimit ?? '--';
+      todayCalls = bat.todayCalls || 0;
+    }
+  } catch {}
+
+  // Detect API keys
+  const keyCount = [
+    process.env.ANTHROPIC_API_KEY, process.env.AI_API_KEY,
+    process.env.ELEVENLABS_API_KEY, process.env.SUPABASE_URL,
+  ].filter(Boolean).length;
+
+  // Notification queue
+  let queueSize = 0;
+  try {
+    const res = await fetch(`${NOTIFICATIONS_URL}/queue`, { signal: AbortSignal.timeout(2000) });
+    if (res.ok) { const d = await res.json() as any; queueSize = d.queued || 0; }
+  } catch {}
+
   return {
     users: userCount,
     whatsappSessions: waConnected,
-    apiKeysConfigured: 0,
-    credits: 100,
-    approvalsPending: 0,
+    batteryRemaining,
+    batteryLimit,
+    todayCalls,
+    apiKeysConfigured: keyCount,
+    queueSize,
     traceId: randomUUID(),
   };
 });
@@ -106,10 +139,96 @@ app.get('/admin/users-list', async (req: any, reply: any) => {
   }
 });
 
-app.get('/api-keys', async () => ({ providers: ['openai/codex', 'google/gemini', 'anthropic/claude'], configured: [] }));
-app.get('/credits', async () => ({ orgId: 'demo-org', aiBatteryCredits: 100 }));
-app.get('/approvals', async () => ({ pending: [] }));
-app.get('/audit', async () => ({ entries: [] }));
+/* ── Real API Endpoints (proxied from other services) ── */
+
+// API key detection from environment
+app.get('/admin/api-key-status', async (req: any, reply: any) => {
+  if (!isAdmin(req)) return reply.code(401).send({ error: 'unauthorized' });
+  const keys = [
+    { name: 'Anthropic / Claude', env: 'ANTHROPIC_API_KEY', configured: !!process.env.ANTHROPIC_API_KEY },
+    { name: 'OpenAI', env: 'AI_API_KEY', configured: !!process.env.AI_API_KEY },
+    { name: 'ElevenLabs', env: 'ELEVENLABS_API_KEY', configured: !!process.env.ELEVENLABS_API_KEY },
+    { name: 'Supabase', env: 'SUPABASE_URL', configured: !!process.env.SUPABASE_URL },
+    { name: 'Workspace MCP', env: 'WORKSPACE_MCP_URL', configured: mcpConfigured },
+    { name: 'Stripe', env: 'STRIPE_WEBHOOK_SECRET', configured: !!process.env.STRIPE_WEBHOOK_SECRET },
+    { name: 'PayPal', env: 'PAYPAL_WEBHOOK_ID', configured: !!process.env.PAYPAL_WEBHOOK_ID },
+  ];
+  return { keys, configured: keys.filter(k => k.configured).length, total: keys.length };
+});
+
+// AI Battery — proxy from kitz_os
+app.get('/admin/battery', async (req: any, reply: any) => {
+  if (!isAdmin(req)) return reply.code(401).send({ error: 'unauthorized' });
+  try {
+    const res = await fetch(`${KITZ_OS_URL}/api/kitz/battery`, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return { error: 'kitz_os_error' };
+    return await res.json();
+  } catch {
+    return { error: 'kitz_os_offline', remaining: '--', dailyLimit: '--', todayCredits: 0, todayCalls: 0 };
+  }
+});
+
+// AI Battery ledger — real spend history from kitz_os
+app.get('/admin/battery/ledger', async (req: any, reply: any) => {
+  if (!isAdmin(req)) return reply.code(401).send({ error: 'unauthorized' });
+  try {
+    const res = await fetch(`${KITZ_OS_URL}/api/kitz/battery/ledger?limit=100`, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return { entries: [], error: 'kitz_os_error' };
+    return await res.json();
+  } catch {
+    return { entries: [], error: 'kitz_os_offline' };
+  }
+});
+
+// System status — proxy from kitz_os
+app.get('/admin/system', async (req: any, reply: any) => {
+  if (!isAdmin(req)) return reply.code(401).send({ error: 'unauthorized' });
+  try {
+    const res = await fetch(`${KITZ_OS_URL}/api/kitz/status`, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return { error: 'kitz_os_error' };
+    return await res.json();
+  } catch {
+    return { error: 'kitz_os_offline', status: 'unknown' };
+  }
+});
+
+// Business metrics — from MCP dashboard_metrics
+app.get('/admin/metrics', async (req: any, reply: any) => {
+  if (!isAdmin(req)) return reply.code(401).send({ error: 'unauthorized' });
+  if (!mcpConfigured) return { error: 'mcp_not_configured' };
+  return await callMcp('dashboard_metrics');
+});
+
+// Business summary — from MCP
+app.get('/admin/business-summary', async (req: any, reply: any) => {
+  if (!isAdmin(req)) return reply.code(401).send({ error: 'unauthorized' });
+  if (!mcpConfigured) return { error: 'mcp_not_configured' };
+  return await callMcp('business_summary');
+});
+
+// Payment ledger — from kitz-payments
+app.get('/admin/payment-ledger', async (req: any, reply: any) => {
+  if (!isAdmin(req)) return reply.code(401).send({ error: 'unauthorized' });
+  try {
+    const res = await fetch(`${PAYMENTS_URL}/ledger`, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return { entries: [], error: 'payments_error' };
+    return await res.json();
+  } catch {
+    return { entries: [], error: 'payments_offline' };
+  }
+});
+
+// Notification queue — from kitz-notifications-queue
+app.get('/admin/queue', async (req: any, reply: any) => {
+  if (!isAdmin(req)) return reply.code(401).send({ error: 'unauthorized' });
+  try {
+    const res = await fetch(`${NOTIFICATIONS_URL}/queue`, { signal: AbortSignal.timeout(3000) });
+    if (!res.ok) return { queued: 0, deadLetter: 0, error: 'queue_error' };
+    return await res.json();
+  } catch {
+    return { queued: 0, deadLetter: 0, error: 'queue_offline' };
+  }
+});
 
 // ── KITZ Voice Assistant (ElevenLabs widget) ──
 const ELEVENLABS_AGENT_ID = process.env.ELEVENLABS_AGENT_ID || '';
@@ -557,13 +676,23 @@ const ADMIN_HTML = `<!DOCTYPE html>
         </div>
         <div class="card">
           <div class="card-label">AI Battery</div>
-          <div class="card-value" id="dash-credits">100</div>
-          <div class="card-sub">credits remaining</div>
+          <div class="card-value" id="dash-battery">--</div>
+          <div class="card-sub" id="dash-battery-sub">credits remaining</div>
         </div>
         <div class="card">
           <div class="card-label">API Keys</div>
-          <div class="card-value" id="dash-keys">0</div>
+          <div class="card-value" id="dash-keys">--</div>
           <div class="card-sub">configured</div>
+        </div>
+        <div class="card">
+          <div class="card-label">AI Calls</div>
+          <div class="card-value" id="dash-calls">--</div>
+          <div class="card-sub">today</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Queue</div>
+          <div class="card-value" id="dash-queue">--</div>
+          <div class="card-sub">notifications</div>
         </div>
       </div>
 
@@ -628,22 +757,8 @@ const ADMIN_HTML = `<!DOCTYPE html>
     <!-- API Keys Tab (hidden) -->
     <div id="tab-api-keys" style="display:none;">
       <h2>API Keys</h2>
-      <div class="cards">
-        <div class="card">
-          <div class="card-label">Anthropic / Claude</div>
-          <div class="card-value" style="font-size:16px;" id="key-anthropic">\u2022\u2022\u2022</div>
-          <div class="card-sub">Haiku, Sonnet, Opus</div>
-        </div>
-        <div class="card">
-          <div class="card-label">OpenAI</div>
-          <div class="card-value" style="font-size:16px;" id="key-openai">\u2022\u2022\u2022</div>
-          <div class="card-sub">GPT-4o-mini</div>
-        </div>
-        <div class="card">
-          <div class="card-label">ElevenLabs</div>
-          <div class="card-value" style="font-size:16px;" id="key-elevenlabs">\u2022\u2022\u2022</div>
-          <div class="card-sub">TTS voice</div>
-        </div>
+      <div id="api-keys-list" class="wa-section" style="padding:16px;">
+        <div style="color:#555;text-align:center;padding:16px;font-size:13px;">Loading...</div>
       </div>
       <div class="card" style="padding:16px;margin-top:8px;">
         <div style="color:#666;font-size:13px;">API keys are set via environment variables on Railway. Edit them in your deployment settings.</div>
@@ -652,12 +767,16 @@ const ADMIN_HTML = `<!DOCTYPE html>
 
     <!-- Audit Tab (hidden) -->
     <div id="tab-audit" style="display:none;">
-      <h2>Audit Log</h2>
-      <div class="card" style="padding:16px;">
-        <div style="color:#555;font-size:13px;text-align:center;padding:32px 0;">
-          <div style="font-size:24px;margin-bottom:8px;opacity:0.4;">\uD83D\uDD0D</div>
-          Audit log streams from kitz_os trace events.<br>
-          Recent activity will appear here when the system processes requests.
+      <h2>AI Spend Ledger</h2>
+      <div class="wa-section">
+        <div class="wa-header">
+          <h3>Recent AI Spend</h3>
+          <div class="wa-status">
+            <span id="audit-count" style="font-size:13px;color:#00d4aa;">Loading...</span>
+          </div>
+        </div>
+        <div id="audit-list" class="session-list" style="max-height:500px;overflow-y:auto;">
+          <div style="color:#555;text-align:center;padding:24px;font-size:13px;">Loading...</div>
         </div>
       </div>
     </div>
@@ -804,6 +923,8 @@ const ADMIN_HTML = `<!DOCTYPE html>
       if (btn) btn.classList.add('active');
       if (name === 'whatsapp') loadSessionsTab2();
       if (name === 'users') loadUsers();
+      if (name === 'api-keys') loadApiKeys();
+      if (name === 'audit') loadAuditLog();
     }
 
     function loadSessionsTab2() {
@@ -825,8 +946,13 @@ const ADMIN_HTML = `<!DOCTYPE html>
     fetch('/dashboard').then(function(r) { return r.json(); }).then(function(d) {
       if (d.users !== undefined) document.getElementById('dash-users').textContent = d.users;
       if (d.whatsappSessions !== undefined) document.getElementById('dash-wa-count').textContent = d.whatsappSessions;
-      if (d.credits !== undefined) document.getElementById('dash-credits').textContent = d.credits;
+      if (d.batteryRemaining !== undefined) {
+        document.getElementById('dash-battery').textContent = d.batteryRemaining;
+        document.getElementById('dash-battery-sub').textContent = 'of ' + (d.batteryLimit || '?') + ' daily';
+      }
       if (d.apiKeysConfigured !== undefined) document.getElementById('dash-keys').textContent = d.apiKeysConfigured;
+      if (d.todayCalls !== undefined) document.getElementById('dash-calls').textContent = d.todayCalls;
+      if (d.queueSize !== undefined) document.getElementById('dash-queue').textContent = d.queueSize;
     }).catch(function() {});
 
     // Load users for Users tab
@@ -845,6 +971,38 @@ const ADMIN_HTML = `<!DOCTYPE html>
         }).join('');
       }).catch(function() {
         document.getElementById('users-list').innerHTML = '<div style="color:#ff6b6b;text-align:center;padding:24px;font-size:13px;">Could not load users.</div>';
+      });
+    }
+
+    // Load API key status
+    function loadApiKeys() {
+      fetch('/admin/api-key-status').then(function(r) { return r.json(); }).then(function(d) {
+        var keys = d.keys || [];
+        var list = document.getElementById('api-keys-list');
+        list.innerHTML = '<div class="wa-header"><h3>Service Keys (' + d.configured + '/' + d.total + ')</h3></div>' +
+          keys.map(function(k) {
+            return '<div class="session-item"><div class="session-info"><span class="dot ' + (k.configured ? 'on' : 'off') + '"></span><span class="session-phone">' + k.name + '</span><span class="session-id">' + k.env + '</span></div><div style="font-size:12px;color:' + (k.configured ? '#00d4aa' : '#555') + ';">' + (k.configured ? 'Configured' : 'Not set') + '</div></div>';
+          }).join('');
+      }).catch(function() {});
+    }
+
+    // Load audit log (real AI spend data from kitz_os)
+    function loadAuditLog() {
+      fetch('/admin/battery/ledger').then(function(r) { return r.json(); }).then(function(d) {
+        var entries = d.entries || [];
+        document.getElementById('audit-count').textContent = entries.length + ' entries';
+        var list = document.getElementById('audit-list');
+        if (entries.length === 0) {
+          list.innerHTML = '<div style="color:#555;text-align:center;padding:24px;font-size:13px;">No AI spend recorded yet. Send a message via WhatsApp to generate activity.</div>';
+          return;
+        }
+        list.innerHTML = entries.reverse().map(function(e) {
+          var time = new Date(e.ts).toLocaleString();
+          var provColor = e.provider === 'openai' ? '#74aa9c' : e.provider === 'claude' ? '#d4a574' : '#a474d4';
+          return '<div class="session-item"><div class="session-info"><span class="dot" style="background:' + provColor + '"></span><span class="session-phone">' + e.model + '</span><span class="session-id">' + e.provider + ' &middot; ' + e.credits.toFixed(2) + ' credits &middot; ' + e.units.toLocaleString() + ' ' + (e.category === 'llm_tokens' ? 'tokens' : 'chars') + '</span></div><div style="font-size:11px;color:#444;">' + time + '</div></div>';
+        }).join('');
+      }).catch(function() {
+        document.getElementById('audit-list').innerHTML = '<div style="color:#ff6b6b;text-align:center;padding:24px;font-size:13px;">Could not load audit data. Is kitz_os running?</div>';
       });
     }
 

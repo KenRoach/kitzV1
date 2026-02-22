@@ -167,6 +167,11 @@ services:
       PORT: 3011
       GATEWAY_URL: http://kitz-gateway:4000
       WA_CONNECTOR_URL: http://kitz-whatsapp-connector:3006
+      KITZ_OS_URL: http://kitz-os:3012
+      PAYMENTS_URL: http://kitz-payments:3005
+      NOTIFICATIONS_URL: http://kitz-notifications-queue:3008
+      WORKSPACE_MCP_URL: ${WORKSPACE_MCP_URL:-}
+      WORKSPACE_MCP_KEY: ${WORKSPACE_MCP_KEY:-}
       SUPABASE_URL: ${SUPABASE_URL:-}
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
       WORKSPACE_SUPABASE_URL: ${WORKSPACE_SUPABASE_URL:-}
