@@ -1,17 +1,110 @@
 import Fastify from 'fastify';
+import cookie from '@fastify/cookie';
+import formbody from '@fastify/formbody';
 import { randomUUID } from 'node:crypto';
 
 export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
 
 const WA_CONNECTOR_URL = process.env.WA_CONNECTOR_URL || 'http://localhost:3006';
+const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:4000';
+const DEV_TOKEN_SECRET = process.env.DEV_TOKEN_SECRET || 'dev-secret-change-me';
+const ADMIN_COOKIE = 'kitz_admin';
 
-app.get('/dashboard', async () => ({
-  apiKeysConfigured: 0,
-  credits: 100,
-  approvalsPending: 0,
-  traceId: randomUUID()
-}));
+await app.register(cookie);
+await app.register(formbody);
+
+/* ── Admin Auth (simple password gate using DEV_TOKEN_SECRET) ── */
+const adminSessions = new Set<string>();
+
+function isAdmin(req: any): boolean {
+  const sid = req.cookies?.[ADMIN_COOKIE];
+  return !!sid && adminSessions.has(sid);
+}
+
+function requireAdmin(req: any, reply: any): boolean {
+  if (!isAdmin(req)) {
+    reply.redirect('/admin/login');
+    return false;
+  }
+  return true;
+}
+
+app.get('/admin/login', async (req: any, reply: any) => {
+  if (isAdmin(req)) return reply.redirect('/');
+  const error = (req.query as any)?.error;
+  reply.type('text/html').send(LOGIN_PAGE_HTML(error === '1'));
+});
+
+app.post('/admin/login', async (req: any, reply: any) => {
+  const { password } = req.body || {};
+  if (password === DEV_TOKEN_SECRET) {
+    const sid = randomUUID();
+    adminSessions.add(sid);
+    reply.setCookie(ADMIN_COOKIE, sid, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 86400 });
+    return reply.redirect('/');
+  }
+  return reply.redirect('/admin/login?error=1');
+});
+
+app.get('/admin/logout', async (req: any, reply: any) => {
+  const sid = req.cookies?.[ADMIN_COOKIE];
+  if (sid) adminSessions.delete(sid);
+  reply.clearCookie(ADMIN_COOKIE, { path: '/' });
+  return reply.redirect('/admin/login');
+});
+
+/* ── Real Data Endpoints ── */
+
+app.get('/dashboard', async (req: any, reply: any) => {
+  if (!isAdmin(req)) return reply.code(401).send({ error: 'unauthorized' });
+
+  // Fetch users from gateway
+  let userCount = 0;
+  try {
+    const res = await fetch(`${GATEWAY_URL}/admin/users`, {
+      headers: { 'x-admin-secret': DEV_TOKEN_SECRET, 'x-trace-id': randomUUID(), 'x-org-id': 'admin' },
+      signal: AbortSignal.timeout(3000),
+    });
+    if (res.ok) {
+      const data = await res.json() as any;
+      userCount = data.total || 0;
+    }
+  } catch {}
+
+  // Fetch WA sessions
+  let waConnected = 0;
+  try {
+    const res = await fetch(`${WA_CONNECTOR_URL}/whatsapp/sessions`, { signal: AbortSignal.timeout(3000) });
+    if (res.ok) {
+      const data = await res.json() as any;
+      waConnected = (data.sessions || []).filter((s: any) => s.isConnected).length;
+    }
+  } catch {}
+
+  return {
+    users: userCount,
+    whatsappSessions: waConnected,
+    apiKeysConfigured: 0,
+    credits: 100,
+    approvalsPending: 0,
+    traceId: randomUUID(),
+  };
+});
+
+app.get('/admin/users-list', async (req: any, reply: any) => {
+  if (!isAdmin(req)) return reply.code(401).send({ error: 'unauthorized' });
+  try {
+    const res = await fetch(`${GATEWAY_URL}/admin/users`, {
+      headers: { 'x-admin-secret': DEV_TOKEN_SECRET, 'x-trace-id': randomUUID(), 'x-org-id': 'admin' },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) return { users: [], total: 0, error: 'gateway_error' };
+    return await res.json();
+  } catch {
+    return { users: [], total: 0, error: 'gateway_offline' };
+  }
+});
 
 app.get('/api-keys', async () => ({ providers: ['openai/codex', 'google/gemini', 'anthropic/claude'], configured: [] }));
 app.get('/credits', async () => ({ orgId: 'demo-org', aiBatteryCredits: 100 }));
@@ -42,12 +135,14 @@ app.get('/voice-config', async () => ({
 //  WhatsApp Login — QR Code Page
 // ═══════════════════════════════════════════
 
-// Root serves the admin dashboard
-app.get('/', async (_req, reply) => {
+// Root serves the admin dashboard (auth required)
+app.get('/', async (req: any, reply: any) => {
+  if (!requireAdmin(req, reply)) return;
   reply.type('text/html').send(ADMIN_HTML);
 });
 
-app.get('/whatsapp/login', async (_req, reply) => {
+app.get('/whatsapp/login', async (req: any, reply: any) => {
+  if (!requireAdmin(req, reply)) return;
   reply.type('text/html').send(ADMIN_HTML);
 });
 
@@ -115,6 +210,44 @@ app.delete('/whatsapp/sessions/:userId', async (req: any) => {
     return { error: 'WhatsApp connector unavailable' };
   }
 });
+
+// ── Admin Login HTML ──
+const LOGIN_PAGE_HTML = (error: boolean) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KITZ Admin \u2014 Login</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .container { max-width: 360px; width: 100%; padding: 40px 24px; text-align: center; }
+    .logo { font-size: 48px; font-weight: 800; letter-spacing: -2px; margin-bottom: 8px; background: linear-gradient(135deg, #00d4aa, #00b4d8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { color: #555; font-size: 13px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 32px; }
+    .card { background: #111; border: 1px solid #222; border-radius: 12px; padding: 24px; text-align: left; }
+    label { display: block; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    input { width: 100%; padding: 10px 14px; background: #0a0a0a; border: 1px solid #222; border-radius: 8px; color: #fff; font-size: 14px; font-family: inherit; }
+    input:focus { outline: none; border-color: #00d4aa; }
+    .btn { display: block; width: 100%; padding: 10px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; background: #00d4aa; color: #000; margin-top: 16px; }
+    .btn:hover { background: #00e8bb; }
+    .error { background: #ff6b6b12; color: #ff6b6b; border: 1px solid #ff6b6b22; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">KITZ</div>
+    <div class="subtitle">Admin</div>
+    <div class="card">
+      ${error ? '<div class="error">Invalid password</div>' : ''}
+      <form method="POST" action="/admin/login">
+        <label>Admin Password</label>
+        <input name="password" type="password" placeholder="DEV_TOKEN_SECRET" autofocus required/>
+        <button class="btn" type="submit">Log In</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>`;
 
 // ── Admin Dashboard + WhatsApp Login HTML ──
 const ADMIN_HTML = `<!DOCTYPE html>
@@ -392,13 +525,17 @@ const ADMIN_HTML = `<!DOCTYPE html>
 <body>
   <div class="topbar">
     <div class="logo">KITZ</div>
-    <div class="label">Admin</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="label">Admin</div>
+      <a href="/admin/logout" style="color:#666;text-decoration:none;font-size:12px;padding:4px 10px;border:1px solid #333;border-radius:6px;">Log out</a>
+    </div>
   </div>
 
   <div class="main">
     <!-- Tab Navigation -->
     <div style="display:flex;gap:2px;margin-bottom:28px;overflow-x:auto;">
       <button class="btn btn-sm tab active" data-tab="overview" onclick="switchTab('overview')">Overview</button>
+      <button class="btn btn-sm tab" data-tab="users" onclick="switchTab('users')">Users</button>
       <button class="btn btn-sm tab" data-tab="whatsapp" onclick="switchTab('whatsapp')">WhatsApp</button>
       <button class="btn btn-sm tab" data-tab="api-keys" onclick="switchTab('api-keys')">API Keys</button>
       <button class="btn btn-sm tab" data-tab="audit" onclick="switchTab('audit')">Audit Log</button>
@@ -409,24 +546,24 @@ const ADMIN_HTML = `<!DOCTYPE html>
       <h2>Overview</h2>
       <div class="cards">
         <div class="card">
+          <div class="card-label">Users</div>
+          <div class="card-value" id="dash-users">--</div>
+          <div class="card-sub">registered</div>
+        </div>
+        <div class="card">
+          <div class="card-label">WhatsApp</div>
+          <div class="card-value" id="dash-wa-count">--</div>
+          <div class="card-sub" id="dash-wa-sub">sessions</div>
+        </div>
+        <div class="card">
           <div class="card-label">AI Battery</div>
           <div class="card-value" id="dash-credits">100</div>
           <div class="card-sub">credits remaining</div>
         </div>
         <div class="card">
-          <div class="card-label">WhatsApp</div>
-          <div class="card-value" id="dash-wa-count">0</div>
-          <div class="card-sub" id="dash-wa-sub">sessions</div>
-        </div>
-        <div class="card">
           <div class="card-label">API Keys</div>
           <div class="card-value" id="dash-keys">0</div>
           <div class="card-sub">configured</div>
-        </div>
-        <div class="card">
-          <div class="card-label">Approvals</div>
-          <div class="card-value" id="dash-approvals">0</div>
-          <div class="card-sub">pending</div>
         </div>
       </div>
 
@@ -468,6 +605,22 @@ const ADMIN_HTML = `<!DOCTYPE html>
           Each WhatsApp account gets its own session via Baileys.<br>
           Messages flow: WhatsApp \u2192 Connector \u2192 KITZ OS \u2192 AI Response \u2192 WhatsApp.<br>
           Sessions persist across restarts (auth stored locally).
+        </div>
+      </div>
+    </div>
+
+    <!-- Users Tab (hidden) -->
+    <div id="tab-users" style="display:none;">
+      <h2>Registered Users</h2>
+      <div class="wa-section">
+        <div class="wa-header">
+          <h3>User List</h3>
+          <div class="wa-status">
+            <span id="user-count-badge" style="font-size:13px;color:#00d4aa;">Loading...</span>
+          </div>
+        </div>
+        <div id="users-list" class="session-list" style="max-height:500px;overflow-y:auto;">
+          <div style="color:#555;text-align:center;padding:24px;font-size:13px;">Loading...</div>
         </div>
       </div>
     </div>
@@ -650,6 +803,7 @@ const ADMIN_HTML = `<!DOCTYPE html>
       var btn = document.querySelector('.tab[data-tab="' + name + '"]');
       if (btn) btn.classList.add('active');
       if (name === 'whatsapp') loadSessionsTab2();
+      if (name === 'users') loadUsers();
     }
 
     function loadSessionsTab2() {
@@ -667,18 +821,32 @@ const ADMIN_HTML = `<!DOCTYPE html>
       }).catch(function() {});
     }
 
-    // Load dashboard data
+    // Load dashboard data (real)
     fetch('/dashboard').then(function(r) { return r.json(); }).then(function(d) {
+      if (d.users !== undefined) document.getElementById('dash-users').textContent = d.users;
+      if (d.whatsappSessions !== undefined) document.getElementById('dash-wa-count').textContent = d.whatsappSessions;
       if (d.credits !== undefined) document.getElementById('dash-credits').textContent = d.credits;
-      if (d.approvalsPending !== undefined) document.getElementById('dash-approvals').textContent = d.approvalsPending;
       if (d.apiKeysConfigured !== undefined) document.getElementById('dash-keys').textContent = d.apiKeysConfigured;
     }).catch(function() {});
 
-    // Detect API keys from env
-    fetch('/api-keys').then(function(r) { return r.json(); }).then(function(d) {
-      var configured = d.configured || [];
-      document.getElementById('dash-keys').textContent = configured.length;
-    }).catch(function() {});
+    // Load users for Users tab
+    function loadUsers() {
+      fetch('/admin/users-list').then(function(r) { return r.json(); }).then(function(d) {
+        var users = d.users || [];
+        document.getElementById('user-count-badge').textContent = users.length + ' total';
+        var list = document.getElementById('users-list');
+        if (users.length === 0) {
+          list.innerHTML = '<div style="color:#555;text-align:center;padding:24px;font-size:13px;">No users registered yet.</div>';
+          return;
+        }
+        list.innerHTML = users.map(function(u) {
+          var date = new Date(u.createdAt).toLocaleDateString();
+          return '<div class="session-item"><div class="session-info"><span class="dot on"></span><span class="session-phone">' + (u.name || 'Unknown') + '</span><span class="session-id">' + u.email + '</span></div><div style="color:#555;font-size:12px;">' + date + '</div></div>';
+        }).join('');
+      }).catch(function() {
+        document.getElementById('users-list').innerHTML = '<div style="color:#ff6b6b;text-align:center;padding:24px;font-size:13px;">Could not load users.</div>';
+      });
+    }
 
     // Load on page load
     loadSessions();
@@ -686,6 +854,10 @@ const ADMIN_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
-const WA_LOGIN_HTML = ADMIN_HTML;
+app.get('/health', async () => health);
 
-app.listen({ port: Number(process.env.PORT || 3011), host: '0.0.0.0' });
+if (process.env.NODE_ENV !== 'test') {
+  app.listen({ port: Number(process.env.PORT || 3011), host: '0.0.0.0' });
+}
+
+export default app;

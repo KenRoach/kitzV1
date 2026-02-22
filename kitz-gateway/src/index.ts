@@ -221,4 +221,19 @@ app.post('/auth/token', async (req, reply) => {
   return { token, userId: user.id, orgId: user.orgId, name: user.name, expiresIn: TOKEN_EXPIRY_SECONDS };
 });
 
+/* ── Admin Endpoints (protected by DEV_TOKEN_SECRET) ── */
+
+const DEV_TOKEN_SECRET = process.env.DEV_TOKEN_SECRET || '';
+
+app.get('/admin/users', async (req, reply) => {
+  const secret = req.headers['x-admin-secret'] || (req.query as any)?.secret;
+  if (!DEV_TOKEN_SECRET || secret !== DEV_TOKEN_SECRET) {
+    return reply.code(403).send(buildError('FORBIDDEN', 'Invalid admin secret', getTraceId(req)));
+  }
+  const list = Array.from(users.values()).map(u => ({
+    id: u.id, email: u.email, name: u.name, orgId: u.orgId, createdAt: u.createdAt,
+  }));
+  return { users: list, total: list.length };
+});
+
 app.listen({ port: Number(process.env.PORT || 4000), host: '0.0.0.0' });

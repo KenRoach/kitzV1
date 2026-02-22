@@ -165,6 +165,8 @@ services:
     environment:
       <<: *env-common
       PORT: 3011
+      GATEWAY_URL: http://kitz-gateway:4000
+      WA_CONNECTOR_URL: http://kitz-whatsapp-connector:3006
       SUPABASE_URL: ${SUPABASE_URL:-}
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
       WORKSPACE_SUPABASE_URL: ${WORKSPACE_SUPABASE_URL:-}
@@ -172,6 +174,9 @@ services:
       GOD_MODE_USER_ID: ${GOD_MODE_USER_ID:-8787fee9-d06a-442f-91ba-fd082b134ccf}
       DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET:-dev-secret-change-me}
       ELEVENLABS_AGENT_ID: ${ELEVENLABS_AGENT_ID:-}
+    depends_on:
+      - kitz-gateway
+      - kitz-whatsapp-connector
 
   # ── KITZ OS (port 3012) ──
   kitz-os:
