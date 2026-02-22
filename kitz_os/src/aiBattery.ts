@@ -23,7 +23,7 @@
  *   - Monthly: ≤ 30 credits
  */
 
-import { appendFile, mkdir } from 'node:fs/promises';
+import { appendFile, mkdir, readFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -280,6 +280,111 @@ export function hasBudget(estimatedCredits = 1): boolean {
  */
 export function getLedger(): SpendEntry[] {
   return [...ledger];
+}
+
+// ── Boot Restore ─────────────────────────────────────────
+
+/**
+ * Restore ledger from NDJSON file on boot.
+ * Falls back to Supabase if the file is empty/missing.
+ */
+export async function initBattery(): Promise<void> {
+  let restored = 0;
+
+  // 1. Try restoring from local NDJSON file first (fastest)
+  restored = await restoreFromFile();
+
+  // 2. If file was empty, try Supabase
+  if (restored === 0 && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+    restored = await restoreFromSupabase();
+  }
+
+  console.log(JSON.stringify({
+    ts: new Date().toISOString(),
+    module: 'aiBattery',
+    action: 'boot_restore',
+    entries_restored: restored,
+    source: restored > 0 ? 'file_or_supabase' : 'empty',
+  }));
+}
+
+async function restoreFromFile(): Promise<number> {
+  try {
+    const raw = await readFile(LEDGER_FILE, 'utf-8');
+    const lines = raw.trim().split('\n').filter(Boolean);
+    let count = 0;
+    for (const line of lines) {
+      try {
+        const entry = JSON.parse(line) as SpendEntry;
+        if (entry.id && entry.ts && entry.provider) {
+          // Avoid duplicates
+          if (!ledger.some(e => e.id === entry.id)) {
+            ledger.push(entry);
+            count++;
+          }
+        }
+      } catch {
+        // Skip malformed lines
+      }
+    }
+    return count;
+  } catch {
+    // File doesn't exist yet — that's fine
+    return 0;
+  }
+}
+
+async function restoreFromSupabase(): Promise<number> {
+  try {
+    // Fetch today's spend entries from Supabase
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/agent_audit_log?business_id=eq.${BUSINESS_ID}&action=like.spend.*&created_at=gte.${todayStart.toISOString()}&order=created_at.asc&limit=500`,
+      {
+        headers: {
+          'apikey': SUPABASE_SERVICE_ROLE_KEY,
+          'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        },
+        signal: AbortSignal.timeout(10_000),
+      },
+    );
+
+    if (!res.ok) return 0;
+
+    const rows = await res.json() as Array<{
+      trace_id: string;
+      action: string;
+      credits_consumed: number;
+      args: { provider?: string; model?: string; units?: number };
+      created_at: string;
+      tool_name: string;
+    }>;
+
+    let count = 0;
+    for (const row of rows) {
+      const category = row.action.replace('spend.', '') as SpendCategory;
+      const entry: SpendEntry = {
+        id: row.trace_id + '_' + count,
+        ts: row.created_at,
+        provider: (row.args?.provider || 'openai') as SpendProvider,
+        category,
+        units: row.args?.units || 0,
+        credits: row.credits_consumed,
+        model: row.args?.model || 'unknown',
+        traceId: row.trace_id,
+        toolContext: row.tool_name,
+      };
+      if (!ledger.some(e => e.traceId === entry.traceId && e.ts === entry.ts)) {
+        ledger.push(entry);
+        count++;
+      }
+    }
+    return count;
+  } catch {
+    return 0;
+  }
 }
 
 // ── Persistence ──────────────────────────────────────────

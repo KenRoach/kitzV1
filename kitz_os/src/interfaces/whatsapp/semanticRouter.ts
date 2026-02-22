@@ -149,11 +149,12 @@ async function executeTool(
   args: Record<string, unknown>,
   registry: OsToolRegistry,
   traceId: string,
+  userId?: string,
 ): Promise<string> {
   // Check if tool maps to MCP
   const mcpToolName = TOOL_TO_MCP[toolName];
   if (mcpToolName) {
-    const result = await callWorkspaceMcp(mcpToolName, args, traceId);
+    const result = await callWorkspaceMcp(mcpToolName, args, traceId, userId);
     return typeof result === 'string' ? result : JSON.stringify(result);
   }
 
@@ -173,6 +174,7 @@ export async function routeWithAI(
   registry: OsToolRegistry,
   traceId: string,
   mediaContext?: { media_base64: string; mime_type: string },
+  userId?: string,
 ): Promise<{ response: string; toolsUsed: string[]; creditsConsumed: number }> {
   // ── AI Battery check — block if depleted ──
   if (!hasBudget(0.5)) {
@@ -256,7 +258,7 @@ export async function routeWithAI(
         trace_id: traceId,
       }));
 
-      const toolResult = await executeTool(toolName, args, registry, traceId);
+      const toolResult = await executeTool(toolName, args, registry, traceId, userId);
 
       messages.push({
         role: 'tool',

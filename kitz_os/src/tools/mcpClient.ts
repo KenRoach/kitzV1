@@ -1,7 +1,8 @@
 /**
  * MCP Client — JSON-RPC 2.0 HTTP client for workspace MCP server.
  *
- * Injects GOD_MODE_USER_ID into every tool call for service-role access.
+ * Passes the caller's userId for Supabase RLS enforcement.
+ * Falls back to GOD_MODE_USER_ID only when no userId is provided (system/cron calls).
  */
 
 const WORKSPACE_MCP_URL = process.env.WORKSPACE_MCP_URL || 'https://mqkjbejuuedauygeccbj.supabase.co/functions/v1/mcp-server/mcp';
@@ -19,14 +20,17 @@ export async function callWorkspaceMcp(
   toolName: string,
   args: Record<string, unknown> = {},
   traceId?: string,
+  userId?: string,
 ): Promise<unknown> {
+  const effectiveUserId = userId || GOD_MODE_USER_ID;
+
   const body = {
     jsonrpc: '2.0',
     id: Date.now(),
     method: 'tools/call',
     params: {
       name: toolName,
-      arguments: { user_id: GOD_MODE_USER_ID, ...args },
+      arguments: { user_id: effectiveUserId, ...args },
     },
   };
 

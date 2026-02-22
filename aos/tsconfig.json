@@ -11,14 +11,7 @@
     "outDir": "dist"
   },
   "include": [
-    "src/index.ts",
-    "src/types.ts",
-    "src/eventBus.ts",
-    "src/ledger/**/*.ts",
-    "src/artifacts/**/*.ts",
-    "src/bots/**/*.ts",
-    "src/cli/**/*.ts",
-    "src/policies/**/*.ts",
+    "src/**/*.ts",
     "test/**/*.ts"
   ]
 }
