@@ -21,7 +21,7 @@ TypeScript monorepo with 13+ microservices on Fastify. GitHub: `KenRoach/kitzV1`
 | `admin-kitz-services` | 3011 | Admin dashboard, API keys, credits, WhatsApp QR proxy | Stub |
 | `kitz_os` | 3012 | Core AI engine — 68+ tools, semantic router, cadence, AI Battery | Functional |
 | `kitz-brain` | cron | Scheduled AI agents (daily 8am, weekly Mon 9am) | Stub |
-| `xyz88-io` | 3001 | Client-facing CRM, orders, storefront, checkout links (workspace.kitz.services) | Stub |
+| `xyz88-io` | 3001 | workspace.kitz.services — Free manual workspace (CRM, orders, checkout links, tasks, AI direction) for users + AI agents | Functional |
 | `kitz-schemas` | lib | Shared TypeScript contracts + trace helpers | Functional |
 | `aos` | — | Agent-to-agent OS layer (30+ agent roles, event bus, ledger) | Stub |
 | `kitz-docs` | — | Architecture docs, threat model, approval matrix, runbooks | Docs |
@@ -205,7 +205,7 @@ When modifying contracts in `kitz-schemas/src/contracts.ts`, check all consuming
 ## Business Context
 - **Target user**: 25-45, LatAm, Spanish-first, sells on WhatsApp/Instagram
 - **Two tiers**: Starters (idea only) and Hustlers (already selling informally)
-- **Free tier**: Mobile CRM + Order Management + Checkout Links (workspace.kitz.services)
+- **Free tier**: workspace.kitz.services — Manual workspace (CRM, Orders, Checkout Links, Tasks, AI Direction) for users + AI agents
 - **Paid tier**: AI Battery credits (100/$5, 500/$20, 2000/$60)
 - **Activation target**: < 10 minutes to first value (biggest scale risk)
 - **Breakthrough moment**: When user sees their own data in the system (identity shift)

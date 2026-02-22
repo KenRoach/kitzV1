@@ -96,7 +96,7 @@ export function getAllLovableTools(): ToolSchema[] {
         properties: {
           name: {
             type: 'string',
-            description: 'Project name (e.g., "xyz88-io", "admin-dashboard")',
+            description: 'Project name (e.g., "workspace", "admin-dashboard")',
           },
           url: {
             type: 'string',
