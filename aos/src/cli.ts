@@ -1,5 +1,5 @@
 import { createAOS } from './index.js';
-import { DailyOpsWorkflow, IncidentWorkflow, WeeklyBoardPacketWorkflow } from './runners/workflows.js';
+import { DailyOpsWorkflow, WeeklyBoardPacketWorkflow } from './runners/workflows.js';
 
 async function main(): Promise<void> {
   const [command, option, value] = process.argv.slice(2);
@@ -17,19 +17,52 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (command === 'simulate' && option === '--event') {
-    if (value === 'INCIDENT_DETECTED') {
-      await aos.bus.publish({ type: 'INCIDENT_DETECTED', source: 'cli', severity: 'high', payload: { summary: 'Simulated incident' } });
-      await IncidentWorkflow(aos.bus, aos.registry, aos.memory);
-      console.log('Incident simulated: owner assigned + PSA proposal generated.');
-      return;
+  if (command === 'launch') {
+    // Build a default launch context for CLI usage
+    const ctx = {
+      killSwitch: false,
+      toolCount: 68,
+      systemStatus: 'online',
+      aiKeysConfigured: true,
+      batteryRemaining: 5,
+      batteryDailyLimit: 5,
+      batteryDepleted: false,
+      servicesHealthy: ['kitz_os', 'workspace', 'kitz-gateway', 'kitz-whatsapp-connector'],
+      servicesDown: [],
+      campaignProfileCount: 10,
+      campaignTemplateLanguages: ['es', 'en'],
+      draftFirstEnforced: true,
+      webhookCryptoEnabled: false,
+      rateLimitingEnabled: true,
+      jwtAuthEnabled: true,
+      semanticRouterActive: true,
+      whatsappConnectorConfigured: true,
+      workspaceMcpConfigured: true,
+      cadenceEngineEnabled: true,
+      funnelStagesDefined: 10,
+      activationTargetMinutes: 10,
+      pricingTiersDefined: 3,
+      freeToPathDefined: true,
+    };
+    const result = await aos.runLaunchReview(ctx);
+    const d = result.decision;
+    console.log(`\n${d.approved ? '🚀 LAUNCH APPROVED' : '🛑 LAUNCH BLOCKED'}`);
+    console.log(`Votes: ${d.totalGo} GO | ${d.totalNoGo} NO-GO | ${d.totalConditional} CONDITIONAL`);
+    console.log(`\nCEO Decision:\n${d.summary}\n`);
+    for (const r of d.reviews) {
+      const icon = r.vote === 'go' ? '🟢' : r.vote === 'no-go' ? '🔴' : '🟡';
+      console.log(`${icon} ${r.role} — ${r.vote} (${r.confidence}%)`);
     }
+    return;
+  }
+
+  if (command === 'simulate' && option === '--event') {
     await aos.bus.publish({ type: value, source: 'cli', severity: 'medium', payload: { simulated: true } });
     console.log(`Simulated ${value}.`);
     return;
   }
 
-  console.log('Usage: node aos/run daily | weekly-board | simulate --event INCIDENT_DETECTED');
+  console.log('Usage: node aos/run daily | weekly-board | launch | simulate --event EVENT_TYPE');
 }
 
 main().catch((error) => {

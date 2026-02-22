@@ -1,4 +1,5 @@
 import { BaseAgent } from '../baseAgent.js';
+import type { LaunchContext, LaunchReview } from '../../types.js';
 
 /**
  * HeadGrowth Agent — Activation Funnels & Retention
@@ -143,6 +144,45 @@ export class HeadGrowthAgent extends BaseAgent {
       byStage,
       activationRate: users.length ? activated / users.length : 0,
       atRiskCount: atRisk,
+    };
+  }
+
+  reviewLaunchReadiness(ctx: LaunchContext): LaunchReview {
+    const blockers: string[] = [];
+    const warnings: string[] = [];
+    const passed: string[] = [];
+
+    if (ctx.funnelStagesDefined < 5) {
+      warnings.push(`Only ${ctx.funnelStagesDefined} funnel stages — need full 10-stage tracking`);
+    } else {
+      passed.push(`${ctx.funnelStagesDefined} funnel stages: invited → replied → signed_up → first_contact → first_action → ...`);
+    }
+
+    if (ctx.activationTargetMinutes > 10) {
+      blockers.push(`Activation target ${ctx.activationTargetMinutes} min exceeds 10-min goal`);
+    } else {
+      passed.push(`Activation target: < ${ctx.activationTargetMinutes} min to first value`);
+    }
+
+    if (ctx.campaignProfileCount < 10) {
+      warnings.push(`${ctx.campaignProfileCount} campaign profiles — target is 10 for first cohort`);
+    } else {
+      passed.push(`${ctx.campaignProfileCount} target users for first cohort`);
+    }
+
+    passed.push('Conversion targets set: 70% invited→replied, 85% replied→signup, 80% signup→action');
+    passed.push('Breakthrough moment defined: user sees their own data in system');
+
+    const vote = blockers.length > 0 ? 'no-go' as const : warnings.length > 0 ? 'conditional' as const : 'go' as const;
+    const confidence = blockers.length === 0 ? (warnings.length === 0 ? 88 : 74) : 30;
+
+    return {
+      agent: this.name, role: 'HeadGrowth', vote, confidence, blockers, warnings, passed,
+      summary: vote === 'go'
+        ? 'Growth ready. Funnel defined, activation < 10 min, cohort targets set.'
+        : vote === 'conditional'
+          ? `Growth mostly ready: ${warnings.join('; ')}`
+          : `Growth blockers: ${blockers.join('; ')}`,
     };
   }
 

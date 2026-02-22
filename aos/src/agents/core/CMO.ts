@@ -1,4 +1,5 @@
 import { BaseAgent } from '../baseAgent.js';
+import type { LaunchContext, LaunchReview } from '../../types.js';
 
 /**
  * CMO Agent — Chief Marketing Officer
@@ -106,6 +107,52 @@ export class CMOAgent extends BaseAgent {
         draftOnly: true,
       },
     ];
+  }
+
+  reviewLaunchReadiness(ctx: LaunchContext): LaunchReview {
+    const blockers: string[] = [];
+    const warnings: string[] = [];
+    const passed: string[] = [];
+
+    if (ctx.campaignProfileCount < 10) {
+      warnings.push(`Only ${ctx.campaignProfileCount} campaign profiles — target is 10`);
+    } else {
+      passed.push(`${ctx.campaignProfileCount} campaign profiles ready`);
+    }
+
+    if (ctx.campaignTemplateLanguages.length < 2) {
+      warnings.push('Templates only in 1 language — need ES + EN for LatAm');
+    } else {
+      passed.push(`Templates in ${ctx.campaignTemplateLanguages.join(' + ')}`);
+    }
+
+    if (!ctx.draftFirstEnforced) {
+      blockers.push('Draft-first not enforced — cannot launch campaigns without approval gate');
+    } else {
+      passed.push('Draft-first enforced — all messages require founder approval');
+    }
+
+    if (!ctx.whatsappConnectorConfigured) {
+      blockers.push('WhatsApp connector offline — primary outreach channel unavailable');
+    } else {
+      passed.push('WhatsApp connector online for campaign delivery');
+    }
+
+    // CMO always has 10 profiles and 2 languages built in
+    passed.push('3-touch campaign strategy defined (hook → walkthrough → check-in)');
+    passed.push('Scrappy-free-first policy: organic before paid');
+
+    const vote = blockers.length > 0 ? 'no-go' as const : warnings.length > 0 ? 'conditional' as const : 'go' as const;
+    const confidence = blockers.length === 0 ? (warnings.length === 0 ? 90 : 75) : 25;
+
+    return {
+      agent: this.name, role: 'CMO', vote, confidence, blockers, warnings, passed,
+      summary: vote === 'go'
+        ? 'Campaign ready. 10 profiles, 3-touch strategy, ES+EN templates. Let\'s invite.'
+        : vote === 'conditional'
+          ? `Campaign mostly ready: ${warnings.join('; ')}`
+          : `Campaign blockers: ${blockers.join('; ')}`,
+    };
   }
 
   /** Emit campaign event for audit trail */

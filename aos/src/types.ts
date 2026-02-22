@@ -7,6 +7,13 @@ export type AOSMessageType =
   | 'INCIDENT_DETECTED'
   | 'PR_READY_FOR_REVIEW'
   | 'ORG_DIGEST_READY'
+  | 'LAUNCH_REVIEW_REQUESTED'
+  | 'LAUNCH_REVIEW_SUBMITTED'
+  | 'LAUNCH_APPROVED'
+  | 'LAUNCH_BLOCKED'
+  | 'INVITE_DRAFT_CREATED'
+  | 'REVENUE_EVENT'
+  | 'USER_ACTIVATION_STAGE'
   | string;
 
 export interface AOSEvent {
@@ -17,6 +24,22 @@ export interface AOSEvent {
   timestamp: string;
   payload: Record<string, unknown>;
   related_ids?: string[];
+}
+
+export interface AgentConfig {
+  name: string;
+  role: string;
+  tier: 'c-suite' | 'board' | 'governance' | 'external';
+  can_spawn_ad_hoc: boolean;
+  max_ad_hoc: number;
+  max_active_ad_hoc: number;
+}
+
+export interface ProposalRecord {
+  owner: string;
+  issueId: string;
+  proposal: Record<string, unknown>;
+  timestamp: string;
 }
 
 export interface TaskArtifact {
@@ -63,3 +86,56 @@ export type LedgerArtifact =
   | { kind: 'proposal'; data: ProposalArtifact }
   | { kind: 'decision'; data: DecisionArtifact }
   | { kind: 'outcome'; data: OutcomeArtifact };
+
+// ── Launch Review Protocol ──
+
+export type LaunchVote = 'go' | 'no-go' | 'conditional';
+
+export interface LaunchReview {
+  agent: string;
+  role: string;
+  vote: LaunchVote;
+  confidence: number;
+  blockers: string[];
+  warnings: string[];
+  passed: string[];
+  summary: string;
+}
+
+export interface LaunchContext {
+  killSwitch: boolean;
+  toolCount: number;
+  systemStatus: string;
+  aiKeysConfigured: boolean;
+  batteryRemaining: number;
+  batteryDailyLimit: number;
+  batteryDepleted: boolean;
+  servicesHealthy: string[];
+  servicesDown: string[];
+  campaignProfileCount: number;
+  campaignTemplateLanguages: string[];
+  draftFirstEnforced: boolean;
+  webhookCryptoEnabled: boolean;
+  rateLimitingEnabled: boolean;
+  jwtAuthEnabled: boolean;
+  semanticRouterActive: boolean;
+  whatsappConnectorConfigured: boolean;
+  workspaceMcpConfigured: boolean;
+  cadenceEngineEnabled: boolean;
+  funnelStagesDefined: number;
+  activationTargetMinutes: number;
+  pricingTiersDefined: number;
+  freeToPathDefined: boolean;
+}
+
+export interface LaunchDecision {
+  approved: boolean;
+  decidedBy: string;
+  timestamp: string;
+  reviews: LaunchReview[];
+  totalGo: number;
+  totalNoGo: number;
+  totalConditional: number;
+  blockers: string[];
+  summary: string;
+}

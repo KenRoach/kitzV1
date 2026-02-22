@@ -686,6 +686,77 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
     return { status: 'revoked', message: 'Google Calendar disconnected.' };
   });
 
+  // ── Launch Review — 33 agents vote, CEO decides ──────────────
+
+  app.get('/api/kitz/launch', async () => {
+    try {
+      const result = await kernel.runLaunchReview();
+      const d = result.decision;
+
+      // Format for WhatsApp-friendly output
+      const reviewSummaries = d.reviews.map(r =>
+        `${r.vote === 'go' ? '🟢' : r.vote === 'no-go' ? '🔴' : '🟡'} *${r.role}* — ${r.vote.toUpperCase()} (${r.confidence}%)\n  ${r.summary}`
+      );
+
+      return {
+        approved: d.approved,
+        decidedBy: d.decidedBy,
+        timestamp: d.timestamp,
+        votes: {
+          go: d.totalGo,
+          noGo: d.totalNoGo,
+          conditional: d.totalConditional,
+          total: d.reviews.length,
+        },
+        blockers: d.blockers,
+        summary: d.summary,
+        reviews: reviewSummaries,
+        context: result.context,
+        tiers: {
+          cSuite: result.reviewsByTier.cSuite.map(r => ({ agent: r.agent, vote: r.vote, confidence: r.confidence })),
+          board: result.reviewsByTier.board.map(r => ({ agent: r.agent, vote: r.vote, confidence: r.confidence })),
+          governance: result.reviewsByTier.governance.map(r => ({ agent: r.agent, vote: r.vote, confidence: r.confidence })),
+          external: result.reviewsByTier.external.map(r => ({ agent: r.agent, vote: r.vote, confidence: r.confidence })),
+        },
+      };
+    } catch (err) {
+      return { error: 'Launch review failed', message: (err as Error).message };
+    }
+  });
+
+  // ── Launch Review WhatsApp format ──────────────
+
+  app.get('/api/kitz/launch/whatsapp', async () => {
+    try {
+      const result = await kernel.runLaunchReview();
+      const d = result.decision;
+
+      const header = d.approved
+        ? '🚀 *KITZ OS — LAUNCH APPROVED*'
+        : '🛑 *KITZ OS — LAUNCH BLOCKED*';
+
+      const votes = `📊 *Votes:* ${d.totalGo} GO | ${d.totalNoGo} NO-GO | ${d.totalConditional} CONDITIONAL`;
+
+      const cSuite = result.reviewsByTier.cSuite.map(r =>
+        `${r.vote === 'go' ? '🟢' : r.vote === 'no-go' ? '🔴' : '🟡'} ${r.role}: ${r.vote} (${r.confidence}%)`
+      ).join('\n');
+
+      const board = result.reviewsByTier.board.map(r =>
+        `${r.vote === 'go' ? '🟢' : r.vote === 'no-go' ? '🔴' : '🟡'} ${r.role}: ${r.vote} (${r.confidence}%)`
+      ).join('\n');
+
+      const blockerText = d.blockers.length > 0
+        ? `\n\n🚫 *Blockers:*\n${d.blockers.map(b => `• ${b}`).join('\n')}`
+        : '';
+
+      const whatsapp = `${header}\n\n${votes}\n\n*C-Suite:*\n${cSuite}\n\n*Board:*\n${board}${blockerText}\n\n*CEO Decision:*\n${d.summary}\n\n_${d.reviews.length} agents reviewed • ${d.timestamp}_`;
+
+      return { response: whatsapp };
+    } catch (err) {
+      return { error: 'Launch review failed', message: (err as Error).message };
+    }
+  });
+
   await app.listen({ port: PORT, host: '0.0.0.0' });
   console.log(`[server] KITZ OS listening on port ${PORT}`);
   return app;

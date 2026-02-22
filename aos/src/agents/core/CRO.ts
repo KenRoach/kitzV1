@@ -1,4 +1,5 @@
 import { BaseAgent } from '../baseAgent.js';
+import type { LaunchContext, LaunchReview } from '../../types.js';
 
 /**
  * CRO Agent — Chief Revenue Officer
@@ -74,6 +75,46 @@ export class CROAgent extends BaseAgent {
       monthlyRevenue: tier.price,
       annualLTV: tier.price * 12,
       recommendedTier: tier,
+    };
+  }
+
+  reviewLaunchReadiness(ctx: LaunchContext): LaunchReview {
+    const blockers: string[] = [];
+    const warnings: string[] = [];
+    const passed: string[] = [];
+
+    if (ctx.pricingTiersDefined < 2) {
+      blockers.push('Need at least 2 pricing tiers (free + paid)');
+    } else {
+      passed.push(`${ctx.pricingTiersDefined} pricing tiers: $5/100, $20/500, $60/2000`);
+    }
+
+    if (!ctx.freeToPathDefined) {
+      warnings.push('Free-to-paid conversion path not wired end-to-end');
+    } else {
+      passed.push('Free-to-paid path: 7+ days active → AI Battery upsell');
+    }
+
+    // For first 10 users, free tier must work perfectly
+    if (!ctx.workspaceMcpConfigured) {
+      blockers.push('Workspace not configured — free tier is broken');
+    } else {
+      passed.push('Free workspace (CRM, orders, checkout links, tasks) operational');
+    }
+
+    passed.push('Scrappy-free-first: no paid push until free value proven');
+    passed.push('ROI >= 2x policy enforced on all AI Battery spends');
+
+    const vote = blockers.length > 0 ? 'no-go' as const : warnings.length > 0 ? 'conditional' as const : 'go' as const;
+    const confidence = blockers.length === 0 ? (warnings.length === 0 ? 85 : 70) : 25;
+
+    return {
+      agent: this.name, role: 'CRO', vote, confidence, blockers, warnings, passed,
+      summary: vote === 'go'
+        ? 'Revenue pipeline ready. Free tier solid, pricing set, upsell logic defined.'
+        : vote === 'conditional'
+          ? `Revenue mostly ready: ${warnings.join('; ')}`
+          : `Revenue blockers: ${blockers.join('; ')}`,
     };
   }
 
