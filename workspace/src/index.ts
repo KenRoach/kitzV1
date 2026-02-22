@@ -618,7 +618,7 @@ app.get('/auth/logout', async (_req: any, reply: any) => {
 /* ── Home redirect ── */
 app.get('/', async (req: any, reply: any) => {
   const session = getSession(req);
-  return reply.redirect(session ? '/leads' : '/login');
+  return reply.redirect(session ? '/leads' : '/start');
 });
 
 /* ── Helper: make authenticated call to gateway ── */

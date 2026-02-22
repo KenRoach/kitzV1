@@ -170,13 +170,13 @@ export class CMOAgent extends BaseAgent {
     if (language === 'es') {
       return {
         touch1_hustler:
-          `Hey [Name] — hice algo para los que vendemos por WhatsApp.\n\nWorkspace gratis: contactos, pedidos, links de pago. Sin costos ocultos.\n\nLo estoy usando yo mismo. Quieres probarlo?\n\nworkspace.kitz.services`,
+          `Hey [Name] — hice algo para los que vendemos por WhatsApp.\n\nWorkspace gratis: contactos, pedidos, links de pago. Sin costos ocultos.\n\nLo estoy usando yo mismo. Quieres probarlo?\n\nworkspace.kitz.services/start`,
         touch1_starter:
           `[Name] — te acuerdas de MealKitz?\n\nHice una herramienta gratis para empezar a vender. CRM + links de cobro + tareas.\n\nCero costo. 2 min para montar. Te mando el link?`,
         touch2_hustler:
-          `Asi empiezas (2 min):\n\n1. Abre workspace.kitz.services\n2. Agrega tu primer contacto (tu mejor cliente)\n3. Crea un link de cobro para algo que vendes\n\nListo. Tu negocio organizado en un solo lugar.\n\nDudas? Responde aqui.`,
+          `Asi empiezas (2 min):\n\n1. Abre workspace.kitz.services/start\n2. Agrega tu primer contacto (tu mejor cliente)\n3. Crea un link de cobro para algo que vendes\n\nListo. Tu negocio organizado en un solo lugar.\n\nDudas? Responde aqui.`,
         touch2_starter:
-          `Asi empiezas (2 min):\n\n1. Abre workspace.kitz.services\n2. Agrega tu primer contacto\n3. Crea una tarea para tu proxima venta\n\nYa tienes tu workspace. Cero costo.\n\nDudas? Responde aqui.`,
+          `Asi empiezas (2 min):\n\n1. Abre workspace.kitz.services/start\n2. Agrega tu primer contacto\n3. Crea una tarea para tu proxima venta\n\nYa tienes tu workspace. Cero costo.\n\nDudas? Responde aqui.`,
         touch3_hustler:
           `[Name] — como te va con el workspace?\n\nTip: crea un link de cobro y mandalo a un cliente. La forma mas rapida de cobrar.\n\nComo lo sientes hasta ahora?`,
         touch3_starter:
@@ -185,13 +185,13 @@ export class CMOAgent extends BaseAgent {
     }
     return {
       touch1_hustler:
-        `Hey [Name] — built something for people like us who sell on WhatsApp.\n\nFree workspace: contacts, orders, payment links. No hidden fees.\n\nBeen using it myself. Want to try?\n\nworkspace.kitz.services`,
+        `Hey [Name] — built something for people like us who sell on WhatsApp.\n\nFree workspace: contacts, orders, payment links. No hidden fees.\n\nBeen using it myself. Want to try?\n\nworkspace.kitz.services/start`,
       touch1_starter:
         `[Name] — remember MealKitz?\n\nBuilt a free tool to start selling. CRM + payment links + tasks.\n\nZero cost. 2 min setup. Want the link?`,
       touch2_hustler:
-        `Here's how to start (2 min):\n\n1. Open workspace.kitz.services\n2. Add your first contact (your best customer)\n3. Create a checkout link for something you sell\n\nThat's it. Your business in one place.\n\nQuestions? Reply here.`,
+        `Here's how to start (2 min):\n\n1. Open workspace.kitz.services/start\n2. Add your first contact (your best customer)\n3. Create a checkout link for something you sell\n\nThat's it. Your business in one place.\n\nQuestions? Reply here.`,
       touch2_starter:
-        `Here's how to start (2 min):\n\n1. Open workspace.kitz.services\n2. Add your first contact\n3. Create a task for your next sale\n\nYour workspace is ready. Zero cost.\n\nQuestions? Reply here.`,
+        `Here's how to start (2 min):\n\n1. Open workspace.kitz.services/start\n2. Add your first contact\n3. Create a task for your next sale\n\nYour workspace is ready. Zero cost.\n\nQuestions? Reply here.`,
       touch3_hustler:
         `[Name] — how's the workspace going?\n\nTip: create a payment link and send it to a client. Fastest way to get paid.\n\nHow's it feeling so far?`,
       touch3_starter:
