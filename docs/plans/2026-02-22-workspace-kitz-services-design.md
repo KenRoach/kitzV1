@@ -5,7 +5,7 @@
 
 ## Overview
 
-Mobile-first owner dashboard built in Lovable, connected to Supabase (`mqkjbejuuedauygeccbj`), deployed at `workspace.kitz.services`. Full free-tier suite: CRM, Orders, Checkout Links, AI Direction, and Tasks.
+Mobile-first owner dashboard built in Lovable, connected to Supabase (`yjustozltqpsroxkjobf`), deployed at `workspace.kitz.services`. Full free-tier suite: CRM, Orders, Checkout Links, AI Direction, and Tasks.
 
 ## Architecture
 
@@ -21,7 +21,7 @@ User (mobile browser)
 
 | Route | Purpose |
 |-------|---------|
-| `/login` | Supabase Auth — email + magic link |
+| `/auth` | Supabase Auth — email + password |
 | `/` (dashboard) | Overview: quick stats (contacts, orders today, battery balance), recent activity |
 | `/contacts` | CRM — list, add, edit contacts. Name, phone (WhatsApp), email, notes |
 | `/orders` | Order list — status tracking (pending, confirmed, delivered), linked to contact |
@@ -29,23 +29,23 @@ User (mobile browser)
 | `/tasks` | Task board — simple list with status (todo, doing, done) |
 | `/ai` | AI Direction — battery balance display, usage history, gated AI actions |
 
-## Supabase Tables (new, with RLS)
+## Supabase Tables (with RLS)
 
-- **`contacts`** — id, user_id, name, phone, email, notes, created_at
-- **`orders`** — id, user_id, contact_id (FK), amount, status, description, created_at
-- **`checkout_links`** — id, user_id, order_id (FK, optional), amount, description, short_url, status, created_at
-- **`tasks`** — id, user_id, title, status (todo/doing/done), created_at
-- **`ai_battery_usage`** — id, user_id, credits_used, action, created_at
+- **`contacts`** — id, business_id, name, phone, email, notes, created_at
+- **`orders`** — id, business_id, contact_id (FK), amount, status, description, created_at
+- **`checkout_links`** — id, business_id, order_id (FK, optional), amount, description, short_url, status, created_at
+- **`tasks`** — id, business_id, title, status (todo/doing/done), created_at
+- **`ai_battery_usage`** — id, business_id, credits_used, action, created_at
 
-All tables have `user_id` column with RLS policies: users only see their own data.
+All tables use `business_id` tenant key with RLS: `business_id IN (SELECT id FROM businesses WHERE owner_id = auth.uid())`.
 
 ## Auth Flow
 
 1. User visits `workspace.kitz.services`
-2. Redirected to `/login` if no session
-3. Signs up / logs in via email + magic link (Supabase Auth)
+2. Redirected to `/auth` if no session
+3. Signs up / logs in via email + password (Supabase Auth)
 4. Session stored in browser, supabase-js handles token refresh
-5. RLS enforces data isolation per user
+5. RLS enforces data isolation per business (via `business_id` → `owner_id = auth.uid()`)
 
 ## Tech Choices
 
@@ -59,7 +59,9 @@ All tables have `user_id` column with RLS policies: users only see their own dat
 
 - **Lovable project ID:** `0dd377df-8e0b-4ff3-84e5-220c400737d6`
 - **Lovable URL:** https://lovable.dev/projects/0dd377df-8e0b-4ff3-84e5-220c400737d6
-- **Supabase project:** `mqkjbejuuedauygeccbj`
-- **Supabase URL:** https://mqkjbejuuedauygeccbj.supabase.co
+- **Supabase project:** `yjustozltqpsroxkjobf`
+- **Supabase URL:** https://yjustozltqpsroxkjobf.supabase.co
+- **Lovable preview:** https://preview--bizgenie-core.lovable.app
+- **Lovable published:** https://bizgenie-core.lovable.app
 - **GitHub repo:** KenRoach/xyz88-io
-- **Domain:** workspace.kitz.services
+- **Custom domains:** workspace.kitz.services, admin.kitz.services

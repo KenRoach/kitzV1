@@ -34,7 +34,7 @@ const LOVABLE_WEBHOOK_TOKEN = process.env.LOVABLE_WEBHOOK_TOKEN || '';
 
 // Sandbox root — artifacts can only be written inside this directory
 const SANDBOX_ROOT = path.resolve(process.cwd(), '..');
-const ALLOWED_DIRS = ['kitz_os', 'bizgenie-core', 'kitz-brain', 'scripts', 'docs'];
+const ALLOWED_DIRS = ['kitz_os', 'xyz88-io', 'kitz-brain', 'scripts', 'docs'];
 
 // ── LLM Call ──
 async function generateWithLLM(
@@ -577,7 +577,7 @@ ${context ? `\nReference files for style/pattern matching:\n${context}` : ''}`;
           },
           save_to: {
             type: 'string',
-            description: 'Optional file path to save (default: auto-generated in bizgenie-core/supabase/migrations/)',
+            description: 'Optional file path to save (default: auto-generated in kitz_os/migrations/)',
           },
         },
         required: ['description'],
@@ -587,7 +587,7 @@ ${context ? `\nReference files for style/pattern matching:\n${context}` : ''}`;
         const description = args.description as string;
         const tables = (args.tables as string[]) || [];
         const saveTo = (args.save_to as string) ||
-          `bizgenie-core/supabase/migrations/${new Date().toISOString().slice(0, 10).replace(/-/g, '')}000000_generated.sql`;
+          `kitz_os/migrations/${new Date().toISOString().slice(0, 10).replace(/-/g, '')}000000_generated.sql`;
 
         const systemPrompt = `You are KITZ OS Migration Generator. Create a PostgreSQL migration for Supabase.
 
