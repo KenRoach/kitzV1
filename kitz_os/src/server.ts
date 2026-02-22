@@ -35,6 +35,7 @@ import { routeWithAI } from './interfaces/whatsapp/semanticRouter.js';
 import { textToSpeech, getKitzVoiceConfig, getWidgetSnippet, isElevenLabsConfigured } from './llm/elevenLabsClient.js';
 import { getBatteryStatus, recordRecharge, getLedger } from './aiBattery.js';
 import { initMemory, storeMessage, buildContextWindow } from './memory/manager.js';
+import { verifyStripeSignature, verifyHmacSha256, verifyPayPalHeaders } from './webhookVerify.js';
 import { isGoogleOAuthConfigured, getAuthUrl, exchangeCode, hasStoredTokens, revokeTokens } from './auth/googleOAuth.js';
 
 export async function createServer(kernel: KitzKernel) {
@@ -325,10 +326,20 @@ export async function createServer(kernel: KitzKernel) {
         action: 'received',
       }));
 
-      // Signature verification placeholder
-      // Production: use stripe.webhooks.constructEvent(rawBody, signature, STRIPE_WEBHOOK_SECRET)
-      if (!signature && process.env.NODE_ENV === 'production') {
-        return reply.code(401).send({ error: 'Missing stripe-signature header' });
+      // Cryptographic signature verification
+      const stripeSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      if (stripeSecret) {
+        if (!signature) {
+          return reply.code(401).send({ error: 'Missing stripe-signature header' });
+        }
+        const rawBody = JSON.stringify(req.body);
+        const result = verifyStripeSignature(rawBody, signature, stripeSecret);
+        if (!result.valid) {
+          console.error(JSON.stringify({ ts: new Date().toISOString(), module: 'payment-webhook', provider: 'stripe', trace_id: traceId, error: result.error }));
+          return reply.code(401).send({ error: `Stripe signature invalid: ${result.error}` });
+        }
+      } else if (process.env.NODE_ENV === 'production') {
+        return reply.code(500).send({ error: 'STRIPE_WEBHOOK_SECRET not configured' });
       }
 
       const event = req.body || {};
@@ -374,11 +385,15 @@ export async function createServer(kernel: KitzKernel) {
         action: 'received',
       }));
 
-      // PayPal verification placeholder
-      // Production: verify via PayPal Webhooks API with PAYPAL_WEBHOOK_ID
-      const transmissionId = req.headers['paypal-transmission-id'];
-      if (!transmissionId && process.env.NODE_ENV === 'production') {
-        return reply.code(401).send({ error: 'Missing PayPal transmission headers' });
+      // Cryptographic header verification (defense-in-depth before PayPal API call)
+      const paypalResult = verifyPayPalHeaders(req.headers as Record<string, string | string[] | undefined>);
+      if (!paypalResult.valid) {
+        if (process.env.NODE_ENV === 'production') {
+          console.error(JSON.stringify({ ts: new Date().toISOString(), module: 'payment-webhook', provider: 'paypal', trace_id: traceId, error: paypalResult.error }));
+          return reply.code(401).send({ error: `PayPal verification failed: ${paypalResult.error}` });
+        }
+        // Dev mode: log warning but allow through for testing
+        console.warn(JSON.stringify({ ts: new Date().toISOString(), module: 'payment-webhook', provider: 'paypal', trace_id: traceId, warning: paypalResult.error, mode: 'dev-passthrough' }));
       }
 
       const event = req.body || {};
@@ -428,12 +443,18 @@ export async function createServer(kernel: KitzKernel) {
         action: 'received',
       }));
 
-      // Yappy verification: shared secret
-      const yappySecret = req.headers['x-yappy-secret'] || req.headers['x-webhook-secret'];
-      if (process.env.NODE_ENV === 'production' && process.env.YAPPY_WEBHOOK_SECRET) {
-        if (yappySecret !== process.env.YAPPY_WEBHOOK_SECRET) {
-          return reply.code(401).send({ error: 'Invalid Yappy webhook secret' });
+      // Cryptographic HMAC-SHA256 signature verification
+      const yappySecret = process.env.YAPPY_WEBHOOK_SECRET;
+      if (yappySecret) {
+        const yappySig = (req.headers['x-yappy-signature'] || req.headers['x-webhook-signature']) as string || '';
+        const rawBody = JSON.stringify(req.body);
+        const result = verifyHmacSha256(rawBody, yappySig, yappySecret);
+        if (!result.valid) {
+          console.error(JSON.stringify({ ts: new Date().toISOString(), module: 'payment-webhook', provider: 'yappy', trace_id: traceId, error: result.error }));
+          return reply.code(401).send({ error: `Yappy signature invalid: ${result.error}` });
         }
+      } else if (process.env.NODE_ENV === 'production') {
+        return reply.code(500).send({ error: 'YAPPY_WEBHOOK_SECRET not configured' });
       }
 
       const payload = req.body || {};
@@ -470,12 +491,18 @@ export async function createServer(kernel: KitzKernel) {
         action: 'received',
       }));
 
-      // BAC verification: HMAC or shared secret
-      const bacSignature = req.headers['x-bac-signature'] || req.headers['x-webhook-secret'];
-      if (process.env.NODE_ENV === 'production' && process.env.BAC_WEBHOOK_SECRET) {
-        if (bacSignature !== process.env.BAC_WEBHOOK_SECRET) {
-          return reply.code(401).send({ error: 'Missing BAC signature header' });
+      // Cryptographic HMAC-SHA256 signature verification
+      const bacSecret = process.env.BAC_WEBHOOK_SECRET;
+      if (bacSecret) {
+        const bacSig = (req.headers['x-bac-signature'] || req.headers['x-webhook-signature']) as string || '';
+        const rawBody = JSON.stringify(req.body);
+        const result = verifyHmacSha256(rawBody, bacSig, bacSecret);
+        if (!result.valid) {
+          console.error(JSON.stringify({ ts: new Date().toISOString(), module: 'payment-webhook', provider: 'bac', trace_id: traceId, error: result.error }));
+          return reply.code(401).send({ error: `BAC signature invalid: ${result.error}` });
         }
+      } else if (process.env.NODE_ENV === 'production') {
+        return reply.code(500).send({ error: 'BAC_WEBHOOK_SECRET not configured' });
       }
 
       const payload = req.body || {};

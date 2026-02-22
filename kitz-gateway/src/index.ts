@@ -9,11 +9,12 @@ import type {
   ToolCallResponse
 } from 'kitz-schemas';
 import { verifyJwt } from './jwt.js';
+import { FileBackedRateLimitStore } from './rateLimitStore.js';
 
 export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
 
-await app.register(rateLimit, { max: 120, timeWindow: '1 minute' });
+await app.register(rateLimit, { max: 120, timeWindow: '1 minute', store: FileBackedRateLimitStore });
 
 const JWT_SECRET = process.env.JWT_SECRET || process.env.DEV_TOKEN_SECRET || '';
 
