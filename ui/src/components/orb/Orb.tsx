@@ -43,24 +43,27 @@ const FEET_FRAMES = [
 ]
 
 /* ── Welcome sequence — Kitz greets user on first load ── */
-/* Tone: cool, chill, confident. Gen Z clarity + disciplined founder. */
+/* Kitz = execution engine. Trains, reskills, coaches, leads, strategizes, */
+/* directs, and organizes your agents. Cool, chill, confident. */
 const WELCOME_LINES = [
   { text: "hey! i'm kitz", mood: 'happy' as MoodKey, duration: 2000 },
-  { text: 'your AI crew 🤝', mood: 'talking' as MoodKey, duration: 2000 },
+  { text: 'i direct your agents', mood: 'talking' as MoodKey, duration: 2000 },
   { text: 'i lead your agents', mood: 'talking' as MoodKey, duration: 2000 },
   { text: 'tap me!', mood: 'happy' as MoodKey, duration: 2000 },
 ]
 
 /* ── Idle phrases — loop after welcome ── */
-/* Cool, chill, action-oriented. Never corporate. Short punchy lines. */
+/* Reflects what Kitz does: train, reskill, coach, lead, strategize, direct, organize */
 const IDLE_PHRASES = [
-  { text: 'what we building?', mood: 'idle' as MoodKey, duration: 2500 },
-  { text: "let's grow 🚀", mood: 'happy' as MoodKey, duration: 2000 },
+  { text: 'coaching agents 🧠', mood: 'idle' as MoodKey, duration: 2500 },
+  { text: 'organizing your crew', mood: 'talking' as MoodKey, duration: 2500 },
   { text: 'tap to text!', mood: 'talking' as MoodKey, duration: 2000 },
-  { text: 'crew is ready', mood: 'idle' as MoodKey, duration: 2000 },
+  { text: 'training agents...', mood: 'idle' as MoodKey, duration: 2500 },
   { text: '2x tap to talk', mood: 'talking' as MoodKey, duration: 2500 },
+  { text: 'strategizing 📊', mood: 'idle' as MoodKey, duration: 2000 },
+  { text: 'leading the team', mood: 'happy' as MoodKey, duration: 2000 },
   { text: 'just build it 💪', mood: 'happy' as MoodKey, duration: 2000 },
-  { text: 'numbers don\'t lie 📊', mood: 'idle' as MoodKey, duration: 2500 },
+  { text: 'reskilling agents', mood: 'idle' as MoodKey, duration: 2500 },
   { text: 'stay focused', mood: 'idle' as MoodKey, duration: 2000 },
 ]
 
