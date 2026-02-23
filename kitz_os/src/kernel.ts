@@ -12,6 +12,8 @@
 import { createServer } from './server.js';
 import { OsToolRegistry } from './tools/registry.js';
 import { getBatteryStatus, initBattery, type BatteryStatus } from './aiBattery.js';
+import { initSOPStore } from './sops/store.js';
+import { loadStarterSOPs } from './sops/loader.js';
 import { CadenceEngine } from './cadence/engine.js';
 import { createAOS, type AOSRuntime } from '../../aos/src/index.js';
 import type { LaunchContext } from '../../aos/src/types.js';
@@ -55,6 +57,14 @@ export class KitzKernel {
     // 2. Restore AI Battery ledger from persistent storage
     await initBattery().catch(err => {
       console.warn('[kernel] Battery restore failed (non-fatal):', (err as Error).message);
+    });
+
+    // 2.5. Initialize SOP store and load starter SOPs
+    await initSOPStore().catch(err => {
+      console.warn('[kernel] SOP store init failed (non-fatal):', (err as Error).message);
+    });
+    await loadStarterSOPs().catch(err => {
+      console.warn('[kernel] Starter SOP load failed (non-fatal):', (err as Error).message);
     });
 
     // 3. Register all tools

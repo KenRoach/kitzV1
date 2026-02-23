@@ -113,7 +113,7 @@ function extractTriggerKeywords(slug: string, content: string): string[] {
  * Extract applicable agents from **Owner:** line if present.
  * Falls back to ['*'] when no Owner line found.
  */
-function extractApplicableAgents(content: string, type: SOPType): string[] {
+function extractApplicableAgents(content: string, _type: SOPType): string[] {
   const ownerAgents = parseOwnerLine(content);
   if (ownerAgents.length > 0) return ownerAgents;
 

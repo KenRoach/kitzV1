@@ -21,6 +21,7 @@ import { chatCompletion, getAiModel, type ChatMessage, type ToolDef } from '../.
 import { callWorkspaceMcp } from '../../tools/mcpClient.js';
 import type { OsToolRegistry } from '../../tools/registry.js';
 import { recordLLMSpend, hasBudget, getBatteryStatus } from '../../aiBattery.js';
+import { searchSOPs } from '../../sops/store.js';
 
 // ── Tool-to-MCP Mapping ──
 // Maps KITZ OS tool names to workspace MCP tool names for direct execution
@@ -82,6 +83,8 @@ const DIRECT_EXECUTE_TOOLS = new Set([
   'outbound_sendVoiceNote', 'outbound_makeCall',
   // Web scraping + search tools
   'web_scrape', 'web_search', 'web_summarize', 'web_extract',
+  // SOP tools
+  'sop_search', 'sop_get', 'sop_list', 'sop_create', 'sop_update',
 ]);
 
 // ── Draft-First Classification ──
@@ -110,6 +113,8 @@ const WRITE_TOOLS = new Set([
   // Lovable writes
   'lovable_addProject', 'lovable_updateProject', 'lovable_removeProject',
   'lovable_pushArtifact', 'lovable_linkProjects',
+  // SOP writes (draft-first — new SOPs need approval)
+  'sop_create', 'sop_update',
 ]);
 
 // In-memory draft queue: traceId → pending drafts
@@ -151,7 +156,11 @@ function formatDraftSummary(drafts: DraftAction[]): string {
 }
 
 // ── System Prompt ──
-function buildSystemPrompt(toolCount: number): string {
+function buildSystemPrompt(toolCount: number, sopContext?: string): string {
+  const sopSection = sopContext
+    ? `\n\nRELEVANT SOPS (follow these procedures when applicable):\n${sopContext}`
+    : '';
+
   return `You are KITZ, an AI Business Operating System responding via WhatsApp.
 
 You are the execution engine for a small business. You have ${toolCount} tools available to fulfill requests.
@@ -206,7 +215,9 @@ RULES:
 21. For voice responses, use voice_speak to generate audio, then outbound_sendVoiceNote to deliver via WhatsApp.
 22. For WhatsApp calls, use outbound_makeCall. Calls use KITZ's female voice (ElevenLabs TTS).
 23. When user says "say that" or "read this aloud" or "voice note", use voice_speak + outbound_sendVoiceNote.
-24. KITZ's voice is female, warm, professional, and multilingual (Spanish-first, English fluent).`;
+24. KITZ's voice is female, warm, professional, and multilingual (Spanish-first, English fluent).
+25. For SOP queries ("how do I", "what's the process", "what's the SOP"), use sop_search to find relevant procedures.
+26. When creating new SOPs from user input, use sop_create. All new SOPs start as drafts.${sopSection}`;
 }
 
 // ── Execute a tool ──
@@ -259,7 +270,13 @@ export async function routeWithAI(
   const aiModel = getAiModel();
   const aiProvider = aiModel.startsWith('claude') ? 'claude' as const : 'openai' as const;
 
-  const systemPrompt = buildSystemPrompt(registry.count());
+  // ── SOP Context Injection — search for relevant procedures ──
+  const relevantSOPs = searchSOPs(userMessage, 3);
+  const sopContext = relevantSOPs.length > 0
+    ? relevantSOPs.map(sop => `[${sop.title}] ${sop.summary}`).join('\n')
+    : undefined;
+
+  const systemPrompt = buildSystemPrompt(registry.count(), sopContext);
 
   const messages: ChatMessage[] = [
     { role: 'system', content: systemPrompt },
