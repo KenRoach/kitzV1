@@ -1,7 +1,7 @@
 import { Code, ExternalLink } from 'lucide-react'
 
 const jsonPreview = `{
-  "name": "KITZ OS",
+  "name": "KITZ",
   "version": "0.1.0",
   "capabilities": {
     "agentTeams": 18,

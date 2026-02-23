@@ -29,7 +29,7 @@ export function TopNavBar({ currentNav, onNavChange, userName }: TopNavBarProps)
       {/* Logo */}
       <div className="px-4 py-5">
         <h1 className="bg-gradient-to-r from-purple-500 to-purple-600 bg-clip-text text-lg font-extrabold uppercase tracking-wide text-transparent">
-          KITZ OS v0.1
+          KITZ v0.1
         </h1>
       </div>
 

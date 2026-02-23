@@ -76,15 +76,18 @@ function getGreeting(): string {
 }
 
 /* ── Kitz graceful floating ── */
-// Kitz floats only in the RIGHT half of the hero card (the empty space).
+// Kitz floats ONLY in the RIGHT portion of the hero card (the empty white space).
+// He must never drift over the text/mission content on the left.
 const SPEED = 0.18        // very gentle drift — graceful (in % per frame)
-const PADDING_PCT = 4     // % from edges to keep Kitz away from borders
-const RIGHT_HALF_START = 0.48  // Kitz zone starts at 48% of card width
+const PAD_RIGHT = 6       // % horizontal padding from right edge
+const PAD_TOP = 20        // % top padding (thought bubble extends above center)
+const PAD_BOTTOM = 16     // % bottom padding (feet + aura extend below center)
+const RIGHT_ZONE_START = 0.58  // Kitz zone starts at 58% of card width (well clear of text)
 
-// Sleep position as fraction of container (center of right-half white space)
-const SLEEP_X_FRAC = 0.74
-const SLEEP_Y_FRAC = 0.50
-const WAKE_DELAY = 800  // ms Kitz pauses at sleep spot before drifting
+// Sleep position as fraction of container (center of right-zone white space)
+const SLEEP_X_FRAC = 0.76
+const SLEEP_Y_FRAC = 0.48  // slightly above center to keep feet within card
+const WAKE_DELAY = 4200  // ms Kitz pauses at sleep spot before drifting (~matches 4s wake-up in Orb)
 
 function useFloatingKitz(_containerRef: React.RefObject<HTMLDivElement | null>, paused: boolean) {
   // pos stores percentages (0–100) of container, NOT pixels
@@ -99,13 +102,13 @@ function useFloatingKitz(_containerRef: React.RefObject<HTMLDivElement | null>, 
   const wakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   pausedRef.current = paused
 
-  // Compute bounds as percentages — pure %, no pixel math needed
+  // Compute bounds as percentages — asymmetric padding for thought bubble (top) and feet (bottom)
   const getBoundsPercent = useCallback(() => {
     return {
-      minX: RIGHT_HALF_START * 100,
-      maxX: 100 - PADDING_PCT,
-      minY: PADDING_PCT,
-      maxY: 100 - PADDING_PCT,
+      minX: RIGHT_ZONE_START * 100,
+      maxX: 100 - PAD_RIGHT,
+      minY: PAD_TOP,
+      maxY: 100 - PAD_BOTTOM,
     }
   }, [])
 
@@ -166,9 +169,9 @@ function useFloatingKitz(_containerRef: React.RefObject<HTMLDivElement | null>, 
       posRef.current = { x: sleepX, y: sleepY }
       setPos({ x: sleepX, y: sleepY })
 
-      // Fresh gentle velocity in a random direction
-      const angle = Math.random() * Math.PI * 2
-      velRef.current = { dx: Math.cos(angle) * SPEED * 0.4, dy: Math.sin(angle) * SPEED * 0.25 }
+      // Fresh gentle velocity — bias rightward so Kitz doesn't drift into text
+      const angle = (Math.random() - 0.5) * Math.PI  // -90° to +90° (rightward half)
+      velRef.current = { dx: Math.cos(angle) * SPEED * 0.3, dy: Math.sin(angle) * SPEED * 0.2 }
 
       // Pause at sleep spot while waking up visually, then start drifting
       wakeTimerRef.current = setTimeout(() => {

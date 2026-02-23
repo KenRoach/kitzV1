@@ -1,4 +1,5 @@
 import { TopNavBar } from './TopNavBar'
+import { StatusBanner } from './StatusBanner'
 import { useAuthStore } from '@/stores/authStore'
 
 interface DashboardLayoutProps {
@@ -12,16 +13,21 @@ export function DashboardLayout({ children, currentNav, onNavChange }: Dashboard
 
   const userName = user?.email?.split('@')[0] ?? 'User'
   return (
-    <div className="flex h-screen bg-white">
-      {/* Left sidebar navigation */}
-      <TopNavBar
-        currentNav={currentNav}
-        onNavChange={onNavChange}
-        userName={userName}
-      />
+    <div className="flex h-screen flex-col bg-white">
+      {/* System status banner — shown when degraded/outage/maintenance */}
+      <StatusBanner />
 
-      {/* Main content */}
-      <main className="flex-1 overflow-hidden">{children}</main>
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left sidebar navigation */}
+        <TopNavBar
+          currentNav={currentNav}
+          onNavChange={onNavChange}
+          userName={userName}
+        />
+
+        {/* Main content */}
+        <main className="flex-1 overflow-hidden">{children}</main>
+      </div>
     </div>
   )
 }

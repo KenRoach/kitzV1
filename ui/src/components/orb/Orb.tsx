@@ -43,20 +43,25 @@ const FEET_FRAMES = [
 ]
 
 /* ── Welcome sequence — Kitz greets user on first load ── */
+/* Tone: cool, chill, confident. Gen Z clarity + disciplined founder. */
 const WELCOME_LINES = [
-  { text: "hey! i'm kitz 👋", mood: 'happy' as MoodKey, duration: 2000 },
-  { text: 'your AI business assistant', mood: 'talking' as MoodKey, duration: 2000 },
-  { text: '100+ agents ready to help you', mood: 'talking' as MoodKey, duration: 2000 },
-  { text: 'tap me anytime to chat!', mood: 'happy' as MoodKey, duration: 2000 },
+  { text: "hey! i'm kitz", mood: 'happy' as MoodKey, duration: 2000 },
+  { text: 'your AI crew 🤝', mood: 'talking' as MoodKey, duration: 2000 },
+  { text: 'i lead your agents', mood: 'talking' as MoodKey, duration: 2000 },
+  { text: 'tap me!', mood: 'happy' as MoodKey, duration: 2000 },
 ]
 
 /* ── Idle phrases — loop after welcome ── */
+/* Cool, chill, action-oriented. Never corporate. Short punchy lines. */
 const IDLE_PHRASES = [
-  { text: 'need help with anything?', mood: 'idle' as MoodKey, duration: 2000 },
-  { text: "let's grow your business 🚀", mood: 'happy' as MoodKey, duration: 2000 },
-  { text: 'tap me to chat!', mood: 'talking' as MoodKey, duration: 2000 },
-  { text: 'your AI team is ready', mood: 'idle' as MoodKey, duration: 2000 },
+  { text: 'what we building?', mood: 'idle' as MoodKey, duration: 2500 },
+  { text: "let's grow 🚀", mood: 'happy' as MoodKey, duration: 2000 },
+  { text: 'tap to text!', mood: 'talking' as MoodKey, duration: 2000 },
+  { text: 'crew is ready', mood: 'idle' as MoodKey, duration: 2000 },
+  { text: '2x tap to talk', mood: 'talking' as MoodKey, duration: 2500 },
   { text: 'just build it 💪', mood: 'happy' as MoodKey, duration: 2000 },
+  { text: 'numbers don\'t lie 📊', mood: 'idle' as MoodKey, duration: 2500 },
+  { text: 'stay focused', mood: 'idle' as MoodKey, duration: 2000 },
 ]
 
 const PX = 8
@@ -302,12 +307,59 @@ interface OrbProps {
   sleeping?: boolean
 }
 
+/* Wake phase: sleeping → stirring (eyes flutter) → waking (color returns) → awake (fully active) */
+type WakePhase = 'sleeping' | 'stirring' | 'waking' | 'awake'
+
+/* ── Moody phrases when tapped while sleeping — chill, never rude ── */
+const MOODY_PHRASES = ['five more min...', 'not yet... 😴', 'shhh...', 'zzz... later', 'still charging ⚡']
+
 export function Orb({ sleeping = false }: OrbProps) {
-  const { open, state } = useOrbStore()
+  const { open, focusChat, state } = useOrbStore()
   const [feetFrame, setFeetFrame] = useState(0)
   const [bounceY, setBounceY] = useState(0)
   const [blinking, setBlinking] = useState(false)
   const [fadeIn, setFadeIn] = useState(false)
+  const [wakePhase, setWakePhase] = useState<WakePhase>(sleeping ? 'sleeping' : 'awake')
+  const wakeTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
+  const [moodyText, setMoodyText] = useState<string | null>(null)
+  const moodyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const moodyIndexRef = useRef(0)
+
+  // Wake-up sequence: sleeping → stirring (1s) → waking (3s with "yah") → awake
+  useEffect(() => {
+    // Clear any running wake timers
+    wakeTimersRef.current.forEach(clearTimeout)
+    wakeTimersRef.current = []
+
+    if (sleeping) {
+      setWakePhase('sleeping')
+      // Clear moody text when going back to sleep
+      if (moodyTimerRef.current) clearTimeout(moodyTimerRef.current)
+      setMoodyText(null)
+      return
+    }
+
+    // Not sleeping — start wake-up sequence
+    if (wakePhase === 'sleeping') {
+      // Phase 1: stirring — eyes flutter, still gray (1s)
+      setWakePhase('stirring')
+      const t1 = setTimeout(() => setWakePhase('waking'), 1000)
+      // Phase 2: waking — "yah" bubble for 3 seconds, color returns
+      const t2 = setTimeout(() => setWakePhase('awake'), 4000)
+      // Phase 3: awake — fully active, happy
+      wakeTimersRef.current = [t1, t2]
+    }
+    return () => {
+      wakeTimersRef.current.forEach(clearTimeout)
+      wakeTimersRef.current = []
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sleeping])
+
+  const isFullyAwake = wakePhase === 'awake'
+  const isAsleep = wakePhase === 'sleeping'
+  const isStirring = wakePhase === 'stirring'
+  const isWaking = wakePhase === 'waking'
 
   // Fade in with website on mount
   useEffect(() => {
@@ -323,28 +375,45 @@ export function Orb({ sleeping = false }: OrbProps) {
   // Idle phrase loop — cycles after welcome
   const [idlePhrase, setIdlePhrase] = useState(0)
 
-  // Determine mood: sleeping overrides everything, then welcome flow, then orbStore state
-  const currentWelcome = !sleeping && !welcomeDone && welcomeStep < WELCOME_LINES.length
+  // Determine mood based on wake phase
+  const currentWelcome = isFullyAwake && !welcomeDone && welcomeStep < WELCOME_LINES.length
     ? WELCOME_LINES[welcomeStep]
     : null
 
-  const moodKey: MoodKey = sleeping
+  const moodKey: MoodKey = isAsleep
     ? 'sleeping'
+    : isStirring
+    ? 'sleeping'       // still looks asleep but eyes will flutter via blinking
+    : isWaking
+    ? 'idle'           // half-open eyes, gentle smile — waking up naturally
     : currentWelcome
     ? currentWelcome.mood
     : state === 'success' ? 'happy' : state === 'error' ? 'alert' : state === 'thinking' ? 'thinking' : 'idle'
 
   const currentMood = MOODS[moodKey]
-  const isTalking = !sleeping && (moodKey === 'talking' || !!currentWelcome)
+  const isTalking = isFullyAwake && (moodKey === 'talking' || !!currentWelcome)
+
+  // Color progression: gray → desaturated purple → muted purple → full purple
+  const displayColor = isAsleep
+    ? '#94a3b8'        // gray — sleeping
+    : isStirring
+    ? '#b0a0c0'        // desaturated purple-gray — stirring
+    : isWaking
+    ? '#c084fc'        // light purple — waking up
+    : currentMood.color // full purple — awake
 
   // Current idle phrase
-  const currentIdlePhrase = !sleeping && welcomeDone && state === 'idle'
+  const currentIdlePhrase = isFullyAwake && welcomeDone && state === 'idle'
     ? IDLE_PHRASES[idlePhrase % IDLE_PHRASES.length]
     : null
 
-  // Thought bubble text: sleeping shows Z's, welcome → active state → idle phrases
-  const thoughtText = sleeping
+  // Thought bubble text
+  const thoughtText = isAsleep
     ? null
+    : isStirring
+    ? null           // no bubble yet, just stirring
+    : isWaking
+    ? "yay, i'm up!"   // waking up phrase
     : currentWelcome
     ? currentWelcome.text
     : state === 'thinking' ? '...'
@@ -353,9 +422,9 @@ export function Orb({ sleeping = false }: OrbProps) {
     : currentIdlePhrase ? currentIdlePhrase.text
     : null
 
-  // Welcome sequence — auto-advance through lines
+  // Welcome sequence — auto-advance through lines (only when fully awake)
   useEffect(() => {
-    if (welcomeDone || welcomeStep >= WELCOME_LINES.length) return
+    if (!isFullyAwake || welcomeDone || welcomeStep >= WELCOME_LINES.length) return
     const line = WELCOME_LINES[welcomeStep]
     if (!line) return
     welcomeTimerRef.current = setTimeout(() => {
@@ -369,39 +438,50 @@ export function Orb({ sleeping = false }: OrbProps) {
     return () => {
       if (welcomeTimerRef.current) clearTimeout(welcomeTimerRef.current)
     }
-  }, [welcomeStep, welcomeDone])
+  }, [welcomeStep, welcomeDone, isFullyAwake])
 
   // Idle phrase loop — advance every phrase duration
   useEffect(() => {
-    if (!welcomeDone || state !== 'idle') return
+    if (!isFullyAwake || !welcomeDone || state !== 'idle') return
     const phrase = IDLE_PHRASES[idlePhrase % IDLE_PHRASES.length]
     if (!phrase) return
     const t = setTimeout(() => {
       setIdlePhrase((p) => (p + 1) % IDLE_PHRASES.length)
     }, phrase.duration)
     return () => clearTimeout(t)
-  }, [welcomeDone, state, idlePhrase])
+  }, [welcomeDone, state, idlePhrase, isFullyAwake])
 
-  // Idle foot animation — paused when sleeping
+  // Idle foot animation — only when fully awake
   useEffect(() => {
-    if (sleeping) { setFeetFrame(0); return }
+    if (!isFullyAwake) { setFeetFrame(0); return }
     const interval = setInterval(() => setFeetFrame((f) => (f + 1) % 3), 550)
     return () => clearInterval(interval)
-  }, [sleeping])
+  }, [isFullyAwake])
 
-  // Gentle bounce — smooth sine-wave breathing motion
+  // Gentle bounce — starts during waking phase (slower), full speed when awake
   useEffect(() => {
-    if (sleeping) { setBounceY(0); return }
+    if (isAsleep || isStirring) { setBounceY(0); return }
     let t = 0
     let raf: number
+    const speed = isWaking ? 0.015 : 0.03  // slower bounce while waking
+    const amplitude = isWaking ? -1.5 : -2.5
     const tick = () => {
-      t += 0.03
-      setBounceY(Math.sin(t) * -2.5)
+      t += speed
+      setBounceY(Math.sin(t) * amplitude)
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [sleeping])
+  }, [isAsleep, isStirring, isWaking])
+
+  // Rapid blinking during stirring phase (eyes fluttering)
+  useEffect(() => {
+    if (!isStirring) return
+    const interval = setInterval(() => {
+      setBlinking((b) => !b)
+    }, 300)
+    return () => clearInterval(interval)
+  }, [isStirring])
 
   // Random blinking
   useEffect(() => {
@@ -413,12 +493,38 @@ export function Orb({ sleeping = false }: OrbProps) {
     return () => clearInterval(interval)
   }, [])
 
+  // Single tap → text chatbox | Double tap → voice modal
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const handleClick = () => {
+    // If sleeping, show moody reaction instead of opening anything
+    if (isAsleep) {
+      if (moodyTimerRef.current) clearTimeout(moodyTimerRef.current)
+      const phrase = MOODY_PHRASES[moodyIndexRef.current % MOODY_PHRASES.length]!
+      moodyIndexRef.current += 1
+      setMoodyText(phrase)
+      moodyTimerRef.current = setTimeout(() => setMoodyText(null), 2000)
+      return
+    }
+
     if (!welcomeDone) {
       if (welcomeTimerRef.current) clearTimeout(welcomeTimerRef.current)
       setWelcomeDone(true)
     }
-    open()
+
+    // Double-tap detection: if a click timer is running, this is a double tap → voice
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current)
+      clickTimerRef.current = null
+      open()  // voice modal
+      return
+    }
+
+    // Otherwise wait to see if it's a double tap — if not, open text chatbox
+    clickTimerRef.current = setTimeout(() => {
+      clickTimerRef.current = null
+      focusChat()  // text chatbox
+    }, 280)
   }
 
   return (
@@ -439,26 +545,32 @@ export function Orb({ sleeping = false }: OrbProps) {
       aria-label="Talk to Kitz"
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick() }}
     >
-      {/* Thought bubble or sleep Z's */}
-      {sleeping ? (
+      {/* Thought bubble, moody bubble, or sleep Z's */}
+      {isAsleep && moodyText ? (
+        <ThoughtBubble text={moodyText} color="#EF4444" />
+      ) : isAsleep ? (
         <SleepZs />
       ) : thoughtText ? (
-        <ThoughtBubble text={thoughtText} color={currentMood.color} />
+        <ThoughtBubble text={thoughtText} color={displayColor} />
       ) : null}
 
       {/* Character */}
       <div
         style={{
           position: 'relative',
-          transform: `translateY(${sleeping ? 0 : bounceY}px)`,
-          transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), filter 0.8s ease',
-          filter: sleeping
+          transform: `translateY(${isAsleep ? 0 : bounceY}px)`,
+          transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), filter 1.2s ease',
+          filter: isAsleep
             ? 'drop-shadow(0 0 4px rgba(148,163,184,0.25)) grayscale(0.4)'
+            : isStirring
+            ? 'drop-shadow(0 0 5px rgba(168,85,247,0.1)) grayscale(0.2)'
+            : isWaking
+            ? `drop-shadow(0 0 6px ${PURPLE}25) grayscale(0)`
             : `drop-shadow(0 0 8px ${PURPLE}50) drop-shadow(0 0 20px ${PURPLE}25)`,
         }}
       >
-        {/* Aura — soft purple glow behind character */}
-        {!sleeping && (
+        {/* Aura — appears during waking (faint) and fully when awake */}
+        {(isWaking || isFullyAwake) && (
           <div
             style={{
               position: 'absolute',
@@ -470,6 +582,8 @@ export function Orb({ sleeping = false }: OrbProps) {
               borderRadius: '50%',
               background: `radial-gradient(circle, ${PURPLE}30 0%, ${PURPLE}15 40%, ${PURPLE}06 65%, transparent 80%)`,
               animation: 'orb-breathe 4s ease-in-out infinite',
+              opacity: isWaking ? 0.4 : 1,
+              transition: 'opacity 1s ease',
               pointerEvents: 'none',
             }}
           />
@@ -481,15 +595,16 @@ export function Orb({ sleeping = false }: OrbProps) {
             style={{
               width: Math.max(2, PX * 0.3),
               height: PX * 1.5,
-              background: currentMood.color,
-              boxShadow: `0 -${PX * 0.5}px 0 ${currentMood.color}, 0 -${PX}px 6px ${currentMood.color}60`,
+              background: displayColor,
+              boxShadow: `0 -${PX * 0.5}px 0 ${displayColor}, 0 -${PX}px 6px ${displayColor}60`,
+              transition: 'background 1s ease, box-shadow 1s ease',
             }}
           />
         </div>
 
         {/* Body */}
         <div style={{ position: 'relative' }}>
-          <PixelGrid grid={ORB_SHAPE} color={currentMood.color} />
+          <PixelGrid grid={ORB_SHAPE} color={displayColor} />
           {/* Highlight pixels */}
           <div style={{ position: 'absolute', top: PX, left: PX * 2, width: PX * 0.6, height: PX * 0.6, background: '#fff', opacity: 0.7 }} />
           <div style={{ position: 'absolute', top: PX * 1.5, left: PX * 1.5, width: PX * 0.4, height: PX * 0.4, background: '#fff', opacity: 0.4 }} />
@@ -498,7 +613,7 @@ export function Orb({ sleeping = false }: OrbProps) {
         </div>
 
         {/* Feet */}
-        <PixelGrid grid={(FEET_FRAMES[feetFrame] ?? FEET_FRAMES[0])!} color={currentMood.color} opacity={0.7} offsetY={-1} />
+        <PixelGrid grid={(FEET_FRAMES[feetFrame] ?? FEET_FRAMES[0])!} color={displayColor} opacity={0.7} offsetY={-1} />
       </div>
 
     </div>

@@ -17,13 +17,23 @@ interface BuildLogEntry {
 type Lang = 'en' | 'es' | 'ps'
 
 export function ChatPanel() {
-  const { messages, state, sendMessage } = useOrbStore()
+  const { messages, state, sendMessage, chatFocused, blurChat } = useOrbStore()
   const user = useAuthStore((s) => s.user)
   const [input, setInput] = useState('')
   const [lang, setLang] = useState<Lang>('en')
   const scrollRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const agentSteps = useAgentThinkingStore((s) => s.steps)
   const isAgentThinking = useAgentThinkingStore((s) => s.isThinking)
+
+  // When Kitz is tapped, focus the chat input
+  useEffect(() => {
+    if (chatFocused && inputRef.current) {
+      inputRef.current.focus()
+      inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' })
+      blurChat()
+    }
+  }, [chatFocused, blurChat])
 
   // Mock build log for demo
   const [buildLog] = useState<BuildLogEntry[]>([
@@ -183,10 +193,11 @@ export function ChatPanel() {
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
             </button>
             <input
+              ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask Kitz..."
-              className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-10 pr-4 text-sm text-white placeholder-gray-500 outline-none transition focus:border-purple-500/50"
+              className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-10 pr-4 text-sm text-white placeholder-gray-500 outline-none transition focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/30"
             />
           </div>
           {/* Send */}

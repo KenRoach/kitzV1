@@ -13,23 +13,33 @@ interface ChatMessage {
 type OrbState = 'idle' | 'thinking' | 'success' | 'error'
 
 interface OrbStore {
+  /* Voice modal (TalkToKitzModal) */
   isOpen: boolean
+  /* Text chatbox focus signal — ChatPanel listens for this */
+  chatFocused: boolean
+
   state: OrbState
   messages: ChatMessage[]
+
   toggle: () => void
   open: () => void
   close: () => void
+  focusChat: () => void
+  blurChat: () => void
   sendMessage: (content: string, userId: string) => Promise<void>
 }
 
 export const useOrbStore = create<OrbStore>((set, get) => ({
   isOpen: false,
+  chatFocused: false,
   state: 'idle',
   messages: [],
 
   toggle: () => set((s) => ({ isOpen: !s.isOpen })),
   open: () => set({ isOpen: true }),
   close: () => set({ isOpen: false }),
+  focusChat: () => set({ chatFocused: true }),
+  blurChat: () => set({ chatFocused: false }),
 
   sendMessage: async (content, userId) => {
     const userMsg: ChatMessage = {
