@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import formbody from '@fastify/formbody';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash, createHmac } from 'node:crypto';
 import { callMcp, mcpConfigured } from './mcp.js';
 
 export const health = { status: 'ok' };
@@ -9,6 +9,28 @@ const app = Fastify({ logger: true });
 const gatewayUrl = process.env.GATEWAY_URL || 'http://localhost:4000';
 const waConnectorUrl = process.env.WA_CONNECTOR_URL || 'http://localhost:3006';
 const COOKIE_NAME = 'kitz_session';
+const JWT_SECRET = process.env.JWT_SECRET || process.env.DEV_TOKEN_SECRET || 'kitz-dev-secret';
+
+/* ── Inline Auth (no gateway round-trip) ── */
+
+interface UserRecord { id: string; email: string; name: string; passwordHash: string; orgId: string; }
+const registeredUsers = new Map<string, UserRecord>(); // email → user
+
+function hashPw(pw: string): string { return createHash('sha256').update(pw).digest('hex'); }
+
+function b64url(buf: Buffer): string { return buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+
+function mintJwt(userId: string, orgId: string): string {
+  const now = Math.floor(Date.now() / 1000);
+  const header = b64url(Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })));
+  const payload = b64url(Buffer.from(JSON.stringify({
+    sub: userId, org_id: orgId,
+    scopes: ['battery:read', 'payments:write', 'tools:invoke', 'events:write', 'notifications:write', 'messages:write'],
+    iat: now, exp: now + 604800,
+  })));
+  const sig = b64url(createHmac('sha256', JWT_SECRET).update(`${header}.${payload}`).digest());
+  return `${header}.${payload}.${sig}`;
+}
 
 const ELEVENLABS_AGENT_ID = process.env.ELEVENLABS_AGENT_ID || '';
 const voiceWidget = ELEVENLABS_AGENT_ID
@@ -17,6 +39,14 @@ const voiceWidget = ELEVENLABS_AGENT_ID
 
 await app.register(cookie);
 await app.register(formbody);
+
+/* ── Auto-detect HTML responses and set correct Content-Type ── */
+app.addHook('onSend', async (_req, reply, payload) => {
+  if (typeof payload === 'string' && payload.trimStart().startsWith('<!DOCTYPE html>')) {
+    reply.header('content-type', 'text/html; charset=utf-8');
+  }
+  return payload;
+});
 
 /* ── In-Memory Stores (MVP) ── */
 
@@ -375,6 +405,80 @@ const shell = (title: string, body: string, session: Session | null, script = ''
 </body>
 </html>`;
 
+/* ── Branded Onboarding Page (/start) ── */
+
+const startPage = (formHtml: string, bottomLink: string, error = '') => `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>workspace.kitz.services — Start</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0a;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+    .url-bar{display:inline-flex;align-items:center;gap:6px;background:#111;border:1px solid #1a1a1a;border-radius:20px;padding:6px 16px;margin-bottom:24px;font-size:13px;color:#555;font-family:'SF Mono',Monaco,'Cascadia Code',monospace}
+    .url-bar .lock{color:#00d4aa;font-size:11px}
+    .url-bar .domain{color:#999}
+    .url-bar .path{color:#00d4aa;font-weight:600}
+    .brand{text-align:center;margin-bottom:32px}
+    .brand-logo{font-size:48px;font-weight:900;letter-spacing:-2px;background:linear-gradient(135deg,#00d4aa,#00b4d8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .brand-sub{font-size:14px;color:#555;margin-top:4px;letter-spacing:2px;text-transform:uppercase}
+    .brand-tagline{font-size:16px;color:#888;margin-top:12px;line-height:1.5}
+    .brand-tagline strong{color:#00d4aa}
+    .card{background:#111;border:1px solid #1a1a1a;border-radius:16px;padding:28px;max-width:380px;width:100%}
+    .wa-badge{display:inline-flex;align-items:center;gap:8px;background:#25d36622;color:#25d366;font-size:13px;font-weight:600;padding:6px 14px;border-radius:20px;margin-bottom:20px}
+    .wa-badge svg{width:18px;height:18px;fill:#25d366}
+    .form-group{margin-bottom:14px}
+    .form-label{display:block;font-size:12px;color:#666;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px}
+    input{width:100%;padding:12px 14px;background:#0a0a0a;border:1px solid #222;border-radius:10px;color:#fff;font-size:15px;font-family:inherit}
+    input:focus{outline:none;border-color:#00d4aa}
+    input::placeholder{color:#444}
+    .btn{display:block;width:100%;padding:14px;border-radius:10px;border:none;font-size:15px;font-weight:700;cursor:pointer;text-align:center;transition:all 0.2s}
+    .btn-primary{background:linear-gradient(135deg,#00d4aa,#00b4d8);color:#000}
+    .btn-primary:hover{opacity:0.9;transform:translateY(-1px)}
+    .bottom{text-align:center;font-size:13px;color:#555;margin-top:20px}
+    .bottom a{color:#00d4aa;text-decoration:none}
+    .alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;background:#ff6b6b12;color:#ff6b6b;border:1px solid #ff6b6b22}
+    .steps{display:flex;gap:8px;margin-bottom:20px;justify-content:center}
+    .step{font-size:11px;color:#444;padding:4px 10px;border-radius:12px;border:1px solid #1a1a1a}
+    .step.active{color:#00d4aa;border-color:#00d4aa44;background:#00d4aa08}
+    .footer{margin-top:32px;text-align:center;font-size:12px;color:#333}
+    .footer a{color:#444;text-decoration:none}
+    .footer a:hover{color:#00d4aa}
+  </style>
+</head>
+<body>
+  <div class="url-bar">
+    <span class="lock">&#x1f512;</span>
+    <span class="domain">workspace.kitz.services</span>
+    <span class="path">/start</span>
+  </div>
+  <div class="brand">
+    <div class="brand-logo">KITZ</div>
+    <div class="brand-sub">workspace</div>
+    <div class="brand-tagline">Your hustle deserves <strong>infrastructure</strong>.</div>
+  </div>
+  <div class="steps">
+    <div class="step active">1. Sign Up</div>
+    <div class="step">2. Connect WhatsApp</div>
+    <div class="step">3. You're Live</div>
+  </div>
+  <div class="card">
+    <div class="wa-badge">
+      <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.61.609l4.458-1.495A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.24 0-4.31-.726-5.993-1.957l-.418-.312-2.647.887.887-2.647-.312-.418A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+      Connect via WhatsApp
+    </div>
+    ${error}
+    ${formHtml}
+  </div>
+  <div class="bottom">${bottomLink}</div>
+  <div class="footer">
+    <a href="https://workspace.kitz.services">workspace.kitz.services</a> &mdash; Free for early testers. No credit card.
+  </div>
+</body>
+</html>`;
+
 /* ── Auth Pages ── */
 
 const authPage = (title: string, formHtml: string, bottomLink: string) => shell(title, `
@@ -386,8 +490,76 @@ const authPage = (title: string, formHtml: string, bottomLink: string) => shell(
   </div>
 `, null);
 
-app.get('/login', async (req: any) => {
-  if (getSession(req)) return (req as any).server.redirect('/leads');
+/* ── /start — branded shareable onboarding link ── */
+
+app.get('/start', async (req: any, reply: any) => {
+  const session = getSession(req);
+  if (session) return reply.redirect('/whatsapp');
+  const error = (req.query as any)?.error;
+  const errorHtml = error === 'exists'
+    ? `<div class="alert">That email is already registered. <a href="/start?mode=login" style="color:#00d4aa">Log in instead</a></div>`
+    : error === 'validation'
+    ? `<div class="alert">All fields are required. Password min 6 chars.</div>`
+    : error === 'invalid'
+    ? `<div class="alert">Invalid email or password.</div>`
+    : '';
+  const mode = (req.query as any)?.mode;
+  if (mode === 'login') {
+    return startPage(`
+      <form method="POST" action="/auth/start-login">
+        <div class="form-group"><label class="form-label">Email</label><input name="email" type="email" placeholder="you@example.com" required autofocus/></div>
+        <div class="form-group"><label class="form-label">Password</label><input name="password" type="password" placeholder="Your password" required/></div>
+        <button class="btn btn-primary" type="submit">Log In & Connect</button>
+      </form>
+    `, `New here? <a href="/start">Create a free account</a>`, errorHtml);
+  }
+  return startPage(`
+    <form method="POST" action="/auth/start-register">
+      <div class="form-group"><label class="form-label">Your Name</label><input name="name" placeholder="Maria Garcia" required autofocus/></div>
+      <div class="form-group"><label class="form-label">Email</label><input name="email" type="email" placeholder="you@example.com" required/></div>
+      <div class="form-group"><label class="form-label">Password</label><input name="password" type="password" placeholder="Min 6 characters" minlength="6" required/></div>
+      <button class="btn btn-primary" type="submit">Create Account & Connect WhatsApp</button>
+    </form>
+  `, `Already have an account? <a href="/start?mode=login">Log in</a>`, errorHtml);
+});
+
+/* /start auth handlers — redirect to /whatsapp instead of /leads */
+
+app.post('/auth/start-register', async (req: any, reply: any) => {
+  const { name, email, password } = req.body || {};
+  if (!name || !email || !password || password.length < 6) return reply.redirect('/start?error=validation');
+  const key = email.toLowerCase();
+  if (registeredUsers.has(key)) return reply.redirect('/start?error=exists');
+  const userId = randomUUID();
+  const orgId = randomUUID();
+  registeredUsers.set(key, { id: userId, email: key, name, passwordHash: hashPw(password), orgId });
+  const token = mintJwt(userId, orgId);
+  const sessionId = randomUUID();
+  sessions.set(sessionId, { userId, email: key, name, token, orgId });
+  funnel.signup += 1;
+  reply.setCookie(COOKIE_NAME, sessionId, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
+  return reply.redirect('/whatsapp');
+});
+
+app.post('/auth/start-login', async (req: any, reply: any) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) return reply.redirect('/start?mode=login&error=invalid');
+  const user = registeredUsers.get(email.toLowerCase());
+  if (!user || user.passwordHash !== hashPw(password)) {
+    authFailures += 1;
+    return reply.redirect('/start?mode=login&error=invalid');
+  }
+  const token = mintJwt(user.id, user.orgId);
+  const sessionId = randomUUID();
+  sessions.set(sessionId, { userId: user.id, email: user.email, name: user.name, token, orgId: user.orgId });
+  reply.setCookie(COOKIE_NAME, sessionId, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
+  return reply.redirect('/whatsapp');
+});
+
+/* ── Standard Auth Pages (existing) ── */
+
+app.get('/login', async (req: any, reply: any) => {
+  if (getSession(req)) return reply.redirect('/leads');
   const error = (req.query as any)?.error;
   return authPage('Log In', `
     ${error ? `<div class="alert alert-warn" style="margin-bottom:12px">${error === 'invalid' ? 'Invalid email or password' : 'Please log in'}</div>` : ''}
@@ -399,8 +571,8 @@ app.get('/login', async (req: any) => {
   `, `Don't have an account? <a href="/register" style="color:#00d4aa">Sign up free</a>`);
 });
 
-app.get('/register', async (req: any) => {
-  if (getSession(req)) return (req as any).server.redirect('/leads');
+app.get('/register', async (req: any, reply: any) => {
+  if (getSession(req)) return reply.redirect('/leads');
   const error = (req.query as any)?.error;
   return authPage('Sign Up', `
     ${error === 'exists' ? `<div class="alert alert-warn" style="margin-bottom:12px">That email is already registered. <a href="/login" style="color:#00d4aa">Log in instead?</a></div>` : ''}
@@ -420,26 +592,22 @@ app.post('/auth/register', async (req: any, reply: any) => {
     return reply.redirect('/register?error=validation');
   }
 
-  try {
-    const res = await fetch(`${gatewayUrl}/auth/signup`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-trace-id': randomUUID() },
-      body: JSON.stringify({ name, email, password }),
-    });
-    const data = await res.json() as any;
-    if (!res.ok) {
-      return reply.redirect(data.code === 'USER_EXISTS' ? '/register?error=exists' : '/register?error=validation');
-    }
-
-    const sessionId = randomUUID();
-    sessions.set(sessionId, { userId: data.userId, email, name, token: data.token, orgId: data.orgId });
-    funnel.signup += 1;
-
-    reply.setCookie(COOKIE_NAME, sessionId, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
-    return reply.redirect('/leads');
-  } catch {
-    return reply.redirect('/register?error=validation');
+  const key = email.toLowerCase();
+  if (registeredUsers.has(key)) {
+    return reply.redirect('/register?error=exists');
   }
+
+  const userId = randomUUID();
+  const orgId = randomUUID();
+  registeredUsers.set(key, { id: userId, email: key, name, passwordHash: hashPw(password), orgId });
+
+  const token = mintJwt(userId, orgId);
+  const sessionId = randomUUID();
+  sessions.set(sessionId, { userId, email: key, name, token, orgId });
+  funnel.signup += 1;
+
+  reply.setCookie(COOKIE_NAME, sessionId, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
+  return reply.redirect('/leads');
 });
 
 app.post('/auth/login', async (req: any, reply: any) => {
@@ -448,26 +616,18 @@ app.post('/auth/login', async (req: any, reply: any) => {
     return reply.redirect('/login?error=invalid');
   }
 
-  try {
-    const res = await fetch(`${gatewayUrl}/auth/token`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-trace-id': randomUUID() },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json() as any;
-    if (!res.ok) {
-      authFailures += 1;
-      return reply.redirect('/login?error=invalid');
-    }
-
-    const sessionId = randomUUID();
-    sessions.set(sessionId, { userId: data.userId, email, name: data.name, token: data.token, orgId: data.orgId });
-
-    reply.setCookie(COOKIE_NAME, sessionId, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
-    return reply.redirect('/leads');
-  } catch {
+  const user = registeredUsers.get(email.toLowerCase());
+  if (!user || user.passwordHash !== hashPw(password)) {
+    authFailures += 1;
     return reply.redirect('/login?error=invalid');
   }
+
+  const token = mintJwt(user.id, user.orgId);
+  const sessionId = randomUUID();
+  sessions.set(sessionId, { userId: user.id, email: user.email, name: user.name, token, orgId: user.orgId });
+
+  reply.setCookie(COOKIE_NAME, sessionId, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
+  return reply.redirect('/leads');
 });
 
 app.get('/auth/logout', async (_req: any, reply: any) => {
@@ -480,7 +640,7 @@ app.get('/auth/logout', async (_req: any, reply: any) => {
 /* ── Home redirect ── */
 app.get('/', async (req: any, reply: any) => {
   const session = getSession(req);
-  return reply.redirect(session ? '/leads' : '/login');
+  return reply.redirect(session ? '/leads' : '/start');
 });
 
 /* ── Helper: make authenticated call to gateway ── */
@@ -702,7 +862,19 @@ app.get('/tasks', async (req: any, reply: any) => {
   if (!session) return;
   trackUsage('tasks.view');
 
-  const tasks = userTasks.get(session.userId) || [];
+  // Fetch from MCP (Supabase) with in-memory fallback
+  let tasks: Task[] = userTasks.get(session.userId) || [];
+  if (mcpConfigured) {
+    const result = await callMcp('list_tasks', { limit: 100 }, session.userId) as any;
+    if (result && !result.error && Array.isArray(result)) {
+      tasks = result.map((t: any) => ({
+        id: t.id,
+        title: t.title || t.description || '',
+        status: t.status || 'todo',
+        createdAt: t.created_at || new Date().toISOString(),
+      }));
+    }
+  }
   const todo = tasks.filter(t => t.status === 'todo').length;
   const inProgress = tasks.filter(t => t.status === 'in_progress').length;
   const done = tasks.filter(t => t.status === 'done').length;
@@ -722,7 +894,7 @@ app.get('/tasks', async (req: any, reply: any) => {
 
   return shell('Tasks', `
     <h1 class="page-title">Tasks</h1>
-    <p class="page-desc">Create, assign, and close sales & ops tasks.</p>
+    <p class="page-desc">Create, assign, and close sales & ops tasks.${mcpConfigured ? '' : ' <span style="color:#555">(offline mode)</span>'}</p>
     <div class="stats-row">
       <div class="stat"><div class="stat-value">${todo}</div><div class="stat-label">To Do</div></div>
       <div class="stat"><div class="stat-value">${inProgress}</div><div class="stat-label">In Progress</div></div>
@@ -751,6 +923,11 @@ app.post('/tasks/add', async (req: any, reply: any) => {
   const { title } = req.body || {};
   if (!title) return reply.redirect('/tasks');
 
+  // Write to MCP (Supabase)
+  if (mcpConfigured) {
+    await callMcp('create_task', { title, status: 'todo' }, session.userId);
+  }
+  // Also keep in-memory for instant reads
   const tasks = userTasks.get(session.userId) || [];
   tasks.push({ id: randomUUID(), title, status: 'todo', createdAt: new Date().toISOString() });
   userTasks.set(session.userId, tasks);
@@ -762,6 +939,10 @@ app.post('/tasks/done', async (req: any, reply: any) => {
   const session = requireSession(req, reply);
   if (!session) return;
   const { id } = req.body || {};
+  // Update in MCP
+  if (mcpConfigured && id) {
+    await callMcp('update_task', { task_id: id, status: 'done' }, session.userId);
+  }
   const tasks = userTasks.get(session.userId) || [];
   const task = tasks.find(t => t.id === id);
   if (task) task.status = 'done';
@@ -1126,9 +1307,11 @@ app.get('/ai-direction', async (req: any, reply: any) => {
     <div class="alert alert-info">Manual mode is always free. AI costs 0.5\u20132 credits per task.</div>
   `, session, `fetch('/api/ai-battery').then(function(r){return r.json()}).then(function(d){
     var c=d.credits||0;
-    document.getElementById('battery-credits').textContent=c;
-    document.getElementById('battery-status').textContent=c>0?'Active':'Depleted';
-    if(c>0){document.getElementById('run-ai').disabled=false;}
+    var limit=d.dailyLimit||5;
+    var depleted=d.depleted||false;
+    document.getElementById('battery-credits').textContent=c+'/'+limit;
+    document.getElementById('battery-status').textContent=depleted?'Depleted':(d.status==='kitz_os_offline'?'Offline':'Active');
+    if(!depleted&&c>0){document.getElementById('run-ai').disabled=false;}
     else{document.getElementById('battery-warn').style.display='block';}
   }).catch(function(){
     document.getElementById('battery-credits').textContent='?';
@@ -1200,13 +1383,21 @@ app.get('/api/ops/metrics', async () => {
 
 app.get('/health', async () => health);
 
+/* ── 404 catch-all — redirect unknown routes to /start ── */
+app.setNotFoundHandler(async (_req: any, reply: any) => {
+  return reply.redirect('/start');
+});
+
 /** Escape HTML to prevent XSS */
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 if (process.env.NODE_ENV !== 'test') {
-  app.listen({ port: Number(process.env.PORT || 3001), host: '0.0.0.0' });
+  app.listen({ port: Number(process.env.PORT || 3001), host: '0.0.0.0' }).catch((err) => {
+    console.error('FATAL: workspace failed to start', err);
+    process.exit(1);
+  });
 }
 
 export default app;

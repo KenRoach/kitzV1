@@ -106,11 +106,29 @@ app.post('/tool-calls', { preHandler: requireScope('tools:invoke') }, async (req
   return response;
 });
 
-app.get('/ai-battery/balance', { preHandler: requireScope('battery:read') }, async (req) => ({
-  orgId: getOrgId(req),
-  credits: 100,
-  traceId: getTraceId(req)
-}));
+app.get('/ai-battery/balance', { preHandler: requireScope('battery:read') }, async (req) => {
+  const kitzOsUrl = process.env.KITZ_OS_URL || 'http://localhost:3012';
+  try {
+    const res = await fetch(`${kitzOsUrl}/api/kitz/battery`, {
+      headers: { 'x-trace-id': getTraceId(req), 'x-org-id': getOrgId(req) },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (res.ok) {
+      const data = await res.json() as any;
+      return {
+        orgId: getOrgId(req),
+        credits: data.remaining ?? data.credits ?? 0,
+        dailyLimit: data.dailyLimit ?? 5,
+        todaySpent: data.todayCredits ?? 0,
+        depleted: data.depleted ?? false,
+        traceId: getTraceId(req),
+      };
+    }
+  } catch { /* kitz_os unreachable — fall through */ }
+
+  // Fallback if kitz_os is down
+  return { orgId: getOrgId(req), credits: 0, dailyLimit: 5, todaySpent: 0, depleted: true, status: 'kitz_os_offline', traceId: getTraceId(req) };
+});
 
 app.post('/approvals/request', { preHandler: requireScope('approvals:write') }, async (req) => {
   const body = req.body as ApprovalRequest;
