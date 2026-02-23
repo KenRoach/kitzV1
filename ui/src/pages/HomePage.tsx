@@ -79,9 +79,9 @@ function getGreeting(): string {
 // Kitz floats ONLY in the RIGHT portion of the hero card (the empty white space).
 // He must never drift over the text/mission content on the left.
 const SPEED = 0.18        // very gentle drift — graceful (in % per frame)
-const PAD_RIGHT = 6       // % horizontal padding from right edge
-const PAD_TOP = 20        // % top padding (thought bubble extends above center)
-const PAD_BOTTOM = 16     // % bottom padding (feet + aura extend below center)
+const PAD_RIGHT = 10      // % horizontal padding from right edge (bubble + aura clearance)
+const PAD_TOP = 22        // % top padding (thought bubble extends above center)
+const PAD_BOTTOM = 18     // % bottom padding (feet + aura extend below center)
 const RIGHT_ZONE_START = 0.58  // Kitz zone starts at 58% of card width (well clear of text)
 
 // Sleep position as fraction of container (center of right-zone white space)

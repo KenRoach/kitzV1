@@ -231,21 +231,22 @@ function ThoughtBubble({ text, color }: { text: string; color: string }) {
     <div
       style={{
         position: 'relative',
-        marginBottom: 12,
-        padding: '6px 12px',
+        marginBottom: 10,
+        padding: '4px 10px',
         background: '#f8f5ff',
         border: `2px solid ${color}40`,
         borderRadius: 4,
         color: '#4b2d8e',
         fontSize: 9,
         fontWeight: 600,
-        letterSpacing: 1.5,
+        letterSpacing: 1.2,
         animation: 'fadeInUp 0.8s cubic-bezier(0.25, 0.1, 0.25, 1)',
         textShadow: `0 0 10px ${color}30`,
         whiteSpace: 'nowrap',
-        maxWidth: 140,
+        maxWidth: 110,
         overflow: 'hidden',
         textOverflow: 'ellipsis',
+        textAlign: 'center' as const,
       }}
     >
       {text}
