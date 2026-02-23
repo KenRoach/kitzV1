@@ -22,9 +22,9 @@ export function TasksTab() {
           <label className="block text-xs font-medium text-gray-500 mb-1">New Task</label>
           <input value={title} onChange={(e) => setTitle(e.target.value)} required
             placeholder="What needs to get done?"
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-[#00D4AA]" />
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
         </div>
-        <button type="submit" className="flex items-center gap-2 rounded-lg bg-[#00D4AA] px-4 py-2 text-sm font-medium text-white hover:bg-[#00E8BB] transition">
+        <button type="submit" className="flex items-center gap-2 rounded-lg bg-purple-500 px-4 py-2 text-sm font-medium text-white hover:bg-purple-400 transition">
           <Plus className="h-4 w-4" /> Add
         </button>
       </form>
@@ -38,9 +38,9 @@ export function TasksTab() {
       <div className="space-y-1">
         {tasks.map((task) => (
           <div key={task.id} className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition hover:bg-gray-50">
-            <button className="text-gray-400 hover:text-[#00D4AA] transition">
+            <button className="text-gray-400 hover:text-purple-500 transition">
               {task.done
-                ? <CheckSquare className="h-5 w-5 text-[#00D4AA]" />
+                ? <CheckSquare className="h-5 w-5 text-purple-500" />
                 : <Square className="h-5 w-5" />
               }
             </button>

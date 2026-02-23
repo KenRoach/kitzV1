@@ -37,7 +37,7 @@ export function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@business.com"
-          className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-black placeholder-gray-400 outline-none transition focus:border-[#00D4AA] focus:ring-2 focus:ring-[#00D4AA]/20"
+          className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-black placeholder-gray-400 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
         />
       </div>
 
@@ -52,14 +52,14 @@ export function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter your password"
-          className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-black placeholder-gray-400 outline-none transition focus:border-[#00D4AA] focus:ring-2 focus:ring-[#00D4AA]/20"
+          className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-black placeholder-gray-400 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
         />
       </div>
 
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full rounded-lg bg-[#00D4AA] px-4 py-3 font-semibold text-white transition hover:bg-[#00E8BB] disabled:opacity-50"
+        className="w-full rounded-lg bg-purple-500 px-4 py-3 font-semibold text-white transition hover:bg-purple-400 disabled:opacity-50"
       >
         {isLoading ? 'Signing in...' : 'Sign In'}
       </button>

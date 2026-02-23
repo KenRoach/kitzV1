@@ -27,15 +27,15 @@ export function CheckoutTab() {
           <label className="block text-xs font-medium text-gray-500 mb-1">Label *</label>
           <input value={label} onChange={(e) => setLabel(e.target.value)} required
             placeholder="Payment for..."
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-[#00D4AA]" />
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
         </div>
         <div className="w-32">
           <label className="block text-xs font-medium text-gray-500 mb-1">Amount *</label>
           <input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required
             placeholder="$0.00"
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-[#00D4AA]" />
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
         </div>
-        <button type="submit" className="flex items-center gap-2 rounded-lg bg-[#00D4AA] px-4 py-2 text-sm font-medium text-white hover:bg-[#00E8BB] transition">
+        <button type="submit" className="flex items-center gap-2 rounded-lg bg-purple-500 px-4 py-2 text-sm font-medium text-white hover:bg-purple-400 transition">
           <Plus className="h-4 w-4" /> Create
         </button>
       </form>
@@ -58,10 +58,10 @@ export function CheckoutTab() {
             </div>
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1">
-                <span className={`h-2 w-2 rounded-full ${link.active ? 'bg-[#00D4AA]' : 'bg-gray-300'}`} />
+                <span className={`h-2 w-2 rounded-full ${link.active ? 'bg-purple-500' : 'bg-gray-300'}`} />
                 <span className="text-xs text-gray-500">{link.active ? 'Active' : 'Inactive'}</span>
               </span>
-              <span className="font-semibold text-[#00D4AA]">${link.amount.toFixed(2)}</span>
+              <span className="font-semibold text-purple-500">${link.amount.toFixed(2)}</span>
               <button onClick={() => copySlug(link.slug)} className="rounded-lg p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600">
                 <Copy className="h-4 w-4" />
               </button>

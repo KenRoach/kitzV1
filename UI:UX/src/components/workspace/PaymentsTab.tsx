@@ -36,7 +36,7 @@ export function PaymentsTab() {
       <div className="flex gap-4">
         <div className="flex-1 rounded-xl border border-gray-200 p-4">
           <p className="font-mono text-xs text-gray-500">Received this week</p>
-          <p className="mt-1 text-2xl font-bold text-[#00D4AA]">${totalIncoming.toLocaleString()}</p>
+          <p className="mt-1 text-2xl font-bold text-purple-500">${totalIncoming.toLocaleString()}</p>
         </div>
         <div className="flex-1 rounded-xl border border-gray-200 p-4">
           <p className="font-mono text-xs text-gray-500">Pending</p>
@@ -75,7 +75,7 @@ export function PaymentsTab() {
               </span>
               <span className={cn(
                 'font-mono text-sm font-semibold',
-                payment.type === 'incoming' ? 'text-[#00D4AA]' : 'text-gray-500',
+                payment.type === 'incoming' ? 'text-purple-500' : 'text-gray-500',
               )}>
                 {payment.type === 'incoming' ? '+' : '-'}${payment.amount}
               </span>

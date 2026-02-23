@@ -196,7 +196,7 @@ export function ChatPanel() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask Kitz..."
-              className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-10 pr-4 text-sm text-white placeholder-gray-500 outline-none transition focus:border-[#00D4AA]/50"
+              className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-10 pr-4 text-sm text-white placeholder-gray-500 outline-none transition focus:border-purple-500/50"
             />
           </div>
           {/* Send */}
@@ -206,7 +206,7 @@ export function ChatPanel() {
             className={cn(
               'flex h-9 w-9 items-center justify-center rounded-xl transition',
               input.trim() && state !== 'thinking'
-                ? 'bg-[#00D4AA] text-white hover:bg-[#00E8BB]'
+                ? 'bg-purple-500 text-white hover:bg-purple-400'
                 : 'bg-white/5 text-gray-600',
             )}
           >
@@ -218,15 +218,15 @@ export function ChatPanel() {
         <div className="flex items-center justify-center gap-5 font-mono text-[11px]">
           <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/5">
             <span className="text-gray-500">AI Battery</span>
-            <span className="text-red-400">5</span>
+            <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold text-purple-400">5</span>
           </button>
           <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/5">
             <span className="text-gray-500">Active Agents</span>
-            <span className="text-amber-400">8</span>
+            <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold text-purple-400">8</span>
           </button>
           <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/5">
             <span className="text-gray-500">WhatsApp</span>
-            <span className="text-[#00D4AA]">⚡</span>
+            <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold text-purple-400">⚡</span>
           </button>
         </div>
       </div>

@@ -23,7 +23,7 @@ export function Sidebar({ currentNav, onNavChange, userName, userEmail }: Sideba
   return (
     <aside className="flex h-full w-64 flex-col bg-[#0A0A0A]">
       <div className="px-5 pt-6 pb-4">
-        <h1 className="bg-gradient-to-r from-[#00D4AA] to-[#00B4D8] bg-clip-text text-2xl font-extrabold text-transparent">
+        <h1 className="bg-gradient-to-r from-purple-500 to-purple-600 bg-clip-text text-2xl font-extrabold text-transparent">
           KITZ
         </h1>
       </div>
@@ -40,7 +40,7 @@ export function Sidebar({ currentNav, onNavChange, userName, userEmail }: Sideba
                 className={cn(
                   'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                   isActive
-                    ? 'border-l-2 border-[#00D4AA] bg-white/5 text-[#00D4AA]'
+                    ? 'border-l-2 border-purple-500 bg-white/5 text-purple-500'
                     : 'border-l-2 border-transparent text-gray-400 hover:bg-white/5 hover:text-gray-200',
                 )}
               >
@@ -70,7 +70,7 @@ export function Sidebar({ currentNav, onNavChange, userName, userEmail }: Sideba
 
       <div className="border-t border-white/10 px-4 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#00D4AA] text-sm font-semibold text-white">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-500 text-sm font-semibold text-white">
             {initial}
           </div>
           <div className="min-w-0 flex-1">

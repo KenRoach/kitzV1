@@ -8,7 +8,7 @@ interface WhatsAppBannerProps {
 export function WhatsAppBanner({ onConnect, onDismiss }: WhatsAppBannerProps) {
   return (
     <div className="mx-auto max-w-3xl px-6">
-      <div className="flex items-center justify-between rounded-xl bg-gradient-to-r from-[#00D4AA] to-[#00B4D8] px-5 py-3 shadow-sm">
+      <div className="flex items-center justify-between rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 px-5 py-3 shadow-sm">
         <div className="flex items-center gap-3">
           <MessageCircle className="h-5 w-5 text-white" />
           <p className="text-sm font-medium text-white">

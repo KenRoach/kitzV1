@@ -31,7 +31,7 @@ export function OrbChat() {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
           <div className="flex items-center gap-2">
-            <div className="h-2.5 w-2.5 rounded-full bg-[#00D4AA]" />
+            <div className="h-2.5 w-2.5 rounded-full bg-purple-500" />
             <h3 className="text-sm font-semibold text-black">Kitz AI</h3>
             <span className="font-mono text-[10px] text-gray-400">voice assistant</span>
           </div>
@@ -56,7 +56,7 @@ export function OrbChat() {
                 className={cn(
                   'max-w-[85%] rounded-2xl px-4 py-2 text-sm',
                   msg.role === 'user'
-                    ? 'bg-[#00D4AA] text-white'
+                    ? 'bg-purple-500 text-white'
                     : 'bg-gray-100 text-black',
                 )}
               >
@@ -82,12 +82,12 @@ export function OrbChat() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Message Kitz..."
-              className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-black placeholder-gray-400 outline-none transition focus:border-[#00D4AA]"
+              className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-black placeholder-gray-400 outline-none transition focus:border-purple-500"
             />
             <button
               type="submit"
               disabled={state === 'thinking'}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-[#00D4AA] text-white transition hover:bg-[#00E8BB] disabled:opacity-50"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-500 text-white transition hover:bg-purple-400 disabled:opacity-50"
             >
               <ArrowUp className="h-4 w-4" />
             </button>

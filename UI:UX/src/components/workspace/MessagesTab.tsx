@@ -35,7 +35,7 @@ export function MessagesTab() {
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-bold text-black">Messages</h3>
           {totalUnread > 0 && (
-            <span className="rounded-full bg-[#00D4AA] px-2 py-0.5 text-[10px] font-bold text-white">
+            <span className="rounded-full bg-purple-500 px-2 py-0.5 text-[10px] font-bold text-white">
               {totalUnread}
             </span>
           )}
@@ -68,7 +68,7 @@ export function MessagesTab() {
             <div className="flex items-center gap-2 shrink-0 ml-3">
               <span className="font-mono text-[10px] text-gray-400">{convo.time}</span>
               {convo.unread > 0 && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#00D4AA] text-[10px] font-bold text-white">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-500 text-[10px] font-bold text-white">
                   {convo.unread}
                 </span>
               )}

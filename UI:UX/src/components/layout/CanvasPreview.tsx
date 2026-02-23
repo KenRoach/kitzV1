@@ -25,7 +25,7 @@ export function CanvasPreview() {
         <div className="border-b border-gray-100 bg-white px-6 py-4">
           <div className="mx-auto max-w-5xl flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-[#00D4AA]" />
+              <Sparkles className="h-5 w-5 text-purple-500" />
               <span className="text-lg font-extrabold tracking-tight text-black">kitz</span>
             </div>
             {/* Tab navigation */}
@@ -57,7 +57,7 @@ export function CanvasPreview() {
                 key={tab.id}
                 className={cn(
                   'h-1 flex-1 rounded-full transition-colors',
-                  activeTab === tab.id ? 'bg-[#00D4AA]' : 'bg-gray-200',
+                  activeTab === tab.id ? 'bg-purple-500' : 'bg-gray-200',
                 )}
               />
             ))}

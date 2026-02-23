@@ -23,15 +23,15 @@ export function OrdersTab() {
           <label className="block text-xs font-medium text-gray-500 mb-1">Description *</label>
           <input value={description} onChange={(e) => setDescription(e.target.value)} required
             placeholder="Order description"
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-[#00D4AA]" />
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
         </div>
         <div className="w-32">
           <label className="block text-xs font-medium text-gray-500 mb-1">Total *</label>
           <input type="number" step="0.01" value={total} onChange={(e) => setTotal(e.target.value)} required
             placeholder="$0.00"
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-[#00D4AA]" />
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
         </div>
-        <button type="submit" className="flex items-center gap-2 rounded-lg bg-[#00D4AA] px-4 py-2 text-sm font-medium text-white hover:bg-[#00E8BB] transition">
+        <button type="submit" className="flex items-center gap-2 rounded-lg bg-purple-500 px-4 py-2 text-sm font-medium text-white hover:bg-purple-400 transition">
           <Plus className="h-4 w-4" /> Create
         </button>
       </form>
@@ -58,7 +58,7 @@ export function OrdersTab() {
               }`}>
                 {order.status}
               </span>
-              <span className="font-semibold text-[#00D4AA]">${order.total.toFixed(2)}</span>
+              <span className="font-semibold text-purple-500">${order.total.toFixed(2)}</span>
             </div>
           </div>
         ))}

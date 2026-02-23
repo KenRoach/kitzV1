@@ -13,7 +13,7 @@ export function TopBar({ onToggleSidebar }: TopBarProps) {
       >
         <Menu className="h-5 w-5" />
       </button>
-      <h1 className="bg-gradient-to-r from-[#00D4AA] to-[#00B4D8] bg-clip-text text-xl font-extrabold text-transparent">
+      <h1 className="bg-gradient-to-r from-purple-500 to-purple-600 bg-clip-text text-xl font-extrabold text-transparent">
         KITZ
       </h1>
       <div className="w-9" />

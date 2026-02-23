@@ -41,7 +41,7 @@ export function HeroPrompt({ userName }: HeroPromptProps) {
           </button>
           <button
             type="submit"
-            className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#00D4AA] text-white transition hover:bg-[#00E8BB]"
+            className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-500 text-white transition hover:bg-purple-400"
           >
             <ArrowUp className="h-4 w-4" />
           </button>

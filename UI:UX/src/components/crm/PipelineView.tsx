@@ -10,7 +10,7 @@ function PipelineCard({ lead, onClick }: { lead: Lead; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="w-full rounded-xl border border-gray-200 bg-white p-4 text-left transition hover:shadow-md hover:border-[#00D4AA]/30"
+      className="w-full rounded-xl border border-gray-200 bg-white p-4 text-left transition hover:shadow-md hover:border-purple-500/30"
     >
       <p className="font-semibold text-black">{lead.name}</p>
       <div className="mt-2 flex flex-wrap gap-1.5">
@@ -22,7 +22,7 @@ function PipelineCard({ lead, onClick }: { lead: Lead; onClick: () => void }) {
       </div>
       <div className="mt-3 flex items-center gap-3 text-xs text-gray-400">
         {lead.value != null && lead.value > 0 && (
-          <span className="flex items-center gap-1 font-semibold text-[#00D4AA]">
+          <span className="flex items-center gap-1 font-semibold text-purple-500">
             <DollarSign className="h-3 w-3" />{lead.value}
           </span>
         )}

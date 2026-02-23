@@ -62,7 +62,7 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
               <button
                 onClick={() => setShowStageDropdown(!showStageDropdown)}
                 className={cn(
-                  'flex w-full items-center justify-between rounded-xl border border-gray-200 px-4 py-3 transition hover:border-[#00D4AA]/30',
+                  'flex w-full items-center justify-between rounded-xl border border-gray-200 px-4 py-3 transition hover:border-purple-500/30',
                 )}
               >
                 <div className="flex items-center gap-2">
@@ -117,7 +117,7 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
               {lead.value != null && lead.value > 0 && (
                 <div className="rounded-xl border border-gray-200 px-4 py-3">
                   <span className="font-mono text-xs text-gray-400">Deal value</span>
-                  <p className="font-mono text-lg font-bold text-[#00D4AA]">${lead.value.toLocaleString()}</p>
+                  <p className="font-mono text-lg font-bold text-purple-500">${lead.value.toLocaleString()}</p>
                 </div>
               )}
             </div>
@@ -144,7 +144,7 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 placeholder="Add tag..."
-                className="flex-1 rounded-xl border border-gray-200 px-3 py-2 font-mono text-sm text-black placeholder-gray-400 outline-none focus:border-[#00D4AA]"
+                className="flex-1 rounded-xl border border-gray-200 px-3 py-2 font-mono text-sm text-black placeholder-gray-400 outline-none focus:border-purple-500"
               />
               <button type="submit" className="rounded-xl bg-gray-100 px-4 py-2 font-mono text-xs font-medium text-gray-600 transition hover:bg-gray-200">
                 Add
@@ -172,9 +172,9 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
                 value={newNote}
                 onChange={(e) => setNewNote(e.target.value)}
                 placeholder="Add a note..."
-                className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm text-black placeholder-gray-400 outline-none focus:border-[#00D4AA]"
+                className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm text-black placeholder-gray-400 outline-none focus:border-purple-500"
               />
-              <button type="submit" className="rounded-xl bg-[#00D4AA] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#00E8BB]">
+              <button type="submit" className="rounded-xl bg-purple-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-purple-400">
                 Add
               </button>
             </form>

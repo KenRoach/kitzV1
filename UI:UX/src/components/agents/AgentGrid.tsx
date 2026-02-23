@@ -97,7 +97,7 @@ export function AgentGrid() {
             className={cn(
               'whitespace-nowrap px-3 py-2 text-xs font-medium transition-colors',
               filter === f.id
-                ? 'border-b-2 border-[#00D4AA] text-black'
+                ? 'border-b-2 border-purple-500 text-black'
                 : 'text-gray-500 hover:text-gray-700',
             )}
           >

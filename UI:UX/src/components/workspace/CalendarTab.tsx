@@ -19,7 +19,7 @@ const TODAY_EVENTS: Event[] = [
 
 const typeColors = {
   call: 'bg-blue-500',
-  meeting: 'bg-[#00D4AA]',
+  meeting: 'bg-purple-500',
   task: 'bg-amber-500',
   'follow-up': 'bg-purple-500',
 }
@@ -37,7 +37,7 @@ export function CalendarTab() {
         </div>
         <div className="flex gap-2">
           <span className="flex items-center gap-1.5 text-xs text-gray-500">
-            <span className="h-2 w-2 rounded-full bg-[#00D4AA]" /> Meeting
+            <span className="h-2 w-2 rounded-full bg-purple-500" /> Meeting
           </span>
           <span className="flex items-center gap-1.5 text-xs text-gray-500">
             <span className="h-2 w-2 rounded-full bg-blue-500" /> Call

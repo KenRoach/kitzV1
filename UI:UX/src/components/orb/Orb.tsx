@@ -6,9 +6,9 @@ export function Orb() {
   const { toggle, state } = useOrbStore()
 
   const shadowMap = {
-    idle: 'shadow-[0_0_20px_rgba(0,212,170,0.4)]',
-    thinking: 'shadow-[0_0_25px_rgba(0,180,216,0.5)]',
-    success: 'shadow-[0_0_25px_rgba(0,212,170,0.6)]',
+    idle: 'shadow-[0_0_20px_rgba(168,85,247,0.4)]',
+    thinking: 'shadow-[0_0_25px_rgba(147,51,234,0.5)]',
+    success: 'shadow-[0_0_25px_rgba(168,85,247,0.6)]',
     error: 'shadow-[0_0_25px_rgba(239,68,68,0.5)]',
   }
 
@@ -20,7 +20,7 @@ export function Orb() {
         onClick={toggle}
         className={cn(
           'flex h-16 w-16 items-center justify-center rounded-full',
-          'bg-gradient-to-br from-[#00D4AA] to-[#00B4D8] text-white',
+          'bg-gradient-to-br from-purple-500 to-purple-600 text-white',
           'cursor-pointer transition-all',
           pulseSpeed,
           shadowMap[state],

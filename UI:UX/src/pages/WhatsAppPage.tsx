@@ -19,7 +19,7 @@ export function WhatsAppPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-white px-6">
       <h1 className="text-3xl font-extrabold">
-        <span className="bg-gradient-to-r from-[#00D4AA] to-[#00B4D8] bg-clip-text text-transparent">
+        <span className="bg-gradient-to-r from-purple-500 to-purple-600 bg-clip-text text-transparent">
           KITZ
         </span>
       </h1>
@@ -32,7 +32,7 @@ export function WhatsAppPage() {
 
       <button
         onClick={() => navigate('/')}
-        className="mt-6 text-sm text-gray-400 transition hover:text-[#00D4AA]"
+        className="mt-6 text-sm text-gray-400 transition hover:text-purple-500"
       >
         Skip for now →
       </button>

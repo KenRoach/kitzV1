@@ -35,7 +35,7 @@ export function WorkspaceTabs() {
             className={cn(
               'whitespace-nowrap px-4 py-3 font-mono text-xs font-medium uppercase tracking-wider transition-colors',
               active === tab.id
-                ? 'border-b-2 border-[#00D4AA] text-black'
+                ? 'border-b-2 border-purple-500 text-black'
                 : 'text-gray-400 hover:text-gray-600',
             )}
           >

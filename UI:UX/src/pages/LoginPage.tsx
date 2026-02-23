@@ -23,7 +23,7 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-white">
       <div className="text-center">
         <h1 className="text-3xl font-extrabold">
-          <span className="bg-gradient-to-r from-[#00D4AA] to-[#00B4D8] bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-purple-500 to-purple-600 bg-clip-text text-transparent">
             KITZ
           </span>
         </h1>

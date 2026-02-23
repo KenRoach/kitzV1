@@ -24,21 +24,21 @@ export function LeadsTab() {
           <label className="block text-xs font-medium text-gray-500 mb-1">Name *</label>
           <input value={name} onChange={(e) => setName(e.target.value)} required
             placeholder="Contact name"
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-[#00D4AA]" />
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
         </div>
         <div className="flex-1 min-w-[120px]">
           <label className="block text-xs font-medium text-gray-500 mb-1">Phone</label>
           <input value={phone} onChange={(e) => setPhone(e.target.value)}
             placeholder="+507..."
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-[#00D4AA]" />
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
         </div>
         <div className="flex-1 min-w-[140px]">
           <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
           <input value={email} onChange={(e) => setEmail(e.target.value)}
             placeholder="email@..."
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-[#00D4AA]" />
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
         </div>
-        <button type="submit" className="flex items-center gap-2 rounded-lg bg-[#00D4AA] px-4 py-2 text-sm font-medium text-white hover:bg-[#00E8BB] transition">
+        <button type="submit" className="flex items-center gap-2 rounded-lg bg-purple-500 px-4 py-2 text-sm font-medium text-white hover:bg-purple-400 transition">
           <UserPlus className="h-4 w-4" /> Add
         </button>
       </form>

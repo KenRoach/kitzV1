@@ -15,13 +15,13 @@ interface AgentCardProps {
 }
 
 const dotColors = {
-  active: 'bg-[#00D4AA]',
+  active: 'bg-purple-500',
   idle: 'bg-amber-400',
   offline: 'bg-gray-300',
 }
 
 const badgeStyles: Record<TeamCluster, string> = {
-  manager: 'bg-[#00D4AA]/10 text-[#00D4AA]',
+  manager: 'bg-purple-500/10 text-purple-500',
   sales: 'bg-blue-100 text-blue-600',
   'demand-gen': 'bg-pink-100 text-pink-600',
   operations: 'bg-orange-100 text-orange-600',
