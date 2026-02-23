@@ -1,49 +1,47 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 74" width="56" height="74">
-  <!-- Kitz pixel character favicon — transparent background -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 73" width="56" height="73">
+  <!--
+    Kitz pixel character favicon — transparent background
+    Mirrors Orb.tsx exactly: PX=7, 8x8 grid, same eye/mouth proportions
+  -->
 
-  <!-- Antenna stem -->
-  <rect x="28" y="0" width="2" height="9" fill="#a855f7"/>
-  <!-- Antenna flag (square tip to the right) -->
-  <rect x="30" y="0" width="4" height="4" fill="#a855f7"/>
+  <!-- Antenna: stem + flag tip -->
+  <rect x="27" y="0" width="2" height="10" fill="#a855f7"/>
+  <rect x="29" y="0" width="4" height="3" fill="#a855f7"/>
 
-  <!-- Body: 8x8 pixel grid, 7px cells -->
-  <!-- Row 0: __XXXX__ -->
-  <rect x="14" y="9" width="7" height="7" fill="#a855f7"/>
-  <rect x="21" y="9" width="7" height="7" fill="#a855f7"/>
-  <rect x="28" y="9" width="7" height="7" fill="#a855f7"/>
-  <rect x="35" y="9" width="7" height="7" fill="#a855f7"/>
-  <!-- Row 1: _XXXXXX_ -->
-  <rect x="7" y="16" width="7" height="7" fill="#a855f7"/>
-  <rect x="14" y="16" width="7" height="7" fill="#a855f7"/>
-  <rect x="21" y="16" width="7" height="7" fill="#a855f7"/>
-  <rect x="28" y="16" width="7" height="7" fill="#a855f7"/>
-  <rect x="35" y="16" width="7" height="7" fill="#a855f7"/>
-  <rect x="42" y="16" width="7" height="7" fill="#a855f7"/>
-  <!-- Row 2: XXXXXXXX -->
-  <rect x="0" y="23" width="56" height="7" fill="#a855f7"/>
-  <!-- Row 3: XXXXXXXX -->
-  <rect x="0" y="30" width="56" height="7" fill="#a855f7"/>
-  <!-- Row 4: XXXXXXXX -->
-  <rect x="0" y="37" width="56" height="7" fill="#a855f7"/>
-  <!-- Row 5: XXXXXXXX -->
-  <rect x="0" y="44" width="56" height="7" fill="#a855f7"/>
-  <!-- Row 6: _XXXXXX_ -->
-  <rect x="7" y="51" width="42" height="7" fill="#a855f7"/>
-  <!-- Row 7: __XXXX__ -->
-  <rect x="14" y="58" width="28" height="7" fill="#a855f7"/>
+  <!-- Body: 8x8 pixel grid, PX=7, body starts at y=10 -->
+  <!-- Row 0: __1111__ -->
+  <rect x="14" y="10" width="28" height="7" fill="#a855f7"/>
+  <!-- Row 1: _111111_ -->
+  <rect x="7" y="17" width="42" height="7" fill="#a855f7"/>
+  <!-- Rows 2-5: 11111111 -->
+  <rect x="0" y="24" width="56" height="28" fill="#a855f7"/>
+  <!-- Row 6: _111111_ -->
+  <rect x="7" y="52" width="42" height="7" fill="#a855f7"/>
+  <!-- Row 7: __1111__ -->
+  <rect x="14" y="59" width="28" height="7" fill="#a855f7"/>
 
-  <!-- Highlight shine (upper-left) -->
-  <rect x="9" y="17" width="4" height="5" fill="#d8b4fe" opacity="0.6"/>
+  <!-- Highlight pixel (matches Orb.tsx: top=PX*1, left=PX*2) -->
+  <rect x="16" y="18" width="4" height="4" fill="#fff" opacity="0.6"/>
+  <rect x="13" y="21" width="3" height="3" fill="#fff" opacity="0.35"/>
 
-  <!-- Left eye: half-pill (flat bottom, rounded top) -->
-  <path d="M11 35 L11 31 Q14.5 28 18 31 L18 35 Z" fill="#1a1a2e"/>
-  <!-- Right eye: half-pill (flat bottom, rounded top) -->
-  <path d="M35 35 L35 31 Q38.5 28 42 31 L42 35 Z" fill="#1a1a2e"/>
+  <!-- Eyes: half-pill (flat bottom, rounded top) — matches Orb 'open' style -->
+  <!-- Orb: top=PX*2.5=17.5 from body, left eye at PX*2=14, right at PX*5=35 -->
+  <!-- Body starts at y=10, so eyes at y=10+17.5=27.5. Width=PX=7, height=PX*0.7=5 -->
+  <rect x="14" y="28" width="7" height="5" rx="3.5" ry="3.5" fill="#0A0A0A"/>
+  <rect x="35" y="28" width="7" height="5" rx="3.5" ry="3.5" fill="#0A0A0A"/>
+  <!-- Flat bottom: overlay rect to clip the bottom curve -->
+  <rect x="14" y="31" width="7" height="2" fill="#0A0A0A"/>
+  <rect x="35" y="31" width="7" height="2" fill="#0A0A0A"/>
 
-  <!-- Mouth: half-pill smirk (flat top, curved bottom) -->
-  <path d="M20 43 L34 43 Q34 48 27 48 Q20 48 20 43 Z" fill="#1a1a2e"/>
+  <!-- Mouth: half-pill smirk (flat top, rounded bottom) -->
+  <!-- Orb: top=PX*4.2=29.4 from body, centered, width=PX*1.8=12.6, height=PX*0.6=4.2 -->
+  <!-- Body starts at y=10, so mouth at y=10+29.4=39.4. Centered: x=(56-13)/2=21.5 -->
+  <rect x="22" y="39" width="13" height="4" rx="0" ry="0" fill="#0A0A0A"/>
+  <!-- Rounded bottom half -->
+  <rect x="22" y="41" width="13" height="3" rx="6.5" ry="3" fill="#0A0A0A"/>
 
-  <!-- Feet (darker purple) -->
-  <rect x="14" y="66" width="6" height="5" fill="#7c3aed"/>
-  <rect x="35" y="66" width="6" height="5" fill="#7c3aed"/>
+  <!-- Feet: two blocks below body (matches Orb FEET_FRAMES) -->
+  <!-- Feet at col 2 and col 5: x=PX*2=14, x=PX*5=35 -->
+  <rect x="14" y="67" width="7" height="4" fill="#a855f7" opacity="0.7"/>
+  <rect x="35" y="67" width="7" height="4" fill="#a855f7" opacity="0.7"/>
 </svg>
