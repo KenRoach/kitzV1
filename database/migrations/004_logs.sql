@@ -1,0 +1,2 @@
+-- Activity logs table
+-- TODO: Define schema for activity feed

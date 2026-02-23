@@ -1,0 +1,2 @@
+-- Skills table
+-- TODO: Define schema for agent skills registry

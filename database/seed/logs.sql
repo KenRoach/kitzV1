@@ -1,0 +1,2 @@
+-- Seed data for activity logs
+-- TODO: Add sample activity log entries
