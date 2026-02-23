@@ -24,6 +24,16 @@ export default defineConfig({
       '/api/whatsapp': {
         target: 'http://localhost:3006',
         rewrite: (p) => p.replace(/^\/api\/whatsapp/, ''),
+        // SSE: don't buffer event-stream responses
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
+            const ct = proxyRes.headers['content-type'] || ''
+            if (ct.includes('text/event-stream')) {
+              proxyRes.headers['cache-control'] = 'no-cache'
+              proxyRes.headers['x-accel-buffering'] = 'no'
+            }
+          })
+        },
       },
       '/api/kitz': {
         target: 'http://localhost:3012',

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { QRScanner } from '@/components/whatsapp/QRScanner'
+import { Orb } from '@/components/orb/Orb'
 
 export function WhatsAppPage() {
   const navigate = useNavigate()
@@ -18,15 +19,8 @@ export function WhatsAppPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-white px-6">
-      <h1 className="text-3xl font-extrabold">
-        <span className="bg-gradient-to-r from-purple-500 to-purple-600 bg-clip-text text-transparent">
-          KITZ
-        </span>
-      </h1>
-      <p className="mt-2 text-gray-500">Connect your WhatsApp to get started</p>
-      <p className="mb-8 text-xs text-gray-400">
-        Scan the QR code with your WhatsApp to link your business
-      </p>
+      <Orb static />
+      <p className="mt-4 mb-8 text-gray-500">Scan the QR to run Kitz in your WhatsApp</p>
 
       <QRScanner onConnected={handleConnected} />
 
@@ -34,7 +28,7 @@ export function WhatsAppPage() {
         onClick={() => navigate('/')}
         className="mt-6 text-sm text-gray-400 transition hover:text-purple-500"
       >
-        Skip for now →
+        Skip to run it manually →
       </button>
     </div>
   )

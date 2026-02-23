@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { Home, Briefcase, Bot, Zap, Activity, HelpCircle, Settings, Moon, Sun } from 'lucide-react'
+import { Home, Briefcase, Bot, Zap, Activity, HelpCircle, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useSettingsStore } from '@/stores/settingsStore'
+import type { Language } from '@/stores/settingsStore'
 
 interface TopNavBarProps {
   currentNav: string
@@ -17,12 +18,16 @@ const navItems = [
   { id: 'activity', label: 'Activity', icon: Activity },
 ] as const
 
-type Lang = 'en' | 'es' | 'ps'
+const LANG_OPTIONS: { code: string; full: Language }[] = [
+  { code: 'en', full: 'English' },
+  { code: 'es', full: 'Español' },
+  { code: 'pt', full: 'Português' },
+]
 
 export function TopNavBar({ currentNav, onNavChange, userName }: TopNavBarProps) {
   const initial = userName.charAt(0).toUpperCase()
-  const [lang, setLang] = useState<Lang>('en')
-  const [darkMode, setDarkMode] = useState(false)
+  const { interfaceLang, setInterfaceLang } = useSettingsStore()
+  const activeLangCode = LANG_OPTIONS.find((l) => l.full === interfaceLang)?.code ?? 'en'
 
   return (
     <aside className="flex h-full w-56 shrink-0 flex-col border-r border-gray-200 bg-white">
@@ -61,30 +66,21 @@ export function TopNavBar({ currentNav, onNavChange, userName }: TopNavBarProps)
       <div className="space-y-3 border-t border-gray-200 px-3 py-3">
         {/* Language selector */}
         <div className="flex items-center gap-0.5 rounded-lg bg-gray-100 p-0.5">
-          {(['en', 'es', 'ps'] as const).map((l) => (
+          {LANG_OPTIONS.map((l) => (
             <button
-              key={l}
-              onClick={() => setLang(l)}
+              key={l.code}
+              onClick={() => setInterfaceLang(l.full)}
               className={cn(
                 'flex-1 rounded-md px-2 py-1 text-center font-mono text-[10px] font-medium uppercase transition',
-                lang === l
+                activeLangCode === l.code
                   ? 'bg-white text-purple-600 shadow-sm'
                   : 'text-gray-400 hover:text-gray-600',
               )}
             >
-              {l}
+              {l.code}
             </button>
           ))}
         </div>
-
-        {/* Dark mode toggle */}
-        <button
-          onClick={() => setDarkMode(!darkMode)}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
-        >
-          {darkMode ? <Sun className="h-4 w-4 shrink-0" /> : <Moon className="h-4 w-4 shrink-0" />}
-          {darkMode ? 'Light Mode' : 'Dark Mode'}
-        </button>
 
         {/* Settings */}
         <button

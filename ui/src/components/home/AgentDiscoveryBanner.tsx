@@ -1,5 +1,9 @@
 import { Code, ExternalLink } from 'lucide-react'
 
+const manifestUrl = typeof window !== 'undefined'
+  ? `${window.location.origin}/.well-known/kitz.json`
+  : '/.well-known/kitz.json'
+
 const jsonPreview = `{
   "name": "KITZ",
   "version": "0.1.0",
@@ -27,12 +31,12 @@ export function AgentDiscoveryBanner() {
             through our machine-readable manifest endpoint.
           </p>
           <a
-            href="http://localhost:5173/.well-known/kitz.json"
+            href={manifestUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-purple-400 transition hover:text-purple-300"
           >
-            <span className="font-mono">http://localhost:5173/.well-known/kitz.json</span>
+            <span className="font-mono">{manifestUrl}</span>
             <ExternalLink className="h-3 w-3" />
           </a>
         </div>

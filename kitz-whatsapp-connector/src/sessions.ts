@@ -43,6 +43,29 @@ const ACCESS_MODE: AccessMode = 'open';         // Default: allow all senders
 
 const baileysLogger = P({ level: 'warn' });
 
+// ── Cached Baileys version — avoids 400-500ms fetch on every connect ──
+let cachedVersion: [number, number, number] | null = null;
+let cachedVersionAt = 0;
+const VERSION_CACHE_TTL_MS = 30 * 60 * 1000; // refresh every 30 min
+
+async function getBaileysVersion(): Promise<[number, number, number]> {
+  const now = Date.now();
+  if (cachedVersion && now - cachedVersionAt < VERSION_CACHE_TTL_MS) {
+    return cachedVersion;
+  }
+  try {
+    const { version } = await fetchLatestBaileysVersion();
+    cachedVersion = version;
+    cachedVersionAt = now;
+    return version;
+  } catch {
+    // If fetch fails and we have a cached version, use it
+    if (cachedVersion) return cachedVersion;
+    // Fallback: let Baileys use its own default
+    return [2, 3000, 0];
+  }
+}
+
 // ── Track Kitz-sent message IDs to prevent echo loops in self-chat ──
 const kitzSentIds = new Set<string>();
 const KITZ_SENT_TTL_MS = 30_000; // Forget after 30s
@@ -243,8 +266,10 @@ class SessionManager {
     // Restore from backup if creds corrupted
     maybeRestoreCredsFromBackup(authDir);
 
-    const { state, saveCreds } = await useMultiFileAuthState(authDir);
-    const { version } = await fetchLatestBaileysVersion();
+    const [{ state, saveCreds }, version] = await Promise.all([
+      useMultiFileAuthState(authDir),
+      getBaileysVersion(),
+    ]);
 
     // Minimal config matching OpenClaw's proven pattern — no aggressive timeouts
     const sock = makeWASocket({

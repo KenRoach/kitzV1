@@ -1,13 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface UseSSEOptions {
   url: string
   onMessage: (event: string, data: unknown) => void
   onError?: (error: Event) => void
   enabled?: boolean
+  /** Change this value to force a reconnect */
+  reconnectKey?: number
 }
 
-export function useSSE({ url, onMessage, onError, enabled = true }: UseSSEOptions) {
+export function useSSE({ url, onMessage, onError, enabled = true, reconnectKey = 0 }: UseSSEOptions) {
   const [connected, setConnected] = useState(false)
   const esRef = useRef<EventSource | null>(null)
 
@@ -28,7 +30,7 @@ export function useSSE({ url, onMessage, onError, enabled = true }: UseSSEOption
       }
     }
 
-    for (const eventType of ['session', 'qr', 'connected', 'error', 'logged_out']) {
+    for (const eventType of ['session', 'qr', 'connected', 'error', 'logged_out', 'disconnected']) {
       es.addEventListener(eventType, (event) => {
         try {
           const data: unknown = JSON.parse((event as MessageEvent).data as string)
@@ -50,13 +52,13 @@ export function useSSE({ url, onMessage, onError, enabled = true }: UseSSEOption
       setConnected(false)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url, enabled])
+  }, [url, enabled, reconnectKey])
 
-  const close = () => {
+  const close = useCallback(() => {
     esRef.current?.close()
     esRef.current = null
     setConnected(false)
-  }
+  }, [])
 
   return { connected, close }
 }

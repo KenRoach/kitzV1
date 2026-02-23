@@ -311,6 +311,8 @@ function SleepZs() {
 
 interface OrbProps {
   sleeping?: boolean
+  /** Render a frozen idle state — no animations, no interactions */
+  static?: boolean
 }
 
 /* Wake phase: sleeping → stirring (eyes flutter) → waking (color returns) → awake (fully active) */
@@ -319,7 +321,7 @@ type WakePhase = 'sleeping' | 'stirring' | 'waking' | 'awake'
 /* ── Moody phrases when tapped while sleeping — chill, never rude ── */
 const MOODY_PHRASES = ['five more min...', 'not yet... 😴', 'shhh...', 'zzz... later', 'still charging ⚡']
 
-export function Orb({ sleeping = false }: OrbProps) {
+export function Orb({ sleeping = false, static: isStatic = false }: OrbProps) {
   const { open, focusChat, state } = useOrbStore()
   const [feetFrame, setFeetFrame] = useState(0)
   const [bounceY, setBounceY] = useState(0)
@@ -330,6 +332,68 @@ export function Orb({ sleeping = false }: OrbProps) {
   const [moodyText, setMoodyText] = useState<string | null>(null)
   const moodyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const moodyIndexRef = useRef(0)
+
+  /* ── Static mode: frozen idle Orb — no animations, no interactions ── */
+  if (isStatic) {
+    const staticMood = MOODS.idle
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          userSelect: 'none',
+        }}
+      >
+        <div
+          style={{
+            position: 'relative',
+            filter: `drop-shadow(0 0 8px ${PURPLE}50) drop-shadow(0 0 20px ${PURPLE}25)`,
+          }}
+        >
+          {/* Aura — static glow */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: PX * 10,
+              height: PX * 10,
+              transform: 'translate(-50%, -50%)',
+              borderRadius: '50%',
+              background: `radial-gradient(circle, ${PURPLE}30 0%, ${PURPLE}15 40%, ${PURPLE}06 65%, transparent 80%)`,
+              pointerEvents: 'none',
+            }}
+          />
+
+          {/* Antenna */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: -1 }}>
+            <div
+              style={{
+                width: Math.max(2, PX * 0.3),
+                height: PX * 1.5,
+                background: PURPLE,
+                boxShadow: `0 -${PX * 0.5}px 0 ${PURPLE}, 0 -${PX}px 6px ${PURPLE}60`,
+              }}
+            />
+          </div>
+
+          {/* Body */}
+          <div style={{ position: 'relative' }}>
+            <PixelGrid grid={ORB_SHAPE} color={PURPLE} />
+            {/* Highlight pixels */}
+            <div style={{ position: 'absolute', top: PX, left: PX * 2, width: PX * 0.6, height: PX * 0.6, background: '#fff', opacity: 0.7 }} />
+            <div style={{ position: 'absolute', top: PX * 1.5, left: PX * 1.5, width: PX * 0.4, height: PX * 0.4, background: '#fff', opacity: 0.4 }} />
+            <Eyes mood={staticMood.eyes} blinkFrame={false} />
+            <Mouth mood={staticMood.mouth} isTalking={false} />
+          </div>
+
+          {/* Feet — first frame, static */}
+          <PixelGrid grid={FEET_FRAMES[0]!} color={PURPLE} opacity={0.7} offsetY={-1} />
+        </div>
+      </div>
+    )
+  }
 
   // Wake-up sequence: sleeping → stirring (1s) → waking (3s with "yah") → awake
   useEffect(() => {

@@ -16,25 +16,25 @@ import { cn } from '@/lib/utils'
 /* ── Agent architecture tiers ── */
 const tiers = [
   {
-    title: 'C-Suite',
+    title: 'The Bosses',
     count: 12,
-    description: 'CEO, CFO, CMO, COO, CPO, CRO, CTO — executive decision-making and strategy. Each C-Suite agent owns a domain and delegates to specialist teams.',
+    description: 'The top dogs — The Boss, Money Manager, Megaphone, Operator, Closer, Architect. Each one owns a domain and tells the specialist teams what to do.',
     color: 'bg-purple-500',
   },
   {
-    title: 'Board',
+    title: 'The Advisors',
     count: 9,
-    description: 'Risk analysis, ethics, growth vision, operational realism. The board reviews high-impact decisions before execution.',
+    description: 'Risk checkers, ethics watchers, growth visionaries. They review big decisions before anything gets executed.',
     color: 'bg-blue-500',
   },
   {
-    title: 'Governance',
+    title: 'The Guardrails',
     count: 9,
-    description: 'Capital allocation, focus capacity, incentive alignment, institutional memory. Guardrails that keep the AI org accountable.',
+    description: 'Budget control, focus management, accountability. These agents keep the whole operation running clean.',
     color: 'bg-emerald-500',
   },
   {
-    title: 'Specialist Teams',
+    title: 'The Specialists',
     count: KITZ_MANIFEST.capabilities.totalAgents,
     description: `${KITZ_MANIFEST.capabilities.agentTeams} teams covering every business function — from sales and marketing to engineering and compliance.`,
     color: 'bg-amber-500',
@@ -234,7 +234,7 @@ export function AgentsPage() {
         </div>
 
         <a
-          href="http://localhost:5173/.well-known/kitz.json"
+          href={`${window.location.origin}/.well-known/kitz.json`}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-white/80 transition hover:text-white"

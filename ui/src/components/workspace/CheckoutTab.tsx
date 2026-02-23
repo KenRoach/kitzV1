@@ -16,8 +16,10 @@ export function CheckoutTab() {
     setLabel(''); setAmount('')
   }
 
+  const payDomain = import.meta.env.VITE_PAY_DOMAIN || 'pay.kitz.services'
+
   const copySlug = (slug: string) => {
-    void navigator.clipboard.writeText(`https://pay.kitz.services/${slug}`)
+    void navigator.clipboard.writeText(`https://${payDomain}/${slug}`)
   }
 
   return (

@@ -195,7 +195,7 @@ export function WorkspacePage() {
         </div>
 
         <a
-          href="http://localhost:5173/.well-known/kitz.json"
+          href={`${window.location.origin}/.well-known/kitz.json`}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-white/80 transition hover:text-white"

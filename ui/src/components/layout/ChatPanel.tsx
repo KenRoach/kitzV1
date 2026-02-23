@@ -14,13 +14,10 @@ interface BuildLogEntry {
   items: string[]
 }
 
-type Lang = 'en' | 'es' | 'ps'
-
 export function ChatPanel() {
   const { messages, state, sendMessage, chatFocused, blurChat } = useOrbStore()
   const user = useAuthStore((s) => s.user)
   const [input, setInput] = useState('')
-  const [lang, setLang] = useState<Lang>('en')
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const agentSteps = useAgentThinkingStore((s) => s.steps)
@@ -63,35 +60,11 @@ export function ChatPanel() {
   }
 
   return (
-    <div className="flex h-full w-full flex-col bg-[#0A0A0A]">
+    <div className="flex h-full w-full flex-col bg-gradient-to-b from-purple-950 to-purple-900">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-white/20 px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-white">Command Center</span>
-        </div>
-        <div className="flex items-center gap-0.5 rounded-lg bg-white/5 p-0.5">
-          {(['en', 'es', 'ps'] as const).map((l) => {
-            const langLabel: Record<Lang, string> = {
-              en: 'Switch to English',
-              es: 'Switch to Spanish',
-              ps: 'Switch to Pashtun',
-            }
-            return (
-              <button
-                key={l}
-                onClick={() => setLang(l)}
-                aria-label={langLabel[l]}
-                className={cn(
-                  'rounded-md px-2 py-1 font-mono text-[10px] font-medium uppercase transition',
-                  lang === l
-                    ? 'bg-white/10 text-white'
-                    : 'text-gray-500 hover:text-gray-300',
-                )}
-              >
-                {l}
-              </button>
-            )
-          })}
         </div>
       </div>
 
@@ -101,29 +74,29 @@ export function ChatPanel() {
         {buildLog.map((entry) => (
           <div key={entry.id} className="space-y-3">
             {/* Card-style build summary */}
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <div className="rounded-xl border border-white/20 bg-white/10 p-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-white">{entry.title}</span>
-                <Bookmark className="h-4 w-4 text-gray-500" />
+                <Bookmark className="h-4 w-4 text-white/50" />
               </div>
               {/* Toggle: Details / Preview */}
-              <div className="mt-3 flex rounded-lg bg-white/5 p-0.5">
-                <button className="flex-1 rounded-md bg-transparent px-3 py-1.5 text-xs font-medium text-gray-400">
+              <div className="mt-3 flex rounded-lg bg-white/10 p-0.5">
+                <button className="flex-1 rounded-md bg-transparent px-3 py-1.5 text-xs font-medium text-white/50">
                   Details
                 </button>
-                <button className="flex-1 rounded-md bg-white/10 px-3 py-1.5 text-xs font-medium text-white">
+                <button className="flex-1 rounded-md bg-white/20 px-3 py-1.5 text-xs font-medium text-white">
                   Preview
                 </button>
               </div>
             </div>
 
             {/* Build items */}
-            <div className="text-sm text-gray-300 leading-relaxed">
-              <p className="mb-2">Done! Here's what was added:</p>
+            <div className="text-sm text-white/80 leading-relaxed">
+              <p className="mb-2">Done! Here&apos;s what was added:</p>
               <ul className="space-y-2">
                 {entry.items.map((item, i) => (
                   <li key={i} className="flex items-start gap-2">
-                    <span className="mt-1.5 h-1 w-1 rounded-full bg-gray-500 shrink-0" />
+                    <span className="mt-1.5 h-1 w-1 rounded-full bg-white/50 shrink-0" />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -132,19 +105,19 @@ export function ChatPanel() {
 
             {/* Action bar */}
             <div className="flex items-center gap-1">
-              <button aria-label="Undo" className="rounded-lg p-1.5 text-gray-500 hover:bg-white/5 hover:text-gray-300 transition">
+              <button aria-label="Undo" className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white transition">
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></svg>
               </button>
-              <button aria-label="Like" className="rounded-lg p-1.5 text-gray-500 hover:bg-white/5 hover:text-gray-300 transition">
+              <button aria-label="Like" className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white transition">
                 <ThumbsUp className="h-4 w-4" />
               </button>
-              <button aria-label="Reply" className="rounded-lg p-1.5 text-gray-500 hover:bg-white/5 hover:text-gray-300 transition">
+              <button aria-label="Reply" className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white transition">
                 <MessageCircle className="h-4 w-4" />
               </button>
-              <button aria-label="Copy" className="rounded-lg p-1.5 text-gray-500 hover:bg-white/5 hover:text-gray-300 transition">
+              <button aria-label="Copy" className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white transition">
                 <Copy className="h-4 w-4" />
               </button>
-              <button aria-label="More options" className="rounded-lg p-1.5 text-gray-500 hover:bg-white/5 hover:text-gray-300 transition">
+              <button aria-label="More options" className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white transition">
                 <MoreHorizontal className="h-4 w-4" />
               </button>
             </div>
@@ -175,7 +148,7 @@ export function ChatPanel() {
                 key={q}
                 onClick={() => void sendMessage(q, user?.id ?? 'default')}
                 aria-label={`Ask Kitz: ${q}`}
-                className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-gray-300 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs text-white/80 transition hover:bg-white/20 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30"
               >
                 {q}
               </button>
@@ -185,11 +158,11 @@ export function ChatPanel() {
       </div>
 
       {/* Bottom bar: input + stats */}
-      <div className="border-t border-white/10 px-4 py-3 space-y-3">
+      <div className="border-t border-white/20 px-4 py-3 space-y-3">
         {/* Input */}
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
           <div className="relative flex-1">
-            <button type="button" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition">
+            <button type="button" className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
             </button>
             <input
@@ -197,7 +170,7 @@ export function ChatPanel() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask Kitz..."
-              className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-10 pr-4 text-sm text-white placeholder-gray-500 outline-none transition focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/30"
+              className="w-full rounded-xl border border-white/40 bg-white/10 py-2.5 pl-10 pr-4 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/70 focus:ring-2 focus:ring-white/20"
             />
           </div>
           {/* Send */}
@@ -207,8 +180,8 @@ export function ChatPanel() {
             className={cn(
               'flex h-9 w-9 items-center justify-center rounded-xl transition',
               input.trim() && state !== 'thinking'
-                ? 'bg-purple-500 text-white hover:bg-purple-400'
-                : 'bg-white/5 text-gray-600',
+                ? 'bg-white text-purple-900 hover:bg-white/90'
+                : 'bg-white/10 text-white/30',
             )}
           >
             <ArrowUp className="h-4 w-4" />
@@ -217,22 +190,22 @@ export function ChatPanel() {
 
         {/* Stats bar */}
         <div className="flex items-center justify-center gap-5 font-mono text-[11px]">
-          <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/5">
-            <span className="text-gray-400">AI Battery</span>
-            <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold text-purple-400">5</span>
+          <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/10">
+            <span className="text-white/50">AI Battery</span>
+            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold text-white">5</span>
           </button>
-          <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/5">
-            <span className="text-gray-400">Active Agents</span>
-            <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold text-purple-400">{agentSteps.filter((s) => s.status === 'pending').length || 0}</span>
+          <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/10">
+            <span className="text-white/50">Active Agents</span>
+            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold text-white">{agentSteps.filter((s) => s.status === 'pending').length || 0}</span>
           </button>
-          <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/5">
-            <span className="text-gray-400">WhatsApp</span>
-            <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold text-purple-400">⚡</span>
+          <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/10">
+            <span className="text-white/50">WhatsApp</span>
+            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold text-white">⚡</span>
           </button>
         </div>
 
         {/* Tagline */}
-        <p className="text-center text-[10px] italic tracking-wide text-gray-600">
+        <p className="text-center text-[10px] italic tracking-wide text-white/40">
           Your hustle deserves infrastructure
         </p>
       </div>
