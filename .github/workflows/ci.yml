@@ -113,3 +113,45 @@ jobs:
         working-directory: workspace
       - run: npm run typecheck
         working-directory: workspace
+
+  ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+        working-directory: ui
+      - run: npm run build
+        working-directory: ui
+
+  logs-api:
+    needs: kitz-schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+        working-directory: kitz-schemas
+      - run: npm install
+        working-directory: engine/logs-api
+      - run: npx tsc --noEmit
+        working-directory: engine/logs-api
+
+  comms-api:
+    needs: kitz-schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+        working-directory: kitz-schemas
+      - run: npm install
+        working-directory: engine/comms-api
+      - run: npx tsc --noEmit
+        working-directory: engine/comms-api

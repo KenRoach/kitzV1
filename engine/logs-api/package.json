@@ -6,11 +6,16 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
   },
-  "dependencies": {},
+  "dependencies": {
+    "fastify": "^4.28.0",
+    "kitz-schemas": "file:../../kitz-schemas",
+    "tsx": "^4.7.0"
+  },
   "devDependencies": {
-    "tsx": "^4.7.0",
+    "@types/node": "^25.3.0",
     "typescript": "^5.3.3"
   }
 }

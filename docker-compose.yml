@@ -239,6 +239,30 @@ services:
       - kitz-gateway
       - kitz-whatsapp-connector
 
+  # ── Comms API (port 3013) ──
+  comms-api:
+    <<: *service-defaults
+    build:
+      args:
+        SERVICE_DIR: engine/comms-api
+    ports:
+      - "3013:3013"
+    environment:
+      <<: *env-common
+      PORT: 3013
+
+  # ── Logs API (port 3014) ──
+  logs-api:
+    <<: *service-defaults
+    build:
+      args:
+        SERVICE_DIR: engine/logs-api
+    ports:
+      - "3014:3014"
+    environment:
+      <<: *env-common
+      PORT: 3014
+
   # ── Brain (cron — no port) ──
   kitz-brain:
     build:

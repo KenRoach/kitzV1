@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import { Sparkles, Zap, ScrollText } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { WorkspaceTabs } from '@/components/workspace/WorkspaceTabs'
 import { AgentGrid } from '@/components/agents/AgentGrid'
+import { AutoPilotTab } from '@/components/autopilot/AutoPilotTab'
+import { ActivityTab } from '@/components/activity/ActivityTab'
 
 type PreviewTab = 'workspace' | 'agents' | 'autopilot' | 'activity'
 
@@ -70,31 +72,9 @@ export function CanvasPreview() {
 
           {activeTab === 'agents' && <AgentGrid />}
 
-          {activeTab === 'autopilot' && (
-            <div className="rounded-xl border border-gray-200 bg-white p-12 text-center">
-              <Zap className="mx-auto h-10 w-10 text-gray-300 mb-3" />
-              <h3 className="text-lg font-bold text-black">Auto-Pilot</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Set rules for your agents. They'll handle the rest.
-              </p>
-              <p className="mt-1 font-mono text-xs text-gray-400">
-                "Follow up with leads after 3 days" · "Auto-reply to returns" · "Daily sales report"
-              </p>
-            </div>
-          )}
+          {activeTab === 'autopilot' && <AutoPilotTab />}
 
-          {activeTab === 'activity' && (
-            <div className="rounded-xl border border-gray-200 bg-white p-12 text-center">
-              <ScrollText className="mx-auto h-10 w-10 text-gray-300 mb-3" />
-              <h3 className="text-lg font-bold text-black">Activity</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Everything your agents did, in one place.
-              </p>
-              <p className="mt-1 font-mono text-xs text-gray-400">
-                Follow-ups sent, orders tracked, payments received.
-              </p>
-            </div>
-          )}
+          {activeTab === 'activity' && <ActivityTab />}
         </div>
       </div>
     </div>

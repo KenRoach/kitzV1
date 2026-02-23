@@ -48,6 +48,16 @@ export interface CheckoutLink {
   id: string; slug: string; amount: number; label: string; active: boolean; createdAt: string
 }
 
+export interface Payment {
+  id: string
+  type: 'incoming' | 'outgoing'
+  description: string
+  amount: number
+  status: 'completed' | 'pending' | 'failed'
+  date: string
+  method: string
+}
+
 // Mock CRM data for demo
 const MOCK_LEADS: Lead[] = [
   { id: '1', name: 'Maria Rodriguez', phone: '+507 6234-5678', email: 'maria@cafebonito.pa', source: 'WhatsApp', stage: 'qualified', value: 450, tags: ['cafe', 'panama city'], notes: ['Interested in monthly subscription', 'Runs Cafe Bonito in Casco Viejo'], lastContact: '2026-02-22', createdAt: '2026-02-10' },
@@ -61,7 +71,7 @@ const MOCK_LEADS: Lead[] = [
 ]
 
 interface WorkspaceState {
-  leads: Lead[]; orders: Order[]; tasks: Task[]; checkoutLinks: CheckoutLink[]
+  leads: Lead[]; orders: Order[]; tasks: Task[]; checkoutLinks: CheckoutLink[]; payments: Payment[]
   isLoading: boolean
   // Leads / CRM
   fetchLeads: () => Promise<void>
@@ -80,10 +90,20 @@ interface WorkspaceState {
   // Checkout
   fetchCheckoutLinks: () => Promise<void>
   addCheckoutLink: (data: { label: string; amount: number }) => Promise<void>
+  // Payments
+  fetchPayments: () => Promise<void>
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   leads: MOCK_LEADS, orders: [], tasks: [], checkoutLinks: [],
+  payments: [
+    { id: 'p1', type: 'incoming', description: 'Maria Rodriguez — Invoice #1042', amount: 450, status: 'completed', date: '2026-02-23', method: 'Yappy' },
+    { id: 'p2', type: 'incoming', description: 'Carlos Mendez — Checkout link', amount: 120, status: 'completed', date: '2026-02-22', method: 'Stripe' },
+    { id: 'p3', type: 'incoming', description: 'Ana Gutierrez — Invoice #1041', amount: 800, status: 'pending', date: '2026-02-22', method: 'PayPal' },
+    { id: 'p4', type: 'outgoing', description: 'AI Battery — 100 credits', amount: 5, status: 'completed', date: '2026-02-21', method: 'Stripe' },
+    { id: 'p5', type: 'incoming', description: 'Pedro Silva — Order #389', amount: 275, status: 'completed', date: '2026-02-20', method: 'BAC' },
+    { id: 'p6', type: 'incoming', description: 'Laura Chen — Checkout link', amount: 650, status: 'failed', date: '2026-02-19', method: 'Stripe' },
+  ],
   isLoading: false,
 
   fetchLeads: async () => {
@@ -123,15 +143,32 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
   updateLeadStage: (id, stage) => {
     set((s) => ({ leads: s.leads.map((l) => l.id === id ? { ...l, stage } : l) }))
+    // Async API sync (local-first)
+    apiFetch(`${API.WORKSPACE}/leads/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ stage }),
+    }).catch(() => { /* local-first: keep local state on failure */ })
   },
   addLeadNote: (id, note) => {
     set((s) => ({ leads: s.leads.map((l) => l.id === id ? { ...l, notes: [...l.notes, note] } : l) }))
+    apiFetch(`${API.WORKSPACE}/leads/${id}/notes`, {
+      method: 'POST',
+      body: JSON.stringify({ note }),
+    }).catch(() => { /* local-first */ })
   },
   addLeadTag: (id, tag) => {
     set((s) => ({ leads: s.leads.map((l) => l.id === id && !l.tags.includes(tag) ? { ...l, tags: [...l.tags, tag] } : l) }))
+    apiFetch(`${API.WORKSPACE}/leads/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ addTag: tag }),
+    }).catch(() => { /* local-first */ })
   },
   removeLeadTag: (id, tag) => {
     set((s) => ({ leads: s.leads.map((l) => l.id === id ? { ...l, tags: l.tags.filter((t) => t !== tag) } : l) }))
+    apiFetch(`${API.WORKSPACE}/leads/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ removeTag: tag }),
+    }).catch(() => { /* local-first */ })
   },
 
   fetchOrders: async () => {
@@ -168,5 +205,10 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   addCheckoutLink: async (data) => {
     await apiFetch(`${API.WORKSPACE}/checkout-links`, { method: 'POST', body: JSON.stringify(data) })
     await get().fetchCheckoutLinks()
+  },
+
+  fetchPayments: async () => {
+    // No payment query endpoint exists yet — keep mock data
+    // Future: apiFetch<Payment[]>(`${API.LOGS}/logs?type=payment`)
   },
 }))

@@ -1,24 +1,7 @@
+import { useEffect } from 'react'
 import { ArrowUpRight, ArrowDownLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-interface Payment {
-  id: string
-  type: 'incoming' | 'outgoing'
-  description: string
-  amount: number
-  status: 'completed' | 'pending' | 'failed'
-  date: string
-  method: string
-}
-
-const MOCK_PAYMENTS: Payment[] = [
-  { id: '1', type: 'incoming', description: 'Maria Rodriguez — Invoice #1042', amount: 450, status: 'completed', date: '2026-02-23', method: 'Yappy' },
-  { id: '2', type: 'incoming', description: 'Carlos Mendez — Checkout link', amount: 120, status: 'completed', date: '2026-02-22', method: 'Stripe' },
-  { id: '3', type: 'incoming', description: 'Ana Gutierrez — Invoice #1041', amount: 800, status: 'pending', date: '2026-02-22', method: 'PayPal' },
-  { id: '4', type: 'outgoing', description: 'AI Battery — 100 credits', amount: 5, status: 'completed', date: '2026-02-21', method: 'Stripe' },
-  { id: '5', type: 'incoming', description: 'Pedro Silva — Order #389', amount: 275, status: 'completed', date: '2026-02-20', method: 'BAC' },
-  { id: '6', type: 'incoming', description: 'Laura Chen — Checkout link', amount: 650, status: 'failed', date: '2026-02-19', method: 'Stripe' },
-]
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 
 const statusStyles = {
   completed: 'bg-emerald-50 text-emerald-700',
@@ -27,8 +10,17 @@ const statusStyles = {
 }
 
 export function PaymentsTab() {
-  const totalIncoming = MOCK_PAYMENTS.filter((p) => p.type === 'incoming' && p.status === 'completed').reduce((sum, p) => sum + p.amount, 0)
-  const pendingAmount = MOCK_PAYMENTS.filter((p) => p.status === 'pending').reduce((sum, p) => sum + p.amount, 0)
+  const payments = useWorkspaceStore((s) => s.payments)
+  const fetchPayments = useWorkspaceStore((s) => s.fetchPayments)
+
+  useEffect(() => { fetchPayments() }, [fetchPayments])
+
+  const totalIncoming = payments
+    .filter((p) => p.type === 'incoming' && p.status === 'completed')
+    .reduce((sum, p) => sum + p.amount, 0)
+  const pendingAmount = payments
+    .filter((p) => p.status === 'pending')
+    .reduce((sum, p) => sum + p.amount, 0)
 
   return (
     <div className="space-y-4">
@@ -46,7 +38,7 @@ export function PaymentsTab() {
 
       {/* Payment list */}
       <div className="space-y-1">
-        {MOCK_PAYMENTS.map((payment) => (
+        {payments.map((payment) => (
           <div
             key={payment.id}
             className="flex items-center justify-between rounded-xl border border-gray-100 bg-white px-4 py-3 transition hover:border-gray-200"
