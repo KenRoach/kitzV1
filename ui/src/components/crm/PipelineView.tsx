@@ -117,23 +117,18 @@ export function PipelineView({ onSelectLead }: PipelineViewProps) {
         </div>
       </div>
 
-      {/* Stage progress bar */}
+      {/* Stage progress bar — purple where leads exist, gray otherwise */}
       <div className="flex gap-1">
         {PIPELINE_STAGES.filter((s) => s !== 'lost').map((stage) => {
           const count = leads.filter((l) => l.stage === stage).length
           return (
             <div
               key={stage}
-              className="h-1.5 flex-1 rounded-full"
-              style={{
-                backgroundColor: count > 0 ? STAGE_COLORS[stage].dot.replace('bg-', '') : '#E5E7EB',
-              }}
-            >
-              <div
-                className={cn('h-full rounded-full', STAGE_COLORS[stage].dot)}
-                style={{ width: count > 0 ? '100%' : '0%' }}
-              />
-            </div>
+              className={cn(
+                'h-1.5 flex-1 rounded-full',
+                count > 0 ? 'bg-purple-500' : 'bg-gray-200',
+              )}
+            />
           )
         })}
       </div>

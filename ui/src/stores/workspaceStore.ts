@@ -16,12 +16,12 @@ export const STAGE_LABELS: Record<PipelineStage, string> = {
 }
 
 export const STAGE_COLORS: Record<PipelineStage, { bg: string; text: string; dot: string }> = {
-  new: { bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500' },
-  contacted: { bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-500' },
+  new: { bg: 'bg-purple-50', text: 'text-purple-700', dot: 'bg-purple-500' },
+  contacted: { bg: 'bg-purple-50', text: 'text-purple-700', dot: 'bg-purple-500' },
   qualified: { bg: 'bg-purple-50', text: 'text-purple-700', dot: 'bg-purple-500' },
-  proposal: { bg: 'bg-cyan-50', text: 'text-cyan-700', dot: 'bg-cyan-500' },
-  won: { bg: 'bg-green-50', text: 'text-green-700', dot: 'bg-green-500' },
-  lost: { bg: 'bg-gray-100', text: 'text-gray-500', dot: 'bg-gray-400' },
+  proposal: { bg: 'bg-purple-50', text: 'text-purple-700', dot: 'bg-purple-500' },
+  won: { bg: 'bg-purple-50', text: 'text-purple-700', dot: 'bg-purple-500' },
+  lost: { bg: 'bg-gray-100', text: 'text-gray-500', dot: 'bg-gray-300' },
 }
 
 export interface Lead {
