@@ -87,6 +87,9 @@ app.addHook('onRequest', async (req) => {
 app.addHook('preHandler', requireAuth);
 app.addHook('preHandler', requireOrg);
 
+// Health check (public — no auth required)
+app.get('/health', async () => ({ status: 'ok', service: 'kitz-gateway' }));
+
 app.post('/events', { preHandler: requireScope('events:write') }, async (req) => {
   const body = req.body as EventEnvelope;
   audit('events.received', body, req);

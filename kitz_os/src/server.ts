@@ -323,9 +323,21 @@ export async function createServer(kernel: KitzKernel) {
   );
 
   // ── Draft approval (draft-first enforcement) ──
+  // Auth required: only authenticated users (DEV_TOKEN_SECRET or gateway-forwarded x-user-id) can approve drafts.
   app.post<{ Body: { trace_id: string; action: 'approve' | 'reject'; index?: number } }>(
     '/api/kitz/drafts/decide',
     async (req, reply) => {
+      // Enforce auth — drafts can only be approved by authenticated callers
+      const devSecret = req.headers['x-dev-secret'] as string | undefined;
+      const userId = req.headers['x-user-id'] as string | undefined;
+      const godMode = process.env.GOD_MODE_USER_ID;
+      const isAuthed = (devSecret && devSecret === process.env.DEV_TOKEN_SECRET) ||
+                       (userId && godMode && userId === godMode) ||
+                       (userId && userId.length > 0);
+      if (!isAuthed) {
+        return reply.code(401).send({ error: 'Draft approval requires authentication. Pass x-dev-secret or x-user-id header.' });
+      }
+
       const { trace_id, action, index } = req.body || {};
       if (!trace_id) return reply.code(400).send({ error: 'trace_id required' });
 

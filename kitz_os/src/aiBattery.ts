@@ -38,7 +38,7 @@ const TOKENS_PER_CREDIT = 1000;       // ~1000 LLM tokens = 1 credit
 const TTS_CHARS_PER_CREDIT = 500;     // ~500 ElevenLabs chars = 1 credit
 
 // Budget limits (from governance/ai_battery.md)
-const DAILY_CREDIT_LIMIT = Number(process.env.AI_BATTERY_DAILY_LIMIT) || 500;
+const DAILY_CREDIT_LIMIT = Number(process.env.AI_BATTERY_DAILY_LIMIT) || 5;
 
 // Supabase config (optional — for persistent tracking)
 const SUPABASE_URL = process.env.SUPABASE_URL || '';

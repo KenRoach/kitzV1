@@ -15,6 +15,7 @@ import { getBatteryStatus, initBattery, type BatteryStatus } from './aiBattery.j
 import { initSOPStore } from './sops/store.js';
 import { loadStarterSOPs } from './sops/loader.js';
 import { CadenceEngine } from './cadence/engine.js';
+import { routeWithAI } from './interfaces/whatsapp/semanticRouter.js';
 import { createAOS, type AOSRuntime } from '../../aos/src/index.js';
 import type { LaunchContext } from '../../aos/src/types.js';
 
@@ -100,8 +101,28 @@ export class KitzKernel {
     }
 
     const runId = crypto.randomUUID();
-    // Execution is delegated to the semantic router in server.ts
-    return { runId, response: '', toolsUsed: [], creditsConsumed: 0 };
+
+    // Route through the 5-phase semantic router (same pipeline as WhatsApp webhook)
+    // If an agent is specified, prefix the goal so the router knows the context
+    const message = opts.agent ? `[agent:${opts.agent}] ${opts.goal}` : opts.goal;
+    try {
+      const result = await routeWithAI(
+        message,
+        this.tools,
+        runId,        // use runId as traceId
+        undefined,    // no media context for programmatic runs
+        undefined,    // no userId for programmatic runs
+      );
+      return {
+        runId,
+        response: result.response,
+        toolsUsed: result.toolsUsed,
+        creditsConsumed: result.creditsConsumed,
+      };
+    } catch (err) {
+      console.error(`[kernel] run failed (${runId}):`, (err as Error).message);
+      return { runId, response: `Error: ${(err as Error).message}`, toolsUsed: [], creditsConsumed: 0 };
+    }
   }
 
   /** Build launch context from current system state */

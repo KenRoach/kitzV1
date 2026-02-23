@@ -4,6 +4,34 @@ import type { EventEnvelope } from 'kitz-schemas';
 
 export const health = { status: 'ok' };
 
+// ── Connector URLs (from docker-compose env) ──
+const WA_CONNECTOR_URL = process.env.WA_CONNECTOR_URL || 'http://kitz-whatsapp-connector:3006';
+const EMAIL_CONNECTOR_URL = process.env.EMAIL_CONNECTOR_URL || 'http://kitz-email-connector:3007';
+
+/** Attempt to deliver a notification via the appropriate connector */
+async function deliverNotification(job: NotificationJob): Promise<boolean> {
+  const url = job.channel === 'whatsapp'
+    ? `${WA_CONNECTOR_URL}/send`
+    : `${EMAIL_CONNECTOR_URL}/send`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-trace-id': job.traceId,
+        'x-org-id': job.orgId,
+      },
+      body: JSON.stringify(job.payload),
+      signal: AbortSignal.timeout(10_000),
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn(`[queue] Delivery failed (${job.channel}):`, (err as Error).message);
+    return false;
+  }
+}
+
 interface NotificationJob {
   idempotencyKey: string;
   channel: 'whatsapp' | 'email';
@@ -47,20 +75,25 @@ app.post('/enqueue', async (req: any, reply) => {
   return { queued: true, traceId };
 });
 
-const processJob = (job: NotificationJob): boolean => {
+const processJob = async (job: NotificationJob): Promise<boolean> => {
   if (job.draftOnly) {
     emitAudit('notifications.draft.saved', job.payload, job.traceId);
     return true;
   }
-  return job.attempts > 1;
+  // Actually deliver via the appropriate connector
+  return deliverNotification(job);
 };
 
-setInterval(() => {
+// Health check
+app.get('/health', async () => ({ status: 'ok', service: 'kitz-notifications-queue', queued: queue.length, deadLetter: deadLetter.length }));
+
+// Process queue on 1-second interval
+setInterval(async () => {
   const job = queue.shift();
   if (!job) return;
 
   job.attempts += 1;
-  const delivered = processJob(job);
+  const delivered = await processJob(job);
 
   if (delivered) {
     emitAudit('notifications.delivered', { channel: job.channel, attempts: job.attempts }, job.traceId);
