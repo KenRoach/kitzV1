@@ -23,8 +23,10 @@ import { createTeamRegistry, TeamRegistry } from './teamRegistry.js';
 import { WarRoomManager } from './warRoom.js';
 import { SelfRepairLoop } from './selfRepair.js';
 import { CTODigest } from './ctoDigest.js';
+import { AgentToolBridge } from './toolBridge.js';
+import type { OsToolRegistry } from '../../kitz_os/src/tools/registry.js';
 
-export function createAOS(store: LedgerStore = new FileLedgerStore()) {
+export function createAOS(store: LedgerStore = new FileLedgerStore(), toolRegistry?: OsToolRegistry) {
   const bus = new EventBus(store);
 
   // ── Existing middleware ──
@@ -56,6 +58,9 @@ export function createAOS(store: LedgerStore = new FileLedgerStore()) {
   const ctoDigest = new CTODigest(bus, { agentsTotal: 106 });
   ctoDigest.wire();
 
+  // ── Tool bridge (connects AOS agents to kitz_os tools) ──
+  const toolBridge = toolRegistry ? new AgentToolBridge(toolRegistry) : undefined;
+
   return {
     bus,
     store,
@@ -65,6 +70,7 @@ export function createAOS(store: LedgerStore = new FileLedgerStore()) {
     warRoom,
     selfRepair,
     ctoDigest,
+    toolBridge,
     createTask,
     createProposal,
     createDecision,
@@ -72,7 +78,7 @@ export function createAOS(store: LedgerStore = new FileLedgerStore()) {
 
     /** Run the full 106-agent launch review. CEO decides. */
     async runLaunchReview(ctx: LaunchContext) {
-      return runLaunchPipeline(ctx, bus, memory);
+      return runLaunchPipeline(ctx, bus, memory, toolBridge);
     },
 
     /** Start periodic CTO digest publishing */
@@ -98,6 +104,7 @@ export { TeamRegistry } from './teamRegistry.js';
 export { WarRoomManager } from './warRoom.js';
 export { SelfRepairLoop } from './selfRepair.js';
 export { CTODigest } from './ctoDigest.js';
+export { AgentToolBridge } from './toolBridge.js';
 export type {
   AgentMessage,
   AgentStatus,

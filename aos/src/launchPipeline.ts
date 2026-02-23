@@ -15,6 +15,7 @@
 
 import type { EventBus } from './eventBus.js';
 import type { MemoryStore } from './memory/memoryStore.js';
+import type { AgentToolBridge } from './toolBridge.js';
 import type { LaunchContext, LaunchDecision, LaunchReview } from './types.js';
 
 // C-Suite
@@ -73,6 +74,7 @@ export async function runLaunchPipeline(
   ctx: LaunchContext,
   bus: EventBus,
   memory: MemoryStore,
+  toolBridge?: AgentToolBridge,
 ): Promise<LaunchPipelineResult> {
 
   // Announce launch review
@@ -87,6 +89,7 @@ export async function runLaunchPipeline(
 
   // C-Suite (CEO created separately — he decides last)
   const ceo = new CEOAgent('CEO', bus, memory);
+  if (toolBridge) ceo.setToolBridge(toolBridge);
   const cSuiteAgents = [
     new CFOAgent('CFO', bus, memory),
     new CMOAgent('CMO', bus, memory),
@@ -130,6 +133,14 @@ export async function runLaunchPipeline(
     new councilUS_AAgent('CouncilUS_A', bus, memory),
     new councilUS_BAgent('CouncilUS_B', bus, memory),
   ];
+
+  // ── Attach tool bridge to all agents ──
+  if (toolBridge) {
+    const allAgents = [...cSuiteAgents, ...boardAgents, ...governanceAgents, ...externalAgents];
+    for (const agent of allAgents) {
+      agent.setToolBridge(toolBridge);
+    }
+  }
 
   // ── Collect reviews from all tiers ──
 

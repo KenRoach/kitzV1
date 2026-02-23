@@ -311,6 +311,7 @@ services:
       <<: *env-common
       GATEWAY_URL: http://kitz-gateway:4000
       LLM_HUB_URL: http://kitz-llm-hub:4010
+      KITZ_OS_URL: http://kitz-os:3012
       DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET:-dev-secret-change-me}
       MCP_URL: ${MCP_URL:-}
       MCP_API_KEY: ${MCP_API_KEY:-}
@@ -318,6 +319,7 @@ services:
     depends_on:
       - kitz-gateway
       - kitz-llm-hub
+      - kitz-os
 
 networks:
   kitz-net:

@@ -897,6 +897,89 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
     }
   });
 
+  // ── AOS Agent Endpoints ──────────────
+
+  // List all agents with their status and allowed tools
+  app.get('/api/kitz/agents', async () => {
+    const aos = kernel.aos;
+    const teams = aos.teamRegistry.listTeams();
+    const bridge = aos.toolBridge;
+    return {
+      teams: teams.map(t => ({
+        name: t.name,
+        displayName: t.displayName,
+        lead: t.lead,
+        members: t.members,
+      })),
+      toolBridgeActive: !!bridge,
+      totalTeams: teams.length,
+    };
+  });
+
+  // Get allowed tools for a specific agent
+  app.get<{ Params: { name: string } }>(
+    '/api/kitz/agents/:name/tools',
+    async (req) => {
+      const { name } = req.params;
+      const bridge = kernel.aos.toolBridge;
+      if (!bridge) return { agent: name, tools: [], error: 'Tool bridge not active' };
+
+      // Determine agent tier & team from team registry
+      const teamConfig = kernel.aos.teamRegistry.listTeams().find(t =>
+        t.lead === name || t.members.includes(name)
+      );
+
+      // C-suite names
+      const cSuite = ['CEO', 'CFO', 'CMO', 'COO', 'CPO', 'CRO', 'CTO',
+        'HeadCustomer', 'HeadEducation', 'HeadEngineering', 'HeadGrowth', 'HeadIntelligenceRisk'];
+      const tier = cSuite.includes(name) ? 'c-suite' as const : teamConfig ? 'team' as const : 'governance' as const;
+      const team = teamConfig?.name;
+
+      const tools = bridge.listAllowed(name, tier, team);
+      return { agent: name, tier, team: team || null, toolCount: tools.length, tools };
+    }
+  );
+
+  // Invoke a tool on behalf of an agent
+  app.post<{ Params: { name: string }; Body: { tool: string; args?: Record<string, unknown> } }>(
+    '/api/kitz/agents/:name/invoke',
+    async (req, reply) => {
+      const secret = req.headers['x-dev-secret'];
+      if (secret !== process.env.DEV_TOKEN_SECRET) {
+        return reply.code(401).send({ error: 'unauthorized' });
+      }
+
+      const { name } = req.params;
+      const { tool, args } = req.body || {};
+      if (!tool) return reply.code(400).send({ error: 'tool name required' });
+
+      const bridge = kernel.aos.toolBridge;
+      if (!bridge) return reply.code(503).send({ error: 'Tool bridge not active' });
+
+      const cSuite = ['CEO', 'CFO', 'CMO', 'COO', 'CPO', 'CRO', 'CTO',
+        'HeadCustomer', 'HeadEducation', 'HeadEngineering', 'HeadGrowth', 'HeadIntelligenceRisk'];
+      const teamConfig = kernel.aos.teamRegistry.listTeams().find(t =>
+        t.lead === name || t.members.includes(name)
+      );
+      const tier = cSuite.includes(name) ? 'c-suite' as const : teamConfig ? 'team' as const : 'governance' as const;
+      const team = teamConfig?.name;
+
+      const traceId = crypto.randomUUID();
+      const result = await bridge.invoke(name, tier, team, tool, args || {}, traceId);
+      return result;
+    }
+  );
+
+  // CTO digest — get current system health summary
+  app.get('/api/kitz/agents/cto/digest', async () => {
+    const pending = kernel.aos.ctoDigest.getPendingEntries();
+    return {
+      pendingEntries: pending.length,
+      entries: pending,
+      warRoomsActive: kernel.aos.warRoom.activeCount,
+    };
+  });
+
   await app.listen({ port: PORT, host: '0.0.0.0' });
   console.log(`[server] KITZ OS listening on port ${PORT}`);
   return app;

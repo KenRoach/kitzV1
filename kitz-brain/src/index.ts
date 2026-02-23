@@ -76,7 +76,53 @@ async function runWeekly(): Promise<void> {
   logRun('weekly.complete', traceId, response);
 }
 
-cron.schedule('0 8 * * *', runDaily);
-cron.schedule('0 9 * * 1', runWeekly);
+/** Trigger AOS launch review via kitz_os API */
+async function triggerLaunchReview(): Promise<void> {
+  const traceId = randomUUID();
+  const kitzOsUrl = process.env.KITZ_OS_URL || 'http://kitz-os:3012';
+  logRun('aos.launch-review.start', traceId, {});
+  try {
+    const res = await fetch(`${kitzOsUrl}/api/kitz/launch`, {
+      headers: { 'x-trace-id': traceId },
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (res.ok) {
+      const data = await res.json() as { approved?: boolean; summary?: string; votes?: unknown };
+      logRun('aos.launch-review.complete', traceId, {
+        approved: data.approved,
+        summary: data.summary,
+        votes: data.votes,
+      });
+    } else {
+      logRun('aos.launch-review.error', traceId, { status: res.status });
+    }
+  } catch (err) {
+    logRun('aos.launch-review.error', traceId, { error: (err as Error).message });
+  }
+}
 
-console.log('kitz-brain scheduler started', { financePolicy, growthExecutionPolicy });
+/** Fetch CTO digest from AOS via kitz_os API */
+async function fetchCtoDigest(): Promise<void> {
+  const traceId = randomUUID();
+  const kitzOsUrl = process.env.KITZ_OS_URL || 'http://kitz-os:3012';
+  logRun('aos.cto-digest.start', traceId, {});
+  try {
+    const res = await fetch(`${kitzOsUrl}/api/kitz/agents/cto/digest`, {
+      headers: { 'x-trace-id': traceId },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (res.ok) {
+      const data = await res.json() as Record<string, unknown>;
+      logRun('aos.cto-digest.complete', traceId, data);
+    }
+  } catch (err) {
+    logRun('aos.cto-digest.error', traceId, { error: (err as Error).message });
+  }
+}
+
+cron.schedule('0 8 * * *', runDaily);            // Daily ops: 8am
+cron.schedule('0 9 * * 1', runWeekly);           // Weekly briefing: Mon 9am
+cron.schedule('0 7 * * *', triggerLaunchReview);  // AOS launch review: 7am daily
+cron.schedule('0 */4 * * *', fetchCtoDigest);     // CTO digest: every 4 hours
+
+console.log('kitz-brain scheduler started', { financePolicy, growthExecutionPolicy, aosIntegration: true });

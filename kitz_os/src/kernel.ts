@@ -44,6 +44,7 @@ export class KitzKernel {
   public aos: AOSRuntime;
 
   constructor() {
+    // AOS created without tool bridge — will be wired after tools register
     this.aos = createAOS();
   }
 
@@ -71,6 +72,10 @@ export class KitzKernel {
     // 3. Register all tools
     await this.tools.registerDefaults();
     console.log(`[kernel] ${this.tools.count()} tools registered`);
+
+    // 3.5. Re-create AOS with tool bridge now that registry is populated
+    this.aos = createAOS(undefined, this.tools);
+    console.log(`[kernel] AOS tool bridge wired (agents can invoke tools)`);
 
     // 4. Check AI availability
     const hasAI = !!(

@@ -1,5 +1,6 @@
 import type { EventBus } from '../eventBus.js';
 import type { MemoryStore } from '../memory/memoryStore.js';
+import type { AgentToolBridge, ToolInvocationResult } from '../toolBridge.js';
 import type {
   AgentMessage,
   AgentStatus,
@@ -26,12 +27,18 @@ export class BaseAgent {
   private _lastAction?: string;
   private _lastActionAt?: string;
   private _actionsToday = 0;
+  private _toolBridge?: AgentToolBridge;
 
   constructor(
     public readonly name: string,
     protected readonly eventBus: EventBus,
     protected readonly memory: MemoryStore
   ) {}
+
+  /** Attach the tool bridge so this agent can invoke kitz_os tools */
+  setToolBridge(bridge: AgentToolBridge): void {
+    this._toolBridge = bridge;
+  }
 
   // ── Publishing ──
 
@@ -120,6 +127,40 @@ export class BaseAgent {
 
   resetDailyActions(): void {
     this._actionsToday = 0;
+  }
+
+  // ── Tool Invocation (via kitz_os OsToolRegistry) ──
+
+  /** Invoke a kitz_os tool — permissions enforced by the tool bridge */
+  async invokeTool(
+    toolName: string,
+    args: Record<string, unknown>,
+    traceId?: string,
+  ): Promise<ToolInvocationResult> {
+    if (!this._toolBridge) {
+      return {
+        success: false,
+        error: 'Tool bridge not attached — agent cannot invoke tools',
+        toolName,
+        agentName: this.name,
+        traceId: traceId || 'no-trace',
+      };
+    }
+    const result = await this._toolBridge.invoke(
+      this.name, this.tier, this.team, toolName, args, traceId || crypto.randomUUID(),
+    );
+    if (result.success) {
+      this._lastAction = `tool:${toolName}`;
+      this._lastActionAt = new Date().toISOString();
+      this._actionsToday += 1;
+    }
+    return result;
+  }
+
+  /** List tools this agent is permitted to use */
+  listMyTools(): string[] {
+    if (!this._toolBridge) return [];
+    return this._toolBridge.listAllowed(this.name, this.tier, this.team);
   }
 
   // ── SOP Access ──
