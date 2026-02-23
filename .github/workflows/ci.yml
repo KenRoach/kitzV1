@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm ci
+      - run: npm install
         working-directory: kitz-schemas
       - run: npm run typecheck
         working-directory: kitz-schemas
@@ -28,9 +28,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm ci
+      - run: npm install
         working-directory: kitz-schemas
-      - run: npm ci
+      - run: npm install
         working-directory: kitz-gateway
       - run: npm run typecheck
         working-directory: kitz-gateway
@@ -45,7 +45,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm ci
+      - run: npm install
         working-directory: kitz-schemas
       - run: npm install
         working-directory: kitz_os
@@ -62,21 +62,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm ci
+      - run: npm install
         working-directory: kitz-schemas
-      - run: npm ci
+      - run: npm install
         working-directory: kitz-payments
       - run: npm run typecheck
         working-directory: kitz-payments
 
   kitz-whatsapp-connector:
+    needs: kitz-schemas
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm ci
+      - run: npm install
+        working-directory: kitz-schemas
+      - run: npm install
         working-directory: kitz-whatsapp-connector
       - run: npm run typecheck
         working-directory: kitz-whatsapp-connector
@@ -89,21 +92,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm ci
+      - run: npm install
         working-directory: kitz-schemas
-      - run: npm ci
+      - run: npm install
         working-directory: kitz-notifications-queue
       - run: npm run typecheck
         working-directory: kitz-notifications-queue
 
   workspace:
+    needs: kitz-schemas
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm ci
+      - run: npm install
+        working-directory: kitz-schemas
+      - run: npm install
         working-directory: workspace
       - run: npm run typecheck
         working-directory: workspace
