@@ -140,7 +140,8 @@ function Eyes({ mood, blinkFrame }: { mood: string; blinkFrame: boolean }) {
         marginTop: -s * 0.1,
       }
     }
-    return { ...base, width: s * 0.8, height: s, background: DARK, borderRadius: s * 0.2, marginLeft: s * 0.1 }
+    // Default "open" eyes: half-pill shape (flat bottom, rounded top) — matches Kitz image
+    return { ...base, width: s, height: s * 0.7, background: DARK, borderRadius: `${s * 0.5}px ${s * 0.5}px 0 0`, marginTop: s * 0.15 }
   }
 
   if (mood === 'wide') {
@@ -212,13 +213,14 @@ function Mouth({ mood, isTalking }: { mood: string; isTalking: boolean }) {
       <div style={{ ...base, width: s * 1.5, height: Math.max(2, s * 0.25), background: DARK, borderRadius: 1 }} />
     )
   }
+  // Default smile: half-pill smirk (flat top, rounded bottom) — matches Kitz image
   return (
     <div
       style={{
         ...base,
-        width: s * 2,
-        height: s * 0.8,
-        borderBottom: `${Math.max(2, s * 0.3)}px solid ${DARK}`,
+        width: s * 1.8,
+        height: s * 0.6,
+        background: DARK,
         borderRadius: `0 0 ${s}px ${s}px`,
       }}
     />

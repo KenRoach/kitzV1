@@ -1,93 +1,49 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 74" width="56" height="74">
   <!-- Kitz pixel character favicon — transparent background -->
-  <!-- Matches the Orb.tsx 8x8 pixel grid with antenna + feet -->
 
-  <!-- Antenna stem (centered on body) -->
+  <!-- Antenna stem -->
   <rect x="28" y="0" width="2" height="9" fill="#a855f7"/>
-  <!-- Antenna flag tip (pixel to the right of stem top) -->
-  <rect x="30" y="0" width="4" height="3" fill="#a855f7"/>
+  <!-- Antenna flag (square tip to the right) -->
+  <rect x="30" y="0" width="4" height="4" fill="#a855f7"/>
 
-  <!-- Body: 8×8 pixel grid, each cell = 7×7px -->
-  <!-- Row 0: __XXXX__ (y=9) -->
+  <!-- Body: 8x8 pixel grid, 7px cells -->
+  <!-- Row 0: __XXXX__ -->
   <rect x="14" y="9" width="7" height="7" fill="#a855f7"/>
   <rect x="21" y="9" width="7" height="7" fill="#a855f7"/>
   <rect x="28" y="9" width="7" height="7" fill="#a855f7"/>
   <rect x="35" y="9" width="7" height="7" fill="#a855f7"/>
-
-  <!-- Row 1: _XXXXXX_ (y=16) -->
+  <!-- Row 1: _XXXXXX_ -->
   <rect x="7" y="16" width="7" height="7" fill="#a855f7"/>
   <rect x="14" y="16" width="7" height="7" fill="#a855f7"/>
   <rect x="21" y="16" width="7" height="7" fill="#a855f7"/>
   <rect x="28" y="16" width="7" height="7" fill="#a855f7"/>
   <rect x="35" y="16" width="7" height="7" fill="#a855f7"/>
   <rect x="42" y="16" width="7" height="7" fill="#a855f7"/>
-
-  <!-- Row 2: XXXXXXXX (y=23) -->
-  <rect x="0" y="23" width="7" height="7" fill="#a855f7"/>
-  <rect x="7" y="23" width="7" height="7" fill="#a855f7"/>
-  <rect x="14" y="23" width="7" height="7" fill="#a855f7"/>
-  <rect x="21" y="23" width="7" height="7" fill="#a855f7"/>
-  <rect x="28" y="23" width="7" height="7" fill="#a855f7"/>
-  <rect x="35" y="23" width="7" height="7" fill="#a855f7"/>
-  <rect x="42" y="23" width="7" height="7" fill="#a855f7"/>
-  <rect x="49" y="23" width="7" height="7" fill="#a855f7"/>
-
-  <!-- Row 3: XXXXXXXX (y=30) -->
-  <rect x="0" y="30" width="7" height="7" fill="#a855f7"/>
-  <rect x="7" y="30" width="7" height="7" fill="#a855f7"/>
-  <rect x="14" y="30" width="7" height="7" fill="#a855f7"/>
-  <rect x="21" y="30" width="7" height="7" fill="#a855f7"/>
-  <rect x="28" y="30" width="7" height="7" fill="#a855f7"/>
-  <rect x="35" y="30" width="7" height="7" fill="#a855f7"/>
-  <rect x="42" y="30" width="7" height="7" fill="#a855f7"/>
-  <rect x="49" y="30" width="7" height="7" fill="#a855f7"/>
-
-  <!-- Row 4: XXXXXXXX (y=37) -->
-  <rect x="0" y="37" width="7" height="7" fill="#a855f7"/>
-  <rect x="7" y="37" width="7" height="7" fill="#a855f7"/>
-  <rect x="14" y="37" width="7" height="7" fill="#a855f7"/>
-  <rect x="21" y="37" width="7" height="7" fill="#a855f7"/>
-  <rect x="28" y="37" width="7" height="7" fill="#a855f7"/>
-  <rect x="35" y="37" width="7" height="7" fill="#a855f7"/>
-  <rect x="42" y="37" width="7" height="7" fill="#a855f7"/>
-  <rect x="49" y="37" width="7" height="7" fill="#a855f7"/>
-
-  <!-- Row 5: XXXXXXXX (y=44) -->
-  <rect x="0" y="44" width="7" height="7" fill="#a855f7"/>
-  <rect x="7" y="44" width="7" height="7" fill="#a855f7"/>
-  <rect x="14" y="44" width="7" height="7" fill="#a855f7"/>
-  <rect x="21" y="44" width="7" height="7" fill="#a855f7"/>
-  <rect x="28" y="44" width="7" height="7" fill="#a855f7"/>
-  <rect x="35" y="44" width="7" height="7" fill="#a855f7"/>
-  <rect x="42" y="44" width="7" height="7" fill="#a855f7"/>
-  <rect x="49" y="44" width="7" height="7" fill="#a855f7"/>
-
-  <!-- Row 6: _XXXXXX_ (y=51) -->
-  <rect x="7" y="51" width="7" height="7" fill="#a855f7"/>
-  <rect x="14" y="51" width="7" height="7" fill="#a855f7"/>
-  <rect x="21" y="51" width="7" height="7" fill="#a855f7"/>
-  <rect x="28" y="51" width="7" height="7" fill="#a855f7"/>
-  <rect x="35" y="51" width="7" height="7" fill="#a855f7"/>
-  <rect x="42" y="51" width="7" height="7" fill="#a855f7"/>
-
-  <!-- Row 7: __XXXX__ (y=58) -->
-  <rect x="14" y="58" width="7" height="7" fill="#a855f7"/>
-  <rect x="21" y="58" width="7" height="7" fill="#a855f7"/>
-  <rect x="28" y="58" width="7" height="7" fill="#a855f7"/>
-  <rect x="35" y="58" width="7" height="7" fill="#a855f7"/>
+  <!-- Row 2: XXXXXXXX -->
+  <rect x="0" y="23" width="56" height="7" fill="#a855f7"/>
+  <!-- Row 3: XXXXXXXX -->
+  <rect x="0" y="30" width="56" height="7" fill="#a855f7"/>
+  <!-- Row 4: XXXXXXXX -->
+  <rect x="0" y="37" width="56" height="7" fill="#a855f7"/>
+  <!-- Row 5: XXXXXXXX -->
+  <rect x="0" y="44" width="56" height="7" fill="#a855f7"/>
+  <!-- Row 6: _XXXXXX_ -->
+  <rect x="7" y="51" width="42" height="7" fill="#a855f7"/>
+  <!-- Row 7: __XXXX__ -->
+  <rect x="14" y="58" width="28" height="7" fill="#a855f7"/>
 
   <!-- Highlight shine (upper-left) -->
-  <rect x="14" y="17" width="4" height="4" fill="#fff" opacity="0.5" rx="0.5"/>
+  <rect x="9" y="17" width="4" height="5" fill="#d8b4fe" opacity="0.6"/>
 
-  <!-- Left eye -->
-  <rect x="12" y="31" width="7" height="4" rx="1" fill="#0A0A0A"/>
-  <!-- Right eye -->
-  <rect x="35" y="31" width="7" height="4" rx="1" fill="#0A0A0A"/>
+  <!-- Left eye: half-pill (flat bottom, rounded top) -->
+  <path d="M11 35 L11 31 Q14.5 28 18 31 L18 35 Z" fill="#1a1a2e"/>
+  <!-- Right eye: half-pill (flat bottom, rounded top) -->
+  <path d="M35 35 L35 31 Q38.5 28 42 31 L42 35 Z" fill="#1a1a2e"/>
 
-  <!-- Smile -->
-  <path d="M18 42 Q28 49 38 42" fill="none" stroke="#0A0A0A" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Mouth: half-pill smirk (flat top, curved bottom) -->
+  <path d="M20 43 L34 43 Q34 48 27 48 Q20 48 20 43 Z" fill="#1a1a2e"/>
 
   <!-- Feet (darker purple) -->
-  <rect x="14" y="66" width="6" height="5" fill="#9333ea"/>
-  <rect x="35" y="66" width="6" height="5" fill="#9333ea"/>
+  <rect x="14" y="66" width="6" height="5" fill="#7c3aed"/>
+  <rect x="35" y="66" width="6" height="5" fill="#7c3aed"/>
 </svg>
