@@ -1,11 +1,5 @@
 import { create } from 'zustand'
-
-interface TeamMember {
-  id: string
-  name: string
-  role: string
-  status: 'active' | 'invited' | 'inactive'
-}
+import type { TeamMember } from '@/types/team'
 
 interface TeamState {
   members: TeamMember[]

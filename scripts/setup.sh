@@ -7,7 +7,7 @@ set -e
 echo "🚀 Setting up Kitz OS development environment..."
 
 # Install dependencies for each service
-for dir in ui kitz-gateway kitz-llm-hub kitz-payments kitz-whatsapp-connector kitz-email-connector kitz-notifications-queue kitz-services admin-kitz-services kitz_os workspace kitz-brain kitz-schemas; do
+for dir in ui kitz-gateway kitz-llm-hub kitz-payments kitz-whatsapp-connector kitz-email-connector kitz-notifications-queue kitz-services admin-kitz-services kitz_os workspace kitz-brain kitz-schemas engine/comms-api engine/logs-api; do
   if [ -d "$dir" ] && [ -f "$dir/package.json" ]; then
     echo "📦 Installing $dir..."
     (cd "$dir" && npm install)

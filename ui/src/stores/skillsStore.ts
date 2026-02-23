@@ -1,11 +1,5 @@
 import { create } from 'zustand'
-
-interface Skill {
-  id: string
-  name: string
-  description: string
-  enabled: boolean
-}
+import type { Skill } from '@/types/skills'
 
 interface SkillsState {
   skills: Skill[]

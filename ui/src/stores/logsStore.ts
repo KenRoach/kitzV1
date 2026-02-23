@@ -1,12 +1,5 @@
 import { create } from 'zustand'
-
-interface LogEntry {
-  id: string
-  timestamp: string
-  agent: string
-  action: string
-  details: string
-}
+import type { LogEntry } from '@/types/logs'
 
 interface LogsState {
   entries: LogEntry[]

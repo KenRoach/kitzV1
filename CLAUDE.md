@@ -26,6 +26,13 @@ TypeScript monorepo with 13+ microservices on Fastify. GitHub: `KenRoach/kitzV1`
 | `aos` | — | Agent-to-agent OS layer (30+ agent roles, event bus, ledger) | Stub |
 | `kitz-docs` | — | Architecture docs, threat model, approval matrix, runbooks | Docs |
 | `kitz-knowledge-base` | — | RAG playbooks, SOPs, offer templates | Content |
+| `ui` | 5173 | React + Vite SPA — split-panel dashboard (ChatPanel + CanvasPreview) | Functional |
+| `engine/comms-api` | 3013 | Talk, Text, Email routing (Twilio, email providers) | Stub |
+| `engine/logs-api` | 3014 | Activity logging and audit trail service | Stub |
+| `kitz-supabase` | — | Supabase edge functions + migrations (renamed from bizgenie-core) | Functional |
+| `zero-trust` | — | Security layer: auth, RBAC, encryption, audit, network policies | Stub |
+| `shared` | — | Cross-service shared types, utils, constants, contracts | Stub |
+| `brain` | — | AI agent skills: call transcription, email drafting, sentiment, smart reply | Stub |
 
 **Maturity key:** Production = real API integrations, deployed. Functional = real logic, needs polish. Stub = endpoints exist, business logic is in-memory/placeholder.
 

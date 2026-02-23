@@ -12,6 +12,8 @@ services=(
   "kitz-services:3010"
   "admin-kitz-services:3011"
   "kitz_os:3012"
+  "comms-api:3013"
+  "logs-api:3014"
 )
 
 echo "🏥 Checking service health..."
