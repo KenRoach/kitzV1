@@ -114,3 +114,77 @@ export interface ProcessPaymentWebhookInput {
 
 export const createTraceId = (): string => randomUUID();
 export const nowIso = (): string => new Date().toISOString();
+
+// ── AOS Agent Architecture Contracts (for cross-service consumption) ──
+
+export type AgentTier = 'c-suite' | 'board' | 'governance' | 'external' | 'team' | 'guardian' | 'coach';
+
+export type TeamName =
+  | 'whatsapp-comms' | 'sales-crm' | 'marketing-growth' | 'growth-hacking'
+  | 'education-onboarding' | 'customer-success' | 'content-brand'
+  | 'platform-eng' | 'frontend' | 'backend' | 'devops-ci' | 'qa-testing'
+  | 'ai-ml' | 'finance-billing' | 'legal-compliance' | 'strategy-intel'
+  | 'governance-pmo' | 'coaches';
+
+export type MessageChannel = 'intra-team' | 'cross-team' | 'escalation' | 'war-room' | 'broadcast';
+
+export type MessagePriority = 'low' | 'normal' | 'high' | 'critical';
+
+export interface TeamConfig {
+  name: TeamName;
+  displayName: string;
+  lead: string;
+  members: string[];
+  description: string;
+}
+
+export interface GuardianScope {
+  serviceDir: string;
+  watchPatterns: string[];
+}
+
+export interface AgentMessage {
+  id: string;
+  type: string;
+  source: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  timestamp: string;
+  payload: Record<string, unknown>;
+  related_ids?: string[];
+  target: string | string[];
+  channel: MessageChannel;
+  ttl: number;
+  hops: string[];
+  priority: MessagePriority;
+  requiresAck: boolean;
+  parentMessageId?: string;
+}
+
+export interface CTODigestEntry {
+  category: 'auto_fixed' | 'recommendation' | 'escalation';
+  agent: string;
+  summary: string;
+  eventId: string;
+  timestamp: string;
+}
+
+export interface CTODigestPayload {
+  period: string;
+  autoFixed: CTODigestEntry[];
+  recommendations: CTODigestEntry[];
+  escalations: CTODigestEntry[];
+  agentsOnline: number;
+  agentsTotal: number;
+  warRoomsActive: number;
+}
+
+export interface WarRoomConfig {
+  id: string;
+  reason: string;
+  participants: string[];
+  activatedAt: string;
+  ttlMs: number;
+  status: 'active' | 'dissolved';
+  dissolvedAt?: string;
+  postMortem?: string;
+}

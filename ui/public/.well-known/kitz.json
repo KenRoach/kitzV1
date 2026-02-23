@@ -1,0 +1,171 @@
+{
+  "name": "KITZ OS",
+  "version": "0.1.0",
+  "description": "AI-powered Business Operating System for small businesses",
+  "mission": "Make a small business run like a Fortune 500 company, at a fraction of the cost",
+  "tagline": "Your hustle deserves infrastructure",
+  "targetAudience": "Small business owners in Latin America",
+  "activationTarget": "Under 10 minutes to first value",
+  "capabilities": {
+    "agentTeams": 18,
+    "totalAgents": 100,
+    "tools": 68,
+    "sops": 6,
+    "playbooks": 2,
+    "languages": ["en", "es"]
+  },
+  "agentTeams": [
+    {
+      "name": "sales-crm",
+      "displayName": "Sales & CRM",
+      "lead": "CRO",
+      "agents": ["LeadScorer", "PipelineOptimizer", "OutreachDrafter", "DealCloser"],
+      "capabilities": ["Lead scoring", "Pipeline management", "Outreach drafting", "Deal closing"]
+    },
+    {
+      "name": "whatsapp-comms",
+      "displayName": "WhatsApp & Comms",
+      "lead": "HeadCustomer",
+      "agents": ["WAFlowDesigner", "MessageTemplater", "DeliveryMonitor", "EscalationBot"],
+      "capabilities": ["Chat flow design", "Message templates", "Delivery tracking", "Escalation"]
+    },
+    {
+      "name": "marketing-growth",
+      "displayName": "Marketing & Growth",
+      "lead": "CMO",
+      "agents": ["ContentCreator", "SEOAnalyst", "CampaignRunner", "SocialManager"],
+      "capabilities": ["Content creation", "SEO optimization", "Campaign management", "Social scheduling"]
+    },
+    {
+      "name": "growth-hacking",
+      "displayName": "Growth Hacking",
+      "lead": "HeadGrowth",
+      "agents": ["ActivationOptimizer", "RetentionAnalyst", "ReferralEng", "FunnelDesigner"],
+      "capabilities": ["Activation optimization", "Retention analysis", "Referral programs", "Funnel design"]
+    },
+    {
+      "name": "customer-success",
+      "displayName": "Customer Success",
+      "lead": "CustomerVoice",
+      "agents": ["TicketRouter", "SatisfactionBot", "ChurnPredictor", "FeedbackAggregator"],
+      "capabilities": ["Ticket routing", "Satisfaction tracking", "Churn prediction", "Feedback analysis"]
+    },
+    {
+      "name": "finance-billing",
+      "displayName": "Finance & Billing",
+      "lead": "CFO",
+      "agents": ["InvoiceBot", "RevenueTracker", "CostOptimizer", "ComplianceAuditor"],
+      "capabilities": ["Invoicing", "Revenue tracking", "Cost optimization", "Compliance"]
+    },
+    {
+      "name": "education-onboarding",
+      "displayName": "Education & Onboarding",
+      "lead": "HeadEducation",
+      "agents": ["TutorialBuilder", "DocWriter", "VideoScripter", "FAQBot"],
+      "capabilities": ["Tutorial creation", "Help docs", "Video scripts", "FAQ management"]
+    },
+    {
+      "name": "content-brand",
+      "displayName": "Content & Brand",
+      "lead": "FounderAdvocate",
+      "agents": ["CopyWriter", "TranslationBot", "BrandVoiceBot", "AssetManager"],
+      "capabilities": ["Copywriting", "Translation (ES/EN)", "Brand voice", "Asset management"]
+    },
+    {
+      "name": "strategy-intel",
+      "displayName": "Strategy & Intel",
+      "lead": "HeadIntelligenceRisk",
+      "agents": ["CompetitorTracker", "MarketScanner", "OpportunityBot", "TrendAnalyst"],
+      "capabilities": ["Competitor tracking", "Market scanning", "Opportunity detection", "Trend analysis"]
+    },
+    {
+      "name": "platform-eng",
+      "displayName": "Platform Engineering",
+      "lead": "CTO",
+      "agents": ["APIDesigner", "DBAdmin", "InfraOps", "ServiceMesh"],
+      "capabilities": ["API design", "Database admin", "Infrastructure", "Service mesh"]
+    },
+    {
+      "name": "backend",
+      "displayName": "Backend Engineering",
+      "lead": "HeadEngineering",
+      "agents": ["DataModeler", "IntegrationEng", "SecurityEng", "SystemDesigner"],
+      "capabilities": ["Data modeling", "Integrations", "Security", "System design"]
+    },
+    {
+      "name": "frontend",
+      "displayName": "Frontend Engineering",
+      "lead": "HeadEngineering",
+      "agents": ["UIArchitect", "ComponentDev", "PerformanceOpt", "A11ySpec"],
+      "capabilities": ["UI architecture", "Component dev", "Performance", "Accessibility"]
+    },
+    {
+      "name": "devops-ci",
+      "displayName": "DevOps & CI/CD",
+      "lead": "CTO",
+      "agents": ["PipelineEng", "ContainerOps", "MonitoringEng", "ReleaseManager"],
+      "capabilities": ["CI/CD pipelines", "Containers", "Monitoring", "Releases"]
+    },
+    {
+      "name": "qa-testing",
+      "displayName": "QA & Testing",
+      "lead": "HeadEngineering",
+      "agents": ["TestArchitect", "E2ERunner", "RegressionBot", "LoadTester"],
+      "capabilities": ["Test architecture", "E2E testing", "Regression detection", "Load testing"]
+    },
+    {
+      "name": "ai-ml",
+      "displayName": "AI & Machine Learning",
+      "lead": "CTO",
+      "agents": ["PromptEng", "ModelEval", "RAGSpecialist", "FineTuneOps"],
+      "capabilities": ["Prompt engineering", "Model evaluation", "RAG systems", "Fine-tuning"]
+    },
+    {
+      "name": "legal-compliance",
+      "displayName": "Legal & Compliance",
+      "lead": "CFO",
+      "agents": ["PanamaComplianceBot", "PrivacyAuditor", "DataRetention", "TOS_Monitor"],
+      "capabilities": ["Panama compliance", "Privacy auditing", "Data retention", "TOS monitoring"]
+    },
+    {
+      "name": "governance-pmo",
+      "displayName": "Governance & PMO",
+      "lead": "COO",
+      "agents": ["SprintPlanner", "ProgressTracker", "ResourceAllocator", "RiskMonitor"],
+      "capabilities": ["Sprint planning", "Progress tracking", "Resource allocation", "Risk monitoring"]
+    },
+    {
+      "name": "coaches",
+      "displayName": "Coaching & Training",
+      "lead": "HeadEducation",
+      "agents": ["OnboardingCoach", "PlaybookCoach", "ProcessCoach", "AgentSkillTrainer"],
+      "capabilities": ["Onboarding coaching", "Playbook guidance", "Process coaching", "Agent training"]
+    }
+  ],
+  "sops": [
+    { "slug": "new-customer-onboarding", "title": "New Customer Onboarding", "owner": "HeadGrowth" },
+    { "slug": "ai-battery-management", "title": "AI Battery Management", "owner": "CFO" },
+    { "slug": "whatsapp-response-sla", "title": "WhatsApp Response SLA", "owner": "HeadCustomer" },
+    { "slug": "order-fulfillment", "title": "Order Fulfillment", "owner": "COO" },
+    { "slug": "inbox-triage", "title": "Inbox Triage", "owner": "HeadCustomer" },
+    { "slug": "payment-collection", "title": "Payment Collection", "owner": "CFO" }
+  ],
+  "governance": {
+    "draftFirst": true,
+    "aiBatteryDailyLimit": 5,
+    "roiMinimum": "2x",
+    "killSwitch": true,
+    "auditTrail": true
+  },
+  "endpoints": {
+    "api": "/api/kitz",
+    "whatsapp": "/api/whatsapp",
+    "workspace": "/api/workspace",
+    "discovery": "/.well-known/kitz.json"
+  },
+  "economicModel": {
+    "businessOwnerShare": "45%",
+    "kitzShare": "5%",
+    "reinvestedShare": "50%"
+  }
+}

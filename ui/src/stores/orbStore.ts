@@ -33,7 +33,7 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
 
   sendMessage: async (content, userId) => {
     const userMsg: ChatMessage = {
-      id: `msg_${Date.now()}`,
+      id: crypto.randomUUID(),
       role: 'user',
       content,
       timestamp: Date.now(),
@@ -52,7 +52,7 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
         },
       )
       const assistantMsg: ChatMessage = {
-        id: `msg_${Date.now()}_r`,
+        id: crypto.randomUUID(),
         role: 'assistant',
         content: res.reply ?? res.message ?? 'Done.',
         timestamp: Date.now(),
@@ -65,7 +65,7 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
       }, 2000)
     } catch (err) {
       const errMsg: ChatMessage = {
-        id: `msg_${Date.now()}_e`,
+        id: crypto.randomUUID(),
         role: 'assistant',
         content: err instanceof Error ? err.message : 'Something went wrong.',
         timestamp: Date.now(),

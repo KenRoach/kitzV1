@@ -5,6 +5,8 @@ import { useAuthStore } from '@/stores/authStore'
 import { cn } from '@/lib/utils'
 import { useAgentThinkingStore } from '@/stores/agentThinkingStore'
 import { AgentThinkingBlock } from '@/components/chat/AgentThinkingBlock'
+import { MessageBubble } from '@/components/chat/MessageBubble'
+import { TypingIndicator } from '@/components/chat/TypingIndicator'
 
 interface BuildLogEntry {
   id: string
@@ -41,7 +43,7 @@ export function ChatPanel() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [messages, agentSteps])
+  }, [messages, agentSteps, state])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -55,24 +57,31 @@ export function ChatPanel() {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-white">Kitz OS</span>
-          <span className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[10px] text-gray-400">v0.1</span>
+          <span className="text-sm font-semibold text-white">Command Center</span>
         </div>
         <div className="flex items-center gap-0.5 rounded-lg bg-white/5 p-0.5">
-          {(['en', 'es', 'ps'] as const).map((l) => (
-            <button
-              key={l}
-              onClick={() => setLang(l)}
-              className={cn(
-                'rounded-md px-2 py-1 font-mono text-[10px] font-medium uppercase transition',
-                lang === l
-                  ? 'bg-white/10 text-white'
-                  : 'text-gray-500 hover:text-gray-300',
-              )}
-            >
-              {l}
-            </button>
-          ))}
+          {(['en', 'es', 'ps'] as const).map((l) => {
+            const langLabel: Record<Lang, string> = {
+              en: 'Switch to English',
+              es: 'Switch to Spanish',
+              ps: 'Switch to Pashtun',
+            }
+            return (
+              <button
+                key={l}
+                onClick={() => setLang(l)}
+                aria-label={langLabel[l]}
+                className={cn(
+                  'rounded-md px-2 py-1 font-mono text-[10px] font-medium uppercase transition',
+                  lang === l
+                    ? 'bg-white/10 text-white'
+                    : 'text-gray-500 hover:text-gray-300',
+                )}
+              >
+                {l}
+              </button>
+            )
+          })}
         </div>
       </div>
 
@@ -113,19 +122,19 @@ export function ChatPanel() {
 
             {/* Action bar */}
             <div className="flex items-center gap-1">
-              <button className="rounded-lg p-1.5 text-gray-500 hover:bg-white/5 hover:text-gray-300 transition">
+              <button aria-label="Undo" className="rounded-lg p-1.5 text-gray-500 hover:bg-white/5 hover:text-gray-300 transition">
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></svg>
               </button>
-              <button className="rounded-lg p-1.5 text-gray-500 hover:bg-white/5 hover:text-gray-300 transition">
+              <button aria-label="Like" className="rounded-lg p-1.5 text-gray-500 hover:bg-white/5 hover:text-gray-300 transition">
                 <ThumbsUp className="h-4 w-4" />
               </button>
-              <button className="rounded-lg p-1.5 text-gray-500 hover:bg-white/5 hover:text-gray-300 transition">
+              <button aria-label="Reply" className="rounded-lg p-1.5 text-gray-500 hover:bg-white/5 hover:text-gray-300 transition">
                 <MessageCircle className="h-4 w-4" />
               </button>
-              <button className="rounded-lg p-1.5 text-gray-500 hover:bg-white/5 hover:text-gray-300 transition">
+              <button aria-label="Copy" className="rounded-lg p-1.5 text-gray-500 hover:bg-white/5 hover:text-gray-300 transition">
                 <Copy className="h-4 w-4" />
               </button>
-              <button className="rounded-lg p-1.5 text-gray-500 hover:bg-white/5 hover:text-gray-300 transition">
+              <button aria-label="More options" className="rounded-lg p-1.5 text-gray-500 hover:bg-white/5 hover:text-gray-300 transition">
                 <MoreHorizontal className="h-4 w-4" />
               </button>
             </div>
@@ -134,20 +143,11 @@ export function ChatPanel() {
 
         {/* Chat messages */}
         {messages.map((msg) => (
-          <div key={msg.id}>
-            {msg.role === 'user' ? (
-              <div className="flex justify-end">
-                <div className="max-w-[85%] rounded-2xl bg-white/10 px-4 py-2.5 text-sm text-white">
-                  {msg.content}
-                </div>
-              </div>
-            ) : (
-              <div className="text-sm text-gray-300 leading-relaxed">
-                {msg.content}
-              </div>
-            )}
-          </div>
+          <MessageBubble key={msg.id} role={msg.role} content={msg.content} variant="dark" />
         ))}
+
+        {/* Typing indicator — bouncing dots while KITZ is thinking */}
+        {state === 'thinking' && <TypingIndicator />}
 
         {/* Agent thinking block — shows between user message and response */}
         {(agentSteps.length > 0 || isAgentThinking) && <AgentThinkingBlock />}

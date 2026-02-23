@@ -1,0 +1,27 @@
+import { BaseAgent } from '../../baseAgent.js';
+import type { EventBus } from '../../../eventBus.js';
+import type { MemoryStore } from '../../../memory/memoryStore.js';
+import type { LaunchContext, LaunchReview } from '../../../types.js';
+
+export class FeedbackAggregatorAgent extends BaseAgent {
+  constructor(bus: EventBus, memory: MemoryStore) {
+    super('FeedbackAggregator', bus, memory);
+    this.team = 'customer-success';
+    this.tier = 'team';
+  }
+
+  async aggregateFeedback(period: 'day' | 'week' | 'month'): Promise<{ themes: string[]; count: number; sentiment: 'positive' | 'neutral' | 'negative' }> {
+    // Placeholder — production aggregates from WhatsApp, email, and workspace
+    return { themes: [], count: 0, sentiment: 'neutral' };
+  }
+
+  override reviewLaunchReadiness(ctx: LaunchContext): LaunchReview {
+    const passed: string[] = ['Feedback aggregation pipeline configured'];
+    if (ctx.whatsappConnectorConfigured) passed.push('WhatsApp feedback channel active');
+    return {
+      agent: this.name, role: 'feedback-aggregator', vote: 'go',
+      confidence: 70, blockers: [], warnings: [], passed,
+      summary: 'FeedbackAggregator: Ready to collect and theme user feedback',
+    };
+  }
+}

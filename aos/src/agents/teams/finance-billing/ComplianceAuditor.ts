@@ -1,0 +1,31 @@
+import { BaseAgent } from '../../baseAgent.js';
+import type { EventBus } from '../../../eventBus.js';
+import type { MemoryStore } from '../../../memory/memoryStore.js';
+import type { LaunchContext, LaunchReview } from '../../../types.js';
+
+export class ComplianceAuditorAgent extends BaseAgent {
+  constructor(bus: EventBus, memory: MemoryStore) {
+    super('ComplianceAuditor', bus, memory);
+    this.team = 'finance-billing';
+    this.tier = 'team';
+  }
+
+  async auditCompliance(region: string): Promise<{ compliant: boolean; issues: string[] }> {
+    return { compliant: false, issues: [`${region} compliance audit not implemented`] };
+  }
+
+  override reviewLaunchReadiness(_ctx: LaunchContext): LaunchReview {
+    const passed: string[] = [];
+    const warnings = ['Panama compliance pipeline is a stub — financial regulation checks not live'];
+    return {
+      agent: this.name,
+      role: 'compliance-auditor',
+      vote: 'conditional',
+      confidence: 30,
+      blockers: [],
+      warnings,
+      passed,
+      summary: 'ComplianceAuditor: Panama compliance pipeline is stub — audit not operational',
+    };
+  }
+}

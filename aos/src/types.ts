@@ -1,6 +1,42 @@
 export type EventSeverity = 'low' | 'medium' | 'high' | 'critical';
 
+// ── Agent Tiers ──
+
+export type AgentTier =
+  | 'c-suite'
+  | 'board'
+  | 'governance'
+  | 'external'
+  | 'team'
+  | 'guardian'
+  | 'coach';
+
+// ── Team Names (18 operational teams) ──
+
+export type TeamName =
+  | 'whatsapp-comms'
+  | 'sales-crm'
+  | 'marketing-growth'
+  | 'growth-hacking'
+  | 'education-onboarding'
+  | 'customer-success'
+  | 'content-brand'
+  | 'platform-eng'
+  | 'frontend'
+  | 'backend'
+  | 'devops-ci'
+  | 'qa-testing'
+  | 'ai-ml'
+  | 'finance-billing'
+  | 'legal-compliance'
+  | 'strategy-intel'
+  | 'governance-pmo'
+  | 'coaches';
+
+// ── Message Types ──
+
 export type AOSMessageType =
+  // Existing
   | 'KPI_CHANGED'
   | 'CUSTOMER_FEEDBACK_RECEIVED'
   | 'BUG_REPORTED'
@@ -14,7 +50,60 @@ export type AOSMessageType =
   | 'INVITE_DRAFT_CREATED'
   | 'REVENUE_EVENT'
   | 'USER_ACTIVATION_STAGE'
+  // Guardian events
+  | 'BUILD_HEALTH_DEGRADED'
+  | 'TEST_REGRESSION_DETECTED'
+  | 'DEPENDENCY_VULN_FOUND'
+  | 'DOCS_STALE'
+  | 'PERFORMANCE_DEGRADED'
+  // Coaching events
+  | 'AGENT_ACCURACY_LOW'
+  | 'PLAYBOOK_STALE'
+  | 'WORKFLOW_BOTTLENECK'
+  | 'AGENT_RETRAIN_NEEDED'
+  | 'PLAYBOOK_UPDATED'
+  | 'ONBOARDING_FLOW_UPDATED'
+  | 'PROCESS_IMPROVEMENT_PROPOSAL'
+  // Finance events
+  | 'BATTERY_BURN_ANOMALY'
+  // DevOps events
+  | 'DEPLOY_FAILED'
+  | 'DEPLOY_COMPLETED'
+  // War room events
+  | 'WAR_ROOM_ACTIVATED'
+  | 'WAR_ROOM_DISSOLVED'
+  // PMO events
+  | 'DAILY_STANDUP'
+  | 'SPRINT_STARTED'
+  | 'SPRINT_COMPLETED'
+  // Repair events
+  | 'REPAIR_COMPLETED'
+  | 'REPAIR_NEEDS_HUMAN'
+  // CTO digest
+  | 'CTO_DIGEST'
+  // Docs
+  | 'DOCS_UPDATED'
+  // Sales/CRM
+  | 'LEAD_SCORED'
+  | 'LEAD_STAGE_CHANGED'
+  // Broadcast
+  | 'KILL_SWITCH_ACTIVATED'
+  | 'GOVERNANCE_POLICY_UPDATED'
+  // Extensible
   | string;
+
+// ── Communication Channels ──
+
+export type MessageChannel =
+  | 'intra-team'
+  | 'cross-team'
+  | 'escalation'
+  | 'war-room'
+  | 'broadcast';
+
+export type MessagePriority = 'low' | 'normal' | 'high' | 'critical';
+
+// ── Core Event ──
 
 export interface AOSEvent {
   id: string;
@@ -26,13 +115,90 @@ export interface AOSEvent {
   related_ids?: string[];
 }
 
+// ── Agent Message (extends AOSEvent with routing) ──
+
+export interface AgentMessage extends AOSEvent {
+  target: string | string[];
+  channel: MessageChannel;
+  ttl: number;
+  hops: string[];
+  priority: MessagePriority;
+  requiresAck: boolean;
+  parentMessageId?: string;
+}
+
+// ── Agent Config ──
+
 export interface AgentConfig {
   name: string;
   role: string;
-  tier: 'c-suite' | 'board' | 'governance' | 'external';
+  tier: AgentTier;
+  team?: TeamName;
   can_spawn_ad_hoc: boolean;
   max_ad_hoc: number;
   max_active_ad_hoc: number;
+}
+
+// ── Agent Status ──
+
+export interface AgentStatus {
+  name: string;
+  team?: TeamName;
+  tier: AgentTier;
+  online: boolean;
+  lastAction?: string;
+  lastActionAt?: string;
+  actionsToday: number;
+}
+
+// ── Guardian Scope ──
+
+export interface GuardianScope {
+  serviceDir: string;
+  watchPatterns: string[];
+}
+
+// ── Team Config ──
+
+export interface TeamConfig {
+  name: TeamName;
+  displayName: string;
+  lead: string;
+  members: string[];
+  description: string;
+}
+
+// ── War Room ──
+
+export interface WarRoomConfig {
+  id: string;
+  reason: string;
+  participants: string[];
+  activatedAt: string;
+  ttlMs: number;
+  status: 'active' | 'dissolved';
+  dissolvedAt?: string;
+  postMortem?: string;
+}
+
+// ── CTO Digest ──
+
+export interface CTODigestEntry {
+  category: 'auto_fixed' | 'recommendation' | 'escalation';
+  agent: string;
+  summary: string;
+  eventId: string;
+  timestamp: string;
+}
+
+export interface CTODigestPayload {
+  period: string;
+  autoFixed: CTODigestEntry[];
+  recommendations: CTODigestEntry[];
+  escalations: CTODigestEntry[];
+  agentsOnline: number;
+  agentsTotal: number;
+  warRoomsActive: number;
 }
 
 export interface ProposalRecord {
