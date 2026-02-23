@@ -15,7 +15,7 @@ type Mode = 'manual' | 'kitz'
 
 export function DashboardPage() {
   const [currentNav, setCurrentNav] = useState('home')
-  const [mode, setMode] = useState<Mode>('kitz')
+  const [mode, setMode] = useState<Mode>('manual')
 
   const renderPage = () => {
     switch (currentNav) {
