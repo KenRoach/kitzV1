@@ -135,12 +135,14 @@ function useFloatingKitz(_containerRef: React.RefObject<HTMLDivElement | null>, 
     // Soft bounce at edges
     if (nx <= b.minX || nx >= b.maxX) {
       v.dx *= -0.95
-      nx = Math.max(b.minX, Math.min(b.maxX, nx))
     }
     if (ny <= b.minY || ny >= b.maxY) {
       v.dy *= -0.95
-      ny = Math.max(b.minY, Math.min(b.maxY, ny))
     }
+
+    // Hard clamp — Kitz can never exceed bounds (including wave displacement)
+    nx = Math.max(b.minX, Math.min(b.maxX, nx))
+    ny = Math.max(b.minY, Math.min(b.maxY, ny))
 
     posRef.current = { x: nx, y: ny }
     setPos({ x: nx, y: ny })
