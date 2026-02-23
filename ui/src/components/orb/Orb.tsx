@@ -232,7 +232,7 @@ function ThoughtBubble({ text, color }: { text: string; color: string }) {
         fontSize: 9,
         fontWeight: 600,
         letterSpacing: 1.5,
-        animation: 'fadeInUp 0.6s ease',
+        animation: 'fadeInUp 0.8s cubic-bezier(0.25, 0.1, 0.25, 1)',
         textShadow: `0 0 10px ${color}30`,
         whiteSpace: 'nowrap',
         maxWidth: 140,
@@ -285,7 +285,7 @@ function SleepZs() {
             fontSize: i === 1 ? 9 : 12,
             fontWeight: 800,
             color: '#94a3b8',
-            animation: `sleep-float 2.4s ease-in-out ${i * 0.5}s infinite`,
+            animation: `sleep-float 3s ease-in-out ${i * 0.6}s infinite`,
             opacity: 0,
           }}
         >
@@ -385,17 +385,22 @@ export function Orb({ sleeping = false }: OrbProps) {
   // Idle foot animation — paused when sleeping
   useEffect(() => {
     if (sleeping) { setFeetFrame(0); return }
-    const interval = setInterval(() => setFeetFrame((f) => (f + 1) % 3), 400)
+    const interval = setInterval(() => setFeetFrame((f) => (f + 1) % 3), 550)
     return () => clearInterval(interval)
   }, [sleeping])
 
-  // Gentle bounce — soft breathing motion
+  // Gentle bounce — smooth sine-wave breathing motion
   useEffect(() => {
     if (sleeping) { setBounceY(0); return }
-    const interval = setInterval(() => {
-      setBounceY((p) => (p === 0 ? -2 : p === -2 ? -3 : p === -3 ? -2 : 0))
-    }, 400)
-    return () => clearInterval(interval)
+    let t = 0
+    let raf: number
+    const tick = () => {
+      t += 0.03
+      setBounceY(Math.sin(t) * -2.5)
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
   }, [sleeping])
 
   // Random blinking
@@ -446,7 +451,7 @@ export function Orb({ sleeping = false }: OrbProps) {
         style={{
           position: 'relative',
           transform: `translateY(${sleeping ? 0 : bounceY}px)`,
-          transition: 'transform 0.4s ease, filter 0.6s ease',
+          transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), filter 0.8s ease',
           filter: sleeping
             ? 'drop-shadow(0 0 4px rgba(148,163,184,0.25)) grayscale(0.4)'
             : `drop-shadow(0 0 8px ${PURPLE}50) drop-shadow(0 0 20px ${PURPLE}25)`,
@@ -459,12 +464,12 @@ export function Orb({ sleeping = false }: OrbProps) {
               position: 'absolute',
               top: '50%',
               left: '50%',
-              width: PX * 14,
-              height: PX * 14,
+              width: PX * 10,
+              height: PX * 10,
               transform: 'translate(-50%, -50%)',
               borderRadius: '50%',
               background: `radial-gradient(circle, ${PURPLE}30 0%, ${PURPLE}15 40%, ${PURPLE}06 65%, transparent 80%)`,
-              animation: 'orb-breathe 3s ease-in-out infinite',
+              animation: 'orb-breathe 4s ease-in-out infinite',
               pointerEvents: 'none',
             }}
           />

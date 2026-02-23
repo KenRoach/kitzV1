@@ -25,8 +25,8 @@ body {
 }
 
 @keyframes orb-breathe {
-  0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(0.85); }
-  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+  0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.92); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
 }
 
 @keyframes talk-pulse {
@@ -50,7 +50,7 @@ body {
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -68,10 +68,10 @@ body {
 
 @keyframes sleep-float {
   0%   { opacity: 0; transform: translateY(0) scale(0.6); }
-  20%  { opacity: 1; transform: translateY(-4px) scale(0.8); }
+  15%  { opacity: 0.8; transform: translateY(-3px) scale(0.8); }
   50%  { opacity: 1; transform: translateY(-10px) scale(1); }
-  80%  { opacity: 0.5; transform: translateY(-18px) scale(1.1); }
-  100% { opacity: 0; transform: translateY(-24px) scale(1.2); }
+  80%  { opacity: 0.4; transform: translateY(-18px) scale(1.05); }
+  100% { opacity: 0; transform: translateY(-24px) scale(1.1); }
 }
 
 @keyframes kitz-navigate {

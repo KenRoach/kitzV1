@@ -77,81 +77,131 @@ function getGreeting(): string {
 
 /* ── Kitz graceful floating ── */
 // Kitz floats only in the RIGHT half of the hero card (the empty space).
-const KITZ_WIDTH = 80
-const KITZ_HEIGHT = 100
-const SPEED = 0.3       // gentle drift
-const PADDING = 10
+const SPEED = 0.18        // very gentle drift — graceful (in % per frame)
+const PADDING_PCT = 4     // % from edges to keep Kitz away from borders
+const RIGHT_HALF_START = 0.48  // Kitz zone starts at 48% of card width
 
-function useFloatingKitz(containerRef: React.RefObject<HTMLDivElement | null>, paused: boolean) {
-  const [pos, setPos] = useState({ x: 0, y: 0 })
-  const vel = useRef({ dx: SPEED * 0.8, dy: SPEED * 0.5 })
-  const posRef = useRef({ x: 0, y: 0 })
+// Sleep position as fraction of container (center of right-half white space)
+const SLEEP_X_FRAC = 0.74
+const SLEEP_Y_FRAC = 0.50
+const WAKE_DELAY = 800  // ms Kitz pauses at sleep spot before drifting
+
+function useFloatingKitz(_containerRef: React.RefObject<HTMLDivElement | null>, paused: boolean) {
+  // pos stores percentages (0–100) of container, NOT pixels
+  // This keeps sleeping (CSS %) and awake (JS %) in the same coordinate space
+  const [pos, setPos] = useState({ x: SLEEP_X_FRAC * 100, y: SLEEP_Y_FRAC * 100 })
+  const velRef = useRef({ dx: SPEED, dy: SPEED * 0.6 })
+  const posRef = useRef({ x: SLEEP_X_FRAC * 100, y: SLEEP_Y_FRAC * 100 })
   const rafRef = useRef<number>(0)
   const pausedRef = useRef(paused)
+  const timeRef = useRef(0)
+  const wasPausedRef = useRef(paused)
+  const wakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   pausedRef.current = paused
+
+  // Compute bounds as percentages — pure %, no pixel math needed
+  const getBoundsPercent = useCallback(() => {
+    return {
+      minX: RIGHT_HALF_START * 100,
+      maxX: 100 - PADDING_PCT,
+      minY: PADDING_PCT,
+      maxY: 100 - PADDING_PCT,
+    }
+  }, [])
 
   const animate = useCallback(() => {
     if (pausedRef.current) return
 
-    const container = containerRef.current
-    if (!container) {
+    const b = getBoundsPercent()
+    if (!b) {
       rafRef.current = requestAnimationFrame(animate)
       return
     }
 
-    const bounds = container.getBoundingClientRect()
-    // Only the right half — text lives on the left
-    const minX = bounds.width * 0.48
-    const maxX = bounds.width - KITZ_WIDTH - PADDING
-    const minY = PADDING
-    const maxY = bounds.height - KITZ_HEIGHT - PADDING
-
     const p = posRef.current
-    const v = vel.current
+    const v = velRef.current
 
-    let nx = p.x + v.dx
-    let ny = p.y + v.dy
+    // Gentle sine wave for organic motion
+    timeRef.current += 0.008
+    const waveDx = Math.sin(timeRef.current * 1.3) * 0.02
+    const waveDy = Math.cos(timeRef.current * 0.9) * 0.015
 
-    if (nx <= minX || nx >= maxX) {
-      v.dx *= -1
-      nx = Math.max(minX, Math.min(maxX, nx))
+    let nx = p.x + v.dx + waveDx
+    let ny = p.y + v.dy + waveDy
+
+    // Soft bounce at edges
+    if (nx <= b.minX || nx >= b.maxX) {
+      v.dx *= -0.95
+      nx = Math.max(b.minX, Math.min(b.maxX, nx))
     }
-    if (ny <= minY || ny >= maxY) {
-      v.dy *= -1
-      ny = Math.max(minY, Math.min(maxY, ny))
+    if (ny <= b.minY || ny >= b.maxY) {
+      v.dy *= -0.95
+      ny = Math.max(b.minY, Math.min(b.maxY, ny))
     }
 
     posRef.current = { x: nx, y: ny }
     setPos({ x: nx, y: ny })
     rafRef.current = requestAnimationFrame(animate)
-  }, [containerRef])
+  }, [getBoundsPercent])
 
+  // Handle wake/sleep transitions
   useEffect(() => {
+    const wasPaused = wasPausedRef.current
+    wasPausedRef.current = paused
+
+    if (wakeTimerRef.current) {
+      clearTimeout(wakeTimerRef.current)
+      wakeTimerRef.current = null
+    }
+
     if (paused) {
       cancelAnimationFrame(rafRef.current)
       return
     }
+
+    if (wasPaused && !paused) {
+      // Waking up — start from the exact sleep position (same % coords)
+      const sleepX = SLEEP_X_FRAC * 100
+      const sleepY = SLEEP_Y_FRAC * 100
+      posRef.current = { x: sleepX, y: sleepY }
+      setPos({ x: sleepX, y: sleepY })
+
+      // Fresh gentle velocity in a random direction
+      const angle = Math.random() * Math.PI * 2
+      velRef.current = { dx: Math.cos(angle) * SPEED * 0.4, dy: Math.sin(angle) * SPEED * 0.25 }
+
+      // Pause at sleep spot while waking up visually, then start drifting
+      wakeTimerRef.current = setTimeout(() => {
+        rafRef.current = requestAnimationFrame(animate)
+      }, WAKE_DELAY)
+      return () => {
+        if (wakeTimerRef.current) clearTimeout(wakeTimerRef.current)
+        cancelAnimationFrame(rafRef.current)
+      }
+    }
+
+    // Normal start
     rafRef.current = requestAnimationFrame(animate)
     return () => cancelAnimationFrame(rafRef.current)
   }, [paused, animate])
 
+  // Initial position on mount
   useEffect(() => {
-    const container = containerRef.current
-    if (container) {
-      const bounds = container.getBoundingClientRect()
-      const startX = bounds.width * 0.65
-      const startY = bounds.height * 0.25
-      posRef.current = { x: startX, y: startY }
-      setPos({ x: startX, y: startY })
-    }
+    posRef.current = { x: SLEEP_X_FRAC * 100, y: SLEEP_Y_FRAC * 100 }
+    setPos({ x: SLEEP_X_FRAC * 100, y: SLEEP_Y_FRAC * 100 })
     if (!paused) {
-      rafRef.current = requestAnimationFrame(animate)
+      wakeTimerRef.current = setTimeout(() => {
+        rafRef.current = requestAnimationFrame(animate)
+      }, WAKE_DELAY)
     }
-    return () => cancelAnimationFrame(rafRef.current)
+    return () => {
+      cancelAnimationFrame(rafRef.current)
+      if (wakeTimerRef.current) clearTimeout(wakeTimerRef.current)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  return pos
+  return { pos }
 }
 
 export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
@@ -160,7 +210,7 @@ export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
   const userName = user?.email?.split('@')[0] ?? 'there'
   const heroRef = useRef<HTMLDivElement>(null)
   const sleeping = !showKitz
-  const kitzPos = useFloatingKitz(heroRef, sleeping)
+  const { pos: kitzPos } = useFloatingKitz(heroRef, sleeping)
 
   const handleAction = (action: string) => {
     if (action === 'talk') {
@@ -183,19 +233,17 @@ export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
           <h1 className="mt-1 text-2xl font-bold text-black">{userName}</h1>
           <MissionBlock />
         </div>
-        {/* Kitz — floats in the right half when active, rests centered when sleeping */}
+        {/* Kitz — both states use % + translate(-50%,-50%) so transitions are seamless */}
         <div
           className="absolute z-20"
-          style={sleeping ? {
-            left: '50%',
-            top: '50%',
+          style={{
+            left: sleeping ? `${SLEEP_X_FRAC * 100}%` : `${kitzPos.x}%`,
+            top: sleeping ? `${SLEEP_Y_FRAC * 100}%` : `${kitzPos.y}%`,
             transform: 'translate(-50%, -50%)',
-            transition: 'left 0.6s ease, top 0.6s ease',
-          } : {
-            left: kitzPos.x,
-            top: kitzPos.y,
-            willChange: 'transform',
-            transition: 'left 0.15s ease-out, top 0.15s ease-out',
+            transition: sleeping
+              ? 'left 1s cubic-bezier(0.4, 0, 0.2, 1), top 1s cubic-bezier(0.4, 0, 0.2, 1)'
+              : 'left 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), top 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)',
+            willChange: sleeping ? undefined : 'left, top',
           }}
         >
           <Orb sleeping={sleeping} />
