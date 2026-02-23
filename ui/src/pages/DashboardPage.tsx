@@ -7,7 +7,6 @@ import { AutomationsPage } from './AutomationsPage'
 import { ActivityPage } from './ActivityPage'
 import { HowItWorksPage } from './HowItWorksPage'
 import { SettingsPage } from './SettingsPage'
-import { Orb } from '@/components/orb/Orb'
 import { ChatPanel } from '@/components/layout/ChatPanel'
 import { TalkToKitzModal } from '@/components/talk/TalkToKitzModal'
 import { cn } from '@/lib/utils'
@@ -33,7 +32,7 @@ export function DashboardPage() {
       case 'settings':
         return <SettingsPage />
       default:
-        return <HomePage onNavigate={setCurrentNav} />
+        return <HomePage onNavigate={setCurrentNav} showKitz={mode === 'kitz'} />
     }
   }
 
@@ -42,9 +41,8 @@ export function DashboardPage() {
       <div className="flex h-full">
         {/* Left: main content area */}
         <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Mode toggle + Orb row */}
-          <div className="flex flex-col items-center gap-2 pt-4 pb-2">
-            {/* Manual / Powered by KITZ sliding toggle */}
+          {/* Mode toggle — static center */}
+          <div className="flex items-center justify-center pt-3 pb-1">
             <div className="relative flex items-center rounded-full bg-gray-100 p-0.5">
               {/* Sliding background pill */}
               <div
@@ -74,8 +72,6 @@ export function DashboardPage() {
                 Powered by KITZ
               </button>
             </div>
-
-            <Orb />
           </div>
 
           {/* Page content — scrollable */}

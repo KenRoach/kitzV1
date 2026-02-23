@@ -154,31 +154,22 @@ export function ChatPanel() {
 
         {/* Suggestion chips */}
         {messages.length === 0 && (
-          <div className="flex flex-wrap gap-2 pt-2">
-            <button
-              onClick={() => void sendMessage('Who hasn\'t paid me yet?', user?.id ?? 'default')}
-              className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-gray-400 transition hover:bg-white/10 hover:text-white"
-            >
-              Who hasn't paid me yet?
-            </button>
-            <button
-              onClick={() => void sendMessage('Create a payment link', user?.id ?? 'default')}
-              className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-gray-400 transition hover:bg-white/10 hover:text-white"
-            >
-              Create a payment link
-            </button>
-            <button
-              onClick={() => void sendMessage('What should I do today?', user?.id ?? 'default')}
-              className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-gray-400 transition hover:bg-white/10 hover:text-white"
-            >
-              What should I do today?
-            </button>
-            <button
-              onClick={() => void sendMessage('How\'s my week looking?', user?.id ?? 'default')}
-              className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-gray-400 transition hover:bg-white/10 hover:text-white"
-            >
-              How's my week looking?
-            </button>
+          <div className="flex flex-wrap gap-2 pt-2" role="group" aria-label="Quick questions">
+            {[
+              "Who hasn't paid me yet?",
+              'Create a payment link',
+              'What should I do today?',
+              "How's my week looking?",
+            ].map((q) => (
+              <button
+                key={q}
+                onClick={() => void sendMessage(q, user?.id ?? 'default')}
+                aria-label={`Ask Kitz: ${q}`}
+                className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-gray-300 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+              >
+                {q}
+              </button>
+            ))}
           </div>
         )}
       </div>
@@ -216,15 +207,15 @@ export function ChatPanel() {
         {/* Stats bar */}
         <div className="flex items-center justify-center gap-5 font-mono text-[11px]">
           <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/5">
-            <span className="text-gray-500">AI Battery</span>
+            <span className="text-gray-400">AI Battery</span>
             <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold text-purple-400">5</span>
           </button>
           <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/5">
-            <span className="text-gray-500">Active Agents</span>
+            <span className="text-gray-400">Active Agents</span>
             <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold text-purple-400">{agentSteps.filter((s) => s.status === 'pending').length || 0}</span>
           </button>
           <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/5">
-            <span className="text-gray-500">WhatsApp</span>
+            <span className="text-gray-400">WhatsApp</span>
             <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold text-purple-400">⚡</span>
           </button>
         </div>

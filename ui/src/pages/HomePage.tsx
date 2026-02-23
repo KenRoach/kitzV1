@@ -1,6 +1,7 @@
 import { UserPlus, Link, Receipt, MessageCircle, TrendingUp, ShieldCheck } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useOrbStore } from '@/stores/orbStore'
+import { Orb } from '@/components/orb/Orb'
 import { FeatureCard } from '@/components/home/FeatureCard'
 import { MissionBlock } from '@/components/home/MissionBlock'
 import { AgentDocsSection } from '@/components/home/AgentDocsSection'
@@ -10,6 +11,7 @@ import type { LucideIcon } from 'lucide-react'
 
 interface HomePageProps {
   onNavigate: (nav: string) => void
+  showKitz?: boolean
 }
 
 interface QuickAction {
@@ -72,10 +74,15 @@ function getGreeting(): string {
   return 'Good evening'
 }
 
-export function HomePage({ onNavigate }: HomePageProps) {
+/* ── Kitz zigzag navigation ── */
+// Kitz navigates a zigzag trajectory across the hero card using CSS @keyframes (kitz-navigate).
+// When sleeping, the animation pauses and Kitz freezes in place.
+
+export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
   const user = useAuthStore((s) => s.user)
   const openTalk = useOrbStore((s) => s.open)
   const userName = user?.email?.split('@')[0] ?? 'there'
+  const sleeping = !showKitz
 
   const handleAction = (action: string) => {
     if (action === 'talk') {
@@ -87,11 +94,28 @@ export function HomePage({ onNavigate }: HomePageProps) {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8 pb-12">
-      {/* Hero — greeting + mission */}
-      <div className="rounded-2xl bg-gradient-to-br from-gray-50 to-white border border-gray-100 p-6">
-        <p className="text-sm font-medium text-gray-400">{getGreeting()}</p>
-        <h1 className="mt-1 text-2xl font-bold text-black">{userName}</h1>
-        <MissionBlock />
+      {/* Hero — greeting + mission + Kitz bouncing */}
+      <div
+        className="relative min-h-[220px] overflow-hidden rounded-2xl bg-gradient-to-br from-gray-50 to-white border border-gray-100 p-6"
+      >
+        {/* Text content — z-10 keeps it above Kitz */}
+        <div className="relative z-10 max-w-[55%]">
+          <p className="text-sm font-medium text-gray-400">{getGreeting()}</p>
+          <h1 className="mt-1 text-2xl font-bold text-black">{userName}</h1>
+          <MissionBlock />
+        </div>
+        {/* Kitz — zigzags across the hero card, freezes when sleeping */}
+        <div
+          className="absolute z-0"
+          style={{
+            animation: sleeping ? 'none' : 'kitz-navigate 22s linear infinite',
+            animationPlayState: sleeping ? 'paused' : 'running',
+            top: '8%',
+            left: '75%',
+          }}
+        >
+          <Orb sleeping={sleeping} />
+        </div>
       </div>
 
       {/* Quick actions */}
