@@ -183,10 +183,15 @@ export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
           <h1 className="mt-1 text-2xl font-bold text-black">{userName}</h1>
           <MissionBlock />
         </div>
-        {/* Kitz — floats gracefully in the right half of the hero card */}
+        {/* Kitz — floats in the right half when active, rests centered when sleeping */}
         <div
           className="absolute z-20"
-          style={{
+          style={sleeping ? {
+            left: '50%',
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+            transition: 'left 0.6s ease, top 0.6s ease',
+          } : {
             left: kitzPos.x,
             top: kitzPos.y,
             willChange: 'transform',
