@@ -10,9 +10,13 @@ import { SettingsPage } from './SettingsPage'
 import { Orb } from '@/components/orb/Orb'
 import { ChatPanel } from '@/components/layout/ChatPanel'
 import { TalkToKitzModal } from '@/components/talk/TalkToKitzModal'
+import { cn } from '@/lib/utils'
+
+type Mode = 'manual' | 'kitz'
 
 export function DashboardPage() {
   const [currentNav, setCurrentNav] = useState('home')
+  const [mode, setMode] = useState<Mode>('kitz')
 
   const renderPage = () => {
     switch (currentNav) {
@@ -38,8 +42,39 @@ export function DashboardPage() {
       <div className="flex h-full">
         {/* Left: main content area */}
         <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Orb — top center */}
-          <div className="flex justify-center py-4">
+          {/* Mode toggle + Orb row */}
+          <div className="flex flex-col items-center gap-2 pt-4 pb-2">
+            {/* Manual / Powered by KITZ sliding toggle */}
+            <div className="relative flex items-center rounded-full bg-gray-100 p-0.5">
+              {/* Sliding background pill */}
+              <div
+                className={cn(
+                  'absolute top-0.5 bottom-0.5 rounded-full transition-all duration-300 ease-in-out',
+                  mode === 'manual'
+                    ? 'left-0.5 w-[72px] bg-white shadow-sm'
+                    : 'left-[76px] w-[130px] bg-gradient-to-r from-purple-500 to-purple-600 shadow-sm',
+                )}
+              />
+              <button
+                onClick={() => setMode('manual')}
+                className={cn(
+                  'relative z-10 rounded-full px-4 py-1.5 text-xs font-medium transition-colors duration-300',
+                  mode === 'manual' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600',
+                )}
+              >
+                Manual
+              </button>
+              <button
+                onClick={() => setMode('kitz')}
+                className={cn(
+                  'relative z-10 rounded-full px-4 py-1.5 text-xs font-medium transition-colors duration-300',
+                  mode === 'kitz' ? 'text-white' : 'text-gray-400 hover:text-gray-600',
+                )}
+              >
+                Powered by KITZ
+              </button>
+            </div>
+
             <Orb />
           </div>
 
