@@ -76,14 +76,14 @@ function getGreeting(): string {
 }
 
 /* ── Kitz bouncing physics ── */
-const KITZ_WIDTH = 80   // character body width (~64px) + small buffer
-const KITZ_HEIGHT = 100  // bubble + antenna + body + feet (compact)
-const SPEED = 0.45
+const KITZ_WIDTH = 80
+const KITZ_HEIGHT = 100
+const SPEED = 0.55
 const PADDING = 8
 
 function useBouncingKitz(containerRef: React.RefObject<HTMLDivElement | null>, paused: boolean) {
   const [pos, setPos] = useState({ x: 0, y: 0 })
-  const vel = useRef({ dx: -SPEED, dy: SPEED * 0.75 })
+  const vel = useRef({ dx: -SPEED, dy: SPEED * 0.35 })
   const posRef = useRef({ x: 0, y: 0 })
   const rafRef = useRef<number>(0)
   const pausedRef = useRef(paused)
@@ -137,8 +137,8 @@ function useBouncingKitz(containerRef: React.RefObject<HTMLDivElement | null>, p
     const container = containerRef.current
     if (container) {
       const bounds = container.getBoundingClientRect()
-      const startX = Math.min(bounds.width * 0.75, bounds.width - KITZ_WIDTH - PADDING)
-      const startY = Math.max(PADDING, bounds.height * 0.25)
+      const startX = Math.min(bounds.width * 0.45, bounds.width - KITZ_WIDTH - PADDING)
+      const startY = Math.max(PADDING, bounds.height * 0.2)
       posRef.current = { x: startX, y: startY }
       setPos({ x: startX, y: startY })
     }
