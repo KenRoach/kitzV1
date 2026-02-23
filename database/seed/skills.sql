@@ -1,0 +1,2 @@
+-- Seed data for skills
+-- TODO: Add default skills seed data

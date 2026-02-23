@@ -1,10 +1,13 @@
 import { useState } from 'react'
-import { Sparkles, Users, Zap, ScrollText } from 'lucide-react'
+import { Sparkles, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { WorkspaceTabs } from '@/components/workspace/WorkspaceTabs'
 import { AgentGrid } from '@/components/agents/AgentGrid'
+import { TeamDirectory } from '@/components/team/TeamDirectory'
+import { SkillsGrid } from '@/components/skills/SkillsGrid'
+import { LogsFeed } from '@/components/logs/LogsFeed'
 
-type PreviewTab = 'workspace' | 'agents' | 'autopilot' | 'team' | 'activity'
+type PreviewTab = 'workspace' | 'agents' | 'autopilot' | 'team' | 'skills' | 'logs'
 
 export function CanvasPreview() {
   const [activeTab, setActiveTab] = useState<PreviewTab>('workspace')
@@ -14,7 +17,8 @@ export function CanvasPreview() {
     { id: 'agents', label: 'Agents' },
     { id: 'autopilot', label: 'Auto-Pilot' },
     { id: 'team', label: 'Team' },
-    { id: 'activity', label: 'Activity' },
+    { id: 'skills', label: 'Skills' },
+    { id: 'logs', label: 'Logs' },
   ]
 
   return (
@@ -84,31 +88,11 @@ export function CanvasPreview() {
             </div>
           )}
 
-          {activeTab === 'team' && (
-            <div className="rounded-xl border border-gray-200 bg-white p-12 text-center">
-              <Users className="mx-auto h-10 w-10 text-gray-300 mb-3" />
-              <h3 className="text-lg font-bold text-black">Team</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Manage your team members and roles.
-              </p>
-              <p className="mt-1 font-mono text-xs text-gray-400">
-                Invite collaborators, set permissions, assign agents.
-              </p>
-            </div>
-          )}
+          {activeTab === 'team' && <TeamDirectory />}
 
-          {activeTab === 'activity' && (
-            <div className="rounded-xl border border-gray-200 bg-white p-12 text-center">
-              <ScrollText className="mx-auto h-10 w-10 text-gray-300 mb-3" />
-              <h3 className="text-lg font-bold text-black">Activity</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Everything your agents did, in one place.
-              </p>
-              <p className="mt-1 font-mono text-xs text-gray-400">
-                Follow-ups sent, orders tracked, payments received.
-              </p>
-            </div>
-          )}
+          {activeTab === 'skills' && <SkillsGrid />}
+
+          {activeTab === 'logs' && <LogsFeed />}
         </div>
       </div>
     </div>

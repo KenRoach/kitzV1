@@ -1,0 +1,2 @@
+-- Team members table
+-- TODO: Define schema for team directory

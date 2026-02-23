@@ -2,7 +2,7 @@
  * UI/UX Portal Build Guide — How Kitz OS Portal Was Built
  *
  * This file documents the architecture, decisions, and structure of the
- * Kitz OS Portal (UI:UX/) so that kitz-brain agents can reference it
+ * Kitz OS Portal (ui/) so that kitz-brain agents can reference it
  * when making decisions about the product, user experience, or frontend.
  *
  * Built by Claude Code (Opus 4.6) — Feb 2026
@@ -33,8 +33,8 @@ export const UI_UX_BUILD_GUIDE = {
     textPrimary: '#000000',
     textSecondary: '#374151 (gray-700, code/monospace)',
     textMuted: '#6B7280 (gray-500)',
-    brandAccent: '#00D4AA (Kitz teal)',
-    brandGradient: 'linear-gradient(135deg, #00D4AA, #00B4D8)',
+    brandAccent: 'purple-500 (rgb(168,85,247))',
+    brandGradient: 'linear-gradient(135deg, purple-500, purple-600)',
     danger: '#EF4444',
     border: '#E5E7EB (gray-200)',
     borderRadius: '12px cards, 8px buttons',
@@ -90,7 +90,7 @@ export const UI_UX_BUILD_GUIDE = {
     },
     backendAgents: {
       description: 'Enterprise-grade agents doing the heavy lifting (AOS layer)',
-      file: 'UI:UX/src/lib/agents.ts',
+      file: 'ui/src/lib/agents.ts',
       teams: [
         'Leadership', 'Sales', 'Marketing', 'Operations', 'Engineering',
         'Finance', 'Performance', 'Content Creation', 'Compliance', 'Legal',
@@ -127,25 +127,25 @@ export const UI_UX_BUILD_GUIDE = {
   },
 
   buildCommands: {
-    dev: 'cd UI:UX && npm run dev',
-    build: 'cd UI:UX && npm run build',
-    typeCheck: 'cd UI:UX && ./node_modules/.bin/tsc --noEmit',
+    dev: 'cd ui && npm run dev',
+    build: 'cd ui && npm run build',
+    typeCheck: 'cd ui && ./node_modules/.bin/tsc --noEmit',
   },
 
   keyFiles: [
-    'UI:UX/src/pages/DashboardPage.tsx — Main split-panel layout',
-    'UI:UX/src/components/layout/ChatPanel.tsx — Dark AI chat sidebar',
-    'UI:UX/src/components/layout/CanvasPreview.tsx — White canvas preview',
-    'UI:UX/src/components/orb/Orb.tsx — Voice orb (centered top)',
-    'UI:UX/src/components/orb/OrbChat.tsx — Orb chat panel',
-    'UI:UX/src/components/crm/CrmTab.tsx — CRM pipeline + Add Contact wizard',
-    'UI:UX/src/components/crm/PipelineView.tsx — Kanban drag-and-drop',
-    'UI:UX/src/components/crm/ContactDetail.tsx — Contact detail modal',
-    'UI:UX/src/components/agents/AgentGrid.tsx — Frontend agent teams',
-    'UI:UX/src/components/agents/AgentCard.tsx — Agent card component',
-    'UI:UX/src/lib/agents.ts — Backend agent roster (AOS layer)',
-    'UI:UX/src/stores/workspaceStore.ts — CRM, orders, tasks state',
-    'UI:UX/src/stores/orbStore.ts — Orb chat state',
-    'UI:UX/src/stores/authStore.ts — Auth state + JWT',
+    'ui/src/pages/DashboardPage.tsx — Main split-panel layout',
+    'ui/src/components/layout/ChatPanel.tsx — Dark AI chat sidebar',
+    'ui/src/components/layout/CanvasPreview.tsx — White canvas preview',
+    'ui/src/components/orb/Orb.tsx — Voice orb (centered top)',
+    'ui/src/components/orb/OrbChat.tsx — Orb chat panel',
+    'ui/src/components/crm/CrmTab.tsx — CRM pipeline + Add Contact wizard',
+    'ui/src/components/crm/PipelineView.tsx — Kanban drag-and-drop',
+    'ui/src/components/crm/ContactDetail.tsx — Contact detail modal',
+    'ui/src/components/agents/AgentGrid.tsx — Frontend agent teams',
+    'ui/src/components/agents/AgentCard.tsx — Agent card component',
+    'ui/src/lib/agents.ts — Backend agent roster (AOS layer)',
+    'ui/src/stores/workspaceStore.ts — CRM, orders, tasks state',
+    'ui/src/stores/orbStore.ts — Orb chat state',
+    'ui/src/stores/authStore.ts — Auth state + JWT',
   ],
 } as const;

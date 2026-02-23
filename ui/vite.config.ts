@@ -28,6 +28,14 @@ export default defineConfig({
       '/api/kitz': {
         target: 'http://localhost:3012',
       },
+      '/api/comms': {
+        target: 'http://localhost:3013',
+        rewrite: (p) => p.replace(/^\/api\/comms/, ''),
+      },
+      '/api/logs': {
+        target: 'http://localhost:3014',
+        rewrite: (p) => p.replace(/^\/api\/logs/, ''),
+      },
     },
   },
 })
