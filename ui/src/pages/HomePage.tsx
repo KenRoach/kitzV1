@@ -87,14 +87,12 @@ export function HomePage({ onNavigate }: HomePageProps) {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8 pb-12">
-      {/* Greeting */}
-      <h1 className="text-3xl font-bold text-black">
-        {getGreeting()},{' '}
-        <span className="text-gray-400">{userName}</span>
-      </h1>
-
-      {/* Mission & identity */}
-      <MissionBlock />
+      {/* Hero — greeting + mission */}
+      <div className="rounded-2xl bg-gradient-to-br from-gray-50 to-white border border-gray-100 p-6">
+        <p className="text-sm font-medium text-gray-400">{getGreeting()}</p>
+        <h1 className="mt-1 text-2xl font-bold text-black">{userName}</h1>
+        <MissionBlock />
+      </div>
 
       {/* Quick actions */}
       <h2 className="mt-10 text-lg font-semibold text-black">Quick Start</h2>

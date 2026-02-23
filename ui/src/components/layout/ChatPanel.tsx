@@ -228,6 +228,11 @@ export function ChatPanel() {
             <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold text-purple-400">⚡</span>
           </button>
         </div>
+
+        {/* Tagline */}
+        <p className="text-center text-[10px] italic tracking-wide text-gray-600">
+          Your hustle deserves infrastructure
+        </p>
       </div>
     </div>
   )
