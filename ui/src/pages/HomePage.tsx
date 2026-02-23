@@ -173,7 +173,7 @@ export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
       {/* Hero — greeting + mission + Kitz bouncing */}
       <div
         ref={heroRef}
-        className="relative min-h-[280px] overflow-hidden rounded-2xl bg-gradient-to-br from-gray-50 to-white border border-gray-100 p-6"
+        className="relative min-h-[200px] overflow-hidden rounded-2xl bg-gradient-to-br from-gray-50 to-white border border-gray-100 p-6"
       >
         {/* Text content */}
         <div className="relative z-10">
