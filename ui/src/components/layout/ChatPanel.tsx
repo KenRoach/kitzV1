@@ -3,6 +3,8 @@ import { ArrowUp, Bookmark, ThumbsUp, MessageCircle, Copy, MoreHorizontal } from
 import { useOrbStore } from '@/stores/orbStore'
 import { useAuthStore } from '@/stores/authStore'
 import { cn } from '@/lib/utils'
+import { useAgentThinkingStore } from '@/stores/agentThinkingStore'
+import { AgentThinkingBlock } from '@/components/chat/AgentThinkingBlock'
 
 interface BuildLogEntry {
   id: string
@@ -18,6 +20,8 @@ export function ChatPanel() {
   const [input, setInput] = useState('')
   const [lang, setLang] = useState<Lang>('en')
   const scrollRef = useRef<HTMLDivElement>(null)
+  const agentSteps = useAgentThinkingStore((s) => s.steps)
+  const isAgentThinking = useAgentThinkingStore((s) => s.isThinking)
 
   // Mock build log for demo
   const [buildLog] = useState<BuildLogEntry[]>([
@@ -37,7 +41,7 @@ export function ChatPanel() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [messages])
+  }, [messages, agentSteps])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -145,13 +149,8 @@ export function ChatPanel() {
           </div>
         ))}
 
-        {state === 'thinking' && (
-          <div className="flex gap-1 py-2">
-            <span className="h-2 w-2 animate-bounce rounded-full bg-gray-500" style={{ animationDelay: '0ms' }} />
-            <span className="h-2 w-2 animate-bounce rounded-full bg-gray-500" style={{ animationDelay: '150ms' }} />
-            <span className="h-2 w-2 animate-bounce rounded-full bg-gray-500" style={{ animationDelay: '300ms' }} />
-          </div>
-        )}
+        {/* Agent thinking block — shows between user message and response */}
+        {(agentSteps.length > 0 || isAgentThinking) && <AgentThinkingBlock />}
 
         {/* Suggestion chips */}
         {messages.length === 0 && (
@@ -222,7 +221,7 @@ export function ChatPanel() {
           </button>
           <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/5">
             <span className="text-gray-500">Active Agents</span>
-            <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold text-purple-400">8</span>
+            <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold text-purple-400">{agentSteps.filter((s) => s.status === 'pending').length || 0}</span>
           </button>
           <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/5">
             <span className="text-gray-500">WhatsApp</span>

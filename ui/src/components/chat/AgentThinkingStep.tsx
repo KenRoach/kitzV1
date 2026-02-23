@@ -6,7 +6,7 @@ interface AgentThinkingStepProps {
   isLast: boolean
 }
 
-export function AgentThinkingStep({ step, isLast }: AgentThinkingStepProps) {
+export function AgentThinkingStep({ step, isLast: _isLast }: AgentThinkingStepProps) {
   return (
     <div className="flex items-center gap-2 py-1">
       {/* Status icon */}

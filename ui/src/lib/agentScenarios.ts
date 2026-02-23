@@ -106,7 +106,7 @@ export function classifyScenario(input: string): AgentAction[] {
 
   // Default: lightweight sales chain
   return [
-    { agent: 'CRO', action: AGENT_ACTIONS.CRO },
-    { agent: 'LeadScorer', action: AGENT_ACTIONS.LeadScorer },
+    { agent: 'CRO', action: AGENT_ACTIONS.CRO ?? 'Working on it' },
+    { agent: 'LeadScorer', action: AGENT_ACTIONS.LeadScorer ?? 'Working on it' },
   ]
 }

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { apiFetch } from '@/lib/api'
 import { API } from '@/lib/constants'
+import { useAgentThinkingStore } from './agentThinkingStore'
 
 interface ChatMessage {
   id: string
@@ -39,6 +40,9 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
     }
     set((s) => ({ messages: [...s.messages, userMsg], state: 'thinking' }))
 
+    // Trigger agent thinking simulation
+    useAgentThinkingStore.getState().simulateThinking(content)
+
     try {
       const res = await apiFetch<{ reply?: string; message?: string }>(
         `${API.KITZ_OS}`,
@@ -54,6 +58,8 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
         timestamp: Date.now(),
       }
       set((s) => ({ messages: [...s.messages, assistantMsg], state: 'success' }))
+      // Auto-collapse thinking block when response arrives
+      useAgentThinkingStore.setState({ collapsed: true })
       setTimeout(() => {
         if (get().state === 'success') set({ state: 'idle' })
       }, 2000)

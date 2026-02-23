@@ -25,7 +25,7 @@ interface AgentThinkingStore {
   reset: () => void
 }
 
-export const useAgentThinkingStore = create<AgentThinkingStore>((set, get) => ({
+export const useAgentThinkingStore = create<AgentThinkingStore>((set, _get) => ({
   steps: [],
   isThinking: false,
   collapsed: false,
