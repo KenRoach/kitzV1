@@ -121,7 +121,7 @@ export function AgentsPage() {
 
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-5">
           {phases.map((phase) => (
-            <div key={phase.number} className="rounded-xl border border-gray-200 bg-white p-4">
+            <div key={phase.number} className="rounded-2xl border border-gray-200 bg-white p-5">
               <span className="text-xs font-bold text-gray-300">{phase.number}</span>
               <Brain className="mt-2 h-5 w-5 text-purple-500" />
               <h4 className="mt-2 text-sm font-semibold text-black">{phase.title}</h4>
@@ -171,7 +171,7 @@ export function AgentsPage() {
           {teams.map((team) => (
             <div
               key={team.name}
-              className="flex flex-col items-start rounded-xl border border-gray-200 bg-white p-4"
+              className="flex flex-col items-start rounded-2xl border border-gray-200 bg-white p-5"
             >
               <div className="flex w-full items-center justify-between">
                 <span className="text-sm font-semibold text-black">{team.displayName}</span>

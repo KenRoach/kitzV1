@@ -138,7 +138,7 @@ export function AutomationsPage() {
           {sopDetails.map((sop) => (
             <div
               key={sop.slug}
-              className="flex flex-col rounded-xl border border-gray-200 bg-white p-5"
+              className="flex flex-col rounded-2xl border border-gray-200 bg-white p-5"
             >
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-semibold text-black">{sop.title}</h4>

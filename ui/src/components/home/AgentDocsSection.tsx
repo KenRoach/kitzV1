@@ -55,7 +55,7 @@ export function AgentDocsSection({ onNavigate }: AgentDocsSectionProps) {
           <button
             key={team.name}
             onClick={() => onNavigate('agents')}
-            className="flex flex-col items-start rounded-xl border border-gray-200 bg-white p-4 text-left transition-all hover:shadow-md cursor-pointer"
+            className="flex flex-col items-start rounded-2xl border border-gray-200 bg-white p-5 text-left transition-all hover:shadow-md cursor-pointer"
           >
             <div className="flex w-full items-center justify-between">
               <span className="text-sm font-semibold text-black">{team.displayName}</span>

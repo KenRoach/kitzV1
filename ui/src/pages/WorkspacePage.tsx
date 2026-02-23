@@ -155,7 +155,7 @@ export function WorkspacePage() {
               desc: 'After approval, agents commit changes to the workspace. Every write is logged with a full audit trail.',
             },
           ].map((s) => (
-            <div key={s.step} className="rounded-xl border border-gray-200 bg-white p-5">
+            <div key={s.step} className="rounded-2xl border border-gray-200 bg-white p-5">
               <span className="text-xs font-bold text-gray-300">{s.step}</span>
               <h4 className="mt-2 text-sm font-semibold text-black">{s.title}</h4>
               <p className="mt-1 text-xs leading-relaxed text-gray-500">{s.desc}</p>

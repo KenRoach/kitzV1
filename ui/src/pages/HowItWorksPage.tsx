@@ -126,7 +126,7 @@ export function HowItWorksPage() {
             return (
               <div
                 key={p.title}
-                className="rounded-xl border border-gray-200 bg-white p-5"
+                className="rounded-2xl border border-gray-200 bg-white p-5"
               >
                 <Icon className="h-5 w-5 text-purple-500" />
                 <h4 className="mt-3 text-sm font-semibold text-black">{p.title}</h4>

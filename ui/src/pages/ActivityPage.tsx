@@ -165,7 +165,7 @@ export function ActivityPage() {
           {agentCapabilities.map((cap) => {
             const Icon = cap.icon
             return (
-              <div key={cap.title} className="rounded-xl border border-gray-200 bg-white p-5">
+              <div key={cap.title} className="rounded-2xl border border-gray-200 bg-white p-5">
                 <Icon className="h-5 w-5 text-purple-500" />
                 <h4 className="mt-3 text-sm font-semibold text-black">{cap.title}</h4>
                 <p className="mt-1 text-xs leading-relaxed text-gray-500">{cap.description}</p>
