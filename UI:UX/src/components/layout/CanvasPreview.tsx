@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, Users, Zap, ScrollText } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { StatsRow } from '@/components/dashboard/StatsRow'
 import { WorkspaceTabs } from '@/components/workspace/WorkspaceTabs'
 import { AgentGrid } from '@/components/agents/AgentGrid'
 
-type PreviewTab = 'workspace' | 'agents' | 'automations'
+type PreviewTab = 'workspace' | 'agents' | 'autopilot' | 'team' | 'activity'
 
 export function CanvasPreview() {
   const [activeTab, setActiveTab] = useState<PreviewTab>('workspace')
@@ -13,7 +12,9 @@ export function CanvasPreview() {
   const tabs: { id: PreviewTab; label: string }[] = [
     { id: 'workspace', label: 'Workspace' },
     { id: 'agents', label: 'Agents' },
-    { id: 'automations', label: 'Automations' },
+    { id: 'autopilot', label: 'Auto-Pilot' },
+    { id: 'team', label: 'Team' },
+    { id: 'activity', label: 'Activity' },
   ]
 
   return (
@@ -65,21 +66,46 @@ export function CanvasPreview() {
 
         {/* Content */}
         <div className="mx-auto max-w-5xl px-6 py-6 space-y-6">
-          <StatsRow />
 
           {activeTab === 'workspace' && <WorkspaceTabs />}
 
           {activeTab === 'agents' && <AgentGrid />}
 
-          {activeTab === 'automations' && (
+          {activeTab === 'autopilot' && (
             <div className="rounded-xl border border-gray-200 bg-white p-12 text-center">
-              <Sparkles className="mx-auto h-10 w-10 text-gray-300 mb-3" />
-              <h3 className="text-lg font-bold text-black">Automations</h3>
+              <Zap className="mx-auto h-10 w-10 text-gray-300 mb-3" />
+              <h3 className="text-lg font-bold text-black">Auto-Pilot</h3>
               <p className="mt-1 text-sm text-gray-500">
-                Use the chat to create your first automation.
+                Let Kitz handle the repetitive stuff for you.
               </p>
               <p className="mt-1 font-mono text-xs text-gray-400">
-                "Create a daily report for my top leads"
+                "Follow up with leads who haven't replied in 3 days"
+              </p>
+            </div>
+          )}
+
+          {activeTab === 'team' && (
+            <div className="rounded-xl border border-gray-200 bg-white p-12 text-center">
+              <Users className="mx-auto h-10 w-10 text-gray-300 mb-3" />
+              <h3 className="text-lg font-bold text-black">Team</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Manage your team members and roles.
+              </p>
+              <p className="mt-1 font-mono text-xs text-gray-400">
+                Invite collaborators, set permissions, assign agents.
+              </p>
+            </div>
+          )}
+
+          {activeTab === 'activity' && (
+            <div className="rounded-xl border border-gray-200 bg-white p-12 text-center">
+              <ScrollText className="mx-auto h-10 w-10 text-gray-300 mb-3" />
+              <h3 className="text-lg font-bold text-black">Activity</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Everything your agents did, in one place.
+              </p>
+              <p className="mt-1 font-mono text-xs text-gray-400">
+                Follow-ups sent, orders tracked, payments received.
               </p>
             </div>
           )}

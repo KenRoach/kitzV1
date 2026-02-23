@@ -5,13 +5,19 @@ import { LeadsTab } from './LeadsTab'
 import { OrdersTab } from './OrdersTab'
 import { TasksTab } from './TasksTab'
 import { CheckoutTab } from './CheckoutTab'
+import { PaymentsTab } from './PaymentsTab'
+import { CalendarTab } from './CalendarTab'
+import { MessagesTab } from './MessagesTab'
 
 const tabs = [
   { id: 'crm', label: 'CRM' },
+  { id: 'payments', label: 'Payments' },
   { id: 'leads', label: 'Contacts' },
   { id: 'orders', label: 'Orders' },
   { id: 'tasks', label: 'Tasks' },
-  { id: 'checkout', label: 'Checkout' },
+  { id: 'checkout', label: 'Payment Links' },
+  { id: 'messages', label: 'Messages' },
+  { id: 'calendar', label: 'Calendar' },
 ] as const
 
 type TabId = (typeof tabs)[number]['id']
@@ -21,13 +27,13 @@ export function WorkspaceTabs() {
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white">
-      <div className="flex border-b border-gray-200 px-4">
+      <div className="flex overflow-x-auto border-b border-gray-200 px-4">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActive(tab.id)}
             className={cn(
-              'px-4 py-3 font-mono text-xs font-medium uppercase tracking-wider transition-colors',
+              'whitespace-nowrap px-4 py-3 font-mono text-xs font-medium uppercase tracking-wider transition-colors',
               active === tab.id
                 ? 'border-b-2 border-[#00D4AA] text-black'
                 : 'text-gray-400 hover:text-gray-600',
@@ -39,10 +45,13 @@ export function WorkspaceTabs() {
       </div>
       <div className="p-5">
         {active === 'crm' && <CrmTab />}
+        {active === 'payments' && <PaymentsTab />}
         {active === 'leads' && <LeadsTab />}
         {active === 'orders' && <OrdersTab />}
         {active === 'tasks' && <TasksTab />}
         {active === 'checkout' && <CheckoutTab />}
+        {active === 'messages' && <MessagesTab />}
+        {active === 'calendar' && <CalendarTab />}
       </div>
     </div>
   )

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { ArrowUp, Bookmark, ThumbsUp, MessageCircle, Copy, MoreHorizontal, Sparkles } from 'lucide-react'
+import { ArrowUp, Bookmark, ThumbsUp, MessageCircle, Copy, MoreHorizontal } from 'lucide-react'
 import { useOrbStore } from '@/stores/orbStore'
 import { useAuthStore } from '@/stores/authStore'
 import { cn } from '@/lib/utils'
@@ -10,10 +10,13 @@ interface BuildLogEntry {
   items: string[]
 }
 
+type Lang = 'en' | 'es' | 'ps'
+
 export function ChatPanel() {
   const { messages, state, sendMessage } = useOrbStore()
   const user = useAuthStore((s) => s.user)
   const [input, setInput] = useState('')
+  const [lang, setLang] = useState<Lang>('en')
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // Mock build log for demo
@@ -25,7 +28,7 @@ export function ChatPanel() {
         'CRM pipeline with drag-and-drop stages',
         'Contact management with notes and tags',
         'Order tracking and checkout links',
-        'Agent control center with 30+ AI agents',
+        '15 AI agents managing your business',
       ],
     },
   ])
@@ -48,9 +51,24 @@ export function ChatPanel() {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-[#00D4AA]" />
           <span className="text-sm font-semibold text-white">Kitz OS</span>
           <span className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[10px] text-gray-400">v0.1</span>
+        </div>
+        <div className="flex items-center gap-0.5 rounded-lg bg-white/5 p-0.5">
+          {(['en', 'es', 'ps'] as const).map((l) => (
+            <button
+              key={l}
+              onClick={() => setLang(l)}
+              className={cn(
+                'rounded-md px-2 py-1 font-mono text-[10px] font-medium uppercase transition',
+                lang === l
+                  ? 'bg-white/10 text-white'
+                  : 'text-gray-500 hover:text-gray-300',
+              )}
+            >
+              {l}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -139,23 +157,35 @@ export function ChatPanel() {
         {messages.length === 0 && (
           <div className="flex flex-wrap gap-2 pt-2">
             <button
-              onClick={() => void sendMessage('Show me my pipeline', user?.id ?? 'default')}
+              onClick={() => void sendMessage('Who hasn\'t paid me yet?', user?.id ?? 'default')}
               className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-gray-400 transition hover:bg-white/10 hover:text-white"
             >
-              Show me my pipeline
+              Who hasn't paid me yet?
             </button>
             <button
-              onClick={() => void sendMessage('Create a checkout link', user?.id ?? 'default')}
+              onClick={() => void sendMessage('Create a payment link', user?.id ?? 'default')}
               className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-gray-400 transition hover:bg-white/10 hover:text-white"
             >
-              Create a checkout link
+              Create a payment link
+            </button>
+            <button
+              onClick={() => void sendMessage('What should I do today?', user?.id ?? 'default')}
+              className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-gray-400 transition hover:bg-white/10 hover:text-white"
+            >
+              What should I do today?
+            </button>
+            <button
+              onClick={() => void sendMessage('How\'s my week looking?', user?.id ?? 'default')}
+              className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-gray-400 transition hover:bg-white/10 hover:text-white"
+            >
+              How's my week looking?
             </button>
           </div>
         )}
       </div>
 
-      {/* Bottom bar: security notice + input */}
-      <div className="border-t border-white/10 px-4 py-3">
+      {/* Bottom bar: input + stats */}
+      <div className="border-t border-white/10 px-4 py-3 space-y-3">
         {/* Input */}
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
           <div className="relative flex-1">
@@ -169,15 +199,6 @@ export function ChatPanel() {
               className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-10 pr-4 text-sm text-white placeholder-gray-500 outline-none transition focus:border-[#00D4AA]/50"
             />
           </div>
-          {/* Visual edits button */}
-          <button type="button" className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-xs text-gray-400 transition hover:bg-white/10">
-            <Sparkles className="h-3.5 w-3.5" />
-            Visual edits
-          </button>
-          {/* Plan button */}
-          <button type="button" className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-xs font-medium text-gray-400 transition hover:bg-white/10">
-            Plan
-          </button>
           {/* Send */}
           <button
             type="submit"
@@ -192,6 +213,22 @@ export function ChatPanel() {
             <ArrowUp className="h-4 w-4" />
           </button>
         </form>
+
+        {/* Stats bar */}
+        <div className="flex items-center justify-center gap-5 font-mono text-[11px]">
+          <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/5">
+            <span className="text-gray-500">AI Battery</span>
+            <span className="text-red-400">5</span>
+          </button>
+          <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/5">
+            <span className="text-gray-500">Active Agents</span>
+            <span className="text-amber-400">8</span>
+          </button>
+          <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/5">
+            <span className="text-gray-500">WhatsApp</span>
+            <span className="text-[#00D4AA]">⚡</span>
+          </button>
+        </div>
       </div>
     </div>
   )
