@@ -10,15 +10,17 @@ export class PipelineOptimizerAgent extends BaseAgent {
     this.tier = 'team';
   }
 
-  async suggestStageMove(leadId: string, currentStage: string): Promise<{ suggestedStage: string; confidence: number }> {
-    return { suggestedStage: currentStage, confidence: 0 };
+  async suggestStageMove(contactId: string, traceId?: string): Promise<unknown> {
+    return this.invokeTool('funnel_suggestNextAction', { contact_id: contactId }, traceId);
   }
 
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
 
-    const result = await this.invokeTool('crm_businessSummary', { ...payload }, traceId);
+    const result = await this.invokeTool('funnel_getStatus', {
+      include_contacts: true,
+    }, traceId);
 
     await this.invokeTool('memory_store_knowledge', {
       category: 'swarm-findings',

@@ -1,0 +1,86 @@
+{
+  "name": "KITZ - Drip Post-Purchase Follow-Up",
+  "nodes": [
+    {
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300],
+      "parameters": {
+        "path": "kitz-drip-post-purchase",
+        "httpMethod": "POST"
+      },
+      "webhookId": "kitz-drip-post-purchase"
+    },
+    {
+      "name": "Enroll in Post-Purchase Drip",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "drip_enrollContact",
+          "args": {
+            "sequence_id": "drip-post-purchase",
+            "contact_id": "={{$json.body.contact_id}}",
+            "variables": {
+              "business": "={{$json.body.business_type || 'negocio'}}",
+              "name": "={{$json.body.name || ''}}"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Execute Confirmation Touch",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [650, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "drip_executeTouch",
+          "args": { "enrollment_id": "={{$json.enrollmentId}}" }
+        }
+      }
+    },
+    {
+      "name": "Move to Closed Won",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [850, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "funnel_moveContact",
+          "args": {
+            "contact_id": "={{$json.body.contact_id}}",
+            "new_stage": "closed-won",
+            "reason": "Purchase completed"
+          }
+        }
+      }
+    },
+    {
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [1050, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { post_purchase: true, stage: 'closed-won' } }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": { "main": [[{ "node": "Enroll in Post-Purchase Drip", "type": "main", "index": 0 }]] },
+    "Enroll in Post-Purchase Drip": { "main": [[{ "node": "Execute Confirmation Touch", "type": "main", "index": 0 }]] },
+    "Execute Confirmation Touch": { "main": [[{ "node": "Move to Closed Won", "type": "main", "index": 0 }]] },
+    "Move to Closed Won": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "kitz" }, { "name": "drip" }, { "name": "sales" }]
+}

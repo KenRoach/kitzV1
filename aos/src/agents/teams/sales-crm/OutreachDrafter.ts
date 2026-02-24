@@ -10,15 +10,20 @@ export class OutreachDrafterAgent extends BaseAgent {
     this.tier = 'team';
   }
 
-  async draftOutreach(leadId: string, context: string): Promise<{ draft: string; draftOnly: true }> {
-    return { draft: `Follow-up for ${leadId}: ${context}`, draftOnly: true };
+  async draftOutreach(contactId: string, sequenceId?: string, traceId?: string): Promise<unknown> {
+    return this.invokeTool('drip_enrollContact', {
+      sequence_id: sequenceId || 'drip-welcome',
+      contact_id: contactId,
+    }, traceId);
   }
 
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
 
-    const result = await this.invokeTool('crm_listContacts', { ...payload }, traceId);
+    const result = await this.invokeTool('drip_listSequences', {
+      active_only: true,
+    }, traceId);
 
     await this.invokeTool('memory_store_knowledge', {
       category: 'swarm-findings',

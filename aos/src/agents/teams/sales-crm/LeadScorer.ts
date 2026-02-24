@@ -10,16 +10,18 @@ export class LeadScorerAgent extends BaseAgent {
     this.tier = 'team';
   }
 
-  async scoreLead(leadData: Record<string, unknown>): Promise<{ score: number; tier: 'hot' | 'warm' | 'cold' }> {
-    const score = 50; // Placeholder — production uses ML model
-    return { score, tier: score >= 70 ? 'hot' : score >= 40 ? 'warm' : 'cold' };
+  async scoreLead(status?: string, limit?: number, traceId?: string): Promise<unknown> {
+    return this.invokeTool('funnel_scoreLeads', { status: status || 'lead', limit: limit || 20 }, traceId);
   }
 
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
 
-    const result = await this.invokeTool('crm_listContacts', { ...payload }, traceId);
+    const result = await this.invokeTool('funnel_scoreLeads', {
+      status: payload.status ?? 'lead',
+      limit: payload.limit ?? 20,
+    }, traceId);
 
     await this.invokeTool('memory_store_knowledge', {
       category: 'swarm-findings',

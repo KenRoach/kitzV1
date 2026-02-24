@@ -10,7 +10,13 @@ export class DealCloserAgent extends BaseAgent {
     this.tier = 'team';
   }
 
-  async generateCheckoutLink(productId: string, amount: number): Promise<{ url: string; draftOnly: true }> {
+  async closeDeal(contactId: string, productId: string, amount: number, traceId?: string): Promise<unknown> {
+    // Move to closed-won stage then generate checkout link
+    await this.invokeTool('funnel_moveContact', {
+      contact_id: contactId,
+      new_stage: 'closed-won',
+      reason: `Deal closed — checkout for ${productId}`,
+    }, traceId);
     return { url: `https://workspace.kitz.services/checkout/${productId}`, draftOnly: true };
   }
 
@@ -18,7 +24,7 @@ export class DealCloserAgent extends BaseAgent {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
 
-    const result = await this.invokeTool('orders_listOrders', { ...payload }, traceId);
+    const result = await this.invokeTool('funnel_stageReport', { period: 'week' }, traceId);
 
     await this.invokeTool('memory_store_knowledge', {
       category: 'swarm-findings',

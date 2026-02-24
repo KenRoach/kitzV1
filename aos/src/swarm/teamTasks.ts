@@ -20,11 +20,13 @@ export interface TeamTaskSeed {
 export const TEAM_TASK_SEEDS: TeamTaskSeed[] = [
   {
     team: 'sales-crm',
-    description: 'Review CRM pipeline, contacts, and recent orders',
+    description: 'Review sales funnel, score leads, check drip enrollments, and preview mail merge templates',
     tools: [
-      { name: 'crm_listContacts', args: {} },
-      { name: 'crm_businessSummary', args: {} },
-      { name: 'orders_listOrders', args: {} },
+      { name: 'funnel_getStatus', args: { include_contacts: false } },
+      { name: 'funnel_scoreLeads', args: { status: 'lead', limit: 10 } },
+      { name: 'drip_listSequences', args: { active_only: true } },
+      { name: 'drip_getEnrollments', args: { status: 'active' } },
+      { name: 'merge_listTemplates', args: { channel: 'all' } },
     ],
   },
   {
@@ -46,9 +48,10 @@ export const TEAM_TASK_SEEDS: TeamTaskSeed[] = [
   },
   {
     team: 'growth-hacking',
-    description: 'Draft nurture sequences and optimize activation funnels',
+    description: 'Review drip sequences, draft nurture campaigns, and check funnel conversion',
     tools: [
-      { name: 'crm_businessSummary', args: {} },
+      { name: 'drip_listSequences', args: { active_only: true } },
+      { name: 'funnel_stageReport', args: { period: 'week' } },
       { name: 'marketing_draftNurture', args: { lead_name: 'test-lead', lead_phone: '+507-0000-0000', business_type: 'food delivery', language: 'es' } },
     ],
   },

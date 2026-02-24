@@ -1,0 +1,66 @@
+{
+  "name": "KITZ - Funnel Conversion Report",
+  "nodes": [
+    {
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [250, 300],
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 18 * * 5" }] }
+      }
+    },
+    {
+      "name": "Get Funnel Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "funnel_getStatus",
+          "args": { "include_contacts": false }
+        }
+      }
+    },
+    {
+      "name": "Generate Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [650, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "funnel_stageReport",
+          "args": { "period": "week" }
+        }
+      }
+    },
+    {
+      "name": "Send Report via WA",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [850, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "outbound_sendWhatsApp",
+          "args": {
+            "phone": "={{$env.OWNER_PHONE}}",
+            "message": "Reporte semanal de embudo: {{$json.report}}"
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": { "main": [[{ "node": "Get Funnel Status", "type": "main", "index": 0 }]] },
+    "Get Funnel Status": { "main": [[{ "node": "Generate Report", "type": "main", "index": 0 }]] },
+    "Generate Report": { "main": [[{ "node": "Send Report via WA", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "kitz" }, { "name": "funnel" }, { "name": "reporting" }]
+}

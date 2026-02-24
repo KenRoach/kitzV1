@@ -10,11 +10,19 @@ export class QuoteGeneratorAgent extends BaseAgent {
     this.tier = 'team'
   }
 
+  async generateQuote(contactId: string, amount: number, traceId?: string): Promise<unknown> {
+    return this.invokeTool('merge_renderMessage', {
+      template_id: 'tmpl-invoice-delivery',
+      contact_id: contactId,
+      variables: { amount: `$${amount}`, invoice_number: `Q-${Date.now().toString(36).toUpperCase()}` },
+    }, traceId)
+  }
+
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>
     const traceId = (payload.traceId as string) ?? crypto.randomUUID()
 
-    const result = await this.invokeTool('orders_listOrders', { ...payload }, traceId)
+    const result = await this.invokeTool('merge_listTemplates', { channel: 'all' }, traceId)
 
     await this.invokeTool('memory_store_knowledge', {
       category: 'swarm-findings',

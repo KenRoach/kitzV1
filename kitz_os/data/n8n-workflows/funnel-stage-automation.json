@@ -1,0 +1,64 @@
+{
+  "name": "KITZ - Funnel Stage Automation",
+  "nodes": [
+    {
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300],
+      "parameters": {
+        "path": "kitz-funnel-move",
+        "httpMethod": "POST"
+      },
+      "webhookId": "kitz-funnel-move"
+    },
+    {
+      "name": "Move Contact Stage",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "funnel_moveContact",
+          "args": {
+            "contact_id": "={{$json.body.contact_id}}",
+            "new_stage": "={{$json.body.new_stage}}",
+            "reason": "={{$json.body.reason || 'automated'}}"
+          }
+        }
+      }
+    },
+    {
+      "name": "Suggest Next Action",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [650, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "funnel_suggestNextAction",
+          "args": { "contact_id": "={{$json.body.contact_id}}" }
+        }
+      }
+    },
+    {
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [850, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { stage_moved: true, next_action: $json } }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": { "main": [[{ "node": "Move Contact Stage", "type": "main", "index": 0 }]] },
+    "Move Contact Stage": { "main": [[{ "node": "Suggest Next Action", "type": "main", "index": 0 }]] },
+    "Suggest Next Action": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "kitz" }, { "name": "sales" }, { "name": "funnel" }]
+}

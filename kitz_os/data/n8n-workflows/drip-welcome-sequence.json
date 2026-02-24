@@ -1,0 +1,67 @@
+{
+  "name": "KITZ - Drip Welcome Sequence",
+  "nodes": [
+    {
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300],
+      "parameters": {
+        "path": "kitz-drip-enroll",
+        "httpMethod": "POST"
+      },
+      "webhookId": "kitz-drip-enroll"
+    },
+    {
+      "name": "Enroll in Welcome Drip",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "drip_enrollContact",
+          "args": {
+            "sequence_id": "drip-welcome",
+            "contact_id": "={{$json.body.contact_id}}",
+            "variables": {
+              "business": "={{$json.body.business_type || 'negocio'}}",
+              "name": "={{$json.body.name || ''}}"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Execute First Touch",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [650, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "drip_executeTouch",
+          "args": { "enrollment_id": "={{$json.enrollmentId}}" }
+        }
+      }
+    },
+    {
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [850, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { enrolled: true, first_touch: $json } }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": { "main": [[{ "node": "Enroll in Welcome Drip", "type": "main", "index": 0 }]] },
+    "Enroll in Welcome Drip": { "main": [[{ "node": "Execute First Touch", "type": "main", "index": 0 }]] },
+    "Execute First Touch": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "kitz" }, { "name": "drip" }, { "name": "onboarding" }]
+}

@@ -28,6 +28,13 @@ const MARKETING_TEMPLATES = [
   'campaign-multi-touch',
   'campaign-broadcast-scheduled',
   'campaign-performance-report',
+  'funnel-lead-scoring',
+  'funnel-stage-automation',
+  'funnel-conversion-report',
+  'drip-welcome-sequence',
+  'drip-post-purchase',
+  'drip-reactivation-winback',
+  'mail-merge-broadcast',
 ];
 
 export function getAllMarketingTools(): ToolSchema[] {

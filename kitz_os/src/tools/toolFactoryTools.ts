@@ -24,7 +24,7 @@ export function getAllToolFactoryTools(): ToolSchema[] {
   return [
     {
       name: 'toolFactory_createFromTemplate',
-      description: 'Create a new automation tool from an n8n workflow template. Templates: new-lead-notification, order-fulfillment, payment-received, daily-report, low-stock-alert, lead-nurture-sequence, lead-welcome-onboard, lead-reactivation, content-social-post, content-campaign-copy, content-translate, campaign-multi-touch, campaign-broadcast-scheduled, campaign-performance-report. Deploys to n8n, registers as callable tool, persists to disk.',
+      description: 'Create a new automation tool from an n8n workflow template. Templates: new-lead-notification, order-fulfillment, payment-received, daily-report, low-stock-alert, lead-nurture-sequence, lead-welcome-onboard, lead-reactivation, content-social-post, content-campaign-copy, content-translate, campaign-multi-touch, campaign-broadcast-scheduled, campaign-performance-report, funnel-lead-scoring, funnel-stage-automation, funnel-conversion-report, drip-welcome-sequence, drip-post-purchase, drip-reactivation-winback, mail-merge-broadcast. Deploys to n8n, registers as callable tool, persists to disk.',
       parameters: {
         type: 'object',
         properties: {

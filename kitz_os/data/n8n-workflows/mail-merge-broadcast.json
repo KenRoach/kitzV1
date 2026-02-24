@@ -1,0 +1,70 @@
+{
+  "name": "KITZ - Mail Merge Broadcast",
+  "nodes": [
+    {
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300],
+      "parameters": {
+        "path": "kitz-mail-merge",
+        "httpMethod": "POST"
+      },
+      "webhookId": "kitz-mail-merge"
+    },
+    {
+      "name": "Preview Recipients",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 200],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "merge_bulkRender",
+          "args": {
+            "template_id": "={{$json.body.template_id}}",
+            "status": "={{$json.body.status || ''}}",
+            "tags": "={{$json.body.tags || ''}}",
+            "limit": "={{$json.body.limit || 20}}"
+          }
+        }
+      }
+    },
+    {
+      "name": "Send Merged Messages",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [650, 400],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "merge_sendBulk",
+          "args": {
+            "template_id": "={{$json.body.template_id}}",
+            "status": "={{$json.body.status || ''}}",
+            "tags": "={{$json.body.tags || ''}}",
+            "limit": "={{$json.body.limit || 20}}",
+            "variables": "={{$json.body.variables || {}}}"
+          }
+        }
+      }
+    },
+    {
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [850, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { mail_merge: true, result: $json } }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": { "main": [[{ "node": "Preview Recipients", "type": "main", "index": 0 }, { "node": "Send Merged Messages", "type": "main", "index": 0 }]] },
+    "Send Merged Messages": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "kitz" }, { "name": "mail-merge" }, { "name": "marketing" }]
+}

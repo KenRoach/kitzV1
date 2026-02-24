@@ -84,6 +84,10 @@ export class OsToolRegistry {
       import('./n8nTools.js'),
       import('./toolFactoryTools.js'),
       import('./marketingTools.js'),
+      import('./salesFunnelTools.js'),
+      import('./dripCampaignTools.js'),
+      import('./mailMergeTools.js'),
+      import('./documentArchiveTools.js'),
     ]);
 
     const getterNames = [
@@ -111,6 +115,10 @@ export class OsToolRegistry {
       'getAllN8nTools',
       'getAllToolFactoryTools',
       'getAllMarketingTools',
+      'getAllSalesFunnelTools',
+      'getAllDripCampaignTools',
+      'getAllMailMergeTools',
+      'getAllDocumentArchiveTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {
