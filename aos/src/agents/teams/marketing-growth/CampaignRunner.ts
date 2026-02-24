@@ -10,16 +10,21 @@ export class CampaignRunnerAgent extends BaseAgent {
     this.tier = 'team';
   }
 
-  async runCampaign(campaignId: string): Promise<{ status: 'scheduled' | 'running' | 'paused'; touchesSent: number }> {
-    // 3-touch campaign: awareness → engagement → conversion
-    return { status: 'scheduled', touchesSent: 0 };
+  async runCampaign(campaignName: string, brief: string, traceId?: string): Promise<unknown> {
+    return this.invokeTool('marketing_draftCampaign', { campaign_name: campaignName, brief, touches: 4 }, traceId);
   }
 
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
 
-    const result = await this.invokeTool('dashboard_metrics', { ...payload }, traceId);
+    const result = await this.invokeTool('marketing_draftCampaign', {
+      campaign_name: payload.campaign_name ?? 'swarm-generated-campaign',
+      brief: payload.brief ?? 'Introduce KITZ to small business owners in LatAm',
+      audience: payload.audience ?? 'all active contacts',
+      touches: 4,
+      language: payload.language ?? 'es',
+    }, traceId);
 
     await this.invokeTool('memory_store_knowledge', {
       category: 'swarm-findings',

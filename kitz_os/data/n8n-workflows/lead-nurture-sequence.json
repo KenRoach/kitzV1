@@ -1,0 +1,90 @@
+{
+  "name": "KITZ — Lead Nurture Sequence",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "kitz-lead-nurture",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "mkt-nurture-0001",
+      "name": "Webhook — Lead Nurture",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-service-secret", "value": "dev-secret-change-me" },
+            { "name": "x-trace-id", "value": "={{$runId}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": \"New lead nurture request for {{ $json.name }} ({{ $json.phone }}). Score this lead, then draft a 4-touch omni-channel nurture sequence: Day 0 WhatsApp welcome, Day 3 email value content, Day 7 SMS check-in, Day 14 voice note personal touch. All messages draft-first.\",\n  \"channel\": \"system\",\n  \"userId\": \"n8n-automation\"\n}",
+        "options": {}
+      },
+      "id": "mkt-nurture-0002",
+      "name": "Score & Draft Nurture via KITZ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-service-secret", "value": "dev-secret-change-me" },
+            { "name": "x-trace-id", "value": "={{$runId}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"event\": \"lead_nurture_drafted\",\n  \"data\": {\n    \"lead\": \"{{ $json.name }}\",\n    \"sequence\": {{ $json.response }}\n  },\n  \"workflow_id\": \"lead-nurture-sequence\"\n}",
+        "options": {}
+      },
+      "id": "mkt-nurture-0003",
+      "name": "Notify KITZ — Nurture Drafted",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "mkt-nurture-0004",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Webhook — Lead Nurture": {
+      "main": [[{ "node": "Score & Draft Nurture via KITZ", "type": "main", "index": 0 }]]
+    },
+    "Score & Draft Nurture via KITZ": {
+      "main": [[{ "node": "Notify KITZ — Nurture Drafted", "type": "main", "index": 0 }]]
+    },
+    "Notify KITZ — Nurture Drafted": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "kitz" }, { "name": "marketing" }, { "name": "lead-nurture" }]
+}

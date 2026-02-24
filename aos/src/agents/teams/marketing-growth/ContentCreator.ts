@@ -10,15 +10,20 @@ export class ContentCreatorAgent extends BaseAgent {
     this.tier = 'team';
   }
 
-  async createContent(type: 'social' | 'blog' | 'ad', topic: string): Promise<{ contentId: string; draft: string; draftOnly: true }> {
-    return { contentId: `content_${type}_${Date.now()}`, draft: `Draft ${type} about ${topic}`, draftOnly: true };
+  async createContent(type: 'social' | 'blog' | 'ad', topic: string, traceId?: string): Promise<unknown> {
+    return this.invokeTool('marketing_generateContent', { type, topic, platform: type === 'social' ? 'instagram' : type }, traceId);
   }
 
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
 
-    const result = await this.invokeTool('memory_search', { query: payload.query ?? 'content creation pipeline', limit: 20 }, traceId);
+    const result = await this.invokeTool('marketing_generateContent', {
+      type: payload.type ?? 'social',
+      topic: payload.topic ?? 'KITZ AI business tools for LatAm entrepreneurs',
+      platform: payload.platform ?? 'instagram',
+      language: payload.language ?? 'es',
+    }, traceId);
 
     await this.invokeTool('memory_store_knowledge', {
       category: 'swarm-findings',

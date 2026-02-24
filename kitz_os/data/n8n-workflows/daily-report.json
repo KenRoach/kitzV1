@@ -1,0 +1,151 @@
+{
+  "name": "KITZ — Daily Business Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        },
+        "options": {
+          "timezone": "America/Panama"
+        }
+      },
+      "id": "e5f6a7b8-5555-4eee-b555-000000000001",
+      "name": "Cron — Daily 8AM Panama",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://kitz-os:3012/api/kitz/battery",
+        "options": {}
+      },
+      "id": "e5f6a7b8-5555-4eee-b555-000000000002",
+      "name": "Get AI Battery Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-service-secret",
+              "value": "dev-secret-change-me"
+            },
+            {
+              "name": "x-trace-id",
+              "value": "={{$runId}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"message\": \"Generate today's daily business report. Include AI battery status, CRM pipeline summary, orders, and inventory alerts.\",\n  \"channel\": \"system\",\n  \"userId\": \"n8n-automation\"\n}",
+        "options": {}
+      },
+      "id": "e5f6a7b8-5555-4eee-b555-000000000003",
+      "name": "Generate Report via KITZ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-service-secret",
+              "value": "dev-secret-change-me"
+            },
+            {
+              "name": "x-trace-id",
+              "value": "={{$runId}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"event\": \"daily_report_generated\",\n  \"data\": {\n    \"report\": \"{{ $json.response }}\"\n  },\n  \"workflow_id\": \"daily-report\"\n}",
+        "options": {}
+      },
+      "id": "e5f6a7b8-5555-4eee-b555-000000000004",
+      "name": "Notify KITZ — Report Ready",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Cron — Daily 8AM Panama": {
+      "main": [
+        [
+          {
+            "node": "Get AI Battery Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get AI Battery Status": {
+      "main": [
+        [
+          {
+            "node": "Generate Report via KITZ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Report via KITZ": {
+      "main": [
+        [
+          {
+            "node": "Notify KITZ — Report Ready",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "kitz"
+    }
+  ]
+}

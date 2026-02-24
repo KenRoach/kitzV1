@@ -1,0 +1,90 @@
+{
+  "name": "KITZ — Social Post Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "kitz-content-request",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "mkt-social-0001",
+      "name": "Webhook — Content Request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-service-secret", "value": "dev-secret-change-me" },
+            { "name": "x-trace-id", "value": "={{$runId}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": \"Generate a {{ $json.platform }} social media post about: {{ $json.topic }}. Target audience: LatAm small business owners (25-45). Tone: Gen Z clarity + disciplined founder. Include hashtags. Language: {{ $json.language || 'es' }}. Return the post as a draft for approval.\",\n  \"channel\": \"system\",\n  \"userId\": \"n8n-automation\"\n}",
+        "options": {}
+      },
+      "id": "mkt-social-0002",
+      "name": "Generate Post via KITZ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-service-secret", "value": "dev-secret-change-me" },
+            { "name": "x-trace-id", "value": "={{$runId}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"event\": \"content_post_generated\",\n  \"data\": {\n    \"platform\": \"{{ $json.platform }}\",\n    \"topic\": \"{{ $json.topic }}\",\n    \"post\": {{ $json.response }}\n  },\n  \"workflow_id\": \"content-social-post\"\n}",
+        "options": {}
+      },
+      "id": "mkt-social-0003",
+      "name": "Notify KITZ — Post Generated",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "mkt-social-0004",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Webhook — Content Request": {
+      "main": [[{ "node": "Generate Post via KITZ", "type": "main", "index": 0 }]]
+    },
+    "Generate Post via KITZ": {
+      "main": [[{ "node": "Notify KITZ — Post Generated", "type": "main", "index": 0 }]]
+    },
+    "Notify KITZ — Post Generated": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "kitz" }, { "name": "marketing" }, { "name": "content" }]
+}

@@ -1,0 +1,90 @@
+{
+  "name": "KITZ — Multi-Touch Campaign (Omni-Channel)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "kitz-campaign-start",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "mkt-campaign-0001",
+      "name": "Webhook — Campaign Start",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-service-secret", "value": "dev-secret-change-me" },
+            { "name": "x-trace-id", "value": "={{$runId}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": \"Launch a 4-touch omni-channel campaign. Audience: {{ $json.audience_filter || 'all active contacts' }}. Campaign: {{ $json.campaign_name }}. Brief: {{ $json.brief }}. Schedule: Touch 1 (Day 0) WhatsApp intro, Touch 2 (Day 2) email deep-dive, Touch 3 (Day 5) SMS reminder, Touch 4 (Day 7) voice note personal close. Draft all messages using the KITZ brand voice. All outbound draft-first.\",\n  \"channel\": \"system\",\n  \"userId\": \"n8n-automation\"\n}",
+        "options": {}
+      },
+      "id": "mkt-campaign-0002",
+      "name": "Draft Campaign via KITZ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-service-secret", "value": "dev-secret-change-me" },
+            { "name": "x-trace-id", "value": "={{$runId}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"event\": \"campaign_multi_touch_drafted\",\n  \"data\": {\n    \"campaign\": \"{{ $json.campaign_name }}\",\n    \"touches\": 4,\n    \"channels\": [\"whatsapp\", \"email\", \"sms\", \"voice\"],\n    \"result\": {{ $json.response }}\n  },\n  \"workflow_id\": \"campaign-multi-touch\"\n}",
+        "options": {}
+      },
+      "id": "mkt-campaign-0003",
+      "name": "Notify KITZ — Campaign Drafted",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "mkt-campaign-0004",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Webhook — Campaign Start": {
+      "main": [[{ "node": "Draft Campaign via KITZ", "type": "main", "index": 0 }]]
+    },
+    "Draft Campaign via KITZ": {
+      "main": [[{ "node": "Notify KITZ — Campaign Drafted", "type": "main", "index": 0 }]]
+    },
+    "Notify KITZ — Campaign Drafted": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "kitz" }, { "name": "marketing" }, { "name": "campaign" }, { "name": "omni-channel" }]
+}

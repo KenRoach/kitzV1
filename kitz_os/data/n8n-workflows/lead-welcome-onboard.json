@@ -1,0 +1,90 @@
+{
+  "name": "KITZ — Lead Welcome & Onboard",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "kitz-new-signup",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "mkt-welcome-0001",
+      "name": "Webhook — New Signup",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-service-secret", "value": "dev-secret-change-me" },
+            { "name": "x-trace-id", "value": "={{$runId}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": \"New user signed up: {{ $json.name }} ({{ $json.phone }}, {{ $json.email }}). Create CRM contact, send WhatsApp welcome message, generate a voice welcome greeting using ElevenLabs TTS, and schedule an activation check for 24 hours. All outbound draft-first.\",\n  \"channel\": \"system\",\n  \"userId\": \"n8n-automation\"\n}",
+        "options": {}
+      },
+      "id": "mkt-welcome-0002",
+      "name": "Welcome & Onboard via KITZ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-service-secret", "value": "dev-secret-change-me" },
+            { "name": "x-trace-id", "value": "={{$runId}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"event\": \"lead_welcome_sent\",\n  \"data\": {\n    \"lead\": \"{{ $json.name }}\",\n    \"channels\": [\"whatsapp\", \"voice\"]\n  },\n  \"workflow_id\": \"lead-welcome-onboard\"\n}",
+        "options": {}
+      },
+      "id": "mkt-welcome-0003",
+      "name": "Notify KITZ — Welcome Sent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "mkt-welcome-0004",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Webhook — New Signup": {
+      "main": [[{ "node": "Welcome & Onboard via KITZ", "type": "main", "index": 0 }]]
+    },
+    "Welcome & Onboard via KITZ": {
+      "main": [[{ "node": "Notify KITZ — Welcome Sent", "type": "main", "index": 0 }]]
+    },
+    "Notify KITZ — Welcome Sent": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "kitz" }, { "name": "marketing" }, { "name": "onboarding" }]
+}

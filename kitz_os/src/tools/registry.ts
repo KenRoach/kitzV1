@@ -83,6 +83,7 @@ export class OsToolRegistry {
       import('./inventoryTools.js'),
       import('./n8nTools.js'),
       import('./toolFactoryTools.js'),
+      import('./marketingTools.js'),
     ]);
 
     const getterNames = [
@@ -109,6 +110,7 @@ export class OsToolRegistry {
       'getAllInventoryTools',
       'getAllN8nTools',
       'getAllToolFactoryTools',
+      'getAllMarketingTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {

@@ -1,0 +1,82 @@
+{
+  "name": "KITZ — Campaign Performance Report (Daily)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 18 * * *"
+            }
+          ]
+        },
+        "options": {
+          "timezone": "America/Panama"
+        }
+      },
+      "id": "mkt-perf-0001",
+      "name": "Cron — Daily 6PM Panama",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-service-secret", "value": "dev-secret-change-me" },
+            { "name": "x-trace-id", "value": "={{$runId}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"message\": \"Generate today's marketing performance report. Include: broadcast history and delivery stats (use broadcast_history), CRM pipeline movement (use crm_businessSummary), new leads count, active campaigns, and channel breakdown (WhatsApp, Email, SMS, Voice). Format as a concise executive summary. Then draft a WhatsApp message to the business owner with the key metrics.\",\n  \"channel\": \"system\",\n  \"userId\": \"n8n-automation\"\n}",
+        "options": {}
+      },
+      "id": "mkt-perf-0002",
+      "name": "Generate Performance Report via KITZ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-service-secret", "value": "dev-secret-change-me" },
+            { "name": "x-trace-id", "value": "={{$runId}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"event\": \"campaign_performance_report\",\n  \"data\": {\n    \"report\": {{ $json.response }}\n  },\n  \"workflow_id\": \"campaign-performance-report\"\n}",
+        "options": {}
+      },
+      "id": "mkt-perf-0003",
+      "name": "Notify KITZ — Report Ready",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [750, 300]
+    }
+  ],
+  "connections": {
+    "Cron — Daily 6PM Panama": {
+      "main": [[{ "node": "Generate Performance Report via KITZ", "type": "main", "index": 0 }]]
+    },
+    "Generate Performance Report via KITZ": {
+      "main": [[{ "node": "Notify KITZ — Report Ready", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "kitz" }, { "name": "marketing" }, { "name": "analytics" }]
+}

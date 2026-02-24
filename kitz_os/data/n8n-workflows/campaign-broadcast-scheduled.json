@@ -1,0 +1,82 @@
+{
+  "name": "KITZ — Scheduled Broadcast (WA + SMS)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 10 * * *"
+            }
+          ]
+        },
+        "options": {
+          "timezone": "America/Panama"
+        }
+      },
+      "id": "mkt-broadcast-0001",
+      "name": "Cron — Daily 10AM Panama",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-service-secret", "value": "dev-secret-change-me" },
+            { "name": "x-trace-id", "value": "={{$runId}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"message\": \"Check if there are any scheduled broadcasts for today. If yes, filter contacts by the campaign segment, generate personalized WhatsApp messages for each contact, and queue SMS as fallback for contacts without WhatsApp. All messages draft-first. Use broadcast_preview to check recipients, then broadcast_send when approved.\",\n  \"channel\": \"system\",\n  \"userId\": \"n8n-automation\"\n}",
+        "options": {}
+      },
+      "id": "mkt-broadcast-0002",
+      "name": "Check & Draft Broadcast via KITZ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-service-secret", "value": "dev-secret-change-me" },
+            { "name": "x-trace-id", "value": "={{$runId}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"event\": \"broadcast_scheduled_check\",\n  \"data\": {\n    \"result\": {{ $json.response }}\n  },\n  \"workflow_id\": \"campaign-broadcast-scheduled\"\n}",
+        "options": {}
+      },
+      "id": "mkt-broadcast-0003",
+      "name": "Notify KITZ — Broadcast Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [750, 300]
+    }
+  ],
+  "connections": {
+    "Cron — Daily 10AM Panama": {
+      "main": [[{ "node": "Check & Draft Broadcast via KITZ", "type": "main", "index": 0 }]]
+    },
+    "Check & Draft Broadcast via KITZ": {
+      "main": [[{ "node": "Notify KITZ — Broadcast Status", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "kitz" }, { "name": "marketing" }, { "name": "broadcast" }]
+}

@@ -1,0 +1,155 @@
+{
+  "name": "KITZ — Low Stock Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "c3d4e5f6-3333-4ccc-b333-000000000001",
+      "name": "Schedule — Every 6 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-service-secret",
+              "value": "dev-secret-change-me"
+            },
+            {
+              "name": "x-trace-id",
+              "value": "={{$runId}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"message\": \"Check inventory for low stock alerts and report any products that need restocking.\",\n  \"channel\": \"system\",\n  \"userId\": \"n8n-automation\"\n}",
+        "options": {}
+      },
+      "id": "c3d4e5f6-3333-4ccc-b333-000000000002",
+      "name": "Check Inventory via KITZ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ JSON.stringify($json).toLowerCase() }}",
+              "operation": "contains",
+              "value2": "low stock"
+            }
+          ]
+        }
+      },
+      "id": "c3d4e5f6-3333-4ccc-b333-000000000003",
+      "name": "IF — Low Stock Detected",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-service-secret",
+              "value": "dev-secret-change-me"
+            },
+            {
+              "name": "x-trace-id",
+              "value": "={{$runId}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"event\": \"low_stock_detected\",\n  \"data\": {\n    \"report\": \"{{ $json.response }}\"\n  },\n  \"workflow_id\": \"low-stock-alert\"\n}",
+        "options": {}
+      },
+      "id": "c3d4e5f6-3333-4ccc-b333-000000000004",
+      "name": "Notify KITZ — Low Stock",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1000, 200]
+    }
+  ],
+  "connections": {
+    "Schedule — Every 6 Hours": {
+      "main": [
+        [
+          {
+            "node": "Check Inventory via KITZ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Inventory via KITZ": {
+      "main": [
+        [
+          {
+            "node": "IF — Low Stock Detected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF — Low Stock Detected": {
+      "main": [
+        [
+          {
+            "node": "Notify KITZ — Low Stock",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "kitz"
+    }
+  ]
+}

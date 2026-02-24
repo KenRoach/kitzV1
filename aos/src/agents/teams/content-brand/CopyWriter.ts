@@ -10,15 +10,19 @@ export class CopyWriterAgent extends BaseAgent {
     this.tier = 'team';
   }
 
-  async writeCopy(type: 'landing' | 'email' | 'ad' | 'whatsapp', context: string): Promise<{ draft: string; draftOnly: true }> {
-    return { draft: `${type} copy draft: ${context}`, draftOnly: true };
+  async writeCopy(type: 'landing' | 'email' | 'ad' | 'whatsapp', context: string, traceId?: string): Promise<unknown> {
+    return this.invokeTool('marketing_generateContent', { type: type === 'landing' ? 'ad' : type, topic: context }, traceId);
   }
 
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
 
-    const result = await this.invokeTool('memory_search', { query: payload.query ?? 'marketing copy templates', limit: 20 }, traceId);
+    const result = await this.invokeTool('marketing_generateContent', {
+      type: payload.type ?? 'email',
+      topic: payload.topic ?? 'KITZ platform features and benefits',
+      language: payload.language ?? 'es',
+    }, traceId);
 
     await this.invokeTool('memory_store_knowledge', {
       category: 'swarm-findings',

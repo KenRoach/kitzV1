@@ -1,0 +1,90 @@
+{
+  "name": "KITZ — Campaign Copy Generator (Multi-Channel A/B)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "kitz-campaign-copy",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "mkt-copy-0001",
+      "name": "Webhook — Campaign Copy",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-service-secret", "value": "dev-secret-change-me" },
+            { "name": "x-trace-id", "value": "={{$runId}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": \"Generate A/B campaign copy for: {{ $json.brief }}. Create 2 variants (A and B) for each channel: WhatsApp (5-7 words hook + 15-23 words body), Email (subject line + 3-paragraph body), SMS (160 chars max). Language: {{ $json.language || 'es' }}. All messages draft-first. Return structured JSON with variants per channel.\",\n  \"channel\": \"system\",\n  \"userId\": \"n8n-automation\"\n}",
+        "options": {}
+      },
+      "id": "mkt-copy-0002",
+      "name": "Generate A/B Copy via KITZ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-service-secret", "value": "dev-secret-change-me" },
+            { "name": "x-trace-id", "value": "={{$runId}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"event\": \"campaign_copy_generated\",\n  \"data\": {\n    \"brief\": \"{{ $json.brief }}\",\n    \"variants\": {{ $json.response }}\n  },\n  \"workflow_id\": \"content-campaign-copy\"\n}",
+        "options": {}
+      },
+      "id": "mkt-copy-0003",
+      "name": "Notify KITZ — Copy Generated",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "mkt-copy-0004",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Webhook — Campaign Copy": {
+      "main": [[{ "node": "Generate A/B Copy via KITZ", "type": "main", "index": 0 }]]
+    },
+    "Generate A/B Copy via KITZ": {
+      "main": [[{ "node": "Notify KITZ — Copy Generated", "type": "main", "index": 0 }]]
+    },
+    "Notify KITZ — Copy Generated": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "kitz" }, { "name": "marketing" }, { "name": "content" }, { "name": "ab-test" }]
+}

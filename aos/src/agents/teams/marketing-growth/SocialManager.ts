@@ -10,15 +10,20 @@ export class SocialManagerAgent extends BaseAgent {
     this.tier = 'team';
   }
 
-  async schedulePost(platform: string, content: string, time: string): Promise<{ postId: string; scheduledAt: string; draftOnly: true }> {
-    return { postId: `post_${platform}_${Date.now()}`, scheduledAt: time, draftOnly: true };
+  async schedulePost(platform: string, topic: string, traceId?: string): Promise<unknown> {
+    return this.invokeTool('marketing_generateContent', { type: 'social', topic, platform }, traceId);
   }
 
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
 
-    const result = await this.invokeTool('memory_search', { query: payload.query ?? 'social media engagement metrics', limit: 20 }, traceId);
+    const result = await this.invokeTool('marketing_generateContent', {
+      type: 'social',
+      topic: payload.topic ?? 'KITZ helps you run your business from WhatsApp',
+      platform: payload.platform ?? 'instagram',
+      language: payload.language ?? 'es',
+    }, traceId);
 
     await this.invokeTool('memory_store_knowledge', {
       category: 'swarm-findings',

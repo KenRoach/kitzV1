@@ -28,7 +28,8 @@ bun.lockb
 **/auth_info_baileys/
 
 # Runtime data (battery ledger, tokens, logs)
-**/data/
+**/data/*
+!**/data/n8n-workflows/
 
 # Build artifacts
 *.tsbuildinfo

@@ -10,16 +10,19 @@ export class TranslationBotAgent extends BaseAgent {
     this.tier = 'team';
   }
 
-  async translate(text: string, from: 'es' | 'en', to: 'es' | 'en'): Promise<{ translated: string; from: string; to: string }> {
-    // Placeholder — production uses LLM translation via kitz-llm-hub
-    return { translated: text, from, to };
+  async translate(text: string, from: 'es' | 'en', to: 'es' | 'en', traceId?: string): Promise<unknown> {
+    return this.invokeTool('marketing_translateContent', { text, from, to }, traceId);
   }
 
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
 
-    const result = await this.invokeTool('memory_search', { query: payload.query ?? 'translation queue pending', limit: 20 }, traceId);
+    const result = await this.invokeTool('marketing_translateContent', {
+      text: payload.text ?? 'KITZ te ayuda a manejar tu negocio desde WhatsApp',
+      from: payload.from ?? 'es',
+      to: payload.to ?? 'en',
+    }, traceId);
 
     await this.invokeTool('memory_store_knowledge', {
       category: 'swarm-findings',

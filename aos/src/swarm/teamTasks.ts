@@ -37,18 +37,19 @@ export const TEAM_TASK_SEEDS: TeamTaskSeed[] = [
   },
   {
     team: 'marketing-growth',
-    description: 'Analyze public presence and search visibility',
+    description: 'Generate content, draft campaigns, and report on marketing performance',
     tools: [
-      { name: 'web_search', args: { query: 'kitz Panama small business' } },
-      { name: 'web_scrape', args: { url: 'https://kitz.services' } },
+      { name: 'marketing_listTemplates', args: { category: 'all' } },
+      { name: 'marketing_generateContent', args: { type: 'social', topic: 'KITZ AI business tools', platform: 'instagram', language: 'es' } },
+      { name: 'marketing_campaignReport', args: { period: 'today' } },
     ],
   },
   {
     team: 'growth-hacking',
-    description: 'Review activation funnel and user onboarding metrics',
+    description: 'Draft nurture sequences and optimize activation funnels',
     tools: [
       { name: 'crm_businessSummary', args: {} },
-      { name: 'memory_search', args: { query: 'user activation onboarding', limit: 10 } },
+      { name: 'marketing_draftNurture', args: { lead_name: 'test-lead', lead_phone: '+507-0000-0000', business_type: 'food delivery', language: 'es' } },
     ],
   },
   {
@@ -68,10 +69,10 @@ export const TEAM_TASK_SEEDS: TeamTaskSeed[] = [
   },
   {
     team: 'content-brand',
-    description: 'Evaluate brand voice and content across public pages',
+    description: 'Generate copy, translate content, and evaluate brand voice',
     tools: [
-      { name: 'web_scrape', args: { url: 'https://kitz.services' } },
-      { name: 'memory_search', args: { query: 'brand voice guidelines', limit: 10 } },
+      { name: 'marketing_generateContent', args: { type: 'whatsapp', topic: 'Welcome to KITZ', language: 'es' } },
+      { name: 'marketing_translateContent', args: { text: 'Tu negocio merece infraestructura', from: 'es', to: 'en' } },
     ],
   },
   {

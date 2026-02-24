@@ -10,16 +10,26 @@ export class ActivationOptimizerAgent extends BaseAgent {
     this.tier = 'team';
   }
 
-  async optimizeActivation(userId: string): Promise<{ suggestedFlow: string; estimatedMinutes: number }> {
-    // Target: <10 min to first value
-    return { suggestedFlow: 'quick-start-whatsapp', estimatedMinutes: 8 };
+  async optimizeActivation(userId: string, traceId?: string): Promise<unknown> {
+    // Target: <10 min to first value — draft welcome + nurture sequence
+    const nurture = await this.invokeTool('marketing_draftNurture', {
+      lead_name: userId,
+      lead_phone: '',
+      business_type: 'small business',
+    }, traceId);
+    return nurture;
   }
 
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
 
-    const result = await this.invokeTool('crm_businessSummary', { ...payload }, traceId);
+    const result = await this.invokeTool('marketing_draftNurture', {
+      lead_name: payload.lead_name ?? 'new-user',
+      lead_phone: payload.lead_phone ?? '',
+      business_type: payload.business_type ?? 'small business',
+      language: payload.language ?? 'es',
+    }, traceId);
 
     await this.invokeTool('memory_store_knowledge', {
       category: 'swarm-findings',

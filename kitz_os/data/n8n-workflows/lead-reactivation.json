@@ -1,0 +1,82 @@
+{
+  "name": "KITZ — Lead Reactivation (Weekly)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        },
+        "options": {
+          "timezone": "America/Panama"
+        }
+      },
+      "id": "mkt-react-0001",
+      "name": "Cron — Weekly Mon 9AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-service-secret", "value": "dev-secret-change-me" },
+            { "name": "x-trace-id", "value": "={{$runId}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"message\": \"Find all CRM contacts inactive for 14+ days. For each, draft a WhatsApp re-engagement message and an email with a special offer or value reminder. All messages draft-first. Report how many leads need reactivation.\",\n  \"channel\": \"system\",\n  \"userId\": \"n8n-automation\"\n}",
+        "options": {}
+      },
+      "id": "mkt-react-0002",
+      "name": "Find & Draft Reactivation via KITZ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://kitz-os:3012/api/kitz/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-service-secret", "value": "dev-secret-change-me" },
+            { "name": "x-trace-id", "value": "={{$runId}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"event\": \"lead_reactivation_drafted\",\n  \"data\": {\n    \"result\": {{ $json.response }}\n  },\n  \"workflow_id\": \"lead-reactivation\"\n}",
+        "options": {}
+      },
+      "id": "mkt-react-0003",
+      "name": "Notify KITZ — Reactivation Drafted",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [750, 300]
+    }
+  ],
+  "connections": {
+    "Cron — Weekly Mon 9AM": {
+      "main": [[{ "node": "Find & Draft Reactivation via KITZ", "type": "main", "index": 0 }]]
+    },
+    "Find & Draft Reactivation via KITZ": {
+      "main": [[{ "node": "Notify KITZ — Reactivation Drafted", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "kitz" }, { "name": "marketing" }, { "name": "reactivation" }]
+}
