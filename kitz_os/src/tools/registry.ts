@@ -88,6 +88,12 @@ export class OsToolRegistry {
       import('./dripCampaignTools.js'),
       import('./mailMergeTools.js'),
       import('./documentArchiveTools.js'),
+      import('./contentEngine.js'),
+      import('./invoiceQuoteTools.js'),
+      import('./deckTools.js'),
+      import('./emailBuilderTools.js'),
+      import('./flyerPromoTools.js'),
+      import('./websiteTools.js'),
     ]);
 
     const getterNames = [
@@ -119,6 +125,12 @@ export class OsToolRegistry {
       'getAllDripCampaignTools',
       'getAllMailMergeTools',
       'getAllDocumentArchiveTools',
+      'getAllContentEngineTools',
+      'getAllInvoiceQuoteTools',
+      'getAllDeckTools',
+      'getAllEmailBuilderTools',
+      'getAllFlyerPromoTools',
+      'getAllWebsiteTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {

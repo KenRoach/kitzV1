@@ -14,16 +14,45 @@ export class ContentCreatorAgent extends BaseAgent {
     return this.invokeTool('marketing_generateContent', { type, topic, platform: type === 'social' ? 'instagram' : type }, traceId);
   }
 
+  async createDeck(brief: string, template?: string, traceId?: string): Promise<unknown> {
+    return this.invokeTool('deck_create', { brief, template }, traceId);
+  }
+
+  async createLanding(brief: string, traceId?: string): Promise<unknown> {
+    return this.invokeTool('website_createLanding', { brief }, traceId);
+  }
+
+  async createBioLink(links: Array<{ label: string; url: string }>, traceId?: string): Promise<unknown> {
+    return this.invokeTool('website_createBioLink', { links }, traceId);
+  }
+
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
 
-    const result = await this.invokeTool('marketing_generateContent', {
-      type: payload.type ?? 'social',
-      topic: payload.topic ?? 'KITZ AI business tools for LatAm entrepreneurs',
-      platform: payload.platform ?? 'instagram',
-      language: payload.language ?? 'es',
-    }, traceId);
+    const type = (payload.type as string) ?? 'social';
+    let result;
+    if (type === 'deck') {
+      result = await this.invokeTool('deck_create', {
+        brief: payload.brief ?? payload.topic ?? 'Business overview',
+        template: payload.template ?? 'business-overview',
+      }, traceId);
+    } else if (type === 'landing') {
+      result = await this.invokeTool('website_createLanding', {
+        brief: payload.brief ?? payload.topic ?? 'Business landing page',
+      }, traceId);
+    } else if (type === 'biolink') {
+      result = await this.invokeTool('website_createBioLink', {
+        links: payload.links ?? [{ label: 'Website', url: '#' }],
+      }, traceId);
+    } else {
+      result = await this.invokeTool('marketing_generateContent', {
+        type: type,
+        topic: payload.topic ?? 'KITZ AI business tools for LatAm entrepreneurs',
+        platform: payload.platform ?? 'instagram',
+        language: payload.language ?? 'es',
+      }, traceId);
+    }
 
     await this.invokeTool('memory_store_knowledge', {
       category: 'swarm-findings',

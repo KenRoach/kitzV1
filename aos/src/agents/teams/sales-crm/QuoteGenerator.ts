@@ -11,10 +11,9 @@ export class QuoteGeneratorAgent extends BaseAgent {
   }
 
   async generateQuote(contactId: string, amount: number, traceId?: string): Promise<unknown> {
-    return this.invokeTool('merge_renderMessage', {
-      template_id: 'tmpl-invoice-delivery',
+    return this.invokeTool('quote_create', {
       contact_id: contactId,
-      variables: { amount: `$${amount}`, invoice_number: `Q-${Date.now().toString(36).toUpperCase()}` },
+      line_items: [{ description: 'Service', quantity: 1, unitPrice: amount }],
     }, traceId)
   }
 
@@ -22,7 +21,7 @@ export class QuoteGeneratorAgent extends BaseAgent {
     const payload = msg.payload as Record<string, unknown>
     const traceId = (payload.traceId as string) ?? crypto.randomUUID()
 
-    const result = await this.invokeTool('merge_listTemplates', { channel: 'all' }, traceId)
+    const result = await this.invokeTool('invoice_list', { status: 'all' }, traceId)
 
     await this.invokeTool('memory_store_knowledge', {
       category: 'swarm-findings',

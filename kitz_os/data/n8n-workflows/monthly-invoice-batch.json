@@ -1,0 +1,67 @@
+{
+  "name": "KITZ - Monthly Invoice Batch (1st of Month 8AM)",
+  "nodes": [
+    {
+      "name": "Cron Trigger",
+      "type": "n8n-nodes-base.cron",
+      "position": [250, 300],
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 8 1 * *" }] }
+      }
+    },
+    {
+      "name": "List Recurring Invoices",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "invoice_list",
+          "args": { "status": "all", "type": "invoice" }
+        }
+      }
+    },
+    {
+      "name": "Create Monthly Invoice",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [650, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "invoice_create",
+          "args": {
+            "contact_name": "={{$json.contactName}}",
+            "line_items": "={{$json.lineItems}}",
+            "notes": "Factura mensual generada automaticamente"
+          }
+        }
+      }
+    },
+    {
+      "name": "Notify Owner",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [850, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "outbound_sendWhatsApp",
+          "args": {
+            "to": "={{$env.OWNER_PHONE}}",
+            "message": "Facturas mensuales generadas. Revisa y aprueba en tu dashboard."
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron Trigger": { "main": [[{ "node": "List Recurring Invoices", "type": "main", "index": 0 }]] },
+    "List Recurring Invoices": { "main": [[{ "node": "Create Monthly Invoice", "type": "main", "index": 0 }]] },
+    "Create Monthly Invoice": { "main": [[{ "node": "Notify Owner", "type": "main", "index": 0 }]] }
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "name": "KITZ - Auto-Generate Invoice from Order",
+  "nodes": [
+    {
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300],
+      "parameters": {
+        "path": "kitz-invoice-create",
+        "httpMethod": "POST"
+      },
+      "webhookId": "kitz-invoice-create"
+    },
+    {
+      "name": "Generate Invoice from Order",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "invoice_fromOrder",
+          "args": {
+            "order_id": "={{$json.body.order_id}}",
+            "template": "={{$json.body.template || 'modern'}}"
+          }
+        }
+      }
+    },
+    {
+      "name": "Preview Invoice",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [650, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "content_preview",
+          "args": { "content_id": "={{$json.contentId}}" }
+        }
+      }
+    },
+    {
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [850, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { contentId: $json.contentId, html: $json.html, status: 'draft' } }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": { "main": [[{ "node": "Generate Invoice from Order", "type": "main", "index": 0 }]] },
+    "Generate Invoice from Order": { "main": [[{ "node": "Preview Invoice", "type": "main", "index": 0 }]] },
+    "Preview Invoice": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  }
+}

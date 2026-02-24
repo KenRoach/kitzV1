@@ -1,0 +1,63 @@
+{
+  "name": "KITZ - Deploy Landing Page",
+  "nodes": [
+    {
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300],
+      "parameters": {
+        "path": "kitz-deploy-landing",
+        "httpMethod": "POST"
+      },
+      "webhookId": "kitz-deploy-landing"
+    },
+    {
+      "name": "Export Website HTML",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "website_export",
+          "args": {
+            "content_id": "={{$json.body.content_id}}",
+            "title": "={{$json.body.title || 'Landing Page'}}"
+          }
+        }
+      }
+    },
+    {
+      "name": "Push to Lovable",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [650, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "lovable_pushArtifact",
+          "args": {
+            "html": "={{$json.html}}",
+            "name": "={{$json.body.title || 'landing-page'}}"
+          }
+        }
+      }
+    },
+    {
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [850, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { contentId: $json.contentId, deployed: true, format: 'standalone-html' } }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": { "main": [[{ "node": "Export Website HTML", "type": "main", "index": 0 }]] },
+    "Export Website HTML": { "main": [[{ "node": "Push to Lovable", "type": "main", "index": 0 }]] },
+    "Push to Lovable": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  }
+}

@@ -2,7 +2,10 @@ import { useState, useEffect, useRef } from 'react'
 import { useOrbStore } from '@/stores/orbStore'
 
 /* ── Brand colors ── */
-const PURPLE = '#a855f7'
+const PURPLE = '#A855F7'
+const PURPLE_LIGHT = '#C084FC'
+const PURPLE_DARK = '#7C3AED'
+const LAVENDER = '#DDD6FE'
 const DARK = '#0A0A0A'
 
 /* ── Mood definitions ── */
@@ -18,7 +21,7 @@ type MoodKey = 'idle' | 'thinking' | 'happy' | 'alert' | 'talking' | 'sleeping'
 const MOODS: Record<MoodKey, MoodDef> = {
   idle: { eyes: 'open', mouth: 'smile', color: PURPLE, thought: null },
   thinking: { eyes: 'squint', mouth: 'flat', color: '#F59E0B', thought: '...' },
-  happy: { eyes: 'happy', mouth: 'grin', color: PURPLE, thought: '♪' },
+  happy: { eyes: 'happy', mouth: 'grin', color: PURPLE, thought: null },
   alert: { eyes: 'wide', mouth: 'oh', color: '#EF4444', thought: '!!' },
   talking: { eyes: 'happy', mouth: 'talk', color: PURPLE, thought: null },
   sleeping: { eyes: 'closed', mouth: 'flat', color: '#94a3b8', thought: null },
@@ -43,8 +46,6 @@ const FEET_FRAMES = [
 ]
 
 /* ── Welcome sequence — Kitz greets user on first load ── */
-/* Kitz = execution engine. Trains, reskills, coaches, leads, strategizes, */
-/* directs, and organizes your agents. Cool, chill, confident. */
 const WELCOME_LINES = [
   { text: "hey! i'm kitz", mood: 'happy' as MoodKey, duration: 2000 },
   { text: 'i direct your agents', mood: 'talking' as MoodKey, duration: 2000 },
@@ -53,16 +54,15 @@ const WELCOME_LINES = [
 ]
 
 /* ── Idle phrases — loop after welcome ── */
-/* Reflects what Kitz does: train, reskill, coach, lead, strategize, direct, organize */
 const IDLE_PHRASES = [
-  { text: 'coaching agents 🧠', mood: 'idle' as MoodKey, duration: 2500 },
+  { text: 'coaching agents', mood: 'idle' as MoodKey, duration: 2500 },
   { text: 'organizing your crew', mood: 'talking' as MoodKey, duration: 2500 },
   { text: 'tap to text!', mood: 'talking' as MoodKey, duration: 2000 },
   { text: 'training agents...', mood: 'idle' as MoodKey, duration: 2500 },
   { text: '2x tap to talk', mood: 'talking' as MoodKey, duration: 2500 },
-  { text: 'strategizing 📊', mood: 'idle' as MoodKey, duration: 2000 },
+  { text: 'strategizing', mood: 'idle' as MoodKey, duration: 2000 },
   { text: 'leading the team', mood: 'happy' as MoodKey, duration: 2000 },
-  { text: 'just build it 💪', mood: 'happy' as MoodKey, duration: 2000 },
+  { text: 'just build it', mood: 'happy' as MoodKey, duration: 2000 },
   { text: 'reskilling agents', mood: 'idle' as MoodKey, duration: 2500 },
   { text: 'stay focused', mood: 'idle' as MoodKey, duration: 2000 },
 ]
@@ -76,12 +76,15 @@ function PixelGrid({
   color,
   opacity = 1,
   offsetY = 0,
+  pixelSize,
 }: {
   grid: number[][]
   color: string
   opacity?: number
   offsetY?: number
+  pixelSize?: number
 }) {
+  const s = pixelSize ?? PX
   return (
     <div style={{ position: 'relative', top: offsetY }}>
       {grid.map((row, y) => (
@@ -90,8 +93,8 @@ function PixelGrid({
             <div
               key={`${x}-${y}`}
               style={{
-                width: PX,
-                height: PX,
+                width: s,
+                height: s,
                 background: cell ? color : 'transparent',
                 opacity: cell ? opacity : 0,
               }}
@@ -103,8 +106,8 @@ function PixelGrid({
   )
 }
 
-function Eyes({ mood, blinkFrame }: { mood: string; blinkFrame: boolean }) {
-  const s = PX
+function Eyes({ mood, blinkFrame, pixelSize }: { mood: string; blinkFrame: boolean; pixelSize?: number }) {
+  const s = pixelSize ?? PX
   const eyeStyle = (isLeft: boolean): React.CSSProperties => {
     const base: React.CSSProperties = {
       position: 'absolute',
@@ -140,7 +143,7 @@ function Eyes({ mood, blinkFrame }: { mood: string; blinkFrame: boolean }) {
         marginTop: -s * 0.1,
       }
     }
-    // Default "open" eyes: half-pill shape (flat bottom, rounded top) — matches Kitz image
+    // Default "open" eyes: half-pill shape
     return { ...base, width: s, height: s * 0.7, background: DARK, borderRadius: `${s * 0.5}px ${s * 0.5}px 0 0`, marginTop: s * 0.15 }
   }
 
@@ -165,8 +168,8 @@ function Eyes({ mood, blinkFrame }: { mood: string; blinkFrame: boolean }) {
   )
 }
 
-function Mouth({ mood, isTalking }: { mood: string; isTalking: boolean }) {
-  const s = PX
+function Mouth({ mood, isTalking, pixelSize }: { mood: string; isTalking: boolean; pixelSize?: number }) {
+  const s = pixelSize ?? PX
   const base: React.CSSProperties = {
     position: 'absolute',
     top: s * 4.2,
@@ -213,7 +216,7 @@ function Mouth({ mood, isTalking }: { mood: string; isTalking: boolean }) {
       <div style={{ ...base, width: s * 1.5, height: Math.max(2, s * 0.25), background: DARK, borderRadius: 1 }} />
     )
   }
-  // Default smile: half-pill smirk (flat top, rounded bottom) — matches Kitz image
+  // Default smile
   return (
     <div
       style={{
@@ -227,7 +230,7 @@ function Mouth({ mood, isTalking }: { mood: string; isTalking: boolean }) {
   )
 }
 
-/* ── Thought bubble — appears with a gentle fade ── */
+/* ── Thought bubble ── */
 function ThoughtBubble({ text, color }: { text: string; color: string }) {
   return (
     <div
@@ -245,14 +248,10 @@ function ThoughtBubble({ text, color }: { text: string; color: string }) {
         animation: 'fadeInUp 0.8s cubic-bezier(0.25, 0.1, 0.25, 1)',
         textShadow: `0 0 10px ${color}30`,
         whiteSpace: 'nowrap',
-        maxWidth: 110,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
         textAlign: 'center' as const,
       }}
     >
       {text}
-      {/* Arrow pointing down */}
       <div
         style={{
           position: 'absolute',
@@ -272,7 +271,7 @@ function ThoughtBubble({ text, color }: { text: string; color: string }) {
   )
 }
 
-/* ── Sleep Z's — floating letters above Kitz ── */
+/* ── Sleep Z's ── */
 function SleepZs() {
   return (
     <div
@@ -307,6 +306,33 @@ function SleepZs() {
   )
 }
 
+/* ── Trailing sparkles beneath Kitz ── */
+function TrailingSparkles({ color }: { color: string }) {
+  return (
+    <>
+      {[0, 1, 2].map((i) => (
+        <div
+          key={`trail-${i}`}
+          style={{
+            position: 'absolute',
+            bottom: -8 - i * 10,
+            left: '50%',
+            marginLeft: (i - 1) * 12,
+            width: 3 + i,
+            height: 3 + i,
+            background: color,
+            borderRadius: '50%',
+            opacity: 0.4 - i * 0.1,
+            animation: `kitz-trail-float ${1 + i * 0.3}s ease-in-out infinite`,
+            animationDelay: `${i * 0.2}s`,
+            filter: `blur(${i * 0.5}px)`,
+          }}
+        />
+      ))}
+    </>
+  )
+}
+
 /* ── Main Orb Component ── */
 
 interface OrbProps {
@@ -316,19 +342,17 @@ interface OrbProps {
   level?: number
 }
 
-/* Wake phase: sleeping → stirring (eyes flutter) → waking (color returns) → awake (fully active) */
 type WakePhase = 'sleeping' | 'stirring' | 'waking' | 'awake'
 
-/* ── Moody phrases when tapped while sleeping — chill, never rude ── */
-const MOODY_PHRASES = ['five more min...', 'not yet... 😴', 'shhh...', 'zzz... later', 'still charging ⚡']
+const MOODY_PHRASES = ['five more min...', 'not yet...', 'shhh...', 'zzz... later', 'still charging']
 
 /* ── Level-based aura layers ── */
 const AURA_LAYERS = [
-  null, // Level 1: no extra aura (base purple glow only)
-  { color: '#60A5FA', size: 13, blur: 12, opacity: 0.25, speed: 3 },     // Level 2: blue ring
-  { color: '#FBBF24', size: 15, blur: 16, opacity: 0.3, speed: 2.5 },    // Level 3: gold ring
-  { color: '#F9FAFB', size: 17, blur: 20, opacity: 0.2, speed: 2 },      // Level 4: white field
-  { color: '#7C3AED', size: 19, blur: 24, opacity: 0.35, speed: 1.5 },   // Level 5: Founder Mode (deep purple)
+  null,
+  { color: '#60A5FA', size: 13, blur: 12, opacity: 0.25, speed: 3 },
+  { color: '#FBBF24', size: 15, blur: 16, opacity: 0.3, speed: 2.5 },
+  { color: '#F9FAFB', size: 17, blur: 20, opacity: 0.2, speed: 2 },
+  { color: '#7C3AED', size: 19, blur: 24, opacity: 0.35, speed: 1.5 },
 ]
 
 function OrbAuras({ level }: { level: number }) {
@@ -365,7 +389,7 @@ function OrbAuras({ level }: { level: number }) {
             height: PX * 20,
             transform: 'translate(-50%, -50%)',
             borderRadius: '50%',
-            border: `2px solid #FBBF2430`,
+            border: '2px solid #FBBF2430',
             animation: 'orb-breathe 1.2s ease-in-out infinite',
             pointerEvents: 'none',
           }}
@@ -387,7 +411,7 @@ export function Orb({ sleeping = false, static: isStatic = false, level = 1 }: O
   const moodyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const moodyIndexRef = useRef(0)
 
-  /* ── Static mode: frozen idle Orb — no animations, no interactions ── */
+  /* ── Static mode: frozen idle Orb ── */
   if (isStatic) {
     const staticMood = MOODS.idle
     return (
@@ -405,7 +429,6 @@ export function Orb({ sleeping = false, static: isStatic = false, level = 1 }: O
             filter: `drop-shadow(0 0 8px ${PURPLE}50) drop-shadow(0 0 20px ${PURPLE}25)`,
           }}
         >
-          {/* Aura — static glow */}
           <div
             style={{
               position: 'absolute',
@@ -419,58 +442,56 @@ export function Orb({ sleeping = false, static: isStatic = false, level = 1 }: O
               pointerEvents: 'none',
             }}
           />
-
-          {/* Antenna */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: -1 }}>
+          {/* Antenna with flag */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: -1, position: 'relative' }}>
             <div
               style={{
                 width: Math.max(2, PX * 0.3),
-                height: PX * 1.5,
+                height: PX * 1.8,
                 background: PURPLE,
-                boxShadow: `0 -${PX * 0.5}px 0 ${PURPLE}, 0 -${PX}px 6px ${PURPLE}60`,
+                boxShadow: `0 0 8px ${PURPLE}60`,
               }}
             />
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: '50%',
+              marginLeft: 1,
+              width: PX * 0.7,
+              height: PX * 0.6,
+              background: PURPLE_LIGHT,
+              boxShadow: `0 0 6px ${PURPLE_LIGHT}60`,
+            }} />
           </div>
-
-          {/* Body */}
           <div style={{ position: 'relative' }}>
             <PixelGrid grid={ORB_SHAPE} color={PURPLE} />
-            {/* Highlight pixels */}
-            <div style={{ position: 'absolute', top: PX, left: PX * 2, width: PX * 0.6, height: PX * 0.6, background: '#fff', opacity: 0.7 }} />
-            <div style={{ position: 'absolute', top: PX * 1.5, left: PX * 1.5, width: PX * 0.4, height: PX * 0.4, background: '#fff', opacity: 0.4 }} />
+            <div style={{ position: 'absolute', top: PX, left: PX * 2, width: PX * 0.7, height: PX * 0.7, background: LAVENDER, opacity: 0.6 }} />
+            <div style={{ position: 'absolute', top: PX * 1.5, left: PX * 1.5, width: PX * 0.4, height: PX * 0.4, background: '#fff', opacity: 0.3 }} />
             <Eyes mood={staticMood.eyes} blinkFrame={false} />
             <Mouth mood={staticMood.mouth} isTalking={false} />
           </div>
-
-          {/* Feet — first frame, static */}
-          <PixelGrid grid={FEET_FRAMES[0]!} color={PURPLE} opacity={0.7} offsetY={-1} />
+          <PixelGrid grid={FEET_FRAMES[0]!} color={PURPLE_DARK} opacity={0.8} offsetY={-1} />
         </div>
       </div>
     )
   }
 
-  // Wake-up sequence: sleeping → stirring (1s) → waking (3s with "yah") → awake
+  // Wake-up sequence
   useEffect(() => {
-    // Clear any running wake timers
     wakeTimersRef.current.forEach(clearTimeout)
     wakeTimersRef.current = []
 
     if (sleeping) {
       setWakePhase('sleeping')
-      // Clear moody text when going back to sleep
       if (moodyTimerRef.current) clearTimeout(moodyTimerRef.current)
       setMoodyText(null)
       return
     }
 
-    // Not sleeping — start wake-up sequence
     if (wakePhase === 'sleeping') {
-      // Phase 1: stirring — eyes flutter, still gray (1s)
       setWakePhase('stirring')
       const t1 = setTimeout(() => setWakePhase('waking'), 1000)
-      // Phase 2: waking — "yah" bubble for 3 seconds, color returns
       const t2 = setTimeout(() => setWakePhase('awake'), 4000)
-      // Phase 3: awake — fully active, happy
       wakeTimersRef.current = [t1, t2]
     }
     return () => {
@@ -485,21 +506,20 @@ export function Orb({ sleeping = false, static: isStatic = false, level = 1 }: O
   const isStirring = wakePhase === 'stirring'
   const isWaking = wakePhase === 'waking'
 
-  // Fade in with website on mount
+  // Fade in
   useEffect(() => {
     const t = requestAnimationFrame(() => setFadeIn(true))
     return () => cancelAnimationFrame(t)
   }, [])
 
-  // Welcome flow state
+  // Welcome flow
   const [welcomeStep, setWelcomeStep] = useState(0)
   const [welcomeDone, setWelcomeDone] = useState(false)
   const welcomeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Idle phrase loop — cycles after welcome
+  // Idle phrase loop
   const [idlePhrase, setIdlePhrase] = useState(0)
 
-  // Determine mood based on wake phase
   const currentWelcome = isFullyAwake && !welcomeDone && welcomeStep < WELCOME_LINES.length
     ? WELCOME_LINES[welcomeStep]
     : null
@@ -507,11 +527,11 @@ export function Orb({ sleeping = false, static: isStatic = false, level = 1 }: O
   const moodKey: MoodKey = isAsleep
     ? 'sleeping'
     : isStirring
-    ? 'sleeping'       // still looks asleep but eyes will flutter via blinking
+    ? 'sleeping'
     : isWaking
-    ? 'idle'           // half-open eyes, gentle smile — waking up naturally
+    ? 'idle'
     : speaking
-    ? 'talking'        // TTS playing — Kitz talks with her voice
+    ? 'talking'
     : currentWelcome
     ? currentWelcome.mood
     : state === 'success' ? 'happy' : state === 'error' ? 'alert' : state === 'thinking' ? 'thinking' : 'idle'
@@ -519,36 +539,33 @@ export function Orb({ sleeping = false, static: isStatic = false, level = 1 }: O
   const currentMood = MOODS[moodKey]
   const isTalking = isFullyAwake && (moodKey === 'talking' || !!currentWelcome)
 
-  // Color progression: gray → desaturated purple → muted purple → full purple
   const displayColor = isAsleep
-    ? '#94a3b8'        // gray — sleeping
+    ? '#94a3b8'
     : isStirring
-    ? '#b0a0c0'        // desaturated purple-gray — stirring
+    ? '#b0a0c0'
     : isWaking
-    ? '#c084fc'        // light purple — waking up
-    : currentMood.color // full purple — awake
+    ? PURPLE_LIGHT
+    : currentMood.color
 
-  // Current idle phrase
   const currentIdlePhrase = isFullyAwake && welcomeDone && state === 'idle'
     ? IDLE_PHRASES[idlePhrase % IDLE_PHRASES.length]
     : null
 
-  // Thought bubble text
   const thoughtText = isAsleep
     ? null
     : isStirring
-    ? null           // no bubble yet, just stirring
+    ? null
     : isWaking
-    ? "yay, i'm up!"   // waking up phrase
+    ? "yay, i'm up!"
     : currentWelcome
     ? currentWelcome.text
     : state === 'thinking' ? '...'
-    : state === 'success' ? '♪'
+    : state === 'success' ? null
     : state === 'error' ? '!!'
     : currentIdlePhrase ? currentIdlePhrase.text
     : null
 
-  // Welcome sequence — auto-advance through lines (only when fully awake)
+  // Welcome sequence
   useEffect(() => {
     if (!isFullyAwake || welcomeDone || welcomeStep >= WELCOME_LINES.length) return
     const line = WELCOME_LINES[welcomeStep]
@@ -566,7 +583,7 @@ export function Orb({ sleeping = false, static: isStatic = false, level = 1 }: O
     }
   }, [welcomeStep, welcomeDone, isFullyAwake])
 
-  // Idle phrase loop — advance every phrase duration
+  // Idle phrase loop
   useEffect(() => {
     if (!isFullyAwake || !welcomeDone || state !== 'idle') return
     const phrase = IDLE_PHRASES[idlePhrase % IDLE_PHRASES.length]
@@ -577,19 +594,19 @@ export function Orb({ sleeping = false, static: isStatic = false, level = 1 }: O
     return () => clearTimeout(t)
   }, [welcomeDone, state, idlePhrase, isFullyAwake])
 
-  // Idle foot animation — only when fully awake
+  // Foot animation
   useEffect(() => {
     if (!isFullyAwake) { setFeetFrame(0); return }
-    const interval = setInterval(() => setFeetFrame((f) => (f + 1) % 3), 550)
+    const interval = setInterval(() => setFeetFrame((f) => (f + 1) % 3), 400)
     return () => clearInterval(interval)
   }, [isFullyAwake])
 
-  // Gentle bounce — starts during waking phase (slower), full speed when awake
+  // Gentle bounce
   useEffect(() => {
     if (isAsleep || isStirring) { setBounceY(0); return }
     let t = 0
     let raf: number
-    const speed = isWaking ? 0.015 : 0.03  // slower bounce while waking
+    const speed = isWaking ? 0.015 : 0.03
     const amplitude = isWaking ? -1.5 : -2.5
     const tick = () => {
       t += speed
@@ -600,7 +617,7 @@ export function Orb({ sleeping = false, static: isStatic = false, level = 1 }: O
     return () => cancelAnimationFrame(raf)
   }, [isAsleep, isStirring, isWaking])
 
-  // Rapid blinking during stirring phase (eyes fluttering)
+  // Rapid blinking during stirring
   useEffect(() => {
     if (!isStirring) return
     const interval = setInterval(() => {
@@ -619,11 +636,10 @@ export function Orb({ sleeping = false, static: isStatic = false, level = 1 }: O
     return () => clearInterval(interval)
   }, [])
 
-  // Single tap → text chatbox | Double tap → voice modal
+  // Single tap → text | Double tap → voice
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleClick = () => {
-    // If sleeping, show moody reaction instead of opening anything
     if (isAsleep) {
       if (moodyTimerRef.current) clearTimeout(moodyTimerRef.current)
       const phrase = MOODY_PHRASES[moodyIndexRef.current % MOODY_PHRASES.length]!
@@ -638,18 +654,16 @@ export function Orb({ sleeping = false, static: isStatic = false, level = 1 }: O
       setWelcomeDone(true)
     }
 
-    // Double-tap detection: if a click timer is running, this is a double tap → voice
     if (clickTimerRef.current) {
       clearTimeout(clickTimerRef.current)
       clickTimerRef.current = null
-      open()  // voice modal
+      open()
       return
     }
 
-    // Otherwise wait to see if it's a double tap — if not, open text chatbox
     clickTimerRef.current = setTimeout(() => {
       clickTimerRef.current = null
-      focusChat()  // text chatbox
+      focusChat()
     }, 280)
   }
 
@@ -671,7 +685,7 @@ export function Orb({ sleeping = false, static: isStatic = false, level = 1 }: O
       aria-label="Talk to Kitz"
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick() }}
     >
-      {/* Thought bubble, moody bubble, or sleep Z's */}
+      {/* Thought bubble or sleep Z's */}
       {isAsleep && moodyText ? (
         <ThoughtBubble text={moodyText} color="#EF4444" />
       ) : isAsleep ? (
@@ -692,22 +706,22 @@ export function Orb({ sleeping = false, static: isStatic = false, level = 1 }: O
             ? 'drop-shadow(0 0 5px rgba(168,85,247,0.1)) grayscale(0.2)'
             : isWaking
             ? `drop-shadow(0 0 6px ${PURPLE}25) grayscale(0)`
-            : `drop-shadow(0 0 8px ${PURPLE}50) drop-shadow(0 0 20px ${PURPLE}25)`,
+            : `drop-shadow(0 0 14px ${PURPLE}50)`,
         }}
       >
-        {/* Aura — appears during waking (faint) and fully when awake */}
+        {/* Glow halo */}
         {(isWaking || isFullyAwake) && (
           <div
             style={{
               position: 'absolute',
               top: '50%',
               left: '50%',
-              width: PX * 10,
-              height: PX * 10,
+              width: PX * 14,
+              height: PX * 14,
               transform: 'translate(-50%, -50%)',
               borderRadius: '50%',
-              background: `radial-gradient(circle, ${PURPLE}30 0%, ${PURPLE}15 40%, ${PURPLE}06 65%, transparent 80%)`,
-              animation: 'orb-breathe 4s ease-in-out infinite',
+              background: `radial-gradient(circle, ${PURPLE}20, transparent 70%)`,
+              animation: 'kitz-halo-pulse 2s ease-in-out infinite',
               opacity: isWaking ? 0.4 : 1,
               transition: 'opacity 1s ease',
               pointerEvents: 'none',
@@ -718,33 +732,50 @@ export function Orb({ sleeping = false, static: isStatic = false, level = 1 }: O
         {/* Level-based stacking auras */}
         <OrbAuras level={level} />
 
-        {/* Antenna */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: -1 }}>
+        {/* Antenna with flag */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: -1, position: 'relative' }}>
           <div
             style={{
               width: Math.max(2, PX * 0.3),
-              height: PX * 1.5,
+              height: PX * 1.8,
               background: displayColor,
-              boxShadow: `0 -${PX * 0.5}px 0 ${displayColor}, 0 -${PX}px 6px ${displayColor}60`,
+              boxShadow: `0 0 8px ${displayColor}60`,
               transition: 'background 1s ease, box-shadow 1s ease',
             }}
           />
+          {/* Flag on antenna */}
+          {isFullyAwake && (
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: '50%',
+              marginLeft: 1,
+              width: PX * 0.7,
+              height: PX * 0.6,
+              background: PURPLE_LIGHT,
+              boxShadow: `0 0 6px ${PURPLE_LIGHT}60`,
+            }} />
+          )}
         </div>
 
         {/* Body */}
         <div style={{ position: 'relative' }}>
           <PixelGrid grid={ORB_SHAPE} color={displayColor} />
-          {/* Highlight pixels */}
-          <div style={{ position: 'absolute', top: PX, left: PX * 2, width: PX * 0.6, height: PX * 0.6, background: '#fff', opacity: 0.7 }} />
-          <div style={{ position: 'absolute', top: PX * 1.5, left: PX * 1.5, width: PX * 0.4, height: PX * 0.4, background: '#fff', opacity: 0.4 }} />
+          {/* Highlight pixels (top-left shine) */}
+          <div style={{ position: 'absolute', top: PX, left: PX * 2, width: PX * 0.7, height: PX * 0.7, background: LAVENDER, opacity: 0.6 }} />
+          <div style={{ position: 'absolute', top: PX * 1.5, left: PX * 1.5, width: PX * 0.4, height: PX * 0.4, background: '#fff', opacity: 0.3 }} />
           <Eyes mood={blinking ? 'closed' : currentMood.eyes} blinkFrame={blinking} />
           <Mouth mood={currentMood.mouth} isTalking={isTalking} />
         </div>
 
         {/* Feet */}
-        <PixelGrid grid={(FEET_FRAMES[feetFrame] ?? FEET_FRAMES[0])!} color={displayColor} opacity={0.7} offsetY={-1} />
-      </div>
+        <PixelGrid grid={(FEET_FRAMES[feetFrame] ?? FEET_FRAMES[0])!} color={PURPLE_DARK} opacity={0.8} offsetY={-1} />
 
+        {/* Trailing sparkles when awake and idle */}
+        {isFullyAwake && state === 'idle' && (
+          <TrailingSparkles color={PURPLE_LIGHT} />
+        )}
+      </div>
     </div>
   )
 }

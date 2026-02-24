@@ -58,9 +58,16 @@ export function AgentStatusCard({ agent, onToggle }: AgentStatusCardProps) {
       )}
 
       <div className="mt-3 flex items-center justify-between">
-        <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-medium', badgeStyles[agent.group])}>
-          {agent.group}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-medium', badgeStyles[agent.group])}>
+            {agent.group}
+          </span>
+          {agent.monitoringCount != null && agent.monitoringCount > 0 && (
+            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+              {agent.monitoringCount} workflows
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           {agent.actionsToday > 0 && (
             <span className="font-mono text-[10px] text-gray-400">

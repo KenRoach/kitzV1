@@ -14,15 +14,40 @@ export class CopyWriterAgent extends BaseAgent {
     return this.invokeTool('marketing_generateContent', { type: type === 'landing' ? 'ad' : type, topic: context }, traceId);
   }
 
+  async createFlyer(headline: string, body: string, traceId?: string): Promise<unknown> {
+    return this.invokeTool('flyer_create', { headline, body }, traceId);
+  }
+
+  async createPromo(platform: string, product: string, traceId?: string): Promise<unknown> {
+    return this.invokeTool('promo_create', { platform, product }, traceId);
+  }
+
+  async buildEmail(brief: string, traceId?: string): Promise<unknown> {
+    return this.invokeTool('email_buildTemplate', { brief }, traceId);
+  }
+
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
 
-    const result = await this.invokeTool('marketing_generateContent', {
-      type: payload.type ?? 'email',
-      topic: payload.topic ?? 'KITZ platform features and benefits',
-      language: payload.language ?? 'es',
-    }, traceId);
+    const type = (payload.type as string) ?? 'email';
+    let result;
+    if (type === 'flyer') {
+      result = await this.invokeTool('flyer_create', {
+        headline: payload.headline ?? payload.topic ?? 'Promotional Flyer',
+        body: payload.body ?? payload.topic ?? '',
+      }, traceId);
+    } else if (type === 'promo') {
+      result = await this.invokeTool('promo_create', {
+        platform: payload.platform ?? 'whatsapp',
+        product: payload.product ?? payload.topic ?? '',
+      }, traceId);
+    } else {
+      result = await this.invokeTool('email_buildTemplate', {
+        brief: payload.topic ?? 'KITZ platform features and benefits',
+        template: payload.template ?? 'welcome',
+      }, traceId);
+    }
 
     await this.invokeTool('memory_store_knowledge', {
       category: 'swarm-findings',

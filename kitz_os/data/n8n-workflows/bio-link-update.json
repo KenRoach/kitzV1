@@ -1,0 +1,63 @@
+{
+  "name": "KITZ - Update Bio Link Page",
+  "nodes": [
+    {
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300],
+      "parameters": {
+        "path": "kitz-bio-update",
+        "httpMethod": "POST"
+      },
+      "webhookId": "kitz-bio-update"
+    },
+    {
+      "name": "Create Bio Link",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "website_createBioLink",
+          "args": {
+            "links": "={{$json.body.links}}",
+            "bio": "={{$json.body.bio || ''}}"
+          }
+        }
+      }
+    },
+    {
+      "name": "Export Bio Link",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [650, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "website_export",
+          "args": {
+            "content_id": "={{$json.contentId}}",
+            "title": "={{$json.body.title || 'Bio Link'}}"
+          }
+        }
+      }
+    },
+    {
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [850, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { contentId: $json.contentId, html: $json.html, format: 'standalone-html' } }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": { "main": [[{ "node": "Create Bio Link", "type": "main", "index": 0 }]] },
+    "Create Bio Link": { "main": [[{ "node": "Export Bio Link", "type": "main", "index": 0 }]] },
+    "Export Bio Link": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  }
+}

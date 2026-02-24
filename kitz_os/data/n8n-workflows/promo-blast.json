@@ -1,0 +1,65 @@
+{
+  "name": "KITZ - Promo Blast via WhatsApp",
+  "nodes": [
+    {
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300],
+      "parameters": {
+        "path": "kitz-promo-blast",
+        "httpMethod": "POST"
+      },
+      "webhookId": "kitz-promo-blast"
+    },
+    {
+      "name": "Create Flyer",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "flyer_create",
+          "args": {
+            "headline": "={{$json.body.headline}}",
+            "body": "={{$json.body.body}}",
+            "template": "={{$json.body.template || 'sale'}}"
+          }
+        }
+      }
+    },
+    {
+      "name": "Preview Broadcast",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [650, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "broadcast_preview",
+          "args": {
+            "group_name": "={{$json.body.group_name || 'all'}}",
+            "message": "={{$json.body.message || 'Mira nuestra nueva promocion!'}}",
+            "html_content": "={{$json.html}}"
+          }
+        }
+      }
+    },
+    {
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [850, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { contentId: $json.contentId, broadcastId: $json.broadcastId, status: 'preview' } }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": { "main": [[{ "node": "Create Flyer", "type": "main", "index": 0 }]] },
+    "Create Flyer": { "main": [[{ "node": "Preview Broadcast", "type": "main", "index": 0 }]] },
+    "Preview Broadcast": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  }
+}

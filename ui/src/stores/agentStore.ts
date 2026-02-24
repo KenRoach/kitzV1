@@ -1,7 +1,16 @@
 import { create } from 'zustand'
 import type { AgentInfo, Draft } from '@/types/agent'
+import { getItemsByAgent } from '@/content/automation-catalog'
 
-const MOCK_AGENTS: AgentInfo[] = [
+/** Compute monitoring count from the automation catalog */
+function withMonitoring(agents: AgentInfo[]): AgentInfo[] {
+  return agents.map((a) => ({
+    ...a,
+    monitoringCount: getItemsByAgent(a.name).length,
+  }))
+}
+
+const BASE_AGENTS: AgentInfo[] = [
   { id: 'a1', name: 'Kitz Manager', role: 'Your AI business partner — strategy & priorities', group: 'manager', status: 'active', lastAction: 'Reviewed daily priorities', lastActionAt: '2026-02-23T10:30:00Z', actionsToday: 12 },
   { id: 'a2', name: 'Lead Finder', role: 'Finds new leads from WhatsApp & socials', group: 'sales', status: 'active', lastAction: 'Found 2 new Instagram leads', lastActionAt: '2026-02-23T10:25:00Z', actionsToday: 8 },
   { id: 'a3', name: 'Follow-Up Agent', role: 'Sends timely follow-ups so no lead goes cold', group: 'sales', status: 'active', lastAction: 'Drafted follow-up for Maria G.', lastActionAt: '2026-02-23T10:20:00Z', actionsToday: 5 },
@@ -35,7 +44,7 @@ interface AgentStore {
 }
 
 export const useAgentStore = create<AgentStore>((set) => ({
-  agents: MOCK_AGENTS,
+  agents: withMonitoring(BASE_AGENTS),
   drafts: MOCK_DRAFTS,
 
   fetchAgents: async () => {

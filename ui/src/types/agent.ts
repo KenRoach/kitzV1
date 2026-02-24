@@ -10,6 +10,8 @@ export interface AgentInfo {
   lastAction?: string
   lastActionAt?: string
   actionsToday: number
+  /** Number of automated workflows this agent monitors */
+  monitoringCount?: number
 }
 
 export interface Draft {

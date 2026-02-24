@@ -1,0 +1,66 @@
+{
+  "name": "KITZ - Content Weekly Digest (Fri 5PM)",
+  "nodes": [
+    {
+      "name": "Cron Trigger",
+      "type": "n8n-nodes-base.cron",
+      "position": [250, 300],
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 17 * * 5" }] }
+      }
+    },
+    {
+      "name": "List Week Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "invoice_list",
+          "args": { "status": "all" }
+        }
+      }
+    },
+    {
+      "name": "Generate AI Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [650, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "llm_chat",
+          "args": {
+            "message": "Resumen semanal de contenido creado: {{$json.items.length}} piezas. Genera un resumen ejecutivo breve en espanol.",
+            "tier": "haiku"
+          }
+        }
+      }
+    },
+    {
+      "name": "Send Digest via WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [850, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "outbound_sendWhatsApp",
+          "args": {
+            "to": "={{$env.OWNER_PHONE}}",
+            "message": "={{$json.response}}"
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron Trigger": { "main": [[{ "node": "List Week Content", "type": "main", "index": 0 }]] },
+    "List Week Content": { "main": [[{ "node": "Generate AI Summary", "type": "main", "index": 0 }]] },
+    "Generate AI Summary": { "main": [[{ "node": "Send Digest via WhatsApp", "type": "main", "index": 0 }]] }
+  }
+}

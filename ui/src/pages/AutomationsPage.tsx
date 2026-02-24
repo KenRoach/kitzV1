@@ -1,19 +1,23 @@
+import { useState } from 'react'
 import {
   Zap,
   Shield,
   FileCheck,
-  RotateCcw,
-  Clock,
   Eye,
-  BookOpen,
   CheckCircle2,
   AlertTriangle,
+  RotateCcw,
+  Clock,
   Code,
   ExternalLink,
+  Filter,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/home/PageHeader'
 import { AutoPilotTab } from '@/components/autopilot/AutoPilotTab'
+import { AutomationCategoryGroup } from '@/components/autopilot/AutomationCategoryGroup'
 import { KITZ_MANIFEST } from '@/content/kitz-manifest'
+import { AUTOMATION_CATALOG, getAutomationStats } from '@/content/automation-catalog'
 
 /* ── How Autopilot Works ── */
 const autopilotSteps = [
@@ -43,61 +47,29 @@ const autopilotSteps = [
   },
 ] as const
 
-/* ── SOPs ── */
-const sopDetails = [
-  {
-    slug: 'new-customer-onboarding',
-    title: 'New Customer Onboarding',
-    owner: 'HeadGrowth',
-    description: 'Automatically welcome new customers, collect key info, add to CRM, and trigger first follow-up sequence.',
-    triggers: ['New WhatsApp contact', 'Form submission', 'Manual add'],
-  },
-  {
-    slug: 'ai-battery-management',
-    title: 'AI Battery Management',
-    owner: 'CFO',
-    description: 'Monitor daily credit usage, enforce limits, alert when running low, and recommend manual mode when ROI is insufficient.',
-    triggers: ['Credit threshold reached', 'Daily limit hit', 'Low ROI detected'],
-  },
-  {
-    slug: 'whatsapp-response-sla',
-    title: 'WhatsApp Response SLA',
-    owner: 'HeadCustomer',
-    description: 'Ensure every WhatsApp message gets a response within the SLA. Escalate unresponded messages automatically.',
-    triggers: ['Incoming message', 'SLA timer expiry', 'Escalation threshold'],
-  },
-  {
-    slug: 'order-fulfillment',
-    title: 'Order Fulfillment',
-    owner: 'COO',
-    description: 'Track orders from placement to delivery. Update status, notify customers, and flag delays before they become complaints.',
-    triggers: ['New order', 'Status change', 'Delivery delay'],
-  },
-  {
-    slug: 'inbox-triage',
-    title: 'Inbox Triage',
-    owner: 'HeadCustomer',
-    description: 'Auto-classify incoming messages by urgency and type. Route to the right agent team. Flag VIP customers.',
-    triggers: ['New message', 'VIP contact detected', 'Urgent keyword'],
-  },
-  {
-    slug: 'payment-collection',
-    title: 'Payment Collection',
-    owner: 'CFO',
-    description: 'Send payment reminders, generate checkout links, track overdue invoices, and escalate to human when needed.',
-    triggers: ['Invoice overdue', 'Payment reminder schedule', 'Failed payment'],
-  },
-] as const
-
 /* ── Safety guardrails ── */
 const guardrails = [
-  { icon: Shield, label: 'Draft-first by default', desc: 'draftOnly: true on all connectors and queues' },
-  { icon: AlertTriangle, label: 'Kill switch', desc: 'KILL_SWITCH=true halts all AI execution instantly' },
+  { icon: Shield, label: 'Draft-first by default', desc: 'Nothing sends without your approval' },
+  { icon: AlertTriangle, label: 'Kill switch', desc: 'One tap halts all AI execution instantly' },
   { icon: RotateCcw, label: 'Retry with DLQ', desc: '3 retries, then dead-letter queue. No silent failures' },
   { icon: Clock, label: 'ROI gate', desc: `Projected ROI must be ≥ ${KITZ_MANIFEST.governance.roiMinimum} or agent recommends manual` },
 ] as const
 
+type StatusFilter = 'all' | 'live' | 'coming-soon'
+
 export function AutomationsPage() {
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const stats = getAutomationStats()
+
+  const filteredCatalog = AUTOMATION_CATALOG
+    .map((group) => ({
+      ...group,
+      items: statusFilter === 'all'
+        ? group.items
+        : group.items.filter((i) => i.status === statusFilter),
+    }))
+    .filter((group) => group.items.length > 0)
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-8 pb-12">
       <PageHeader
@@ -110,8 +82,70 @@ export function AutomationsPage() {
         <AutoPilotTab />
       </section>
 
-      {/* ── How it works ── */}
+      {/* ── Stats bar ── */}
+      <section className="mt-2 mb-8">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
+            <p className="text-2xl font-bold text-black">{stats.total}</p>
+            <p className="mt-0.5 text-xs text-gray-500">Total Automations</p>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
+            <p className="text-2xl font-bold text-green-600">{stats.live}</p>
+            <p className="mt-0.5 text-xs text-gray-500">Live Now</p>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
+            <p className="text-2xl font-bold text-amber-600">{stats.comingSoon}</p>
+            <p className="mt-0.5 text-xs text-gray-500">Coming Soon</p>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
+            <p className="text-2xl font-bold text-purple-600">{stats.agents}</p>
+            <p className="mt-0.5 text-xs text-gray-500">Agents Monitoring</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Automation Catalog ── */}
       <section className="mt-2">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-black">Automated Workflows</h3>
+            <p className="text-sm text-gray-500">
+              {stats.categories} categories of workflows — agents monitor and manage each one
+            </p>
+          </div>
+          <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1">
+            <Filter className="ml-2 h-3.5 w-3.5 text-gray-400" />
+            {(['all', 'live', 'coming-soon'] as StatusFilter[]).map((f) => (
+              <button
+                key={f}
+                onClick={() => setStatusFilter(f)}
+                className={cn(
+                  'rounded-md px-3 py-1 text-xs font-medium transition',
+                  statusFilter === f
+                    ? 'bg-purple-500 text-white'
+                    : 'text-gray-500 hover:bg-gray-100',
+                )}
+              >
+                {f === 'all' ? 'All' : f === 'live' ? 'Live' : 'Coming Soon'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {filteredCatalog.map((group, i) => (
+            <AutomationCategoryGroup
+              key={group.category}
+              group={group}
+              defaultExpanded={i === 0}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* ── How it works ── */}
+      <section className="mt-12">
+        <h3 className="text-lg font-bold text-black mb-4">How Automations Work</h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {autopilotSteps.map((step) => {
             const Icon = step.icon
@@ -127,50 +161,6 @@ export function AutomationsPage() {
               </div>
             )
           })}
-        </div>
-      </section>
-
-      {/* ── SOPs ── */}
-      <section className="mt-12 rounded-3xl bg-gray-50 p-6">
-        <div className="flex items-center gap-2">
-          <BookOpen className="h-5 w-5 text-purple-500" />
-          <h3 className="text-lg font-bold text-black">Standard Operating Procedures</h3>
-        </div>
-        <p className="mt-1 text-sm text-gray-500">
-          {KITZ_MANIFEST.capabilities.sops} SOPs ensure consistent quality — every customer gets the same experience
-        </p>
-
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {sopDetails.map((sop) => (
-            <div
-              key={sop.slug}
-              className="flex flex-col rounded-2xl border border-gray-200 bg-white p-5"
-            >
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold text-black">{sop.title}</h4>
-                <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-semibold text-purple-600">
-                  {sop.owner}
-                </span>
-              </div>
-              <p className="mt-2 text-xs leading-relaxed text-gray-500">{sop.description}</p>
-
-              <div className="mt-3">
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                  Triggers
-                </span>
-                <div className="mt-1 flex flex-wrap gap-1">
-                  {sop.triggers.map((t) => (
-                    <span
-                      key={t}
-                      className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
       </section>
 

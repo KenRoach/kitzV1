@@ -32,12 +32,8 @@ export function TopNavBar({ currentNav, onNavChange, userName }: TopNavBarProps)
 
   return (
     <aside className="flex h-full w-56 shrink-0 flex-col border-r border-gray-200 bg-white">
-      {/* Logo */}
-      <div className="px-4 py-5">
-        <h1 className="bg-gradient-to-r from-purple-500 to-purple-600 bg-clip-text text-lg font-extrabold uppercase tracking-wide text-transparent">
-          KITZ v0.1
-        </h1>
-      </div>
+      {/* Spacer */}
+      <div className="py-3" />
 
       {/* Nav items */}
       <nav className="flex-1 space-y-1 px-3">

@@ -1,0 +1,60 @@
+{
+  "name": "KITZ - Quote Follow-Up (Every 3 Days)",
+  "nodes": [
+    {
+      "name": "Cron Trigger",
+      "type": "n8n-nodes-base.cron",
+      "position": [250, 300],
+      "parameters": {
+        "rule": { "interval": [{ "field": "hours", "hoursInterval": 72 }] }
+      }
+    },
+    {
+      "name": "List Pending Quotes",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "invoice_list",
+          "args": { "status": "sent", "type": "quote" }
+        }
+      }
+    },
+    {
+      "name": "Filter Old Quotes",
+      "type": "n8n-nodes-base.if",
+      "position": [650, 300],
+      "parameters": {
+        "conditions": {
+          "number": [{ "value1": "={{$json.items.length}}", "operation": "largerThan", "value2": 0 }]
+        }
+      }
+    },
+    {
+      "name": "Ship Follow-Up",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [850, 300],
+      "parameters": {
+        "url": "http://kitz-os:3012/api/kitz",
+        "method": "POST",
+        "headers": { "x-service-secret": "={{$env.SERVICE_SECRET}}" },
+        "body": {
+          "tool": "content_ship",
+          "args": {
+            "content_id": "={{$json.items[0].contentId}}",
+            "channel": "whatsapp",
+            "message": "Hola! Solo queria hacer seguimiento de la cotizacion que te envie. Avisame si tienes alguna pregunta."
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron Trigger": { "main": [[{ "node": "List Pending Quotes", "type": "main", "index": 0 }]] },
+    "List Pending Quotes": { "main": [[{ "node": "Filter Old Quotes", "type": "main", "index": 0 }]] },
+    "Filter Old Quotes": { "main": [[{ "node": "Ship Follow-Up", "type": "main", "index": 0 }]] }
+  }
+}
