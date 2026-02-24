@@ -18,8 +18,14 @@ interface OrbStore {
   isOpen: boolean
   /* Text chatbox focus signal — ChatPanel listens for this */
   chatFocused: boolean
+  /* Chatbox glow animation — stays true for ~1.5s after puff arrival */
+  chatGlowing: boolean
+  /* Chatbox loading bar animation — exaggerated fill effect on double-click */
+  chatLoading: boolean
   /* TTS speaking state — Orb shows talking mood */
   speaking: boolean
+  /** Incremented each time user clicks Kitz to puff-teleport to chatbox */
+  teleportSeq: number
 
   state: OrbState
   messages: ChatMessage[]
@@ -29,14 +35,26 @@ interface OrbStore {
   close: () => void
   focusChat: () => void
   blurChat: () => void
+  /** Trigger the chatbox glow animation (auto-clears after 1.8s) */
+  glowChat: () => void
+  /** Trigger the exaggerated chatbox loading bar (auto-clears after 2.5s) */
+  loadChat: () => void
+  /** Signal a puff-teleport to chatbox (FloatingOrb listens) */
+  teleportToChat: () => void
   setSpeaking: (val: boolean) => void
   sendMessage: (content: string, userId: string) => Promise<void>
 }
 
+let _glowTimer: ReturnType<typeof setTimeout> | null = null
+let _loadTimer: ReturnType<typeof setTimeout> | null = null
+
 export const useOrbStore = create<OrbStore>((set, get) => ({
   isOpen: false,
   chatFocused: false,
+  chatGlowing: false,
+  chatLoading: false,
   speaking: false,
+  teleportSeq: 0,
   state: 'idle',
   messages: [],
 
@@ -45,6 +63,23 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
   close: () => set({ isOpen: false }),
   focusChat: () => set({ chatFocused: true }),
   blurChat: () => set({ chatFocused: false }),
+  teleportToChat: () => set((s) => ({ teleportSeq: s.teleportSeq + 1 })),
+  glowChat: () => {
+    if (_glowTimer) clearTimeout(_glowTimer)
+    set({ chatGlowing: true })
+    _glowTimer = setTimeout(() => {
+      set({ chatGlowing: false })
+      _glowTimer = null
+    }, 1800)
+  },
+  loadChat: () => {
+    if (_loadTimer) clearTimeout(_loadTimer)
+    set({ chatLoading: true, chatFocused: true })
+    _loadTimer = setTimeout(() => {
+      set({ chatLoading: false })
+      _loadTimer = null
+    }, 2500)
+  },
   setSpeaking: (val) => set({ speaking: val }),
 
   sendMessage: async (content, userId) => {

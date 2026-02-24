@@ -213,7 +213,8 @@ export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
   const user = useAuthStore((s) => s.user)
   const openTalk = useOrbStore((s) => s.open)
   const orbState = useOrbStore((s) => s.state)
-  const focusChat = useOrbStore((s) => s.focusChat)
+  const teleportToChat = useOrbStore((s) => s.teleportToChat)
+  const loadChat = useOrbStore((s) => s.loadChat)
   const [orbTeleporting, setOrbTeleporting] = useState(false)
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const userName = user?.email?.split('@')[0] ?? 'there'
@@ -258,28 +259,31 @@ export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
           }}
           onClick={() => {
             if (sleeping) return
-            // Single click: puff to chatbox. Double click handled below.
+            // Single click: full puff teleport to chatbox. Double click handled below.
             if (clickTimerRef.current) return // double-click pending, skip
             clickTimerRef.current = setTimeout(() => {
               clickTimerRef.current = null
+              // Trigger the full puff teleport (smoke + sparkles + PUFF text + glow)
               setOrbTeleporting(true)
-              setTimeout(() => {
-                focusChat()
-                setOrbTeleporting(false)
-              }, 500)
+              teleportToChat()
+              // Hide hero Kitz while FloatingOrb handles the animation
+              setTimeout(() => setOrbTeleporting(false), 3500)
             }, 250) // wait 250ms to rule out double-click
           }}
           onDoubleClick={() => {
             if (sleeping) return
-            // Double click: open voice modal
+            // Double click: puff teleport + exaggerated loading bar in chatbox
             if (clickTimerRef.current) {
               clearTimeout(clickTimerRef.current)
               clickTimerRef.current = null
             }
-            openTalk()
+            setOrbTeleporting(true)
+            teleportToChat()
+            loadChat()
+            setTimeout(() => setOrbTeleporting(false), 3500)
           }}
         >
-          <Orb sleeping={sleeping} />
+          <Orb sleeping={sleeping} disableClick />
         </div>
       </div>
 

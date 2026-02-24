@@ -340,6 +340,8 @@ interface OrbProps {
   /** Render a frozen idle state — no animations, no interactions */
   static?: boolean
   level?: number
+  /** Disable internal click handling — parent manages clicks */
+  disableClick?: boolean
 }
 
 type WakePhase = 'sleeping' | 'stirring' | 'waking' | 'awake'
@@ -399,7 +401,7 @@ function OrbAuras({ level }: { level: number }) {
   )
 }
 
-export function Orb({ sleeping = false, static: isStatic = false, level = 1 }: OrbProps) {
+export function Orb({ sleeping = false, static: isStatic = false, level = 1, disableClick = false }: OrbProps) {
   const { open, focusChat, state, speaking } = useOrbStore()
   const [feetFrame, setFeetFrame] = useState(0)
   const [bounceY, setBounceY] = useState(0)
@@ -640,6 +642,7 @@ export function Orb({ sleeping = false, static: isStatic = false, level = 1 }: O
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleClick = () => {
+    if (disableClick) return
     if (isAsleep) {
       if (moodyTimerRef.current) clearTimeout(moodyTimerRef.current)
       const phrase = MOODY_PHRASES[moodyIndexRef.current % MOODY_PHRASES.length]!

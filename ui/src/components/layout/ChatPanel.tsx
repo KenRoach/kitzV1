@@ -15,7 +15,7 @@ interface BuildLogEntry {
 }
 
 export function ChatPanel() {
-  const { messages, state, sendMessage, chatFocused, blurChat } = useOrbStore()
+  const { messages, state, sendMessage, chatFocused, blurChat, chatGlowing, chatLoading } = useOrbStore()
   const user = useAuthStore((s) => s.user)
   const [input, setInput] = useState('')
   const [echoToWhatsApp, setEchoToWhatsApp] = useState(false)
@@ -163,16 +163,35 @@ export function ChatPanel() {
         {/* Input */}
         <form onSubmit={handleSubmit} className="flex items-center gap-2" data-orb-chatbox>
           <div className="relative flex-1">
-            <button type="button" className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition">
+            <button type="button" className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition z-10">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
             </button>
             <input
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask Kitz..."
-              className="w-full rounded-xl border border-white/40 bg-white/10 py-2.5 pl-10 pr-4 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/70 focus:ring-2 focus:ring-white/20"
+              placeholder={chatLoading ? '' : 'Ask Kitz...'}
+              className={cn(
+                "w-full rounded-xl border border-white/40 bg-white/10 py-2.5 pl-10 pr-4 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/70 focus:ring-2 focus:ring-white/20",
+                chatGlowing && "kitz-chatbox-glow",
+                chatLoading && "kitz-chatbox-loading-border"
+              )}
             />
+            {/* Exaggerated loading bar overlay */}
+            {chatLoading && (
+              <div className="kitz-chatbox-loading-bar absolute inset-0 rounded-xl overflow-hidden pointer-events-none">
+                {/* Sweeping gradient fill */}
+                <div className="kitz-chatbox-loading-fill absolute inset-0" />
+                {/* Shimmer highlight */}
+                <div className="kitz-chatbox-loading-shimmer absolute inset-0" />
+                {/* Loading text */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="kitz-chatbox-loading-text text-xs font-semibold tracking-wider">
+                    KITZ LOADING...
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
           {/* Send */}
           <button

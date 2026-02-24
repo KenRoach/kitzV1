@@ -180,3 +180,164 @@ body {
   0%, 100% { box-shadow: 0 0 0 rgba(168, 85, 247, 0); }
   50% { box-shadow: 0 0 20px rgba(168, 85, 247, 0.6); border-radius: 8px; }
 }
+
+/* Kitz ghost merge — Kitz shrinks, blurs, and fades as it dissolves into the chatbox */
+.kitz-ghost-merge {
+  animation: kitz-ghost-merge 600ms ease-in forwards;
+}
+@keyframes kitz-ghost-merge {
+  0% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+    filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.5)) blur(0px);
+  }
+  30% {
+    opacity: 0.4;
+    transform: translate(-50%, -50%) scale(0.6);
+    filter: drop-shadow(0 0 15px rgba(168, 85, 247, 0.6)) blur(2px);
+  }
+  60% {
+    opacity: 0.2;
+    transform: translate(-50%, -50%) scale(0.25);
+    filter: drop-shadow(0 0 10px rgba(192, 132, 252, 0.8)) blur(4px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+    filter: drop-shadow(0 0 0 rgba(168, 85, 247, 0)) blur(8px);
+  }
+}
+
+/* Kitz chatbox glow — purple pulse when Kitz puff-teleports to chatbox */
+.kitz-chatbox-glow {
+  animation: kitz-chatbox-glow 1.8s ease-out forwards;
+}
+@keyframes kitz-chatbox-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(168, 85, 247, 0), 0 0 0 0 rgba(192, 132, 252, 0);
+    border-color: rgba(168, 85, 247, 0.9);
+  }
+  15% {
+    box-shadow: 0 0 20px 4px rgba(168, 85, 247, 0.6), 0 0 40px 8px rgba(192, 132, 252, 0.3);
+    border-color: rgba(168, 85, 247, 1);
+  }
+  35% {
+    box-shadow: 0 0 16px 3px rgba(168, 85, 247, 0.5), 0 0 32px 6px rgba(192, 132, 252, 0.2);
+    border-color: rgba(168, 85, 247, 0.8);
+  }
+  60% {
+    box-shadow: 0 0 10px 2px rgba(168, 85, 247, 0.3), 0 0 20px 4px rgba(192, 132, 252, 0.1);
+    border-color: rgba(168, 85, 247, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(168, 85, 247, 0), 0 0 0 0 rgba(192, 132, 252, 0);
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+}
+
+/* ── Kitz chatbox loading bar — exaggerated fill effect on double-click ── */
+
+/* Border pulses bright purple while loading */
+.kitz-chatbox-loading-border {
+  border-color: rgba(168, 85, 247, 0.9) !important;
+  box-shadow: 0 0 20px 4px rgba(168, 85, 247, 0.5), 0 0 40px 8px rgba(192, 132, 252, 0.2), inset 0 0 12px rgba(168, 85, 247, 0.15) !important;
+  animation: kitz-loading-border-pulse 0.6s ease-in-out infinite !important;
+}
+@keyframes kitz-loading-border-pulse {
+  0%, 100% {
+    border-color: rgba(168, 85, 247, 0.9);
+    box-shadow: 0 0 20px 4px rgba(168, 85, 247, 0.5), 0 0 40px 8px rgba(192, 132, 252, 0.2), inset 0 0 12px rgba(168, 85, 247, 0.15);
+  }
+  50% {
+    border-color: rgba(192, 132, 252, 1);
+    box-shadow: 0 0 30px 8px rgba(168, 85, 247, 0.7), 0 0 60px 12px rgba(192, 132, 252, 0.35), inset 0 0 20px rgba(168, 85, 247, 0.25);
+  }
+}
+
+/* The loading bar container */
+.kitz-chatbox-loading-bar {
+  z-index: 5;
+}
+
+/* Purple gradient sweeps left→right like a progress bar */
+.kitz-chatbox-loading-fill {
+  background: linear-gradient(90deg,
+    rgba(168, 85, 247, 0.35) 0%,
+    rgba(192, 132, 252, 0.25) 40%,
+    rgba(124, 58, 237, 0.4) 60%,
+    rgba(168, 85, 247, 0.3) 100%
+  );
+  transform-origin: left;
+  animation: kitz-loading-fill-sweep 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes kitz-loading-fill-sweep {
+  0% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  /* Fast start */
+  15% {
+    transform: scaleX(0.3);
+  }
+  /* Slow crawl through the middle */
+  40% {
+    transform: scaleX(0.55);
+  }
+  60% {
+    transform: scaleX(0.7);
+  }
+  /* Accelerate to finish */
+  80% {
+    transform: scaleX(0.92);
+  }
+  90% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  /* Flash bright then fade */
+  95% {
+    transform: scaleX(1);
+    opacity: 0.8;
+    background: linear-gradient(90deg,
+      rgba(192, 132, 252, 0.5) 0%,
+      rgba(221, 214, 254, 0.4) 50%,
+      rgba(168, 85, 247, 0.5) 100%
+    );
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+}
+
+/* Shimmer highlight that races across during fill */
+.kitz-chatbox-loading-shimmer {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 45%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0.15) 55%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: kitz-loading-shimmer 1s linear infinite;
+}
+@keyframes kitz-loading-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Loading text fades in and pulses */
+.kitz-chatbox-loading-text {
+  color: rgba(221, 214, 254, 0.9);
+  text-shadow: 0 0 12px rgba(168, 85, 247, 0.8), 0 0 24px rgba(192, 132, 252, 0.4);
+  animation: kitz-loading-text-pulse 0.8s ease-in-out infinite;
+  letter-spacing: 3px;
+}
+@keyframes kitz-loading-text-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
