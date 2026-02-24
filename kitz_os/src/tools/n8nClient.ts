@@ -82,6 +82,22 @@ export async function executeWorkflow(
   return callN8n('POST', `/api/v1/workflows/${workflowId}/execute`, data ? { data } : undefined, traceId);
 }
 
+/** Create a new workflow from a JSON definition */
+export async function createWorkflow(
+  workflow: Record<string, unknown>,
+  traceId?: string,
+): Promise<unknown> {
+  return callN8n('POST', '/api/v1/workflows', workflow, traceId);
+}
+
+/** Delete a workflow by ID */
+export async function deleteWorkflow(
+  workflowId: string,
+  traceId?: string,
+): Promise<unknown> {
+  return callN8n('DELETE', `/api/v1/workflows/${workflowId}`, undefined, traceId);
+}
+
 /** List all workflows */
 export async function listWorkflows(traceId?: string): Promise<unknown> {
   return callN8n('GET', '/api/v1/workflows', undefined, traceId);
