@@ -7,32 +7,44 @@ interface HUDProps {
   worldNum: number
 }
 
+const GAME_NAMES: Record<number, string> = {
+  1: 'THE STARTUP',
+  2: 'GROWTH MODE',
+  3: 'SCALE UP',
+}
+
 export function HUD({ score, hp, maxHp, lives, levelName, worldNum }: HUDProps) {
   return (
     <>
-      {/* Top HUD bar */}
       <div
         className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-3"
         style={{ fontFamily: '"Press Start 2P", "Courier New", monospace' }}
       >
-        {/* Left: world + score */}
+        {/* Left: game name + revenue */}
         <div>
-          <div className="text-[7px] uppercase tracking-[0.2em]" style={{ color: '#C084FC', textShadow: '0 0 6px #A855F760' }}>
-            World {worldNum}
+          <div className="text-[6px] uppercase tracking-[0.2em]" style={{ color: '#C084FC', textShadow: '0 0 6px #A855F760' }}>
+            {GAME_NAMES[worldNum] ?? `GAME ${worldNum}`}
           </div>
-          <div className="text-[12px] font-bold text-white" style={{ textShadow: '0 0 8px #ffffff30' }}>
-            {score.toLocaleString()}
+          <div className="flex items-center gap-1">
+            <span className="text-[8px]" style={{ color: '#22C55E' }}>$</span>
+            <span className="text-[12px] font-bold text-white" style={{ textShadow: '0 0 8px #22C55E30' }}>
+              {score.toLocaleString()}
+            </span>
           </div>
+          <div className="text-[5px] uppercase tracking-wider" style={{ color: '#334155' }}>Revenue</div>
         </div>
 
         {/* Center: level name */}
-        <div className="text-center text-[7px] uppercase tracking-[0.2em]" style={{ color: '#64748b' }}>
-          {levelName}
+        <div className="text-center">
+          <div className="text-[7px] uppercase tracking-[0.2em]" style={{ color: '#64748b' }}>
+            {levelName}
+          </div>
         </div>
 
-        {/* Right: HP + lives */}
-        <div className="flex items-center gap-3">
-          <div className="flex gap-1">
+        {/* Right: brand health + funding rounds */}
+        <div className="text-right">
+          <div className="text-[5px] uppercase tracking-wider" style={{ color: '#334155' }}>Brand Health</div>
+          <div className="flex justify-end gap-1">
             {Array.from({ length: maxHp }, (_, i) => (
               <span
                 key={i}
@@ -46,11 +58,13 @@ export function HUD({ score, hp, maxHp, lives, levelName, worldNum }: HUDProps) 
               </span>
             ))}
           </div>
-          <div className="text-[8px]" style={{ color: '#64748b' }}>x{lives}</div>
+          <div className="mt-1 text-[6px]" style={{ color: '#64748b' }}>
+            Funding: <span style={{ color: '#FBBF24' }}>x{lives}</span>
+          </div>
         </div>
       </div>
 
-      {/* Bottom: control labels (desktop only) */}
+      {/* Bottom: control labels (desktop) */}
       <div
         className="pointer-events-none absolute inset-x-0 bottom-0 hidden items-center justify-center gap-6 p-3 lg:flex"
         style={{ fontFamily: '"Press Start 2P", "Courier New", monospace' }}
@@ -58,7 +72,6 @@ export function HUD({ score, hp, maxHp, lives, levelName, worldNum }: HUDProps) 
         <span className="text-[6px]" style={{ color: '#333355' }}>[&larr;&rarr;] MOVE</span>
         <span className="text-[6px]" style={{ color: '#333355' }}>[&uarr;] JUMP</span>
         <span className="text-[6px]" style={{ color: '#333355' }}>[SPACE] SHOOT</span>
-        <span className="text-[6px]" style={{ color: '#333355' }}>[Z] SPECIAL</span>
         <span className="text-[6px]" style={{ color: '#333355' }}>[P] PAUSE</span>
       </div>
     </>

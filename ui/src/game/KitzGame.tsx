@@ -9,8 +9,6 @@ import { PLAYER_MAX_HP, PLAYER_MAX_LIVES } from './constants'
 import { WORLD_1 } from './levels/World1'
 import { WORLD_2 } from './levels/World2'
 import { WORLD_3 } from './levels/World3'
-import { WORLD_4 } from './levels/World4'
-import { WORLD_5 } from './levels/World5'
 
 import { HUD } from './ui/HUD'
 import { TouchControls } from './ui/TouchControls'
@@ -20,11 +18,34 @@ import { Leaderboard } from './ui/Leaderboard'
 import { GameOverScreen } from './ui/GameOverScreen'
 import { LevelCompleteScreen } from './ui/LevelCompleteScreen'
 
-const ALL_LEVELS = [...WORLD_1, ...WORLD_2, ...WORLD_3, ...WORLD_4, ...WORLD_5]
+// 3 games, 3 levels each = 9 total levels
+const ALL_LEVELS = [
+  ...WORLD_1.slice(0, 3),
+  ...WORLD_2.slice(0, 3),
+  ...WORLD_3.slice(0, 3),
+]
 
-function getRandomQuestion(): Question {
-  const allQuestions = COURSES.flatMap((c) => c.questions)
-  return allQuestions[Math.floor(Math.random() * allQuestions.length)]!
+/**
+ * Map each game (world) to specific business courses:
+ * Game 1 "The Startup" → Intro to Business
+ * Game 2 "Growth Mode" → Social Media Marketing + SMB Tech Stack
+ * Game 3 "Scale Up"    → Business Management Systems
+ */
+const WORLD_COURSES: Record<number, string[]> = {
+  1: ['intro-to-business'],
+  2: ['social-media-marketing', 'smb-tech-stack'],
+  3: ['business-management'],
+}
+
+function getQuestionForWorld(worldNum: number): Question {
+  const courseIds = WORLD_COURSES[worldNum] ?? []
+  const pool = COURSES
+    .filter((c) => courseIds.includes(c.id))
+    .flatMap((c) => c.questions)
+
+  // fallback to all questions if no match
+  const questions = pool.length > 0 ? pool : COURSES.flatMap((c) => c.questions)
+  return questions[Math.floor(Math.random() * questions.length)]!
 }
 
 function saveLeaderboardEntry(score: number, world: number, level: number) {
@@ -33,7 +54,7 @@ function saveLeaderboardEntry(score: number, world: number, level: number) {
     const entries: { name: string; score: number; world: number; level: number; date: string }[] = raw
       ? JSON.parse(raw)
       : []
-    entries.push({ name: 'Kitz', score, world, level, date: new Date().toISOString() })
+    entries.push({ name: 'Founder', score, world, level, date: new Date().toISOString() })
     entries.sort((a, b) => b.score - a.score)
     localStorage.setItem('kitz-run-leaderboard', JSON.stringify(entries.slice(0, 20)))
   } catch { /* ignore */ }
@@ -64,7 +85,6 @@ export function KitzGame() {
   const currentLevelRef = useRef(currentLevel)
   currentLevelRef.current = currentLevel
 
-  // Create GameManager once on mount
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -75,7 +95,8 @@ export function KitzGame() {
       onLivesChange: setLives,
       onStateChange: setGameState,
       onQuizTrigger: () => {
-        setQuizQuestion(getRandomQuestion())
+        const lvl = currentLevelRef.current
+        setQuizQuestion(getQuestionForWorld(lvl?.world ?? 1))
       },
       onLevelComplete: (xp) => {
         setXpEarned(xp)
@@ -118,7 +139,6 @@ export function KitzGame() {
     setHp(PLAYER_MAX_HP)
     setLives(PLAYER_MAX_LIVES)
     setShowLeaderboard(false)
-    // Small delay so React hides the menu overlay first, then resize the visible canvas
     setTimeout(() => {
       gameRef.current?.resize()
       gameRef.current?.loadLevel(level, playerLevel)
@@ -173,7 +193,6 @@ export function KitzGame() {
 
   return (
     <div ref={containerRef} className="relative h-full w-full overflow-hidden bg-[#0D0D12]">
-      {/* Canvas — always in the DOM, centered. Hidden behind menu overlay. */}
       <div className="flex h-full w-full items-center justify-center">
         <canvas
           ref={canvasRef}
@@ -181,7 +200,6 @@ export function KitzGame() {
         />
       </div>
 
-      {/* ── MENU OVERLAY ── */}
       {gameState === 'menu' && (
         <div className="absolute inset-0 z-40 overflow-y-auto">
           {showLeaderboard ? (
@@ -196,7 +214,6 @@ export function KitzGame() {
         </div>
       )}
 
-      {/* ── IN-GAME HUD ── */}
       {currentLevel && gameState === 'playing' && (
         <HUD
           score={score}
@@ -208,12 +225,10 @@ export function KitzGame() {
         />
       )}
 
-      {/* ── TOUCH CONTROLS (mobile only) ── */}
       {gameState === 'playing' && (
         <TouchControls onAction={handleTouchAction} onPause={handlePause} />
       )}
 
-      {/* ── PAUSED ── */}
       {gameState === 'paused' && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center" style={{ fontFamily: '"Press Start 2P", "Courier New", monospace', background: 'radial-gradient(ellipse at center, #1a0a2e 0%, #000000cc 100%)' }}>
           <h2 className="text-3xl font-bold tracking-widest text-white" style={{ textShadow: '0 0 30px #A855F7, 0 0 60px #7C3AED' }}>PAUSED</h2>
@@ -236,12 +251,10 @@ export function KitzGame() {
         </div>
       )}
 
-      {/* ── QUIZ ── */}
       {gameState === 'quiz' && quizQuestion && (
         <QuizOverlay question={quizQuestion} onAnswer={handleQuizAnswer} />
       )}
 
-      {/* ── LEVEL COMPLETE ── */}
       {gameState === 'levelComplete' && currentLevel && (
         <LevelCompleteScreen
           levelName={currentLevel.name}
@@ -252,7 +265,6 @@ export function KitzGame() {
         />
       )}
 
-      {/* ── GAME OVER ── */}
       {gameState === 'gameOver' && (
         <GameOverScreen score={score} onRetry={handleRetry} onQuit={handleQuit} />
       )}

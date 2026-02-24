@@ -32,19 +32,22 @@ export function QuizOverlay({ question, onAnswer }: QuizOverlayProps) {
         style={{
           background: 'linear-gradient(180deg, #12122a 0%, #0a0a1a 100%)',
           border: '2px solid #A855F780',
-          boxShadow: '0 0 40px #A855F720, inset 0 1px 0 #A855F710',
+          boxShadow: '0 0 40px #A855F720',
         }}
       >
         {/* Header */}
         <div className="mb-1 flex items-center gap-2">
           <div className="h-2 w-2 animate-pulse rounded-full bg-green-400" style={{ boxShadow: '0 0 8px #22C55E' }} />
-          <span className="text-[8px] uppercase tracking-[0.3em]" style={{ color: '#22C55E', textShadow: '0 0 8px #22C55E60' }}>
-            Incoming Intel
+          <span className="text-[7px] uppercase tracking-[0.3em]" style={{ color: '#22C55E', textShadow: '0 0 8px #22C55E60' }}>
+            Business Advisor
           </span>
         </div>
+        <p className="mb-4 text-[6px]" style={{ color: '#4a4a6a' }}>
+          Answer correctly to restore Brand Health and earn revenue!
+        </p>
 
         {/* Question */}
-        <h3 className="mb-5 text-[10px] leading-relaxed text-white" style={{ textShadow: '0 0 4px #ffffff20' }}>
+        <h3 className="mb-5 text-[9px] leading-relaxed text-white" style={{ textShadow: '0 0 4px #ffffff20' }}>
           {question.question}
         </h3>
 
@@ -79,7 +82,7 @@ export function QuizOverlay({ question, onAnswer }: QuizOverlayProps) {
                 key={i}
                 onClick={() => handleSelect(i)}
                 disabled={revealed}
-                className="w-full text-left text-[9px] leading-relaxed transition-all duration-150"
+                className="w-full text-left text-[8px] leading-relaxed transition-all duration-150"
                 style={{
                   padding: '10px 14px',
                   border: `2px solid ${borderColor}`,
@@ -113,15 +116,15 @@ export function QuizOverlay({ question, onAnswer }: QuizOverlayProps) {
         {/* Result */}
         {revealed && (
           <div
-            className="mt-4 p-3 text-[8px] leading-relaxed"
+            className="mt-4 p-3 text-[7px] leading-relaxed"
             style={{
               border: `1px solid ${correct ? '#22C55E40' : '#EF444440'}`,
               background: correct ? '#0a2e1a' : '#2e0a0a',
               color: correct ? '#4ade80' : '#f87171',
             }}
           >
-            <div className="mb-1 text-[10px] font-bold" style={{ textShadow: `0 0 10px ${correct ? '#22C55E60' : '#EF444460'}` }}>
-              {correct ? '+ INTEL ACQUIRED — HP RESTORED' : '! INTEL INCOMPLETE'}
+            <div className="mb-1 text-[9px] font-bold" style={{ textShadow: `0 0 10px ${correct ? '#22C55E60' : '#EF444460'}` }}>
+              {correct ? '$ SMART MOVE — BRAND HEALTH RESTORED' : '! BAD DECISION — COMPETITORS CLOSING IN'}
             </div>
             <p style={{ color: '#94a3b8' }}>{question.explanation}</p>
           </div>

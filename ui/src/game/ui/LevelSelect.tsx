@@ -1,8 +1,6 @@
 import { WORLD_1 } from '../levels/World1'
 import { WORLD_2 } from '../levels/World2'
 import { WORLD_3 } from '../levels/World3'
-import { WORLD_4 } from '../levels/World4'
-import { WORLD_5 } from '../levels/World5'
 import type { LevelDef } from '../levels/LevelData'
 
 interface LevelSelectProps {
@@ -11,12 +9,34 @@ interface LevelSelectProps {
   onShowLeaderboard: () => void
 }
 
-const WORLDS = [
-  { num: 1, name: 'Startup Street', levels: WORLD_1, color: '#A855F7' },
-  { num: 2, name: 'Market Square', levels: WORLD_2, color: '#3B82F6' },
-  { num: 3, name: 'Finance Fortress', levels: WORLD_3, color: '#F59E0B' },
-  { num: 4, name: 'Tech Tower', levels: WORLD_4, color: '#6366F1' },
-  { num: 5, name: 'Empire Summit', levels: WORLD_5, color: '#EAB308' },
+const GAMES = [
+  {
+    num: 1,
+    name: 'The Startup',
+    desc: 'Business plans, revenue, customers & getting started',
+    levels: WORLD_1.slice(0, 3),
+    color: '#A855F7',
+    icon: '🚀',
+    difficulty: 'EASY',
+  },
+  {
+    num: 2,
+    name: 'Growth Mode',
+    desc: 'Marketing, social media, tools & tech stack',
+    levels: WORLD_2.slice(0, 3),
+    color: '#3B82F6',
+    icon: '📈',
+    difficulty: 'MEDIUM',
+  },
+  {
+    num: 3,
+    name: 'Scale Up',
+    desc: 'Operations, automation, payments & management',
+    levels: WORLD_3.slice(0, 3),
+    color: '#FBBF24',
+    icon: '👑',
+    difficulty: 'HARD',
+  },
 ]
 
 export function LevelSelect({ onSelectLevel, highScores, onShowLeaderboard }: LevelSelectProps) {
@@ -36,82 +56,79 @@ export function LevelSelect({ onSelectLevel, highScores, onShowLeaderboard }: Le
         KITZ RUN
       </h1>
       <p
-        className="mb-10 text-[10px] tracking-wider"
+        className="mb-4 text-[8px] tracking-wider"
         style={{ color: '#C084FC', textShadow: '0 0 10px #A855F780' }}
       >
-        {'>'} YOUR HUSTLE DESERVES INFRASTRUCTURE {'<'}
+        {'>'} BUILD YOUR BUSINESS EMPIRE {'<'}
+      </p>
+      <p className="mb-10 text-[7px]" style={{ color: '#4a4a6a' }}>
+        Collect revenue. Defeat threats. Learn business skills.
       </p>
 
-      {/* Worlds */}
-      <div className="w-full max-w-lg space-y-6">
-        {WORLDS.map((world) => (
-          <div key={world.num}>
-            {/* World header */}
+      {/* Games */}
+      <div className="w-full max-w-lg space-y-8">
+        {GAMES.map((game) => (
+          <div key={game.num}>
+            {/* Game header */}
             <div className="mb-3 flex items-center gap-3">
               <div
                 className="h-3 w-3"
-                style={{ backgroundColor: world.color, boxShadow: `0 0 8px ${world.color}` }}
+                style={{ backgroundColor: game.color, boxShadow: `0 0 8px ${game.color}` }}
               />
               <h2
                 className="text-[10px] font-bold uppercase tracking-[0.2em]"
-                style={{ color: world.color, textShadow: `0 0 10px ${world.color}60` }}
+                style={{ color: game.color, textShadow: `0 0 10px ${game.color}60` }}
               >
-                World {world.num}: {world.name}
+                Game {game.num}: {game.name}
               </h2>
+              <span
+                className="ml-auto text-[7px] uppercase tracking-wider"
+                style={{
+                  color: game.num === 1 ? '#22C55E' : game.num === 2 ? '#FBBF24' : '#EF4444',
+                  textShadow: `0 0 6px ${game.num === 1 ? '#22C55E' : game.num === 2 ? '#FBBF24' : '#EF4444'}60`,
+                }}
+              >
+                {game.difficulty}
+              </span>
             </div>
 
+            {/* Description */}
+            <p className="mb-3 text-[7px] leading-relaxed" style={{ color: '#64748b' }}>
+              {game.icon} {game.desc}
+            </p>
+
             {/* Level buttons */}
-            <div className="grid grid-cols-5 gap-2">
-              {world.levels.map((level, i) => {
+            <div className="grid grid-cols-3 gap-3">
+              {game.levels.map((level, i) => {
                 const scoreVal = highScores[level.id]
-                const isBoss = i === 4
                 return (
                   <button
                     key={level.id}
                     onClick={() => onSelectLevel(level)}
-                    className="group relative flex flex-col items-center gap-1 p-3 transition-all duration-150 hover:scale-105 active:scale-95"
+                    className="group relative flex flex-col items-center gap-1 p-4 transition-all duration-150 hover:scale-105 active:scale-95"
                     style={{
-                      background: isBoss
-                        ? 'linear-gradient(180deg, #2d1b4e 0%, #1a0a2e 100%)'
-                        : 'linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%)',
-                      border: `2px solid ${isBoss ? world.color + '80' : '#333355'}`,
-                      boxShadow: isBoss ? `0 0 12px ${world.color}30, inset 0 1px 0 ${world.color}20` : 'inset 0 1px 0 #ffffff08',
-                      imageRendering: 'pixelated',
+                      background: 'linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%)',
+                      border: `2px solid ${game.color}40`,
+                      boxShadow: 'inset 0 1px 0 #ffffff08',
                     }}
                   >
-                    {/* Level number */}
                     <span
-                      className="text-lg font-bold"
-                      style={{
-                        color: isBoss ? world.color : '#e2e8f0',
-                        textShadow: isBoss ? `0 0 10px ${world.color}` : 'none',
-                      }}
+                      className="text-xl font-bold"
+                      style={{ color: '#e2e8f0', textShadow: '0 0 6px #ffffff20' }}
                     >
                       {i + 1}
                     </span>
-
-                    {/* Level name */}
-                    <span
-                      className="w-full truncate text-center text-[7px]"
-                      style={{ color: isBoss ? world.color + 'cc' : '#64748b' }}
-                    >
+                    <span className="w-full truncate text-center text-[7px]" style={{ color: '#64748b' }}>
                       {level.name}
                     </span>
-
-                    {/* High score */}
                     {scoreVal !== undefined && (
-                      <span className="text-[7px] text-yellow-400" style={{ textShadow: '0 0 6px #FBBF2460' }}>
-                        {scoreVal.toLocaleString()}
+                      <span className="text-[7px]" style={{ color: '#22C55E', textShadow: '0 0 6px #22C55E60' }}>
+                        ${scoreVal.toLocaleString()}
                       </span>
                     )}
-
-                    {/* Hover glow */}
                     <div
                       className="pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100"
-                      style={{
-                        border: `2px solid ${world.color}`,
-                        boxShadow: `0 0 15px ${world.color}40`,
-                      }}
+                      style={{ border: `2px solid ${game.color}`, boxShadow: `0 0 15px ${game.color}40` }}
                     />
                   </button>
                 )
@@ -121,7 +138,7 @@ export function LevelSelect({ onSelectLevel, highScores, onShowLeaderboard }: Le
         ))}
       </div>
 
-      {/* Leaderboard button */}
+      {/* Leaderboard */}
       <button
         onClick={onShowLeaderboard}
         className="mt-10 px-8 py-3 text-[10px] font-bold uppercase tracking-[0.3em] transition-all hover:scale-105 active:scale-95"
@@ -129,15 +146,15 @@ export function LevelSelect({ onSelectLevel, highScores, onShowLeaderboard }: Le
           color: '#FBBF24',
           background: 'linear-gradient(180deg, #2d1b00 0%, #1a1000 100%)',
           border: '2px solid #FBBF2480',
-          boxShadow: '0 0 20px #FBBF2420, inset 0 1px 0 #FBBF2420',
+          boxShadow: '0 0 20px #FBBF2420',
           textShadow: '0 0 10px #FBBF2480',
         }}
       >
-        Leaderboard
+        Top Founders
       </button>
 
-      {/* Controls hint */}
-      <div className="mt-6 flex items-center gap-4 text-[8px] tracking-wider" style={{ color: '#4a4a6a' }}>
+      {/* Controls */}
+      <div className="mt-6 flex items-center gap-4 text-[7px] tracking-wider" style={{ color: '#4a4a6a' }}>
         <span>[ARROWS] MOVE</span>
         <span>[SPACE] SHOOT</span>
         <span>[Z] SPECIAL</span>
