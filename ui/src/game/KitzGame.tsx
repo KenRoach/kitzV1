@@ -40,6 +40,7 @@ function saveLeaderboardEntry(score: number, world: number, level: number) {
 }
 
 export function KitzGame() {
+  const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const gameRef = useRef<GameManager | null>(null)
   const addXP = useGameStore((s) => s.addXP)
@@ -63,6 +64,7 @@ export function KitzGame() {
   const currentLevelRef = useRef(currentLevel)
   currentLevelRef.current = currentLevel
 
+  // Create GameManager once on mount
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -115,11 +117,12 @@ export function KitzGame() {
     setScore(0)
     setHp(PLAYER_MAX_HP)
     setLives(PLAYER_MAX_LIVES)
-    // Resize after canvas becomes visible, then load
-    requestAnimationFrame(() => {
+    setShowLeaderboard(false)
+    // Small delay so React hides the menu overlay first, then resize the visible canvas
+    setTimeout(() => {
       gameRef.current?.resize()
       gameRef.current?.loadLevel(level, playerLevel)
-    })
+    }, 50)
   }, [playerLevel])
 
   const handleQuizAnswer = useCallback((correct: boolean) => {
@@ -145,10 +148,12 @@ export function KitzGame() {
     setScore(0)
     setHp(PLAYER_MAX_HP)
     setLives(PLAYER_MAX_LIVES)
+    gameRef.current?.resize()
     gameRef.current?.loadLevel(currentLevel, playerLevel)
   }, [currentLevel, playerLevel])
 
   const handleQuit = useCallback(() => {
+    gameRef.current?.pauseGame()
     setGameState('menu')
     setCurrentLevel(null)
   }, [])
@@ -164,27 +169,34 @@ export function KitzGame() {
     }
   }, [currentLevel, handleSelectLevel, handleQuit])
 
-  return (
-    <div className="relative flex h-full w-full items-center justify-center bg-[#0D0D12]">
-      {/* Canvas is always mounted so GameManager can initialize */}
-      <canvas
-        ref={canvasRef}
-        className={gameState === 'menu' ? 'absolute opacity-0 pointer-events-none' : 'block'}
-        style={{ imageRendering: 'pixelated' }}
-      />
+  const isPlaying = gameState !== 'menu'
 
+  return (
+    <div ref={containerRef} className="relative h-full w-full overflow-hidden bg-[#0D0D12]">
+      {/* Canvas — always in the DOM, centered. Hidden behind menu overlay. */}
+      <div className="flex h-full w-full items-center justify-center">
+        <canvas
+          ref={canvasRef}
+          style={{ imageRendering: 'pixelated', display: isPlaying ? 'block' : 'none' }}
+        />
+      </div>
+
+      {/* ── MENU OVERLAY ── */}
       {gameState === 'menu' && (
-        showLeaderboard ? (
-          <Leaderboard onBack={() => setShowLeaderboard(false)} />
-        ) : (
-          <LevelSelect
-            onSelectLevel={handleSelectLevel}
-            highScores={highScores}
-            onShowLeaderboard={() => setShowLeaderboard(true)}
-          />
-        )
+        <div className="absolute inset-0 z-40 overflow-y-auto">
+          {showLeaderboard ? (
+            <Leaderboard onBack={() => setShowLeaderboard(false)} />
+          ) : (
+            <LevelSelect
+              onSelectLevel={handleSelectLevel}
+              highScores={highScores}
+              onShowLeaderboard={() => setShowLeaderboard(true)}
+            />
+          )}
+        </div>
       )}
 
+      {/* ── IN-GAME HUD ── */}
       {currentLevel && gameState === 'playing' && (
         <HUD
           score={score}
@@ -196,28 +208,32 @@ export function KitzGame() {
         />
       )}
 
+      {/* ── TOUCH CONTROLS (mobile only) ── */}
       {gameState === 'playing' && (
         <TouchControls onAction={handleTouchAction} onPause={handlePause} />
       )}
 
+      {/* ── PAUSED ── */}
       {gameState === 'paused' && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/60 font-mono">
-          <h2 className="text-2xl font-bold text-white">PAUSED</h2>
-          <div className="mt-4 flex gap-3">
-            <button onClick={handlePause} className="rounded-lg bg-purple-600 px-6 py-2 text-sm font-bold text-white hover:bg-purple-500">
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/70 font-mono">
+          <h2 className="text-3xl font-bold tracking-widest text-white" style={{ textShadow: '0 0 20px #A855F7' }}>PAUSED</h2>
+          <div className="mt-6 flex gap-4">
+            <button onClick={handlePause} className="border-2 border-purple-500 bg-purple-600/80 px-8 py-2 font-mono text-sm font-bold uppercase tracking-wider text-white hover:bg-purple-500">
               Resume
             </button>
-            <button onClick={handleQuit} className="rounded-lg bg-gray-700 px-6 py-2 text-sm font-bold text-white hover:bg-gray-600">
+            <button onClick={handleQuit} className="border-2 border-gray-500 bg-gray-700/80 px-8 py-2 font-mono text-sm font-bold uppercase tracking-wider text-white hover:bg-gray-600">
               Quit
             </button>
           </div>
         </div>
       )}
 
+      {/* ── QUIZ ── */}
       {gameState === 'quiz' && quizQuestion && (
         <QuizOverlay question={quizQuestion} onAnswer={handleQuizAnswer} />
       )}
 
+      {/* ── LEVEL COMPLETE ── */}
       {gameState === 'levelComplete' && currentLevel && (
         <LevelCompleteScreen
           levelName={currentLevel.name}
@@ -228,6 +244,7 @@ export function KitzGame() {
         />
       )}
 
+      {/* ── GAME OVER ── */}
       {gameState === 'gameOver' && (
         <GameOverScreen score={score} onRetry={handleRetry} onQuit={handleQuit} />
       )}

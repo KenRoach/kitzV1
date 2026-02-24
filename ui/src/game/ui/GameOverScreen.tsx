@@ -6,20 +6,53 @@ interface GameOverScreenProps {
 
 export function GameOverScreen({ score, onRetry, onQuit }: GameOverScreenProps) {
   return (
-    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 font-mono">
-      <h2 className="text-3xl font-bold text-red-500">GAME OVER</h2>
-      <p className="mt-2 text-sm text-gray-400">Final Score</p>
-      <p className="text-2xl font-bold text-white">{score.toLocaleString()}</p>
-      <div className="mt-6 flex gap-3">
+    <div
+      className="absolute inset-0 z-50 flex flex-col items-center justify-center"
+      style={{
+        fontFamily: '"Press Start 2P", "Courier New", monospace',
+        background: 'radial-gradient(ellipse at center, #1a0000 0%, #000000cc 100%)',
+      }}
+    >
+      <h2
+        className="text-4xl font-bold tracking-widest"
+        style={{ color: '#EF4444', textShadow: '0 0 40px #EF444480, 0 0 80px #EF444440, 2px 2px 0 #7F1D1D' }}
+      >
+        GAME OVER
+      </h2>
+
+      <div className="mt-6 text-center">
+        <p className="text-[8px] uppercase tracking-[0.3em]" style={{ color: '#64748b' }}>Final Score</p>
+        <p
+          className="mt-2 text-2xl font-bold"
+          style={{ color: '#FBBF24', textShadow: '0 0 15px #FBBF2460' }}
+        >
+          {score.toLocaleString()}
+        </p>
+      </div>
+
+      <div className="mt-8 flex gap-4">
         <button
           onClick={onRetry}
-          className="rounded-lg bg-purple-600 px-6 py-2 text-sm font-bold text-white hover:bg-purple-500"
+          className="px-8 py-3 text-[10px] font-bold uppercase tracking-[0.3em] transition-all hover:scale-105 active:scale-95"
+          style={{
+            color: '#A855F7',
+            background: 'linear-gradient(180deg, #2d1b4e 0%, #1a0a2e 100%)',
+            border: '2px solid #A855F780',
+            boxShadow: '0 0 15px #A855F720',
+            textShadow: '0 0 10px #A855F780',
+          }}
         >
           Try Again
         </button>
         <button
           onClick={onQuit}
-          className="rounded-lg bg-gray-700 px-6 py-2 text-sm font-bold text-white hover:bg-gray-600"
+          className="px-8 py-3 text-[10px] font-bold uppercase tracking-[0.3em] transition-all hover:scale-105 active:scale-95"
+          style={{
+            color: '#94a3b8',
+            background: 'linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%)',
+            border: '2px solid #33335580',
+            boxShadow: '0 0 10px #33335520',
+          }}
         >
           Quit
         </button>

@@ -11,8 +11,9 @@ export class Canvas {
     const ctx = canvas.getContext('2d')
     if (!ctx) throw new Error('Canvas 2D not supported')
     this.ctx = ctx
+    canvas.width = CANVAS_WIDTH
+    canvas.height = CANVAS_HEIGHT
     ctx.imageSmoothingEnabled = false
-    this.resize()
   }
 
   resize() {
@@ -21,6 +22,7 @@ export class Canvas {
 
     const w = parent.clientWidth
     const h = parent.clientHeight
+    if (w === 0 || h === 0) return
 
     const aspect = CANVAS_WIDTH / CANVAS_HEIGHT
     let drawW = w
