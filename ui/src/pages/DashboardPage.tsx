@@ -9,6 +9,7 @@ import { HowItWorksPage } from './HowItWorksPage'
 import { SettingsPage } from './SettingsPage'
 import { ChatPanel } from '@/components/layout/ChatPanel'
 import { TalkToKitzModal } from '@/components/talk/TalkToKitzModal'
+import { FloatingOrb } from '@/components/orb/FloatingOrb'
 import { cn } from '@/lib/utils'
 
 type Mode = 'manual' | 'kitz'
@@ -85,6 +86,9 @@ export function DashboardPage() {
           <ChatPanel />
         </div>
       </div>
+
+      {/* Floating Orb — moves toward nav targets */}
+      {mode === 'kitz' && <FloatingOrb />}
 
       {/* Voice/chat modal */}
       <TalkToKitzModal />

@@ -1,4 +1,6 @@
+import { Volume2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useKitzVoice } from '@/hooks/useKitzVoice'
 
 interface MessageBubbleProps {
   role: 'user' | 'assistant'
@@ -7,6 +9,8 @@ interface MessageBubbleProps {
 }
 
 export function MessageBubble({ role, content, variant = 'light' }: MessageBubbleProps) {
+  const { speak, speaking } = useKitzVoice()
+
   if (role === 'user') {
     return (
       <div className="flex justify-end">
@@ -21,11 +25,25 @@ export function MessageBubble({ role, content, variant = 'light' }: MessageBubbl
   }
 
   return (
-    <div className={cn(
-      'text-sm leading-relaxed',
-      variant === 'dark' ? 'text-gray-300' : 'text-gray-700',
-    )}>
-      {content}
+    <div className="group relative">
+      <div className={cn(
+        'text-sm leading-relaxed',
+        variant === 'dark' ? 'text-gray-300' : 'text-gray-700',
+      )}>
+        {content}
+      </div>
+      <button
+        onClick={() => speak(content)}
+        disabled={speaking}
+        className={cn(
+          'absolute -right-1 top-0 rounded-full p-1 transition-opacity',
+          'opacity-0 group-hover:opacity-100',
+          speaking ? 'text-purple-500 animate-pulse' : 'text-gray-400 hover:text-purple-500',
+        )}
+        title="Listen to Kitz"
+      >
+        <Volume2 className="h-3.5 w-3.5" />
+      </button>
     </div>
   )
 }

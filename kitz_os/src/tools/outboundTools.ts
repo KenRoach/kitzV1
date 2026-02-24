@@ -37,6 +37,7 @@ export function getAllOutboundTools(): ToolSchema[] {
       execute: async (args, traceId) => {
         const phone = String(args.phone || '').replace(/[\s\-()]/g, '');
         const message = String(args.message || '').trim();
+        const userId = String(args._userId || 'default');
 
         if (!phone || !message) {
           return { error: 'Both phone and message are required.' };
@@ -49,7 +50,7 @@ export function getAllOutboundTools(): ToolSchema[] {
             body: JSON.stringify({
               phone,
               message,
-              userId: 'default',
+              userId,
             }),
             signal: AbortSignal.timeout(15_000),
           });
@@ -124,6 +125,7 @@ export function getAllOutboundTools(): ToolSchema[] {
       execute: async (args, traceId) => {
         const phone = String(args.phone || '').trim();
         const text = String(args.text || '').trim();
+        const userId = String(args._userId || 'default');
 
         if (!phone || !text) {
           return { error: 'Both phone and text are required.' };
@@ -235,6 +237,7 @@ export function getAllOutboundTools(): ToolSchema[] {
       execute: async (args, traceId) => {
         const phone = String(args.phone || '').trim();
         const purpose = String(args.purpose || '').trim();
+        const userId = String(args._userId || 'default');
         const script = args.script ? String(args.script) : undefined;
         const language = String(args.language || 'es');
         const maxDuration = Math.min(Number(args.max_duration_minutes) || 5, 15);

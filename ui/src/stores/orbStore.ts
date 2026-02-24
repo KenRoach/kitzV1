@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { apiFetch } from '@/lib/api'
 import { API } from '@/lib/constants'
 import { useAgentThinkingStore } from './agentThinkingStore'
+import { useOrbNavigatorStore, detectNavHint } from '@/hooks/useOrbNavigator'
 
 interface ChatMessage {
   id: string
@@ -17,6 +18,8 @@ interface OrbStore {
   isOpen: boolean
   /* Text chatbox focus signal — ChatPanel listens for this */
   chatFocused: boolean
+  /* TTS speaking state — Orb shows talking mood */
+  speaking: boolean
 
   state: OrbState
   messages: ChatMessage[]
@@ -26,12 +29,14 @@ interface OrbStore {
   close: () => void
   focusChat: () => void
   blurChat: () => void
+  setSpeaking: (val: boolean) => void
   sendMessage: (content: string, userId: string) => Promise<void>
 }
 
 export const useOrbStore = create<OrbStore>((set, get) => ({
   isOpen: false,
   chatFocused: false,
+  speaking: false,
   state: 'idle',
   messages: [],
 
@@ -40,6 +45,7 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
   close: () => set({ isOpen: false }),
   focusChat: () => set({ chatFocused: true }),
   blurChat: () => set({ chatFocused: false }),
+  setSpeaking: (val) => set({ speaking: val }),
 
   sendMessage: async (content, userId) => {
     const userMsg: ChatMessage = {
@@ -70,6 +76,11 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
       set((s) => ({ messages: [...s.messages, assistantMsg], state: 'success' }))
       // Auto-collapse thinking block when response arrives
       useAgentThinkingStore.setState({ collapsed: true })
+      // Detect navigation hints in the response and guide the Orb
+      const navHint = detectNavHint(assistantMsg.content)
+      if (navHint) {
+        useOrbNavigatorStore.getState().navigateTo(navHint.navId, navHint.label)
+      }
       setTimeout(() => {
         if (get().state === 'success') set({ state: 'idle' })
       }, 2000)

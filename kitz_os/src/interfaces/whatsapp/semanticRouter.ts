@@ -85,6 +85,9 @@ const DIRECT_EXECUTE_TOOLS = new Set([
   'web_scrape', 'web_search', 'web_summarize', 'web_extract',
   // SOP tools
   'sop_search', 'sop_get', 'sop_list', 'sop_create', 'sop_update',
+  // Broadcast + auto-reply tools
+  'broadcast_preview', 'broadcast_send', 'broadcast_history',
+  'autoreply_get', 'autoreply_set',
 ]);
 
 // ── Draft-First Classification ──
@@ -115,6 +118,10 @@ const WRITE_TOOLS = new Set([
   'lovable_pushArtifact', 'lovable_linkProjects',
   // SOP writes (draft-first — new SOPs need approval)
   'sop_create', 'sop_update',
+  // Broadcast (sends to many people — highest risk)
+  'broadcast_send',
+  // Auto-reply config changes
+  'autoreply_set',
 ]);
 
 // In-memory draft queue: traceId → pending drafts
@@ -194,6 +201,8 @@ CAPABILITIES:
 - **PAYMENTS** — View payment transactions by provider (Stripe, PayPal, Yappy, BAC), status, or date range. Get revenue summaries (today/week/month). Receive-only — never send money outbound.
 - **VOICE** — KITZ has a female voice (ElevenLabs). Convert text to speech audio. Send voice notes via WhatsApp. Make WhatsApp calls. Get voice widget for websites.
 - **WEB** — Browse the internet: web_search (Google search), web_scrape (fetch any URL), web_summarize (AI-summarize a page), web_extract (pull prices, contacts, data from pages). Use for research, competitive analysis, price checking, or finding information online.
+- **BROADCAST** — Send bulk WhatsApp messages to CRM contacts. Use broadcast_preview to see who matches filters (status, tags), then broadcast_send to deliver. Max 200 recipients, 1.5s delay between sends. Supports {{name}} placeholder for personalization.
+- **AUTO-REPLY** — Configure WhatsApp auto-reply: autoreply_get to view current config, autoreply_set to update message, enable/disable, or change cooldown. Supports {{owner}} placeholder.
 
 RESPONSE STYLE:
 - Default replies: 5-7 words. Keep it tight.
@@ -249,7 +258,8 @@ async function executeTool(
 
   // Check if tool is direct-execute (handled by OS)
   if (DIRECT_EXECUTE_TOOLS.has(toolName)) {
-    const result = await registry.invoke(toolName, args, traceId);
+    const enrichedArgs = userId ? { ...args, _userId: userId } : args;
+    const result = await registry.invoke(toolName, enrichedArgs, traceId);
     return typeof result === 'string' ? result : JSON.stringify(result);
   }
 

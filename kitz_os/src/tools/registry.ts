@@ -74,6 +74,7 @@ export class OsToolRegistry {
       import('./memoryTools.js'),
       import('./webTools.js'),
       import('./sopTools.js'),
+      import('./broadcastTools.js'),
     ]);
 
     const getterNames = [
@@ -95,6 +96,7 @@ export class OsToolRegistry {
       'getAllMemoryTools',
       'getAllWebTools',
       'getAllSOPTools',
+      'getAllBroadcastTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {

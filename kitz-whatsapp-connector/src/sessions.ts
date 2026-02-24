@@ -29,6 +29,7 @@ import { computeBackoff, DEFAULT_RECONNECT_POLICY } from './backoff.js';
 import { isDuplicateMessage, buildDedupeKey } from './dedupe.js';
 import { extractReplyContext, extractLocationData, formatLocationText } from './extract.js';
 import { checkAccess, type AccessMode } from './access-control.js';
+import { getAutoReplyConfig, renderMessage } from './autoReplyConfig.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -866,18 +867,25 @@ class SessionManager {
       this.logMissedMessage(userId, senderNumber, messageText).catch(() => {});
     }
 
+    // Check config — auto-reply may be disabled
+    const config = getAutoReplyConfig(userId);
+    if (!config.enabled) {
+      console.log(`[session:${userId}] Auto-reply disabled — message logged`);
+      return;
+    }
+
     // Check cooldown — don't spam the same person with auto-replies
     const key = `${userId}:${senderJid}`;
     const lastSent = this.autoReplySent.get(key);
-    if (lastSent && Date.now() - lastSent < AUTO_REPLY_COOLDOWN_MS) {
+    if (lastSent && Date.now() - lastSent < config.cooldownMs) {
       console.log(`[session:${userId}] Skipping auto-reply to ${senderJid} (cooldown) — message logged`);
       return;
     }
 
-    // Send polite auto-reply
+    // Send polite auto-reply using configurable message
     try {
       const sent = await sock.sendMessage(senderJid, {
-        text: '🟣 *KITZ*\n─────────\nThanks for your message! Kenneth will get back to you soon. 🙏',
+        text: renderMessage(config),
       });
       if (sent?.key?.id) trackKitzSent(sent.key.id);
       this.autoReplySent.set(key, Date.now());

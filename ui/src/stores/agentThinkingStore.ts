@@ -7,8 +7,9 @@ export interface ThinkingStep {
   id: string
   agentName: string
   action: string
-  status: StepStatus
+  tool?: string
   detail?: string
+  status: StepStatus
   startedAt: number
   completedAt?: number
 }
@@ -41,6 +42,8 @@ export const useAgentThinkingStore = create<AgentThinkingStore>((set, _get) => (
       id: `step_${startTime}_${i}`,
       agentName: a.agent,
       action: a.action,
+      tool: a.tool,
+      detail: a.detail,
       status: 'pending' as StepStatus,
       startedAt: startTime,
     }))

@@ -1,4 +1,4 @@
-import { Check, X, Loader2 } from 'lucide-react'
+import { Check, X, Loader2, Wrench } from 'lucide-react'
 import type { ThinkingStep } from '@/stores/agentThinkingStore'
 
 interface AgentThinkingStepProps {
@@ -8,9 +8,9 @@ interface AgentThinkingStepProps {
 
 export function AgentThinkingStep({ step, isLast: _isLast }: AgentThinkingStepProps) {
   return (
-    <div className="flex items-center gap-2 py-1">
+    <div className="flex items-start gap-2 py-1">
       {/* Status icon */}
-      <div className="flex w-4 flex-col items-center">
+      <div className="mt-0.5 flex w-4 flex-col items-center">
         {step.status === 'pending' && (
           <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-400" />
         )}
@@ -22,15 +22,34 @@ export function AgentThinkingStep({ step, isLast: _isLast }: AgentThinkingStepPr
         )}
       </div>
 
-      {/* Agent name */}
-      <span className="w-28 shrink-0 truncate font-mono text-[11px] font-medium text-gray-400">
-        {step.agentName}
-      </span>
+      <div className="min-w-0 flex-1">
+        {/* Agent name + action */}
+        <div className="flex items-center gap-2">
+          <span className="shrink-0 truncate font-mono text-[11px] font-medium text-gray-400">
+            {step.agentName}
+          </span>
+          <span className="text-[11px] text-gray-500 truncate">
+            {step.action}
+          </span>
+        </div>
 
-      {/* Action phrase */}
-      <span className="text-[11px] text-gray-500">
-        {step.action}
-      </span>
+        {/* Tool badge + detail — shown when available */}
+        {(step.tool || step.detail) && (
+          <div className="mt-0.5 flex items-center gap-1.5">
+            {step.tool && (
+              <span className="inline-flex items-center gap-1 rounded bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-purple-400">
+                <Wrench className="h-2.5 w-2.5" />
+                {step.tool}
+              </span>
+            )}
+            {step.detail && (
+              <span className="text-[10px] text-gray-600 truncate">
+                {step.detail}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

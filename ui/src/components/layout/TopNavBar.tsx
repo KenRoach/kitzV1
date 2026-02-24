@@ -46,6 +46,7 @@ export function TopNavBar({ currentNav, onNavChange, userName }: TopNavBarProps)
           return (
             <button
               key={item.id}
+              data-nav={item.id}
               onClick={() => onNavChange(item.id)}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
@@ -84,6 +85,7 @@ export function TopNavBar({ currentNav, onNavChange, userName }: TopNavBarProps)
 
         {/* Settings */}
         <button
+          data-nav="settings"
           onClick={() => onNavChange('settings')}
           className={cn(
             'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',

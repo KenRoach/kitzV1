@@ -322,7 +322,7 @@ type WakePhase = 'sleeping' | 'stirring' | 'waking' | 'awake'
 const MOODY_PHRASES = ['five more min...', 'not yet... 😴', 'shhh...', 'zzz... later', 'still charging ⚡']
 
 export function Orb({ sleeping = false, static: isStatic = false }: OrbProps) {
-  const { open, focusChat, state } = useOrbStore()
+  const { open, focusChat, state, speaking } = useOrbStore()
   const [feetFrame, setFeetFrame] = useState(0)
   const [bounceY, setBounceY] = useState(0)
   const [blinking, setBlinking] = useState(false)
@@ -456,6 +456,8 @@ export function Orb({ sleeping = false, static: isStatic = false }: OrbProps) {
     ? 'sleeping'       // still looks asleep but eyes will flutter via blinking
     : isWaking
     ? 'idle'           // half-open eyes, gentle smile — waking up naturally
+    : speaking
+    ? 'talking'        // TTS playing — Kitz talks with her voice
     : currentWelcome
     ? currentWelcome.mood
     : state === 'success' ? 'happy' : state === 'error' ? 'alert' : state === 'thinking' ? 'thinking' : 'idle'

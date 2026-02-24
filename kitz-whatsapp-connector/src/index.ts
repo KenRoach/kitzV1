@@ -16,6 +16,7 @@ import { randomUUID } from 'node:crypto';
 import type { EventEnvelope } from 'kitz-schemas';
 import { startBaileys, getConnectionStatus, sendWhatsAppMessage, sendWhatsAppAudio } from './baileys.js';
 import { sessionManager } from './sessions.js';
+import { getAutoReplyConfig, setAutoReplyConfig } from './autoReplyConfig.js';
 
 export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
@@ -129,6 +130,18 @@ app.get('/whatsapp/sessions/:userId/status', async (req: any) => {
 app.delete('/whatsapp/sessions/:userId', async (req: any) => {
   const deleted = await sessionManager.deleteSession(req.params.userId);
   return { ok: deleted, userId: req.params.userId };
+});
+
+// ── Auto-Reply Config ──
+app.get('/whatsapp/sessions/:userId/auto-reply', async (req: any) => {
+  const config = getAutoReplyConfig(req.params.userId);
+  return config;
+});
+
+app.put('/whatsapp/sessions/:userId/auto-reply', async (req: any) => {
+  const patch = req.body || {};
+  const updated = setAutoReplyConfig(req.params.userId, patch);
+  return { ok: true, config: updated };
 });
 
 // ═══════════════════════════════════════════

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { ArrowUp, Bookmark, ThumbsUp, MessageCircle, Copy, MoreHorizontal } from 'lucide-react'
+import { ArrowUp, Bookmark, ThumbsUp, MessageCircle, Copy, MoreHorizontal, Smartphone } from 'lucide-react'
 import { useOrbStore } from '@/stores/orbStore'
 import { useAuthStore } from '@/stores/authStore'
 import { cn } from '@/lib/utils'
@@ -18,6 +18,7 @@ export function ChatPanel() {
   const { messages, state, sendMessage, chatFocused, blurChat } = useOrbStore()
   const user = useAuthStore((s) => s.user)
   const [input, setInput] = useState('')
+  const [echoToWhatsApp, setEchoToWhatsApp] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const agentSteps = useAgentThinkingStore((s) => s.steps)
@@ -198,9 +199,22 @@ export function ChatPanel() {
             <span className="text-white/50">Active Agents</span>
             <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold text-white">{agentSteps.filter((s) => s.status === 'pending').length || 0}</span>
           </button>
-          <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/10">
-            <span className="text-white/50">WhatsApp</span>
-            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold text-white">⚡</span>
+          <button
+            onClick={() => setEchoToWhatsApp(!echoToWhatsApp)}
+            className={cn(
+              'flex items-center gap-1.5 rounded-lg px-2 py-1 transition',
+              echoToWhatsApp ? 'bg-green-500/20 hover:bg-green-500/30' : 'hover:bg-white/10',
+            )}
+            title={echoToWhatsApp ? 'WhatsApp echo ON — responses also sent to WhatsApp' : 'WhatsApp echo OFF'}
+          >
+            <Smartphone className={cn('h-3.5 w-3.5', echoToWhatsApp ? 'text-green-400' : 'text-white/50')} />
+            <span className={echoToWhatsApp ? 'text-green-400' : 'text-white/50'}>WhatsApp</span>
+            <span className={cn(
+              'rounded-full px-2 py-0.5 text-[10px] font-semibold',
+              echoToWhatsApp ? 'bg-green-500/30 text-green-300' : 'bg-white/20 text-white',
+            )}>
+              {echoToWhatsApp ? 'ON' : 'OFF'}
+            </span>
           </button>
         </div>
 
