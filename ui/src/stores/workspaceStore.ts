@@ -74,17 +74,6 @@ export interface Product {
   updatedAt: string
 }
 
-// Mock CRM data for demo
-const MOCK_LEADS: Lead[] = [
-  { id: '1', name: 'Maria Rodriguez', phone: '+507 6234-5678', email: 'maria@cafebonito.pa', source: 'WhatsApp', stage: 'qualified', value: 450, tags: ['cafe', 'panama city'], notes: ['Interested in monthly subscription', 'Runs Cafe Bonito in Casco Viejo'], lastContact: '2026-02-22', createdAt: '2026-02-10' },
-  { id: '2', name: 'Carlos Mendez', phone: '+507 6789-0123', email: 'carlos@fitzone.pa', source: 'Instagram', stage: 'proposal', value: 1200, tags: ['gym', 'subscription'], notes: ['Needs payment links for memberships', 'Has 3 locations'], lastContact: '2026-02-21', createdAt: '2026-02-08' },
-  { id: '3', name: 'Sofia Chen', phone: '+507 6345-6789', source: 'Referral', stage: 'new', value: 200, tags: ['bakery'], notes: ['Just started, referred by Maria'], createdAt: '2026-02-20' },
-  { id: '4', name: 'Diego Vargas', email: 'diego@surfshack.pa', source: 'WhatsApp', stage: 'contacted', value: 800, tags: ['retail', 'beach'], notes: ['Sells surf gear in Bocas del Toro'], lastContact: '2026-02-19', createdAt: '2026-02-05' },
-  { id: '5', name: 'Ana Castillo', phone: '+507 6456-7890', email: 'ana@belleza.pa', source: 'Instagram', stage: 'won', value: 600, tags: ['beauty', 'salon'], notes: ['Signed up for AI Battery pack', 'Running checkout links for appointments'], lastContact: '2026-02-23', createdAt: '2026-01-15' },
-  { id: '6', name: 'Roberto Flores', phone: '+507 6567-8901', source: 'WhatsApp', stage: 'contacted', tags: ['food truck'], notes: ['Wants WhatsApp ordering'], createdAt: '2026-02-18' },
-  { id: '7', name: 'Isabella Torres', email: 'isa@modapanama.com', source: 'Website', stage: 'new', value: 350, tags: ['fashion', 'online'], notes: [], createdAt: '2026-02-22' },
-  { id: '8', name: 'Luis Morales', phone: '+507 6678-9012', source: 'Referral', stage: 'lost', tags: ['restaurant'], notes: ['Too early stage, follow up in 3 months'], lastContact: '2026-02-10', createdAt: '2026-01-20' },
-]
 
 interface WorkspaceState {
   leads: Lead[]; orders: Order[]; tasks: Task[]; checkoutLinks: CheckoutLink[]; payments: Payment[]; products: Product[]
@@ -116,25 +105,26 @@ interface WorkspaceState {
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
-  leads: MOCK_LEADS, orders: [], tasks: [], checkoutLinks: [],
+  leads: [], orders: [], tasks: [], checkoutLinks: [],
   products: [],
-  payments: [
-    { id: 'p1', type: 'incoming', description: 'Maria Rodriguez — Invoice #1042', amount: 450, status: 'completed', date: '2026-02-23', method: 'Yappy' },
-    { id: 'p2', type: 'incoming', description: 'Carlos Mendez — Checkout link', amount: 120, status: 'completed', date: '2026-02-22', method: 'Stripe' },
-    { id: 'p3', type: 'incoming', description: 'Ana Gutierrez — Invoice #1041', amount: 800, status: 'pending', date: '2026-02-22', method: 'PayPal' },
-    { id: 'p4', type: 'outgoing', description: 'AI Battery — 100 credits', amount: 5, status: 'completed', date: '2026-02-21', method: 'Stripe' },
-    { id: 'p5', type: 'incoming', description: 'Pedro Silva — Order #389', amount: 275, status: 'completed', date: '2026-02-20', method: 'BAC' },
-    { id: 'p6', type: 'incoming', description: 'Laura Chen — Checkout link', amount: 650, status: 'failed', date: '2026-02-19', method: 'Stripe' },
-  ],
+  payments: [],
   isLoading: false,
 
   fetchLeads: async () => {
     set({ isLoading: true })
     try {
-      const leads = await apiFetch<Lead[]>(`${API.WORKSPACE}/leads`)
+      const res = await apiFetch<{ contacts?: Lead[]; data?: Lead[] } | Lead[]>(`${API.KITZ_OS}/api/kitz`, {
+        method: 'POST',
+        body: JSON.stringify({ message: 'list contacts', channel: 'api', user_id: 'default' }),
+      })
+      // kitz_os may return contacts in different shapes
+      const leads = Array.isArray(res) ? res : (
+        (res as { contacts?: Lead[] }).contacts ??
+        (res as { data?: Lead[] }).data ??
+        []
+      )
       set({ leads, isLoading: false })
     } catch {
-      // Keep mock data on API failure
       set({ isLoading: false })
     }
   },
@@ -230,8 +220,21 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
 
   fetchPayments: async () => {
-    // No payment query endpoint exists yet — keep mock data
-    // Future: apiFetch<Payment[]>(`${API.LOGS}/logs?type=payment`)
+    set({ isLoading: true })
+    try {
+      const res = await apiFetch<{ transactions?: Payment[]; data?: Payment[] } | Payment[]>(`${API.KITZ_OS}/api/kitz`, {
+        method: 'POST',
+        body: JSON.stringify({ message: 'list transactions', channel: 'api', user_id: 'default' }),
+      })
+      const payments = Array.isArray(res) ? res : (
+        (res as { transactions?: Payment[] }).transactions ??
+        (res as { data?: Payment[] }).data ??
+        []
+      )
+      set({ payments, isLoading: false })
+    } catch {
+      set({ isLoading: false })
+    }
   },
 
   fetchProducts: async () => {

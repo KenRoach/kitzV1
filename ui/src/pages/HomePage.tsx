@@ -214,7 +214,7 @@ export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
   const openTalk = useOrbStore((s) => s.open)
   const orbState = useOrbStore((s) => s.state)
   const teleportToChat = useOrbStore((s) => s.teleportToChat)
-  const loadChat = useOrbStore((s) => s.loadChat)
+  const injectWelcome = useOrbStore((s) => s.injectWelcome)
   const [orbTeleporting, setOrbTeleporting] = useState(false)
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const userName = user?.email?.split('@')[0] ?? 'there'
@@ -272,15 +272,12 @@ export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
           }}
           onDoubleClick={() => {
             if (sleeping) return
-            // Double click: puff teleport + exaggerated loading bar in chatbox
+            // Double click: Kitz stays in place — activate chatbox with welcome + status message
             if (clickTimerRef.current) {
               clearTimeout(clickTimerRef.current)
               clickTimerRef.current = null
             }
-            setOrbTeleporting(true)
-            teleportToChat()
-            loadChat()
-            setTimeout(() => setOrbTeleporting(false), 3500)
+            injectWelcome()
           }}
         >
           <Orb sleeping={sleeping} disableClick />

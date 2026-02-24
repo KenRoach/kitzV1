@@ -95,12 +95,13 @@ export async function createServer(kernel: KitzKernel) {
   });
 
   // ── Main WhatsApp webhook ──
-  app.post<{ Body: { message: string; sender?: string; user_id?: string; trace_id?: string; reply_context?: unknown; location?: string } }>(
+  app.post<{ Body: { message: string; sender?: string; user_id?: string; trace_id?: string; reply_context?: unknown; location?: string; channel?: string } }>(
     '/api/kitz',
     { config: { rateLimit: { max: 30, timeWindow: '1 minute' } } },
     async (req, reply) => {
-      const { message, sender, user_id, trace_id } = req.body || {};
+      const { message, sender, user_id, trace_id, channel: reqChannel } = req.body || {};
       if (!message) return reply.code(400).send({ error: 'message required' });
+      const channel = (reqChannel === 'web' ? 'web' : 'whatsapp') as 'web' | 'whatsapp';
 
       const traceId = trace_id || crypto.randomUUID();
       const userId = user_id || 'default';
@@ -163,15 +164,15 @@ export async function createServer(kernel: KitzKernel) {
 
           case 'greeting': {
             const s = kernel.getStatus();
+            const hour = new Date().getHours();
+            const timeGreet = hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening';
             return {
               command: 'greeting',
               response:
-                `Hey boss 👋\n\n` +
-                `KITZ is online and ready.\n` +
-                `${s.toolCount} tools loaded across CRM, orders, storefronts, payments, and more.\n\n` +
-                `⚡ Battery: unlimited\n\n` +
-                `What are we working on?\n` +
-                `Type *help* for the full menu.`,
+                `${timeGreet} boss 👋\n\n` +
+                `KITZ is locked in. ${s.toolCount} tools loaded — CRM, orders, storefronts, payments, the works.\n\n` +
+                `⚡ Battery: unlimited · 🟢 All systems go\n\n` +
+                `What are we building today?`,
             };
           }
 
@@ -336,7 +337,7 @@ export async function createServer(kernel: KitzKernel) {
 
       if (hasAI) {
         try {
-          const result = await routeWithAI(message, kernel.tools, traceId, undefined, userId);
+          const result = await routeWithAI(message, kernel.tools, traceId, undefined, userId, channel);
           // Store AI response in memory
           try {
             storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'assistant', content: result.response, traceId });

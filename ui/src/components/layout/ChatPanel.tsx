@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { ArrowUp, Bookmark, ThumbsUp, MessageCircle, Copy, MoreHorizontal, Smartphone } from 'lucide-react'
+import { ArrowUp, Smartphone } from 'lucide-react'
 import { useOrbStore } from '@/stores/orbStore'
 import { useAuthStore } from '@/stores/authStore'
 import { cn } from '@/lib/utils'
@@ -8,14 +8,8 @@ import { AgentThinkingBlock } from '@/components/chat/AgentThinkingBlock'
 import { MessageBubble } from '@/components/chat/MessageBubble'
 import { TypingIndicator } from '@/components/chat/TypingIndicator'
 
-interface BuildLogEntry {
-  id: string
-  title: string
-  items: string[]
-}
-
 export function ChatPanel() {
-  const { messages, state, sendMessage, chatFocused, blurChat, chatGlowing, chatLoading } = useOrbStore()
+  const { messages, state, sendMessage, chatFocused, blurChat, chatGlowing } = useOrbStore()
   const user = useAuthStore((s) => s.user)
   const [input, setInput] = useState('')
   const [echoToWhatsApp, setEchoToWhatsApp] = useState(false)
@@ -32,20 +26,6 @@ export function ChatPanel() {
       blurChat()
     }
   }, [chatFocused, blurChat])
-
-  // Mock build log for demo
-  const [buildLog] = useState<BuildLogEntry[]>([
-    {
-      id: '1',
-      title: 'Set up workspace',
-      items: [
-        'CRM pipeline with drag-and-drop stages',
-        'Contact management with notes and tags',
-        'Order tracking and checkout links',
-        '15 AI agents managing your business',
-      ],
-    },
-  ])
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -71,60 +51,6 @@ export function ChatPanel() {
 
       {/* Scrollable content */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-        {/* Build log entries */}
-        {buildLog.map((entry) => (
-          <div key={entry.id} className="space-y-3">
-            {/* Card-style build summary */}
-            <div className="rounded-xl border border-white/20 bg-white/10 p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-white">{entry.title}</span>
-                <Bookmark className="h-4 w-4 text-white/50" />
-              </div>
-              {/* Toggle: Details / Preview */}
-              <div className="mt-3 flex rounded-lg bg-white/10 p-0.5">
-                <button className="flex-1 rounded-md bg-transparent px-3 py-1.5 text-xs font-medium text-white/50">
-                  Details
-                </button>
-                <button className="flex-1 rounded-md bg-white/20 px-3 py-1.5 text-xs font-medium text-white">
-                  Preview
-                </button>
-              </div>
-            </div>
-
-            {/* Build items */}
-            <div className="text-sm text-white/80 leading-relaxed">
-              <p className="mb-2">Done! Here&apos;s what was added:</p>
-              <ul className="space-y-2">
-                {entry.items.map((item, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="mt-1.5 h-1 w-1 rounded-full bg-white/50 shrink-0" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Action bar */}
-            <div className="flex items-center gap-1">
-              <button aria-label="Undo" className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white transition">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></svg>
-              </button>
-              <button aria-label="Like" className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white transition">
-                <ThumbsUp className="h-4 w-4" />
-              </button>
-              <button aria-label="Reply" className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white transition">
-                <MessageCircle className="h-4 w-4" />
-              </button>
-              <button aria-label="Copy" className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white transition">
-                <Copy className="h-4 w-4" />
-              </button>
-              <button aria-label="More options" className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white transition">
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        ))}
-
         {/* Chat messages */}
         {messages.map((msg) => (
           <MessageBubble key={msg.id} role={msg.role} content={msg.content} variant="dark" />
@@ -170,28 +96,12 @@ export function ChatPanel() {
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={chatLoading ? '' : 'Ask Kitz...'}
+              placeholder="Ask Kitz..."
               className={cn(
                 "w-full rounded-xl border border-white/40 bg-white/10 py-2.5 pl-10 pr-4 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/70 focus:ring-2 focus:ring-white/20",
                 chatGlowing && "kitz-chatbox-glow",
-                chatLoading && "kitz-chatbox-loading-border"
               )}
             />
-            {/* Exaggerated loading bar overlay */}
-            {chatLoading && (
-              <div className="kitz-chatbox-loading-bar absolute inset-0 rounded-xl overflow-hidden pointer-events-none">
-                {/* Sweeping gradient fill */}
-                <div className="kitz-chatbox-loading-fill absolute inset-0" />
-                {/* Shimmer highlight */}
-                <div className="kitz-chatbox-loading-shimmer absolute inset-0" />
-                {/* Loading text */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="kitz-chatbox-loading-text text-xs font-semibold tracking-wider">
-                    KITZ LOADING...
-                  </span>
-                </div>
-              </div>
-            )}
           </div>
           {/* Send */}
           <button

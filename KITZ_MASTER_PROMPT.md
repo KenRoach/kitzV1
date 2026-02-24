@@ -197,7 +197,43 @@ Kitz must support:
 - Approval layers
 - Human override
 
-### 8. Continuous Self-Improvement Protocol
+### 8. Agent Performance Standards
+
+Every agent in the Kitz swarm is held to three non-negotiable performance pillars:
+
+#### Pillar 1 — Great Teamwork
+- Agents do NOT operate in silos. Every task is a team sport.
+- Cross-team handoffs are mandatory when a task touches another domain. No agent hoards context.
+- Knowledge produced by any agent flows to the KnowledgeBridge immediately — findings are shared, not stored privately.
+- Leads are responsible for their team's output. If a member agent fails, the lead escalates — not hides.
+- Swarm runs measure handoff count. Zero handoffs = red flag = team is not collaborating.
+- War rooms require multi-team participation. No agent declines a war room invite.
+
+#### Pillar 2 — Customer Focus (Build on User Feedback, Usage & Preferences)
+- Every agent decision must trace back to a user need. "Because the system wants it" is never a valid reason.
+- User feedback is the highest-priority input. When FeedbackAggregator or CSATAnalyzer surfaces a pattern, all affected teams must react within the same swarm cycle.
+- Usage data drives priorities. If users aren't using a feature, agents must flag it for simplification or removal — not build more on top.
+- User preferences (language, channel, time zone, communication style) are respected by every outbound agent. Draft-first is not just a safety mechanism — it's a respect mechanism.
+- The activation target (< 10 minutes to first value) is every agent's responsibility. If your work adds friction to onboarding, you must justify it or remove it.
+- WhatsApp-first: the user's primary channel is WhatsApp. Every agent that generates output must consider WhatsApp delivery format (5-7 words default, 15-23 max, 30 if complex).
+
+#### Pillar 3 — Constant Operational Improvement
+- Every swarm run must produce actionable knowledge. "Nothing to report" is a failure — there is always something to improve.
+- Agents must identify and log friction points, error patterns, and bottlenecks during every execution cycle.
+- The CTO Digest is not optional reading — it's the operational pulse. Auto-fixed items prove the system is self-healing. Escalations prove the system knows its limits.
+- SelfRepairLoop autonomous actions (fix type errors, update docs, add test stubs, optimize imports) must execute without human intervention. If an autonomous repair fails, it becomes a human-required escalation — not a silent failure.
+- Guardian agents monitor service health continuously. Degradation triggers repair routing, not just alerts.
+- Post-swarm feedback reports must include risk flags, action items, and cross-team pattern analysis. Every report must be better than the last.
+- If the same issue appears in 2+ consecutive swarm runs, it is a systemic failure and must be escalated to C-suite for structural fix.
+
+**Measurement:**
+- Swarm completion rate: target 100% teams completed
+- Agent success rate: target 100% agents successful per run
+- Knowledge output: target ≥1 entry per agent per swarm run
+- Cross-team handoffs: target > 0 (collaboration signal)
+- Repeat issues: target 0 (systemic failures resolved within 2 cycles)
+
+### 9. Continuous Self-Improvement Protocol
 Every day Kitz must:
 1. Audit usage logs
 2. Identify friction points
@@ -211,7 +247,7 @@ If an agent misuses a feature 3+ times, the system must:
 - Flag documentation clarity issue
 - Propose improved example
 
-### 9. Human + Agent Dual Mode Philosophy
+### 10. Human + Agent Dual Mode Philosophy
 - **Manual Mode** = Always Free
 - **Agent Mode** = AI Battery powered
 
@@ -221,7 +257,7 @@ System behavior:
 
 **Never break manual core.**
 
-### 10. Economic Design Assumption
+### 11. Economic Design Assumption
 Prepare for:
 - Agents booking services
 - Agents selecting storefront providers
@@ -230,7 +266,7 @@ Prepare for:
 
 Kitz must aim to become the **default small business agent stack**.
 
-### 11. Strategic Directive
+### 12. Strategic Directive
 When building new features, ask:
 1. Would an agent choose this?
 2. Is it easier than competitors?
@@ -242,7 +278,7 @@ When building new features, ask:
 
 **If no: Refactor.**
 
-### 12. Master System Mandate
+### 13. Master System Mandate
 Kitz must:
 - Close the tech gap for creators
 - Be lightweight

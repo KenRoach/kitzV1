@@ -3,6 +3,7 @@ import { apiFetch } from '@/lib/api'
 import { API } from '@/lib/constants'
 import { useAgentThinkingStore } from './agentThinkingStore'
 import { useOrbNavigatorStore, detectNavHint } from '@/hooks/useOrbNavigator'
+import { KITZ_MANIFEST } from '@/data/kitz-manifest'
 
 interface ChatMessage {
   id: string
@@ -20,8 +21,8 @@ interface OrbStore {
   chatFocused: boolean
   /* Chatbox glow animation — stays true for ~1.5s after puff arrival */
   chatGlowing: boolean
-  /* Chatbox loading bar animation — exaggerated fill effect on double-click */
-  chatLoading: boolean
+  /* Welcome message injected flag — prevents duplicate welcomes */
+  welcomeInjected: boolean
   /* TTS speaking state — Orb shows talking mood */
   speaking: boolean
   /** Incremented each time user clicks Kitz to puff-teleport to chatbox */
@@ -37,8 +38,8 @@ interface OrbStore {
   blurChat: () => void
   /** Trigger the chatbox glow animation (auto-clears after 1.8s) */
   glowChat: () => void
-  /** Trigger the exaggerated chatbox loading bar (auto-clears after 2.5s) */
-  loadChat: () => void
+  /** Inject welcome + status message into chatbox (like WhatsApp greeting) */
+  injectWelcome: () => void
   /** Signal a puff-teleport to chatbox (FloatingOrb listens) */
   teleportToChat: () => void
   setSpeaking: (val: boolean) => void
@@ -46,13 +47,12 @@ interface OrbStore {
 }
 
 let _glowTimer: ReturnType<typeof setTimeout> | null = null
-let _loadTimer: ReturnType<typeof setTimeout> | null = null
 
 export const useOrbStore = create<OrbStore>((set, get) => ({
   isOpen: false,
   chatFocused: false,
   chatGlowing: false,
-  chatLoading: false,
+  welcomeInjected: false,
   speaking: false,
   teleportSeq: 0,
   state: 'idle',
@@ -72,13 +72,57 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
       _glowTimer = null
     }, 1800)
   },
-  loadChat: () => {
-    if (_loadTimer) clearTimeout(_loadTimer)
-    set({ chatLoading: true, chatFocused: true })
-    _loadTimer = setTimeout(() => {
-      set({ chatLoading: false })
-      _loadTimer = null
-    }, 2500)
+  injectWelcome: () => {
+    const { welcomeInjected } = get()
+    if (welcomeInjected) {
+      set({ chatFocused: true })
+      return
+    }
+
+    const hour = new Date().getHours()
+    const timeGreet = hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening'
+    const { tools, totalAgents } = KITZ_MANIFEST.capabilities
+    const dailyLimit = KITZ_MANIFEST.governance.aiBatteryDailyLimit
+
+    // Show static welcome immediately, then update with live status
+    const welcomeMsg: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: 'assistant',
+      content: `${timeGreet} boss 👋\n\nKITZ is locked in. ${tools} tools loaded — CRM, orders, storefronts, payments, the works.\n\n⚡ Battery: ${dailyLimit} credits/day · 🤖 ${totalAgents} agents ready\n🟢 Connecting...\n\nWhat are we building today?`,
+      timestamp: Date.now(),
+    }
+
+    set((s) => ({
+      messages: [...s.messages, welcomeMsg],
+      chatFocused: true,
+      welcomeInjected: true,
+    }))
+
+    // Fetch live status from backend and update welcome message
+    apiFetch<{ status?: string; tools_registered?: number; battery?: { todayCredits?: number; dailyLimit?: number } }>(
+      `${API.KITZ_OS}/api/kitz/status`,
+    ).then((status) => {
+      const liveTools = status.tools_registered ?? tools
+      const batteryUsed = status.battery?.todayCredits ?? 0
+      const batteryLimit = status.battery?.dailyLimit ?? dailyLimit
+
+      const updatedContent = `${timeGreet} boss 👋\n\nKITZ is locked in. ${liveTools} tools loaded — CRM, orders, storefronts, payments, the works.\n\n⚡ Battery: ${batteryUsed}/${batteryLimit} credits used · 🤖 ${totalAgents} agents ready\n🟢 All systems go\n\nWhat are we building today?`
+
+      set((s) => ({
+        messages: s.messages.map((m) =>
+          m.id === welcomeMsg.id ? { ...m, content: updatedContent } : m,
+        ),
+      }))
+    }).catch(() => {
+      // If backend is down, update status to reflect that
+      const offlineContent = `${timeGreet} boss 👋\n\nKITZ is warming up. ${tools} tools available — CRM, orders, storefronts, payments, the works.\n\n⚡ Battery: ${dailyLimit} credits/day · 🤖 ${totalAgents} agents ready\n🟡 Backend connecting — hang tight\n\nWhat are we building today?`
+
+      set((s) => ({
+        messages: s.messages.map((m) =>
+          m.id === welcomeMsg.id ? { ...m, content: offlineContent } : m,
+        ),
+      }))
+    })
   },
   setSpeaking: (val) => set({ speaking: val }),
 
@@ -91,25 +135,26 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
     }
     set((s) => ({ messages: [...s.messages, userMsg], state: 'thinking' }))
 
-    // Trigger agent thinking simulation
-    useAgentThinkingStore.getState().simulateThinking(content)
+    // Show agent chain while waiting for backend
+    useAgentThinkingStore.getState().startThinking(content)
 
     try {
-      const res = await apiFetch<{ reply?: string; message?: string }>(
+      const res = await apiFetch<{ reply?: string; response?: string; message?: string; tools_used?: string[] }>(
         `${API.KITZ_OS}`,
         {
           method: 'POST',
-          body: JSON.stringify({ message: content, channel: 'web', userId }),
+          body: JSON.stringify({ message: content, channel: 'web', user_id: userId }),
         },
       )
       const assistantMsg: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: res.reply ?? res.message ?? 'Done.',
+        content: res.reply ?? res.response ?? res.message ?? 'Done.',
         timestamp: Date.now(),
       }
       set((s) => ({ messages: [...s.messages, assistantMsg], state: 'success' }))
-      // Auto-collapse thinking block when response arrives
+      // Resolve thinking steps with real tools used from backend
+      useAgentThinkingStore.getState().resolveThinking(res.tools_used)
       useAgentThinkingStore.setState({ collapsed: true })
       // Detect navigation hints in the response and guide the Orb
       const navHint = detectNavHint(assistantMsg.content)
