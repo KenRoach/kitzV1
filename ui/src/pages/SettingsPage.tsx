@@ -174,6 +174,8 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
 function Toggle({ on, onToggle }: { on: boolean; onToggle: (val: boolean) => void }) {
   return (
     <button
+      role="switch"
+      aria-checked={on}
       onClick={() => onToggle(!on)}
       className={`relative h-6 w-10 rounded-full transition ${
         on ? 'bg-purple-500' : 'bg-gray-200'

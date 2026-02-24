@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import { classifyScenario } from '@/lib/agentScenarios'
-import { useActivityStore } from './activityStore'
 
 export type StepStatus = 'pending' | 'done' | 'failed'
 
@@ -58,22 +57,6 @@ export const useAgentThinkingStore = create<AgentThinkingStore>((set, _get) => (
           )
           const allDone = updated.every((st) => st.status === 'done')
           const elapsed = Date.now() - startTime
-
-          // If all done, push completed steps to activity store
-          if (allDone) {
-            const activityStore = useActivityStore.getState()
-            const newEntries = updated.map((st) => ({
-              id: `act_${st.id}`,
-              type: 'agent' as const,
-              actor: { name: st.agentName, isAgent: true },
-              action: st.action,
-              timestamp: new Date().toISOString(),
-            }))
-            // Prepend to activity entries
-            useActivityStore.setState({
-              entries: [...newEntries, ...activityStore.entries],
-            })
-          }
 
           return {
             steps: updated,

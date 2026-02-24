@@ -20,7 +20,7 @@
 import { chatCompletion, getAiModel, type ChatMessage, type ToolDef } from '../../llm/aiClient.js';
 import { callWorkspaceMcp } from '../../tools/mcpClient.js';
 import type { OsToolRegistry } from '../../tools/registry.js';
-import { recordLLMSpend, hasBudget, getBatteryStatus } from '../../aiBattery.js';
+import { recordLLMSpend } from '../../aiBattery.js';
 import { searchSOPs } from '../../sops/store.js';
 
 // ── Tool-to-MCP Mapping ──
@@ -127,8 +127,20 @@ interface DraftAction {
   status: 'pending' | 'approved' | 'rejected';
 }
 const draftQueue = new Map<string, DraftAction[]>();
+const DRAFT_TTL_MS = 60 * 60 * 1000; // 1 hour
 
-export function getDraftQueue(): Map<string, DraftAction[]> { return draftQueue; }
+function cleanExpiredDrafts(): void {
+  const now = Date.now();
+  for (const [traceId, actions] of draftQueue) {
+    const allExpired = actions.every(a => now - new Date(a.createdAt).getTime() > DRAFT_TTL_MS);
+    if (allExpired) draftQueue.delete(traceId);
+  }
+}
+
+export function getDraftQueue(): Map<string, DraftAction[]> {
+  cleanExpiredDrafts();
+  return draftQueue;
+}
 
 export function approveDraft(traceId: string, index: number): DraftAction | null {
   const drafts = draftQueue.get(traceId);
@@ -253,17 +265,8 @@ export async function routeWithAI(
   mediaContext?: { media_base64: string; mime_type: string },
   userId?: string,
 ): Promise<{ response: string; toolsUsed: string[]; creditsConsumed: number }> {
-  // ── AI Battery check — block if depleted ──
-  if (!hasBudget(0.5)) {
-    const battery = getBatteryStatus();
-    return {
-      response: `⚡ AI Battery depleted (${battery.todayCredits}/${battery.dailyLimit} credits used today). ` +
-        `Read operations still work. To recharge, type "recharge [amount]".`,
-      toolsUsed: [],
-      creditsConsumed: 0,
-    };
-  }
 
+  cleanExpiredDrafts();
   const toolDefs: ToolDef[] = registry.toOpenAITools();
   const toolsUsed: string[] = [];
   let totalCreditsConsumed = 0;
@@ -328,8 +331,15 @@ export async function routeWithAI(
       let args: Record<string, unknown> = {};
       try {
         args = JSON.parse(tc.function.arguments);
-      } catch {
-        args = {};
+      } catch (parseErr) {
+        console.warn(`[router] Malformed tool args for ${tc.function.name}:`, (parseErr as Error).message);
+        messages.push({
+          role: 'tool',
+          content: JSON.stringify({ error: 'Malformed arguments from AI — please retry.' }),
+          tool_call_id: tc.id,
+          name: tc.function.name,
+        });
+        continue;
       }
 
       toolsUsed.push(toolName);

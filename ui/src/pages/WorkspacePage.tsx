@@ -14,7 +14,7 @@ import {
 import { PageHeader } from '@/components/home/PageHeader'
 import { KITZ_MANIFEST } from '@/data/kitz-manifest'
 import { WorkspaceTabs } from '@/components/workspace/WorkspaceTabs'
-import { cn } from '@/lib/utils'
+
 
 /* ── Workspace modules ── */
 const modules = [
@@ -179,12 +179,7 @@ export function WorkspacePage() {
           {endpoints.map((ep) => (
             <div key={ep.path} className="flex items-center gap-3 rounded-lg bg-white/10 px-4 py-3">
               <span
-                className={cn(
-                  'rounded-md px-2 py-0.5 font-mono text-[10px] font-bold',
-                  ep.method === 'GET'
-                    ? 'bg-white/20 text-white/90'
-                    : 'bg-white/20 text-white/90',
-                )}
+                className="rounded-md px-2 py-0.5 font-mono text-[10px] font-bold bg-white/20 text-white/90"
               >
                 {ep.method}
               </span>

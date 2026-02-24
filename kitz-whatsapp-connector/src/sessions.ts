@@ -34,6 +34,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ── Config ──
 const KITZ_OS_URL = process.env.KITZ_OS_URL || 'http://localhost:3012';
+const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
 const AUTH_ROOT = join(__dirname, '..', 'auth_info_baileys');
 const MAX_MEDIA_SIZE = 15_000_000;  // ~10MB raw (base64 is ~33% larger than raw)
 const WATCHDOG_INTERVAL_MS = 30 * 60 * 1000;  // 30 minutes
@@ -103,8 +104,8 @@ function typingDelayMs(response: string): number {
 }
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-// ── Kitz response prefix — visual marker in self-chat ──
-const KITZ_PREFIX = '⚡ *KITZ*\n─────────\n';
+// ── Kitz response prefix — purple dot + KITZ branding ──
+const KITZ_PREFIX = '🟣 *KITZ*\n─────────\n';
 function kitzReply(text: string): string {
   return `${KITZ_PREFIX}${text}`;
 }
@@ -147,7 +148,7 @@ async function forwardToKitzOs(
   try {
     const res = await fetch(`${KITZ_OS_URL}/api/kitz`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET } : {}) },
       body: JSON.stringify({
         message,
         sender: senderJid,
@@ -185,7 +186,7 @@ async function forwardMediaToKitzOs(
   try {
     const res = await fetch(`${KITZ_OS_URL}/api/kitz/media`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET } : {}) },
       body: JSON.stringify({
         media_base64: mediaBase64,
         mime_type: mimeType,
@@ -207,11 +208,33 @@ async function forwardMediaToKitzOs(
   }
 }
 
+// ── Auto-reply tracking — one reply per sender per session to avoid spam ──
+const AUTO_REPLY_COOLDOWN_MS = 4 * 60 * 60 * 1000; // 4 hours between auto-replies per sender
+
 // ── Session Manager ──
 class SessionManager {
   private sessions = new Map<string, UserSession>();
   private groupMetaCache = new Map<string, { subject?: string; participants?: string[]; expires: number }>();
+  private autoReplySent = new Map<string, number>(); // key: `${userId}:${senderJid}` → timestamp
   private static GROUP_META_TTL_MS = 5 * 60 * 1000; // 5 minutes
+  private cleanupTimer: ReturnType<typeof setInterval> | null = null;
+
+  constructor() {
+    // Periodic cleanup every 30 minutes to prevent memory leaks
+    this.cleanupTimer = setInterval(() => this.cleanupStaleMaps(), 30 * 60 * 1000);
+  }
+
+  private cleanupStaleMaps(): void {
+    const now = Date.now();
+    // Clean expired auto-reply entries
+    for (const [key, ts] of this.autoReplySent) {
+      if (now - ts > AUTO_REPLY_COOLDOWN_MS) this.autoReplySent.delete(key);
+    }
+    // Clean expired group meta cache entries
+    for (const [key, entry] of this.groupMetaCache) {
+      if (now > entry.expires) this.groupMetaCache.delete(key);
+    }
+  }
 
   /** Start (or restart) a Baileys session for a user */
   async startSession(userId: string, opts?: StartSessionOpts): Promise<UserSession> {
@@ -561,12 +584,50 @@ class SessionManager {
     // Log EVERY message that arrives (before any filtering)
     console.log(`[session:${userId}] RAW MSG: fromMe=${msg.key.fromMe} remoteJid=${senderJid} myNumber=${myNumber} keys=[${Object.keys(msg.message || {}).join(',')}]`);
 
-    // ── ACCESS MODEL: Only the logged-in user can talk to Kitz ──
-    // Kitz lives in the self-chat ("Me" / "Notes to self").
-    // Messages from other people are IGNORED — the user interacts with them normally.
-    // Self-chat messages arrive as fromMe=true with remoteJid = own number (or own LID).
-    const isSelfChat = myNumber && (senderNumber === myNumber || senderJid.endsWith('@lid'));
-    if (!isSelfChat) return;
+    // ── ACCESS MODEL ──
+    // 1. Self-chat ("Me" / "Notes to self") → always process
+    // 2. Group chats → only process if Kitz is mentioned by name
+    // 3. DMs from others → auto-reply + log to CRM
+    // 4. DMs you send to others → ignore
+    const isSelfChat = myNumber && senderNumber === myNumber;
+    const isGroup = senderJid.endsWith('@g.us');
+
+    // Extract message text early (needed for group mention check + CRM capture)
+    const earlyInner = msg.message?.ephemeralMessage?.message
+      || msg.message?.viewOnceMessage?.message
+      || msg.message;
+    const earlyText = (
+      earlyInner?.conversation
+      || earlyInner?.extendedTextMessage?.text
+      || earlyInner?.imageMessage?.caption
+      || earlyInner?.videoMessage?.caption
+      || earlyInner?.documentMessage?.caption
+      || ''
+    ).toLowerCase();
+
+    // Groups: only respond if the user is @mentioned or "kitz" is named
+    if (isGroup) {
+      // Check WhatsApp @mentions (contextInfo.mentionedJid contains JIDs of mentioned users)
+      const mentionedJids: string[] =
+        earlyInner?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+      const myJid = myNumber ? `${myNumber}@s.whatsapp.net` : '';
+      const isMentioned = myJid && mentionedJids.includes(myJid);
+      const kitzMentioned = /\bkitz\b/i.test(earlyText);
+
+      if (!isMentioned && !kitzMentioned) return;
+      // User was @mentioned or Kitz was named — fall through to process
+      console.log(`[session:${userId}] Activated in group ${senderJid} (mentioned=${isMentioned}, kitz=${kitzMentioned})`);
+    }
+
+    // If it's NOT self-chat and NOT a group (i.e., a DM):
+    if (!isSelfChat && !isGroup) {
+      if (!msg.key.fromMe) {
+        // External person messaged us — polite auto-reply + log to workspace
+        await this.autoReplyToExternal(session, senderJid, earlyText);
+      }
+      // Either way, don't process — Kitz only lives in self-chat and groups when mentioned
+      return;
+    }
 
     // Skip Kitz's own replies echoing back (prevents infinite loops)
     if (msg.key.id && kitzSentIds.has(msg.key.id)) {
@@ -790,6 +851,61 @@ class SessionManager {
     }
 
     await typeThenReply('I handle text, images, docs, and voice notes.');
+  }
+
+  /** Auto-reply to external senders — polite acknowledgment + log missed message to workspace */
+  private async autoReplyToExternal(session: UserSession, senderJid: string, messageText?: string): Promise<void> {
+    const { userId } = session;
+    const sock = session.socket;
+    if (!sock || !session.isConnected) return;
+
+    const senderNumber = senderJid.split('@')[0];
+
+    // Always log the missed message to kitz_os for CRM capture (even during cooldown)
+    if (messageText) {
+      this.logMissedMessage(userId, senderNumber, messageText).catch(() => {});
+    }
+
+    // Check cooldown — don't spam the same person with auto-replies
+    const key = `${userId}:${senderJid}`;
+    const lastSent = this.autoReplySent.get(key);
+    if (lastSent && Date.now() - lastSent < AUTO_REPLY_COOLDOWN_MS) {
+      console.log(`[session:${userId}] Skipping auto-reply to ${senderJid} (cooldown) — message logged`);
+      return;
+    }
+
+    // Send polite auto-reply
+    try {
+      const sent = await sock.sendMessage(senderJid, {
+        text: '🟣 *KITZ*\n─────────\nThanks for your message! Kenneth will get back to you soon. 🙏',
+      });
+      if (sent?.key?.id) trackKitzSent(sent.key.id);
+      this.autoReplySent.set(key, Date.now());
+      console.log(`[session:${userId}] Auto-reply sent to ${senderJid}`);
+    } catch (err) {
+      console.error(`[session:${userId}] Auto-reply failed to ${senderJid}:`, (err as Error).message);
+    }
+  }
+
+  /** Forward a missed WhatsApp message to kitz_os for CRM capture */
+  private async logMissedMessage(userId: string, senderPhone: string, messageText: string): Promise<void> {
+    try {
+      const traceId = crypto.randomUUID();
+      await fetch(`${KITZ_OS_URL}/api/kitz`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET } : {}) },
+        body: JSON.stringify({
+          message: `[MISSED WhatsApp from +${senderPhone}]: "${messageText}".\nLog this contact and their message in the CRM. Phone: +${senderPhone}. Tag as "missed-whatsapp".`,
+          sender: `${senderPhone}@s.whatsapp.net`,
+          user_id: userId,
+          trace_id: traceId,
+        }),
+        signal: AbortSignal.timeout(15_000),
+      });
+      console.log(`[session:${userId}] Missed message from +${senderPhone} logged to workspace`);
+    } catch (err) {
+      console.error(`[session:${userId}] Failed to log missed message:`, (err as Error).message);
+    }
   }
 
   /** Emit an SSE event to all listeners for a session */

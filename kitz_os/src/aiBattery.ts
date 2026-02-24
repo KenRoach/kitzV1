@@ -37,8 +37,7 @@ const LEDGER_FILE = join(DATA_DIR, 'battery-ledger.ndjson');
 const TOKENS_PER_CREDIT = 1000;       // ~1000 LLM tokens = 1 credit
 const TTS_CHARS_PER_CREDIT = 500;     // ~500 ElevenLabs chars = 1 credit
 
-// Budget limits (from governance/ai_battery.md)
-const DAILY_CREDIT_LIMIT = Number(process.env.AI_BATTERY_DAILY_LIMIT) || 5;
+// No daily credit limit — unlimited usage
 
 // Supabase config (optional — for persistent tracking)
 const SUPABASE_URL = process.env.SUPABASE_URL || '';
@@ -93,6 +92,7 @@ export interface BatteryStatus {
 // ── In-Memory Ledger ─────────────────────────────────────
 
 const ledger: SpendEntry[] = [];
+const MAX_LEDGER_SIZE = 10_000;
 let fileReady = false;
 
 // Ensure data directory exists
@@ -120,8 +120,9 @@ export async function recordSpend(entry: Omit<SpendEntry, 'id' | 'ts'>): Promise
     ts: new Date().toISOString(),
   };
 
-  // 1. In-memory ledger
+  // 1. In-memory ledger (capped to prevent unbounded growth)
   ledger.push(fullEntry);
+  if (ledger.length > MAX_LEDGER_SIZE) ledger.splice(0, ledger.length - MAX_LEDGER_SIZE);
 
   // 2. NDJSON file (fire-and-forget — don't block on I/O)
   persistToFile(fullEntry).catch(err => {
@@ -251,14 +252,13 @@ export function getBatteryStatus(): BatteryStatus {
     .reduce((sum, e) => sum + e.units, 0);
 
   const effectiveSpend = Math.max(0, todayCredits - todayRecharged);
-  const remaining = Math.max(0, DAILY_CREDIT_LIMIT - effectiveSpend);
 
   return {
     todayCredits: Math.round(effectiveSpend * 1000) / 1000,
     totalCredits: Math.round(totalCredits * 1000) / 1000,
-    dailyLimit: DAILY_CREDIT_LIMIT,
-    remaining: Math.round(remaining * 1000) / 1000,
-    depleted: remaining <= 0,
+    dailyLimit: Infinity,
+    remaining: Infinity,
+    depleted: false,
     byProvider,
     todayTokens,
     todayTtsChars,
@@ -267,12 +267,11 @@ export function getBatteryStatus(): BatteryStatus {
 }
 
 /**
- * Check if the battery has enough credits for an operation.
- * Returns true if credits are available, false if depleted.
+ * Always returns true — no daily credit limit enforced.
+ * Spend is still tracked for analytics but never blocks execution.
  */
-export function hasBudget(estimatedCredits = 1): boolean {
-  const status = getBatteryStatus();
-  return status.remaining >= estimatedCredits;
+export function hasBudget(_estimatedCredits = 1): boolean {
+  return true;
 }
 
 /**

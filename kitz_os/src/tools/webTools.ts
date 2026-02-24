@@ -20,12 +20,52 @@ const USER_AGENT = 'Mozilla/5.0 (compatible; KitzBot/1.0; +https://kitz.services
 
 // ── Helpers ──
 
+/** Block SSRF — reject private IPs, localhost, cloud metadata endpoints. */
+function validateUrl(rawUrl: string): { safe: boolean; error?: string } {
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return { safe: false, error: `Blocked scheme: ${parsed.protocol}` };
+    }
+    const host = parsed.hostname.toLowerCase();
+    const blocked = [
+      'localhost', '0.0.0.0', '[::1]',
+      '169.254.169.254',           // AWS/GCP metadata
+      'metadata.google.internal',  // GCP metadata
+    ];
+    if (blocked.includes(host)) {
+      return { safe: false, error: `Blocked host: ${host}` };
+    }
+    // Block private IP ranges (RFC 1918 + link-local)
+    const ipMatch = host.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+    if (ipMatch) {
+      const [, a, b] = ipMatch.map(Number);
+      if (a === 127 ||                           // 127.0.0.0/8
+          a === 10 ||                            // 10.0.0.0/8
+          (a === 172 && b >= 16 && b <= 31) ||   // 172.16.0.0/12
+          (a === 192 && b === 168) ||            // 192.168.0.0/16
+          (a === 169 && b === 254)) {            // 169.254.0.0/16
+        return { safe: false, error: `Blocked private IP: ${host}` };
+      }
+    }
+    return { safe: true };
+  } catch {
+    return { safe: false, error: 'Invalid URL' };
+  }
+}
+
 /** Fetch a URL and return raw HTML. */
 async function fetchPage(url: string): Promise<{ html: string; finalUrl: string; status: number }> {
   // Normalize URL
   let normalizedUrl = url.trim();
   if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
     normalizedUrl = `https://${normalizedUrl}`;
+  }
+
+  // SSRF protection
+  const check = validateUrl(normalizedUrl);
+  if (!check.safe) {
+    throw new Error(`URL blocked: ${check.error}`);
   }
 
   const res = await fetch(normalizedUrl, {
@@ -168,7 +208,7 @@ async function aiSummarize(content: string, instruction: string): Promise<string
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 500,
         messages: [{ role: 'user', content: `${instruction}\n\nContent:\n${truncated}` }],
       }),

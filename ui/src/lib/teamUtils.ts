@@ -1,2 +1,0 @@
-// Team utility functions
-export {}

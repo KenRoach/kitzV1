@@ -11,7 +11,8 @@
  * Uses better-sqlite3 for sync performance (or falls back to JSON files).
  */
 
-import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, existsSync, mkdirSync } from 'node:fs';
+import { writeFile, appendFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
@@ -120,18 +121,24 @@ export function initMemory(): void {
 function persistConversations(): void {
   ensureDataDir();
   const lines = conversations.map(m => JSON.stringify(m)).join('\n');
-  writeFileSync(CONVERSATIONS_FILE, lines + '\n');
+  writeFile(CONVERSATIONS_FILE, lines + '\n').catch(err => {
+    console.warn('[memory] persistConversations failed:', (err as Error).message);
+  });
 }
 
 function persistKnowledge(): void {
   ensureDataDir();
-  writeFileSync(KNOWLEDGE_FILE, JSON.stringify(knowledge, null, 2));
+  writeFile(KNOWLEDGE_FILE, JSON.stringify(knowledge, null, 2)).catch(err => {
+    console.warn('[memory] persistKnowledge failed:', (err as Error).message);
+  });
 }
 
 function appendConversation(msg: ConversationMessage): void {
   ensureDataDir();
   const line = JSON.stringify(msg) + '\n';
-  appendFileSync(CONVERSATIONS_FILE, line);
+  appendFile(CONVERSATIONS_FILE, line).catch(err => {
+    console.warn('[memory] appendConversation failed:', (err as Error).message);
+  });
 }
 
 // ── Conversation API ──
@@ -248,8 +255,9 @@ export function searchConversations(
       let score = 0;
       for (const term of terms) {
         if (text.includes(term)) score += 1;
-        // Bonus for exact word match
-        if (new RegExp(`\\b${term}\\b`).test(text)) score += 0.5;
+        // Bonus for exact word match (escape regex chars to prevent ReDoS)
+        const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        if (new RegExp(`\\b${escaped}\\b`).test(text)) score += 0.5;
       }
       return { msg: m, score };
     })
@@ -286,7 +294,8 @@ export function searchKnowledge(
     let score = 0;
     for (const term of terms) {
       if (text.includes(term)) score += 1;
-      if (new RegExp(`\\b${term}\\b`).test(text)) score += 0.5;
+      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      if (new RegExp(`\\b${escaped}\\b`).test(text)) score += 0.5;
     }
     return { entry: k, score };
   })

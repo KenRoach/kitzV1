@@ -54,7 +54,7 @@ export function parseWhatsAppCommand(text: string): KitzCommand | null {
   if (/^(kill|pause|stop|emergency)\b/i.test(lower)) {
     return { action: 'kill_switch', raw, value: true };
   }
-  if (/^(resume|unpause|start|go)\b/i.test(lower)) {
+  if (/^(resume|unpause|start)\b/i.test(lower)) {
     return { action: 'kill_switch', raw, value: false };
   }
 
@@ -149,7 +149,7 @@ export function parseWhatsAppCommand(text: string): KitzCommand | null {
   if (/^run\b/i.test(lower)) {
     return { action: 'run', raw, goal: raw.replace(/^run\s*/i, '').trim() };
   }
-  if (/^approve\s+/i.test(lower)) {
+  if (/^approve\b/i.test(lower)) {
     const match = lower.match(/^approve\s+(.+)/i);
     return { action: 'approve', raw, runId: match?.[1] };
   }

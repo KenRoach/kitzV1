@@ -14,6 +14,11 @@ import { textToSpeech, isElevenLabsConfigured } from '../llm/elevenLabsClient.js
 import type { ToolSchema } from './registry.js';
 
 const WA_CONNECTOR_URL = process.env.WA_CONNECTOR_URL || 'http://localhost:3006';
+const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
+const serviceHeaders: Record<string, string> = {
+  'Content-Type': 'application/json',
+  ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET } : {}),
+};
 
 export function getAllOutboundTools(): ToolSchema[] {
   return [
@@ -30,12 +35,43 @@ export function getAllOutboundTools(): ToolSchema[] {
       },
       riskLevel: 'high',
       execute: async (args, traceId) => {
-        // Draft-first policy — don't actually send without approval
-        return {
-          status: 'draft',
-          message: `Draft WhatsApp to ${args.phone}: "${(args.message as string).slice(0, 100)}..."`,
-          note: 'Outbound sends require approval in alpha mode.',
-        };
+        const phone = String(args.phone || '').replace(/[\s\-()]/g, '');
+        const message = String(args.message || '').trim();
+
+        if (!phone || !message) {
+          return { error: 'Both phone and message are required.' };
+        }
+
+        try {
+          const res = await fetch(`${WA_CONNECTOR_URL}/outbound/send`, {
+            method: 'POST',
+            headers: serviceHeaders,
+            body: JSON.stringify({
+              phone,
+              message,
+              userId: 'default',
+            }),
+            signal: AbortSignal.timeout(15_000),
+          });
+
+          if (res.ok) {
+            return {
+              status: 'sent',
+              message: `✅ WhatsApp message sent to ${phone}: "${message.slice(0, 100)}"`,
+            };
+          }
+
+          const errBody = await res.text().catch(() => '');
+          return {
+            status: 'failed',
+            error: `WhatsApp send failed (${res.status}): ${errBody.slice(0, 200)}`,
+          };
+        } catch (err) {
+          return {
+            status: 'failed',
+            error: `WhatsApp connector unreachable: ${(err as Error).message}`,
+          };
+        }
       },
     },
     {
@@ -126,7 +162,7 @@ export function getAllOutboundTools(): ToolSchema[] {
           try {
             const sendRes = await fetch(`${WA_CONNECTOR_URL}/outbound/send-voice`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: serviceHeaders,
               body: JSON.stringify({
                 phone,
                 audio_base64: audioResult.audioBase64,
@@ -223,7 +259,7 @@ export function getAllOutboundTools(): ToolSchema[] {
         try {
           const callRes = await fetch(`${WA_CONNECTOR_URL}/outbound/call`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: serviceHeaders,
             body: JSON.stringify({
               phone,
               purpose,

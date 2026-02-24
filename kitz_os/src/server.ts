@@ -29,6 +29,7 @@
  */
 
 import Fastify from 'fastify';
+import rateLimit from '@fastify/rate-limit';
 import type { KitzKernel } from './kernel.js';
 import { parseWhatsAppCommand } from './interfaces/whatsapp/commandParser.js';
 import { routeWithAI, getDraftQueue, approveDraft, rejectDraft } from './interfaces/whatsapp/semanticRouter.js';
@@ -42,10 +43,31 @@ export async function createServer(kernel: KitzKernel) {
   const app = Fastify({ logger: false, bodyLimit: 20_000_000 });  // 20MB for media payloads
   const PORT = Number(process.env.PORT) || 3012;
 
+  // Rate limiting — 120 req/min global, 30 req/min on AI endpoints
+  await app.register(rateLimit, { max: 120, timeWindow: '1 minute' });
+
   // Initialize memory system
   try { initMemory(); } catch (err) {
     console.warn('[server] Memory init failed (non-fatal):', (err as Error).message);
   }
+
+  // ── Service auth — inter-service requests must provide a shared secret ──
+  const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
+  app.addHook('onRequest', async (req, reply) => {
+    // Skip auth for health, status, OAuth callbacks, and webhook endpoints
+    const path = req.url.split('?')[0];
+    const skipAuth = path === '/health' ||
+      path === '/api/kitz/status' ||
+      path.startsWith('/api/payments/webhook/') ||
+      path.startsWith('/api/kitz/oauth/google/callback');
+    if (skipAuth) return;
+
+    const secret = req.headers['x-service-secret'] as string | undefined;
+    const devSecret = req.headers['x-dev-secret'] as string | undefined;
+    if (SERVICE_SECRET && secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
+      return reply.code(401).send({ error: 'Unauthorized: missing or invalid service secret' });
+    }
+  });
 
   // ── Health check ──
   app.get('/health', async () => ({ status: 'ok', service: 'kitz-os' }));
@@ -58,6 +80,7 @@ export async function createServer(kernel: KitzKernel) {
   // ── Main WhatsApp webhook ──
   app.post<{ Body: { message: string; sender?: string; user_id?: string; trace_id?: string; reply_context?: unknown; location?: string } }>(
     '/api/kitz',
+    { config: { rateLimit: { max: 30, timeWindow: '1 minute' } } },
     async (req, reply) => {
       const { message, sender, user_id, trace_id } = req.body || {};
       if (!message) return reply.code(400).send({ error: 'message required' });
@@ -87,10 +110,9 @@ export async function createServer(kernel: KitzKernel) {
                 `Uptime: ${s.uptime}s\n` +
                 `Kill Switch: ${s.killSwitch ? '🔴 ON' : '🟢 OFF'}\n\n` +
                 `⚡ *AI Battery*\n` +
-                `Credits: ${b.remaining}/${b.dailyLimit} remaining\n` +
                 `Today: ${b.todayCredits} credits (${b.todayCalls} calls)\n` +
                 `Tokens: ${b.todayTokens.toLocaleString()} | TTS: ${b.todayTtsChars.toLocaleString()} chars\n` +
-                `${b.depleted ? '🔴 DEPLETED — recharge needed' : '🟢 Active'}`,
+                `🟢 Unlimited`,
             };
           }
 
@@ -130,13 +152,21 @@ export async function createServer(kernel: KitzKernel) {
                 `Hey boss 👋\n\n` +
                 `KITZ is online and ready.\n` +
                 `${s.toolCount} tools loaded across CRM, orders, storefronts, payments, and more.\n\n` +
-                `⚡ Battery: ${s.aiBattery.remaining}/${s.aiBattery.dailyLimit} credits\n\n` +
+                `⚡ Battery: unlimited\n\n` +
                 `What are we working on?\n` +
                 `Type *help* for the full menu.`,
             };
           }
 
           case 'kill_switch': {
+            const ksDevSecret = req.headers['x-dev-secret'] as string | undefined;
+            const ksUserId = req.body.user_id;
+            const ksGodMode = process.env.GOD_MODE_USER_ID;
+            const isAdmin = (ksDevSecret && ksDevSecret === process.env.DEV_TOKEN_SECRET) ||
+                            (ksUserId && ksGodMode && ksUserId === ksGodMode);
+            if (!isAdmin) {
+              return { command: 'kill_switch', response: '🔒 Kill switch requires admin access.' };
+            }
             process.env.KILL_SWITCH = String(command.value);
             return {
               command: 'kill_switch',
@@ -148,8 +178,7 @@ export async function createServer(kernel: KitzKernel) {
             const bat = getBatteryStatus();
             return {
               command: 'battery',
-              response: `⚡ *AI Battery*\n\n` +
-                `Credits: *${bat.remaining}* / ${bat.dailyLimit} remaining\n` +
+              response: `⚡ *AI Battery* — Unlimited\n\n` +
                 `Spent today: ${bat.todayCredits} credits (${bat.todayCalls} API calls)\n\n` +
                 `📊 *Breakdown*\n` +
                 `• OpenAI: ${bat.byProvider.openai.toFixed(2)} credits\n` +
@@ -158,7 +187,7 @@ export async function createServer(kernel: KitzKernel) {
                 `📈 *Usage*\n` +
                 `• LLM tokens: ${bat.todayTokens.toLocaleString()}\n` +
                 `• TTS characters: ${bat.todayTtsChars.toLocaleString()}\n\n` +
-                `${bat.depleted ? '🔴 DEPLETED — type "recharge [amount]"' : '🟢 Battery active'}`,
+                `🟢 No daily limit`,
             };
           }
 
@@ -332,8 +361,7 @@ export async function createServer(kernel: KitzKernel) {
       const userId = req.headers['x-user-id'] as string | undefined;
       const godMode = process.env.GOD_MODE_USER_ID;
       const isAuthed = (devSecret && devSecret === process.env.DEV_TOKEN_SECRET) ||
-                       (userId && godMode && userId === godMode) ||
-                       (userId && userId.length > 0);
+                       (userId && godMode && userId === godMode);
       if (!isAuthed) {
         return reply.code(401).send({ error: 'Draft approval requires authentication. Pass x-dev-secret or x-user-id header.' });
       }

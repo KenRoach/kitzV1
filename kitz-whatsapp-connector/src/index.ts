@@ -22,6 +22,25 @@ const app = Fastify({ logger: true });
 
 const templates = new Map<string, string>();
 const consent = new Map<string, boolean>();
+const CONNECTOR_SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
+
+// Auth hook for outbound/session endpoints (skip health + public login pages)
+app.addHook('onRequest', async (req, reply) => {
+  const path = req.url.split('?')[0];
+  const skipAuth = path === '/health' ||
+    path === '/whatsapp/status' ||
+    path === '/whatsapp/login' ||
+    path === '/whatsapp/connect';
+  if (skipAuth) return;
+
+  if (CONNECTOR_SERVICE_SECRET) {
+    const secret = req.headers['x-service-secret'] as string | undefined;
+    const devSecret = req.headers['x-dev-secret'] as string | undefined;
+    if (secret !== CONNECTOR_SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
+      return reply.code(401).send({ error: 'Unauthorized: missing or invalid service secret' });
+    }
+  }
+});
 
 const audit = (event: string, payload: unknown, traceId: string): EventEnvelope => ({
   orgId: 'connector-system',
@@ -131,7 +150,7 @@ app.post('/webhooks/inbound', async (req: any, reply) => {
 app.post('/outbound/send', async (req: any, reply) => {
   const traceId = String(req.headers['x-trace-id'] || randomUUID());
   const { phone, message, draftOnly: draftOnlyParam, userId } = req.body || {};
-  const draftOnly = Boolean(draftOnlyParam ?? false);
+  const draftOnly = Boolean(draftOnlyParam ?? true);
 
   if (draftOnly) {
     app.log.info(audit('whatsapp.outbound.draft', req.body, traceId));

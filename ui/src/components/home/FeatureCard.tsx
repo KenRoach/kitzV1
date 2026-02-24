@@ -3,15 +3,6 @@ import { cn } from '@/lib/utils'
 
 export type FeatureColor = 'purple' | 'blue' | 'pink' | 'orange' | 'emerald' | 'amber'
 
-const colorMap: Record<FeatureColor, { border: string }> = {
-  purple:  { border: 'hover:border-purple-300' },
-  blue:    { border: 'hover:border-purple-300' },
-  pink:    { border: 'hover:border-purple-300' },
-  orange:  { border: 'hover:border-purple-300' },
-  emerald: { border: 'hover:border-purple-300' },
-  amber:   { border: 'hover:border-purple-300' },
-}
-
 interface FeatureCardProps {
   icon: LucideIcon
   title: string
@@ -20,15 +11,13 @@ interface FeatureCardProps {
   onClick?: () => void
 }
 
-export function FeatureCard({ icon: Icon, title, description, color, onClick }: FeatureCardProps) {
-  const c = colorMap[color]
+export function FeatureCard({ icon: Icon, title, description, onClick }: FeatureCardProps) {
   return (
     <button
       onClick={onClick}
       className={cn(
         'flex flex-col items-start rounded-2xl border border-gray-200 bg-white p-5 text-left',
-        'transition-all hover:shadow-lg cursor-pointer',
-        c.border,
+        'transition-all hover:shadow-lg cursor-pointer hover:border-purple-300',
       )}
     >
       <Icon className="h-5 w-5 text-purple-500" />
