@@ -213,6 +213,9 @@ export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
   const user = useAuthStore((s) => s.user)
   const openTalk = useOrbStore((s) => s.open)
   const orbState = useOrbStore((s) => s.state)
+  const focusChat = useOrbStore((s) => s.focusChat)
+  const [orbTeleporting, setOrbTeleporting] = useState(false)
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const userName = user?.email?.split('@')[0] ?? 'there'
   const heroRef = useRef<HTMLDivElement>(null)
   const sleeping = !showKitz
@@ -240,19 +243,40 @@ export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
           <h1 className="mt-1 text-2xl font-bold text-black">{userName}</h1>
           <MissionBlock />
         </div>
-        {/* Kitz — both states use % + translate(-50%,-50%) so transitions are seamless */}
-        {/* Hidden when FloatingOrb takes over (thinking/responding) */}
+        {/* Kitz — puffs out when teleporting to chatbox, clickable to focus chat */}
         <div
-          className="absolute z-20"
+          className={`absolute z-20 ${(orbState === 'thinking' || orbTeleporting) ? 'kitz-puff-out' : ''}`}
           style={{
             left: sleeping ? `${SLEEP_X_FRAC * 100}%` : `${kitzPos.x}%`,
             top: sleeping ? `${SLEEP_Y_FRAC * 100}%` : `${kitzPos.y}%`,
             transform: 'translate(-50%, -50%)',
-            opacity: orbState === 'thinking' ? 0 : 1,
+            cursor: sleeping ? undefined : 'pointer',
             transition: sleeping
-              ? 'left 1s cubic-bezier(0.4, 0, 0.2, 1), top 1s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease'
-              : 'left 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), top 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.4s ease',
+              ? 'left 1s cubic-bezier(0.4, 0, 0.2, 1), top 1s cubic-bezier(0.4, 0, 0.2, 1)'
+              : 'left 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), top 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)',
             willChange: sleeping ? undefined : 'left, top',
+          }}
+          onClick={() => {
+            if (sleeping) return
+            // Single click: puff to chatbox. Double click handled below.
+            if (clickTimerRef.current) return // double-click pending, skip
+            clickTimerRef.current = setTimeout(() => {
+              clickTimerRef.current = null
+              setOrbTeleporting(true)
+              setTimeout(() => {
+                focusChat()
+                setOrbTeleporting(false)
+              }, 500)
+            }, 250) // wait 250ms to rule out double-click
+          }}
+          onDoubleClick={() => {
+            if (sleeping) return
+            // Double click: open voice modal
+            if (clickTimerRef.current) {
+              clearTimeout(clickTimerRef.current)
+              clickTimerRef.current = null
+            }
+            openTalk()
           }}
         >
           <Orb sleeping={sleeping} />

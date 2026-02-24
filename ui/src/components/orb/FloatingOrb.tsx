@@ -1,156 +1,176 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Orb } from './Orb'
 import { useOrbStore } from '@/stores/orbStore'
-import { useOrbNavigatorStore } from '@/hooks/useOrbNavigator'
 
 /**
- * FloatingOrb — the Orb that glides from the hero card to the chatbox.
+ * FloatingOrb — PUFF teleport between hero card and chatbox.
  *
- * Behavior:
- * - Idle: gentle Lissajous drift near its "home" position (hero card area)
- * - Thinking: glides to the chatbox input area
- * - Done: glides back to home
- * - Nav highlight: glides to the highlighted nav item
+ * Idle: hidden (hero Orb in HomePage handles idle display)
+ * Thinking: puff-out at hero → puff-in at chatbox
+ * Done: puff-out at chatbox → puff-in at hero
  */
 
-// Drift parameters for idle floating
-const DRIFT_RANGE_X = 10
-const DRIFT_RANGE_Y = 6
-const DRIFT_SPEED = 0.0007
-
-type GlideTarget = 'home' | 'chatbox' | 'nav'
-
-function getHomePosition(): { x: number; y: number } {
-  // Try to find the hero card and position in its right half
-  const hero = document.querySelector('[data-orb-home]')
-  if (hero) {
-    const rect = hero.getBoundingClientRect()
-    return {
-      x: rect.left + rect.width * 0.76,
-      y: rect.top + rect.height * 0.48,
-    }
-  }
-  // Fallback: center-right of viewport
-  return {
-    x: window.innerWidth * 0.4,
-    y: 180,
-  }
-}
+type Phase = 'hidden' | 'puff-out' | 'puff-in' | 'visible'
 
 function getChatboxPosition(): { x: number; y: number } {
-  // Find the chatbox input area
-  const chatInput = document.querySelector('[data-orb-chatbox]')
-  if (chatInput) {
-    const rect = chatInput.getBoundingClientRect()
-    return {
-      x: rect.left + rect.width / 2 - 40,
-      y: rect.top - 60,
-    }
+  const el = document.querySelector('[data-orb-chatbox]')
+  if (el) {
+    const rect = el.getBoundingClientRect()
+    return { x: rect.left + rect.width / 2 - 40, y: rect.top - 80 }
   }
-  // Fallback: right panel area
-  return {
-    x: window.innerWidth - 250,
-    y: window.innerHeight - 200,
+  return { x: window.innerWidth - 250, y: window.innerHeight - 200 }
+}
+
+function getHeroPosition(): { x: number; y: number } {
+  const el = document.querySelector('[data-orb-home]')
+  if (el) {
+    const rect = el.getBoundingClientRect()
+    return { x: rect.left + rect.width * 0.76 - 40, y: rect.top + rect.height * 0.48 - 40 }
   }
+  return { x: window.innerWidth * 0.35, y: 160 }
+}
+
+/** Purple smoke puff particle */
+function SmokePuff({ x, y }: { x: number; y: number }) {
+  return (
+    <div
+      style={{ position: 'fixed', left: x, top: y, zIndex: 60, pointerEvents: 'none' }}
+    >
+      {/* Multiple offset smoke rings for depth */}
+      {[0, 1, 2, 3, 4].map((i) => (
+        <div
+          key={i}
+          className="kitz-smoke"
+          style={{
+            position: 'absolute',
+            width: 20,
+            height: 20,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, rgba(168,85,247,${0.6 - i * 0.1}) 0%, transparent 70%)`,
+            left: (i % 2 === 0 ? -1 : 1) * (8 + i * 6),
+            top: (i % 3 === 0 ? -1 : 1) * (4 + i * 5),
+            animationDelay: `${i * 0.06}s`,
+          }}
+        />
+      ))}
+      {/* Star sparkle */}
+      <div
+        className="kitz-smoke"
+        style={{
+          position: 'absolute',
+          left: -4,
+          top: -4,
+          fontSize: 18,
+          animationDelay: '0.1s',
+        }}
+      >
+        ✨
+      </div>
+    </div>
+  )
 }
 
 export function FloatingOrb() {
   const orbState = useOrbStore((s) => s.state)
-  const { target, highlighting } = useOrbNavigatorStore()
+  const prevStateRef = useRef(orbState)
 
-  const [basePos, setBasePos] = useState({ x: 0, y: 0 })
-  const [drift, setDrift] = useState({ x: 0, y: 0 })
-  const [initialized, setInitialized] = useState(false)
-  const [glideTarget, setGlideTarget] = useState<GlideTarget>('home')
-  const [visible, setVisible] = useState(true)
+  const [phase, setPhase] = useState<Phase>('hidden')
+  const [pos, setPos] = useState({ x: 0, y: 0 })
+  const [smokePos, setSmokePos] = useState<{ x: number; y: number } | null>(null)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const rafRef = useRef<number>(0)
-  const startTimeRef = useRef(Date.now())
-
-  // Initialize at home position
-  useEffect(() => {
-    const home = getHomePosition()
-    setBasePos(home)
-    setInitialized(true)
-    startTimeRef.current = Date.now()
+  const clearTimers = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
   }, [])
 
-  // Idle drift — Lissajous figure-8 via transform
+  // React to orbStore state changes
   useEffect(() => {
-    if (!initialized) return
+    const prev = prevStateRef.current
+    prevStateRef.current = orbState
 
-    const animate = () => {
-      const elapsed = Date.now() - startTimeRef.current
-      const dx = Math.sin(elapsed * DRIFT_SPEED) * DRIFT_RANGE_X
-      const dy = Math.sin(elapsed * DRIFT_SPEED * 1.4 + 0.8) * DRIFT_RANGE_Y
-      setDrift({ x: dx, y: dy })
-      rafRef.current = requestAnimationFrame(animate)
+    if (orbState === 'thinking' && prev !== 'thinking') {
+      // === TELEPORT TO CHATBOX ===
+      clearTimers()
+
+      // 1) Smoke puff at hero position
+      const hero = getHeroPosition()
+      setSmokePos({ x: hero.x + 40, y: hero.y + 40 })
+
+      // 2) After puff-out duration, appear at chatbox with puff-in
+      timeoutRef.current = setTimeout(() => {
+        setSmokePos(null)
+        const chatbox = getChatboxPosition()
+        setPos(chatbox)
+
+        // Smoke at chatbox arrival
+        setSmokePos({ x: chatbox.x + 40, y: chatbox.y + 40 })
+        setPhase('puff-in')
+
+        // Clear arrival smoke after animation
+        timeoutRef.current = setTimeout(() => {
+          setSmokePos(null)
+          setPhase('visible')
+        }, 500)
+      }, 400)
+
+    } else if (
+      (orbState === 'success' || orbState === 'error' || orbState === 'idle') &&
+      prev === 'thinking' &&
+      phase !== 'hidden'
+    ) {
+      // === TELEPORT BACK TO HERO ===
+      clearTimers()
+
+      // Wait a beat so user sees the Orb at the chatbox with the response
+      timeoutRef.current = setTimeout(() => {
+        // Smoke puff at chatbox
+        const chatbox = getChatboxPosition()
+        setSmokePos({ x: chatbox.x + 40, y: chatbox.y + 40 })
+        setPhase('puff-out')
+
+        timeoutRef.current = setTimeout(() => {
+          setSmokePos(null)
+          setPhase('hidden')
+        }, 500)
+      }, 1500)
     }
 
-    rafRef.current = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(rafRef.current)
-  }, [initialized])
-
-  // React to orbStore state changes — glide to chatbox when thinking
-  useEffect(() => {
-    if (orbState === 'thinking') {
-      setGlideTarget('chatbox')
-      setVisible(true)
-      const pos = getChatboxPosition()
-      setBasePos(pos)
-    } else if (orbState === 'idle' || orbState === 'success' || orbState === 'error') {
-      // Only glide back if we were at chatbox
-      if (glideTarget === 'chatbox') {
-        // Small delay so user sees the Orb at the chatbox when response appears
-        setTimeout(() => {
-          setGlideTarget('home')
-          const home = getHomePosition()
-          setBasePos(home)
-        }, 1200)
-      }
-    }
+    return () => clearTimers()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orbState])
 
-  // React to nav highlighting — overrides chatbox targeting
+  // Clean up on unmount
   useEffect(() => {
-    if (target && highlighting) {
-      setGlideTarget('nav')
-      setVisible(true)
-      const el = document.querySelector(`[data-nav="${target.id}"]`)
-      if (el) {
-        const rect = el.getBoundingClientRect()
-        setBasePos({
-          x: rect.right + 16,
-          y: rect.top + rect.height / 2 - 24,
-        })
-      }
-    } else if (!highlighting && glideTarget === 'nav') {
-      setGlideTarget('home')
-      const home = getHomePosition()
-      setBasePos(home)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target, highlighting])
-
-  if (!initialized || !visible) return null
+    return () => clearTimers()
+  }, [clearTimers])
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        left: basePos.x,
-        top: basePos.y,
-        // Smooth glide for position changes (home ↔ chatbox ↔ nav)
-        transition: 'left 1.2s cubic-bezier(0.34, 1.56, 0.64, 1), top 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        // Idle drift layered via transform — doesn't fight CSS transitions
-        transform: `translate(${drift.x}px, ${drift.y}px)`,
-        zIndex: 50,
-        pointerEvents: 'none',
-        willChange: 'transform',
-      }}
-    >
-      <Orb />
-    </div>
+    <>
+      {/* Smoke particles */}
+      {smokePos && <SmokePuff x={smokePos.x} y={smokePos.y} />}
+
+      {/* The Orb — only rendered when not hidden */}
+      {phase !== 'hidden' && (
+        <div
+          className={
+            phase === 'puff-out' ? 'kitz-puff-out' :
+            phase === 'puff-in' ? 'kitz-puff-in' :
+            ''
+          }
+          style={{
+            position: 'fixed',
+            left: pos.x,
+            top: pos.y,
+            zIndex: 50,
+            pointerEvents: 'none',
+          }}
+        >
+          <Orb />
+        </div>
+      )}
+    </>
   )
 }
