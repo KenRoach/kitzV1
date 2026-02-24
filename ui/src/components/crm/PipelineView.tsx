@@ -45,6 +45,8 @@ function PipelineColumn({ stage, leads, onSelectLead, onDrop }: {
   return (
     <div
       className="flex min-w-[240px] flex-1 flex-col"
+      role="region"
+      aria-label={`${STAGE_LABELS[stage]} stage`}
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => {
         const leadId = e.dataTransfer.getData('leadId')
@@ -154,6 +156,8 @@ export function PipelineView({ onSelectLead }: PipelineViewProps) {
             <div
               key={stage}
               className="flex-1 rounded-xl border border-gray-200 bg-white p-4"
+              role="region"
+              aria-label={`${STAGE_LABELS[stage]} stage`}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 const leadId = e.dataTransfer.getData('leadId')

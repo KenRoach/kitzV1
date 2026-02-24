@@ -12,7 +12,12 @@
  *   - All invocations are logged for audit
  */
 
-import type { OsToolRegistry } from '../../kitz_os/src/tools/registry.js';
+// Local interface to avoid cross-service import (audit finding 6c)
+interface OsToolRegistry {
+  has(name: string): boolean;
+  invoke(name: string, args: Record<string, unknown>, traceId?: string): Promise<unknown>;
+}
+
 import type { AgentTier, TeamName } from './types.js';
 
 // ── Tool Permission Groups ──
@@ -49,6 +54,12 @@ const READ_TOOLS = [
   'compliance_factCheck',
   'voice_listVoices',
   'voice_getConfig',
+  'inventory_checkStock',
+  'inventory_lowStockAlerts',
+  'n8n_listWorkflows',
+  'n8n_getWorkflow',
+  'n8n_getExecutions',
+  'n8n_healthCheck',
 ];
 
 /** CRM write tools — sales team + C-suite */
@@ -63,6 +74,7 @@ const CRM_WRITE_TOOLS = [
   'storefronts_markPaid',
   'products_create',
   'products_update',
+  'inventory_adjustStock',
 ];
 
 /** Outbound messaging — draft-first, C-suite or explicit scope */
@@ -121,6 +133,14 @@ const LOVABLE_TOOLS = [
   'artifact_pushToLovable',
 ];
 
+/** LLM direct access tools — C-suite, AI-ML team, strategy, key agents */
+const LLM_TOOLS = [
+  'agent_chat',
+  'llm_complete',
+  'llm_analyze',
+  'llm_strategize',
+];
+
 /** Critical destructive tools — require explicit per-agent approval */
 const CRITICAL_TOOLS = [
   'storefronts_delete',
@@ -128,6 +148,17 @@ const CRITICAL_TOOLS = [
   'artifact_selfHeal',
   'artifact_generateMigration',
   'email_sendApprovalRequest',
+];
+
+/** n8n workflow automation tools */
+const N8N_TOOLS = [
+  'n8n_listWorkflows',
+  'n8n_getWorkflow',
+  'n8n_executeWorkflow',
+  'n8n_triggerWebhook',
+  'n8n_activateWorkflow',
+  'n8n_getExecutions',
+  'n8n_healthCheck',
 ];
 
 // ── Role → Tool Mapping ──
@@ -143,12 +174,14 @@ export function getAllowedTools(
   // Tier-based access
   switch (tier) {
     case 'c-suite':
-      // C-suite gets broad access
+      // C-suite gets broad access including LLM
       CRM_WRITE_TOOLS.forEach(t => tools.add(t));
       OUTBOUND_TOOLS.forEach(t => tools.add(t));
       CONTENT_TOOLS.forEach(t => tools.add(t));
       CALENDAR_WRITE_TOOLS.forEach(t => tools.add(t));
       KNOWLEDGE_TOOLS.forEach(t => tools.add(t));
+      LLM_TOOLS.forEach(t => tools.add(t));
+      N8N_TOOLS.forEach(t => tools.add(t));
       // Specific C-suite roles get extra tools
       if (agentName === 'CFO' || agentName === 'CRO') {
         PAYMENT_TOOLS.forEach(t => tools.add(t));
@@ -160,6 +193,11 @@ export function getAllowedTools(
       break;
 
     case 'board':
+      // Board: read + knowledge + LLM for strategic deliberation
+      KNOWLEDGE_TOOLS.forEach(t => tools.add(t));
+      LLM_TOOLS.forEach(t => tools.add(t));
+      break;
+
     case 'governance':
     case 'external':
       // Advisory tiers: read-only + knowledge management
@@ -194,43 +232,49 @@ export function getAllowedTools(
 function getTeamTools(team: TeamName): string[] {
   switch (team) {
     case 'sales-crm':
-      return [...CRM_WRITE_TOOLS, ...OUTBOUND_TOOLS];
+      return [...CRM_WRITE_TOOLS, ...OUTBOUND_TOOLS, 'n8n_triggerWebhook'];
 
     case 'marketing-growth':
     case 'growth-hacking':
     case 'content-brand':
-      return [...CONTENT_TOOLS, ...OUTBOUND_TOOLS];
+      return [...CONTENT_TOOLS, ...OUTBOUND_TOOLS, 'n8n_triggerWebhook'];
 
     case 'customer-success':
     case 'whatsapp-comms':
-      return [...CRM_WRITE_TOOLS, ...OUTBOUND_TOOLS];
+      return [...CRM_WRITE_TOOLS, ...OUTBOUND_TOOLS, 'n8n_triggerWebhook'];
 
     case 'education-onboarding':
       return [...CONTENT_TOOLS, ...KNOWLEDGE_TOOLS];
 
     case 'platform-eng':
+      return [...CONTENT_TOOLS, ...LOVABLE_TOOLS, ...KNOWLEDGE_TOOLS, ...N8N_TOOLS];
+
     case 'backend':
+      return [...CONTENT_TOOLS, ...LOVABLE_TOOLS, ...KNOWLEDGE_TOOLS, 'n8n_executeWorkflow', 'n8n_triggerWebhook'];
+
     case 'frontend':
       return [...CONTENT_TOOLS, ...LOVABLE_TOOLS, ...KNOWLEDGE_TOOLS];
 
     case 'devops-ci':
-      return [...CONTENT_TOOLS, ...KNOWLEDGE_TOOLS];
+      return [...CONTENT_TOOLS, ...KNOWLEDGE_TOOLS, ...N8N_TOOLS];
 
     case 'qa-testing':
       return [...CONTENT_TOOLS, ...KNOWLEDGE_TOOLS];
 
     case 'ai-ml':
-      return [...CONTENT_TOOLS, ...KNOWLEDGE_TOOLS];
+      return [...CONTENT_TOOLS, ...KNOWLEDGE_TOOLS, ...LLM_TOOLS];
 
     case 'finance-billing':
-      return [...PAYMENT_TOOLS, ...CRM_WRITE_TOOLS];
+      return [...PAYMENT_TOOLS, ...CRM_WRITE_TOOLS, ...LLM_TOOLS, 'n8n_triggerWebhook'];
 
     case 'legal-compliance':
-      return [...KNOWLEDGE_TOOLS];
+      return [...KNOWLEDGE_TOOLS, ...LLM_TOOLS];
 
     case 'strategy-intel':
+      return [...KNOWLEDGE_TOOLS, ...CALENDAR_WRITE_TOOLS, ...LLM_TOOLS];
+
     case 'governance-pmo':
-      return [...KNOWLEDGE_TOOLS, ...CALENDAR_WRITE_TOOLS];
+      return [...KNOWLEDGE_TOOLS, ...CALENDAR_WRITE_TOOLS, ...LLM_TOOLS];
 
     case 'coaches':
       return [...KNOWLEDGE_TOOLS, ...CONTENT_TOOLS];

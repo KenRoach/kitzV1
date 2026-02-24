@@ -13,6 +13,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import { PageHeader } from '@/components/home/PageHeader'
+import { ActivityTab } from '@/components/activity/ActivityTab'
 import { KITZ_MANIFEST } from '@/content/kitz-manifest'
 import { cn } from '@/lib/utils'
 
@@ -92,6 +93,11 @@ export function ActivityPage() {
         title="Activity"
         description="Every action — human or AI — creates an event in the activity stream"
       />
+
+      {/* ── Live Activity Feed ── */}
+      <section className="mt-2 mb-10">
+        <ActivityTab />
+      </section>
 
       {/* ── What Gets Tracked ── */}
       <section className="mt-2">

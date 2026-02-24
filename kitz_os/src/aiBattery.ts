@@ -275,6 +275,24 @@ export function hasBudget(_estimatedCredits = 1): boolean {
 }
 
 /**
+ * Check if an AI action meets the minimum ROI threshold (2x).
+ * Returns approval status and calculated ROI.
+ * If ROI < 2x, recommend manual mode instead.
+ */
+export function checkROI(estimatedCost: number, estimatedValue: number): { approved: boolean; roi: number; recommendation: string } {
+  if (estimatedCost <= 0) return { approved: true, roi: Infinity, recommendation: 'Zero-cost action — always approved' };
+  const roi = estimatedValue / estimatedCost;
+  if (roi >= 2) {
+    return { approved: true, roi: Math.round(roi * 100) / 100, recommendation: `ROI ${roi.toFixed(1)}x — approved` };
+  }
+  return {
+    approved: false,
+    roi: Math.round(roi * 100) / 100,
+    recommendation: `ROI ${roi.toFixed(1)}x is below 2x minimum. Recommend manual mode.`,
+  };
+}
+
+/**
  * Get the full ledger (for debugging/audit).
  */
 export function getLedger(): SpendEntry[] {

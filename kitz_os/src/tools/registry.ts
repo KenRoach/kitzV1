@@ -75,6 +75,9 @@ export class OsToolRegistry {
       import('./webTools.js'),
       import('./sopTools.js'),
       import('./broadcastTools.js'),
+      import('./llmTools.js'),
+      import('./inventoryTools.js'),
+      import('./n8nTools.js'),
     ]);
 
     const getterNames = [
@@ -97,6 +100,9 @@ export class OsToolRegistry {
       'getAllWebTools',
       'getAllSOPTools',
       'getAllBroadcastTools',
+      'getAllLlmTools',
+      'getAllInventoryTools',
+      'getAllN8nTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {

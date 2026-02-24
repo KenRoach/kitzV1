@@ -57,11 +57,13 @@ interface Lead { id: string; name: string; phone: string; email: string; notes: 
 interface Order { id: string; customer: string; amount: number; description: string; status: string; createdAt: string; }
 interface Task { id: string; title: string; status: string; createdAt: string; }
 interface CheckoutLink { id: string; orderId: string; amount: number; url: string; createdAt: string; }
+interface Product { id: string; name: string; description: string; price: number; cost: number; sku: string; stock_qty: number; low_stock_threshold: number; category: string; image_url: string; is_active: boolean; createdAt: string; updatedAt: string; }
 
 const userLeads = new Map<string, Lead[]>();
 const userOrders = new Map<string, Order[]>();
 const userTasks = new Map<string, Task[]>();
 const userCheckoutLinks = new Map<string, CheckoutLink[]>();
+const userProducts = new Map<string, Product[]>();
 
 /* ── Analytics ── */
 type RouteStats = { count: number; errors: number; latencies: number[] };
@@ -387,6 +389,7 @@ const shell = (title: string, body: string, session: Session | null, script = ''
     <a href="/orders" class="${title === 'Orders' ? 'active' : ''}">Orders</a>
     <a href="/tasks" class="${title === 'Tasks' ? 'active' : ''}">Tasks</a>
     <a href="/checkout-links" class="${title === 'Checkout Links' ? 'active' : ''}">Checkout</a>
+    <a href="/products" class="${title === 'Products' ? 'active' : ''}">Products</a>
     <a href="/whatsapp" class="${title === 'WhatsApp' ? 'active' : ''}">WhatsApp</a>
     <a href="/ai-direction" class="${title === 'AI Direction' ? 'active' : ''}">AI</a>
   </nav>` : ''}
@@ -1031,6 +1034,164 @@ app.post('/checkout-links/create', async (req: any, reply: any) => {
   userCheckoutLinks.set(session.userId, links);
 
   return reply.redirect('/checkout-links');
+});
+
+/* ── Products Page ── */
+
+app.get('/products', async (req: any, reply: any) => {
+  const session = requireSession(req, reply);
+  if (!session) return;
+  trackUsage('products.view');
+
+  // Fetch from MCP (Supabase) with in-memory fallback
+  let products: Product[] = userProducts.get(session.userId) || [];
+  if (mcpConfigured) {
+    const result = await callMcp('list_products', { limit: 100 }, session.userId) as any;
+    if (result && !result.error && Array.isArray(result)) {
+      products = result.map((p: any) => ({
+        id: p.id, name: p.name || '', description: p.description || '',
+        price: Number(p.price) || 0, cost: Number(p.cost) || 0,
+        sku: p.sku || '', stock_qty: Number(p.stock_qty) || 0,
+        low_stock_threshold: Number(p.low_stock_threshold) || 5,
+        category: p.category || '', image_url: p.image_url || '',
+        is_active: p.is_active !== false,
+        createdAt: p.created_at || new Date().toISOString(),
+        updatedAt: p.updated_at || new Date().toISOString(),
+      }));
+    }
+  }
+
+  const activeProducts = products.filter(p => p.is_active).length;
+  const lowStock = products.filter(p => p.is_active && p.stock_qty <= p.low_stock_threshold && p.stock_qty > 0).length;
+  const outOfStock = products.filter(p => p.is_active && p.stock_qty === 0).length;
+
+  const listHtml = products.length
+    ? products.map(p => {
+        const stockColor = !p.is_active ? '#666' : p.stock_qty === 0 ? '#ff6b6b' : p.stock_qty <= p.low_stock_threshold ? '#ffb347' : '#00d4aa';
+        return `<div class="list-item">
+        <div>
+          <div class="list-item-title" style="${!p.is_active ? 'color:#666' : ''}">${esc(p.name)}${!p.is_active ? ' <span class="list-item-badge done">Inactive</span>' : ''}${p.sku ? ` <span style="color:#555;font-size:12px">SKU: ${esc(p.sku)}</span>` : ''}</div>
+          <div class="list-item-sub">$${p.price.toFixed(2)}${p.cost ? ` / Cost: $${p.cost.toFixed(2)}` : ''}${p.category ? ` &middot; ${esc(p.category)}` : ''} &middot; <span style="color:${stockColor}">Stock: ${p.stock_qty}</span></div>
+        </div>
+        <form method="POST" action="/products/delete" style="margin:0"><input type="hidden" name="id" value="${p.id}"/><button class="btn btn-sm btn-danger" type="submit">Remove</button></form>
+      </div>`;
+      }).join('')
+    : `<div class="empty-state"><div class="icon">\uD83D\uDCE6</div>No products yet. Add your first product above.</div>`;
+
+  return shell('Products', `
+    <h1 class="page-title">Products</h1>
+    <p class="page-desc">Manage your product catalog and inventory.${mcpConfigured ? '' : ' <span style="color:#555">(offline mode)</span>'}</p>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-value">${activeProducts}</div><div class="stat-label">Active Products</div></div>
+      <div class="stat"><div class="stat-value" style="color:${lowStock > 0 ? '#ffb347' : '#00d4aa'}">${lowStock}</div><div class="stat-label">Low Stock</div></div>
+      <div class="stat"><div class="stat-value" style="color:${outOfStock > 0 ? '#ff6b6b' : '#00d4aa'}">${outOfStock}</div><div class="stat-label">Out of Stock</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Add Product</span>
+        <span class="card-badge badge-free">FREE</span>
+      </div>
+      <form method="POST" action="/products/add">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Name</label><input name="name" placeholder="Product name" required/></div>
+          <div class="form-group"><label class="form-label">SKU</label><input name="sku" placeholder="SKU-001"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Price (USD)</label><input name="price" type="number" step="0.01" min="0.01" placeholder="25.00" required/></div>
+          <div class="form-group"><label class="form-label">Cost (USD)</label><input name="cost" type="number" step="0.01" min="0" placeholder="10.00"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Category</label><input name="category" placeholder="e.g. Cakes, Clothing"/></div>
+          <div class="form-group"><label class="form-label">Stock Qty</label><input name="stock_qty" type="number" min="0" placeholder="0" value="0"/></div>
+        </div>
+        <div class="form-group"><label class="form-label">Low Stock Threshold</label><input name="low_stock_threshold" type="number" min="0" placeholder="5" value="5" style="max-width:200px"/></div>
+        <button class="btn btn-primary" type="submit">Add Product</button>
+      </form>
+    </div>
+    <div class="card" style="padding:0">${listHtml}</div>
+  `, session);
+});
+
+app.post('/products/add', async (req: any, reply: any) => {
+  const session = requireSession(req, reply);
+  if (!session) return;
+  const { name, sku, price, cost, category, stock_qty, low_stock_threshold } = req.body || {};
+  if (!name || !price) return reply.redirect('/products');
+
+  // Write to MCP (Supabase)
+  if (mcpConfigured) {
+    await callMcp('create_product', {
+      name, sku: sku || undefined, price: Number(price),
+      cost: Number(cost) || undefined, category: category || undefined,
+      stock_qty: Number(stock_qty) || 0, low_stock_threshold: Number(low_stock_threshold) || 5,
+    }, session.userId);
+  }
+  // Also keep in-memory for instant reads
+  const products = userProducts.get(session.userId) || [];
+  const now = new Date().toISOString();
+  products.push({
+    id: randomUUID(), name, description: '', price: Number(price),
+    cost: Number(cost) || 0, sku: sku || '', stock_qty: Number(stock_qty) || 0,
+    low_stock_threshold: Number(low_stock_threshold) || 5, category: category || '',
+    image_url: '', is_active: true, createdAt: now, updatedAt: now,
+  });
+  userProducts.set(session.userId, products);
+  funnel.firstAction += 1;
+  return reply.redirect('/products');
+});
+
+app.post('/products/update', async (req: any, reply: any) => {
+  const session = requireSession(req, reply);
+  if (!session) return;
+  const { id, ...fields } = req.body || {};
+  if (!id) return reply.redirect('/products');
+
+  // Write to MCP (Supabase)
+  if (mcpConfigured) {
+    const mcpFields: Record<string, any> = { product_id: id };
+    if (fields.name) mcpFields.name = fields.name;
+    if (fields.sku) mcpFields.sku = fields.sku;
+    if (fields.price) mcpFields.price = Number(fields.price);
+    if (fields.cost) mcpFields.cost = Number(fields.cost);
+    if (fields.category) mcpFields.category = fields.category;
+    if (fields.stock_qty !== undefined) mcpFields.stock_qty = Number(fields.stock_qty);
+    if (fields.low_stock_threshold !== undefined) mcpFields.low_stock_threshold = Number(fields.low_stock_threshold);
+    if (fields.is_active !== undefined) mcpFields.is_active = fields.is_active === 'true';
+    await callMcp('update_product', mcpFields, session.userId);
+  }
+  // Update in-memory
+  const products = userProducts.get(session.userId) || [];
+  const product = products.find(p => p.id === id);
+  if (product) {
+    if (fields.name) product.name = fields.name;
+    if (fields.sku) product.sku = fields.sku;
+    if (fields.price) product.price = Number(fields.price);
+    if (fields.cost) product.cost = Number(fields.cost);
+    if (fields.category) product.category = fields.category;
+    if (fields.stock_qty !== undefined) product.stock_qty = Number(fields.stock_qty);
+    if (fields.low_stock_threshold !== undefined) product.low_stock_threshold = Number(fields.low_stock_threshold);
+    if (fields.is_active !== undefined) product.is_active = fields.is_active === 'true';
+    product.updatedAt = new Date().toISOString();
+  }
+  return reply.redirect('/products');
+});
+
+app.post('/products/delete', async (req: any, reply: any) => {
+  const session = requireSession(req, reply);
+  if (!session) return;
+  const { id } = req.body || {};
+  // Soft delete: set is_active: false in MCP
+  if (mcpConfigured && id) {
+    await callMcp('update_product', { product_id: id, is_active: false }, session.userId);
+  }
+  // Update in-memory
+  const products = userProducts.get(session.userId) || [];
+  const product = products.find(p => p.id === id);
+  if (product) {
+    product.is_active = false;
+    product.updatedAt = new Date().toISOString();
+  }
+  return reply.redirect('/products');
 });
 
 /* ── WhatsApp Page ── */

@@ -147,5 +147,30 @@ export function getAllCrmTools(): ToolSchema[] {
       riskLevel: 'low',
       execute: async (args, traceId) => callWorkspaceMcp('business_summary', args, traceId),
     },
+    {
+      name: 'crm_submitFeedback',
+      description: 'Submit customer feedback (NPS/CSAT score with optional comment)',
+      parameters: {
+        type: 'object',
+        properties: {
+          contact_name: { type: 'string', description: 'Customer name' },
+          rating: { type: 'number', description: 'Score from 1-5 (1=very unsatisfied, 5=very satisfied)' },
+          comment: { type: 'string', description: 'Optional feedback comment' },
+          channel: { type: 'string', description: 'Feedback channel: whatsapp, web, email, voice' },
+          interaction_type: { type: 'string', description: 'Type of interaction: purchase, support, onboarding' },
+        },
+        required: ['contact_name', 'rating'],
+      },
+      riskLevel: 'low',
+      execute: async (args, traceId) => {
+        const rating = Number(args.rating);
+        if (rating < 1 || rating > 5) return { error: 'Rating must be between 1 and 5' };
+        return callWorkspaceMcp('submit_feedback', {
+          ...args,
+          rating,
+          submitted_at: new Date().toISOString(),
+        }, traceId);
+      },
+    },
   ];
 }

@@ -58,6 +58,22 @@ export interface Payment {
   method: string
 }
 
+export interface Product {
+  id: string
+  name: string
+  description: string
+  price: number
+  cost: number
+  sku: string
+  stock_qty: number
+  low_stock_threshold: number
+  category: string
+  image_url: string
+  is_active: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 // Mock CRM data for demo
 const MOCK_LEADS: Lead[] = [
   { id: '1', name: 'Maria Rodriguez', phone: '+507 6234-5678', email: 'maria@cafebonito.pa', source: 'WhatsApp', stage: 'qualified', value: 450, tags: ['cafe', 'panama city'], notes: ['Interested in monthly subscription', 'Runs Cafe Bonito in Casco Viejo'], lastContact: '2026-02-22', createdAt: '2026-02-10' },
@@ -71,7 +87,7 @@ const MOCK_LEADS: Lead[] = [
 ]
 
 interface WorkspaceState {
-  leads: Lead[]; orders: Order[]; tasks: Task[]; checkoutLinks: CheckoutLink[]; payments: Payment[]
+  leads: Lead[]; orders: Order[]; tasks: Task[]; checkoutLinks: CheckoutLink[]; payments: Payment[]; products: Product[]
   isLoading: boolean
   // Leads / CRM
   fetchLeads: () => Promise<void>
@@ -89,13 +105,19 @@ interface WorkspaceState {
   addTask: (title: string) => Promise<void>
   // Checkout
   fetchCheckoutLinks: () => Promise<void>
-  addCheckoutLink: (data: { label: string; amount: number }) => Promise<void>
+  addCheckoutLink: (data: { label: string; amount: number; product_id?: string }) => Promise<void>
   // Payments
   fetchPayments: () => Promise<void>
+  // Products
+  fetchProducts: () => Promise<void>
+  addProduct: (data: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>
+  updateProduct: (id: string, data: Partial<Product>) => Promise<void>
+  deleteProduct: (id: string) => Promise<void>
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   leads: MOCK_LEADS, orders: [], tasks: [], checkoutLinks: [],
+  products: [],
   payments: [
     { id: 'p1', type: 'incoming', description: 'Maria Rodriguez — Invoice #1042', amount: 450, status: 'completed', date: '2026-02-23', method: 'Yappy' },
     { id: 'p2', type: 'incoming', description: 'Carlos Mendez — Checkout link', amount: 120, status: 'completed', date: '2026-02-22', method: 'Stripe' },
@@ -210,5 +232,45 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   fetchPayments: async () => {
     // No payment query endpoint exists yet — keep mock data
     // Future: apiFetch<Payment[]>(`${API.LOGS}/logs?type=payment`)
+  },
+
+  fetchProducts: async () => {
+    set({ isLoading: true })
+    try {
+      const products = await apiFetch<Product[]>(`${API.WORKSPACE}/products`)
+      set({ products, isLoading: false })
+    } catch {
+      // Keep existing products on API failure
+      set({ isLoading: false })
+    }
+  },
+  addProduct: async (data) => {
+    const now = new Date().toISOString()
+    const newProduct: Product = {
+      id: `prod_${Date.now()}`,
+      ...data,
+      createdAt: now,
+      updatedAt: now,
+    }
+    set((s) => ({ products: [...s.products, newProduct] }))
+    try {
+      await apiFetch(`${API.WORKSPACE}/products`, { method: 'POST', body: JSON.stringify(data) })
+    } catch { /* local-first */ }
+  },
+  updateProduct: async (id, data) => {
+    set((s) => ({
+      products: s.products.map((p) => p.id === id ? { ...p, ...data, updatedAt: new Date().toISOString() } : p),
+    }))
+    try {
+      await apiFetch(`${API.WORKSPACE}/products/${id}`, { method: 'PATCH', body: JSON.stringify(data) })
+    } catch { /* local-first */ }
+  },
+  deleteProduct: async (id) => {
+    set((s) => ({
+      products: s.products.map((p) => p.id === id ? { ...p, is_active: false } : p),
+    }))
+    try {
+      await apiFetch(`${API.WORKSPACE}/products/${id}`, { method: 'DELETE' })
+    } catch { /* local-first */ }
   },
 }))

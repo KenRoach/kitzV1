@@ -13,8 +13,8 @@ import { createOutcome } from './artifacts/outcome.js';
 import { runLaunchPipeline } from './launchPipeline.js';
 import type { LaunchContext } from './types.js';
 
-// ── New: 106-agent architecture infrastructure ──
-import { messageRouterMiddleware } from './middleware/messageRouter.js';
+// ── New: 102-agent architecture infrastructure ──
+import { createSwarmRouter } from './middleware/messageRouter.js';
 import { ttlEnforcerMiddleware } from './middleware/ttlEnforcer.js';
 import { hopTrackerMiddleware } from './middleware/hopTracker.js';
 import { warRoomActivatorMiddleware } from './middleware/warRoomActivator.js';
@@ -24,7 +24,12 @@ import { WarRoomManager } from './warRoom.js';
 import { SelfRepairLoop } from './selfRepair.js';
 import { CTODigest } from './ctoDigest.js';
 import { AgentToolBridge } from './toolBridge.js';
-import type { OsToolRegistry } from '../../kitz_os/src/tools/registry.js';
+import { KnowledgeBridge } from './swarm/knowledgeBridge.js';
+// Local type definition to avoid cross-service import (audit finding 6c)
+interface OsToolRegistry {
+  has(name: string): boolean;
+  invoke(name: string, args: Record<string, unknown>, traceId?: string): Promise<unknown>;
+}
 
 export function createAOS(store: LedgerStore = new FileLedgerStore(), toolRegistry?: OsToolRegistry) {
   const bus = new EventBus(store);
@@ -34,18 +39,18 @@ export function createAOS(store: LedgerStore = new FileLedgerStore(), toolRegist
   bus.use(focusCapacityPolicy);
   bus.use(enforcePermissions);
 
-  // ── New: message routing middleware ──
+  // ── New: team registry (18 teams) ──
+  const teamRegistry = createTeamRegistry();
+
+  // ── New: message routing middleware (swarm-aware) ──
   bus.use(hopTrackerMiddleware);
   bus.use(ttlEnforcerMiddleware);
-  bus.use(messageRouterMiddleware);
+  bus.use(createSwarmRouter(teamRegistry));
   bus.use(warRoomActivatorMiddleware);
   bus.use(ackTrackerMiddleware);
 
   const memory = new MemoryStore();
   const networkingBot = new NetworkingBot('NetworkingBot', bus, store);
-
-  // ── New: team registry (18 teams) ──
-  const teamRegistry = createTeamRegistry();
 
   // ── New: war room manager ──
   const warRoom = new WarRoomManager(bus, store);
@@ -55,11 +60,15 @@ export function createAOS(store: LedgerStore = new FileLedgerStore(), toolRegist
   selfRepair.wire();
 
   // ── New: CTO digest publisher ──
-  const ctoDigest = new CTODigest(bus, { agentsTotal: 106 });
+  const ctoDigest = new CTODigest(bus, { agentsTotal: 102 });
   ctoDigest.wire();
 
   // ── Tool bridge (connects AOS agents to kitz_os tools) ──
   const toolBridge = toolRegistry ? new AgentToolBridge(toolRegistry) : undefined;
+
+  // ── Swarm: KnowledgeBridge — all findings to brain ──
+  const knowledgeBridge = new KnowledgeBridge(bus, memory);
+  knowledgeBridge.wire();
 
   return {
     bus,
@@ -71,12 +80,13 @@ export function createAOS(store: LedgerStore = new FileLedgerStore(), toolRegist
     selfRepair,
     ctoDigest,
     toolBridge,
+    knowledgeBridge,
     createTask,
     createProposal,
     createDecision,
     createOutcome,
 
-    /** Run the full 106-agent launch review. CEO decides. */
+    /** Run the full 102-agent launch review. CEO decides. */
     async runLaunchReview(ctx: LaunchContext) {
       return runLaunchPipeline(ctx, bus, memory, toolBridge);
     },
@@ -105,6 +115,18 @@ export { WarRoomManager } from './warRoom.js';
 export { SelfRepairLoop } from './selfRepair.js';
 export { CTODigest } from './ctoDigest.js';
 export { AgentToolBridge } from './toolBridge.js';
+export { KnowledgeBridge } from './swarm/knowledgeBridge.js';
+export { SwarmRunner, runSwarm } from './swarm/swarmRunner.js';
+export { FeedbackAggregator } from './swarm/feedbackAggregator.js';
+export { LinkRegistry } from './swarm/linkRegistry.js';
+export { createAllAgents, createAgent, createTeamAgents, getAgentCount } from './swarm/agentFactory.js';
+export { TEAM_TASK_SEEDS, getTeamSeed } from './swarm/teamTasks.js';
+export type { SwarmHandoff } from './swarm/handoff.js';
+export type { SwarmResult, SwarmConfig, SwarmProgress, TeamResult, AgentResult } from './swarm/swarmRunner.js';
+export type { SwarmReport, TeamReport, ActionItem } from './swarm/feedbackAggregator.js';
+export type { TrackedLink } from './swarm/linkRegistry.js';
+export type { KnowledgeEntry } from './swarm/knowledgeBridge.js';
+export type { TeamTaskSeed } from './swarm/teamTasks.js';
 export type {
   AgentMessage,
   AgentStatus,

@@ -3,17 +3,19 @@ import { Link, Copy, Plus } from 'lucide-react'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 
 export function CheckoutTab() {
-  const { checkoutLinks, isLoading, fetchCheckoutLinks, addCheckoutLink } = useWorkspaceStore()
+  const { checkoutLinks, isLoading, fetchCheckoutLinks, addCheckoutLink, products, fetchProducts } = useWorkspaceStore()
   const [label, setLabel] = useState('')
   const [amount, setAmount] = useState('')
+  const [productId, setProductId] = useState('')
 
   useEffect(() => { void fetchCheckoutLinks() }, [fetchCheckoutLinks])
+  useEffect(() => { void fetchProducts() }, [fetchProducts])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!label.trim() || !amount) return
-    await addCheckoutLink({ label, amount: parseFloat(amount) })
-    setLabel(''); setAmount('')
+    await addCheckoutLink({ label, amount: parseFloat(amount), product_id: productId || undefined })
+    setLabel(''); setAmount(''); setProductId('')
   }
 
   const payDomain = import.meta.env.VITE_PAY_DOMAIN || 'pay.kitz.services'
@@ -25,6 +27,20 @@ export function CheckoutTab() {
   return (
     <div className="space-y-4">
       <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
+        <div className="flex-1 min-w-[160px]">
+          <label className="block text-xs font-medium text-gray-500 mb-1">Product</label>
+          <select value={productId} onChange={(e) => {
+            setProductId(e.target.value)
+            const p = products.find(pr => pr.id === e.target.value)
+            if (p) { setLabel(p.name); setAmount(String(p.price)) }
+          }}
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500 bg-white">
+            <option value="">Select product (optional)</option>
+            {products.filter(p => p.is_active).map(p => (
+              <option key={p.id} value={p.id}>{p.name} — ${p.price.toFixed(2)}</option>
+            ))}
+          </select>
+        </div>
         <div className="flex-1 min-w-[160px]">
           <label className="block text-xs font-medium text-gray-500 mb-1">Label *</label>
           <input value={label} onChange={(e) => setLabel(e.target.value)} required

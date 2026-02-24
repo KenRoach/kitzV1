@@ -18,6 +18,16 @@ import { CadenceEngine } from './cadence/engine.js';
 import { routeWithAI } from './interfaces/whatsapp/semanticRouter.js';
 import { createAOS, type AOSRuntime } from '../../aos/src/index.js';
 import type { LaunchContext } from '../../aos/src/types.js';
+import { createLogger } from './logger.js';
+
+const log = createLogger('kernel');
+
+/** Database connection pool configuration */
+export const DB_POOL_CONFIG = {
+  max: 10,
+  idleTimeoutMillis: 30_000,
+  connectionTimeoutMillis: 5_000,
+} as const;
 
 export interface KernelStatus {
   status: 'booting' | 'online' | 'degraded' | 'killed';
@@ -52,30 +62,30 @@ export class KitzKernel {
     // 1. Check kill switch
     if (process.env.KILL_SWITCH === 'true') {
       this.status = 'killed';
-      console.warn('[kernel] KILL_SWITCH engaged — system halted');
+      log.warn('KILL_SWITCH engaged — system halted');
       return;
     }
 
     // 2. Restore AI Battery ledger from persistent storage
     await initBattery().catch(err => {
-      console.warn('[kernel] Battery restore failed (non-fatal):', (err as Error).message);
+      log.warn('Battery restore failed', { error: (err as Error).message });
     });
 
     // 2.5. Initialize SOP store and load starter SOPs
     await initSOPStore().catch(err => {
-      console.warn('[kernel] SOP store init failed (non-fatal):', (err as Error).message);
+      log.warn('SOP store init failed', { error: (err as Error).message });
     });
     await loadStarterSOPs().catch(err => {
-      console.warn('[kernel] Starter SOP load failed (non-fatal):', (err as Error).message);
+      log.warn('Starter SOP load failed', { error: (err as Error).message });
     });
 
     // 3. Register all tools
     await this.tools.registerDefaults();
-    console.log(`[kernel] ${this.tools.count()} tools registered`);
+    log.info(`${this.tools.count()} tools registered`, { toolCount: this.tools.count() });
 
     // 3.5. Re-create AOS with tool bridge now that registry is populated
     this.aos = createAOS(undefined, this.tools);
-    console.log(`[kernel] AOS tool bridge wired (agents can invoke tools)`);
+    log.info('AOS tool bridge wired (agents can invoke tools)');
 
     // 4. Check AI availability
     const hasAI = !!(
@@ -85,7 +95,7 @@ export class KitzKernel {
     );
     if (!hasAI) {
       this.status = 'degraded';
-      console.warn('[kernel] No AI keys configured — running in degraded mode');
+      log.warn('No AI keys configured — running in degraded mode');
     }
 
     // 5. Start Fastify control plane
@@ -97,7 +107,7 @@ export class KitzKernel {
     this.cadence.start();
 
     // 7. AOS initialized
-    console.log('[kernel] AOS agent operating system online (33 agents)');
+    log.info('AOS agent operating system online', { agents: 33 });
   }
 
   async run(opts: { goal: string; agent?: string; mode?: string; context?: Record<string, unknown> }): Promise<RunResult> {
@@ -125,7 +135,7 @@ export class KitzKernel {
         creditsConsumed: result.creditsConsumed,
       };
     } catch (err) {
-      console.error(`[kernel] run failed (${runId}):`, (err as Error).message);
+      log.error('Run failed', { runId, error: (err as Error).message });
       return { runId, response: `Error: ${(err as Error).message}`, toolsUsed: [], creditsConsumed: 0 };
     }
   }
@@ -184,6 +194,6 @@ export class KitzKernel {
       await this.server.close();
     }
     this.status = 'killed';
-    console.log('[kernel] shutdown complete');
+    log.info('shutdown complete');
   }
 }

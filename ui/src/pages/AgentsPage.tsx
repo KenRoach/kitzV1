@@ -8,9 +8,15 @@ import {
   Code,
   ExternalLink,
   Network,
+  Play,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Clock,
 } from 'lucide-react'
 import { PageHeader } from '@/components/home/PageHeader'
 import { KITZ_MANIFEST } from '@/content/kitz-manifest'
+import { useSimulationStore } from '@/stores/simulationStore'
 import { cn } from '@/lib/utils'
 
 /* ── Agent architecture tiers ── */
@@ -82,6 +88,7 @@ const phases = [
 
 export function AgentsPage() {
   const [showAll, setShowAll] = useState(false)
+  const { running, lastResult, error: simError, startSimulation } = useSimulationStore()
 
   const teams = showAll
     ? KITZ_MANIFEST.agentTeams
@@ -197,6 +204,104 @@ export function AgentsPage() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* ── Swarm Simulation ── */}
+      <section className="mt-12">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-black">Swarm Simulation</h3>
+            <p className="mt-0.5 text-sm text-gray-500">
+              Run all {KITZ_MANIFEST.capabilities.totalAgents} agents across {KITZ_MANIFEST.capabilities.agentTeams} teams — findings flow to brain
+            </p>
+          </div>
+          <button
+            onClick={() => startSimulation()}
+            disabled={running}
+            className={cn(
+              'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition',
+              running
+                ? 'cursor-not-allowed bg-gray-400'
+                : 'bg-purple-600 hover:bg-purple-700',
+            )}
+          >
+            {running ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Running…
+              </>
+            ) : (
+              <>
+                <Play className="h-4 w-4" />
+                Run Swarm
+              </>
+            )}
+          </button>
+        </div>
+
+        {simError && (
+          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {simError}
+          </div>
+        )}
+
+        {lastResult && (
+          <div className="mt-4 space-y-4">
+            {/* Summary stats */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
+                <div className={cn(
+                  'text-xs font-bold uppercase',
+                  lastResult.status === 'completed' ? 'text-emerald-600' : lastResult.status === 'partial' ? 'text-amber-600' : 'text-red-600',
+                )}>
+                  {lastResult.status}
+                </div>
+                <div className="mt-1 text-lg font-bold text-black">{lastResult.teamsCompleted}/{lastResult.teamsTotal}</div>
+                <div className="text-[10px] text-gray-400">teams</div>
+              </div>
+              <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
+                <Clock className="mx-auto h-4 w-4 text-gray-400" />
+                <div className="mt-1 text-lg font-bold text-black">{(lastResult.durationMs / 1000).toFixed(1)}s</div>
+                <div className="text-[10px] text-gray-400">duration</div>
+              </div>
+              <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
+                <Zap className="mx-auto h-4 w-4 text-amber-500" />
+                <div className="mt-1 text-lg font-bold text-black">{lastResult.agentResults.length}</div>
+                <div className="text-[10px] text-gray-400">agents run</div>
+              </div>
+              <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
+                <Network className="mx-auto h-4 w-4 text-purple-500" />
+                <div className="mt-1 text-lg font-bold text-black">{lastResult.handoffCount}</div>
+                <div className="text-[10px] text-gray-400">handoffs</div>
+              </div>
+              <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
+                <Brain className="mx-auto h-4 w-4 text-blue-500" />
+                <div className="mt-1 text-lg font-bold text-black">{lastResult.knowledgeWritten}</div>
+                <div className="text-[10px] text-gray-400">knowledge</div>
+              </div>
+            </div>
+
+            {/* Per-team results */}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {lastResult.teamResults.map((tr) => (
+                <div key={tr.team} className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    {tr.status === 'completed' ? (
+                      <CheckCircle className="h-4 w-4 text-emerald-500" />
+                    ) : (
+                      <XCircle className="h-4 w-4 text-red-500" />
+                    )}
+                    <span className="text-xs font-medium text-black">{tr.team}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-[10px] text-gray-400">
+                    <span>{tr.agentResults.filter(a => a.success).length}/{tr.agentResults.length} agents</span>
+                    <span>{(tr.durationMs / 1000).toFixed(1)}s</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ── Tools + Integration ── */}

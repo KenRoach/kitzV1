@@ -14,6 +14,8 @@ import type {
   TeamName,
 } from '../types.js';
 import type { SOPEntry } from '../../../kitz_os/src/sops/types.js';
+import { createHandoff } from '../swarm/handoff.js';
+import type { SwarmHandoff } from '../swarm/handoff.js';
 
 export class BaseAgent {
   /** Team this agent belongs to (undefined for board/governance/external without a team) */
@@ -84,6 +86,38 @@ export class BaseAgent {
     this._lastAction = `sendMessage:${channel}`;
     this._lastActionAt = new Date().toISOString();
     this._actionsToday += 1;
+  }
+
+  // ── Swarm Handoff ──
+
+  /**
+   * Hand off control to another agent with accumulated context.
+   * Publishes SWARM_HANDOFF event — messageRouter delivers to target.
+   */
+  async handoff(
+    target: string | string[],
+    context: Record<string, unknown>,
+    reason: string,
+    traceId?: string,
+  ): Promise<SwarmHandoff> {
+    const h = createHandoff(
+      this.name,
+      target,
+      context,
+      reason,
+      traceId ?? crypto.randomUUID(),
+      this.team,
+    );
+    await this.eventBus.publish({
+      type: 'SWARM_HANDOFF',
+      source: this.name,
+      severity: 'low',
+      payload: h as unknown as Record<string, unknown>,
+    });
+    this._lastAction = `handoff:${Array.isArray(target) ? target.join(',') : target}`;
+    this._lastActionAt = new Date().toISOString();
+    this._actionsToday += 1;
+    return h;
   }
 
   // ── Escalation shortcut ──

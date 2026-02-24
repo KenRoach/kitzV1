@@ -24,12 +24,14 @@
  *   GET  /api/kitz/oauth/google/authorize — Start Google OAuth flow
  *   GET  /api/kitz/oauth/google/callback  — OAuth callback (Google redirects here)
  *   POST /api/kitz/oauth/google/revoke    — Revoke Google Calendar access
+ *   POST /api/kitz/webhooks/n8n        — n8n workflow event receiver
  *
  * Port: 3012
  */
 
 import Fastify from 'fastify';
 import rateLimit from '@fastify/rate-limit';
+import cors from '@fastify/cors';
 import type { KitzKernel } from './kernel.js';
 import { parseWhatsAppCommand } from './interfaces/whatsapp/commandParser.js';
 import { routeWithAI, getDraftQueue, approveDraft, rejectDraft } from './interfaces/whatsapp/semanticRouter.js';
@@ -38,6 +40,9 @@ import { getBatteryStatus, recordRecharge, getLedger } from './aiBattery.js';
 import { initMemory, storeMessage, buildContextWindow } from './memory/manager.js';
 import { verifyStripeSignature, verifyHmacSha256, verifyPayPalHeaders } from './webhookVerify.js';
 import { isGoogleOAuthConfigured, getAuthUrl, exchangeCode, hasStoredTokens, revokeTokens } from './auth/googleOAuth.js';
+import { createLogger } from './logger.js';
+
+const log = createLogger('server');
 
 export async function createServer(kernel: KitzKernel) {
   const app = Fastify({ logger: false, bodyLimit: 20_000_000 });  // 20MB for media payloads
@@ -45,6 +50,18 @@ export async function createServer(kernel: KitzKernel) {
 
   // Rate limiting — 120 req/min global, 30 req/min on AI endpoints
   await app.register(rateLimit, { max: 120, timeWindow: '1 minute' });
+
+  // CORS — allow UI and workspace origins (audit finding 6a)
+  await app.register(cors, {
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:3001',
+      'https://kitz.services',
+      'https://workspace.kitz.services',
+      /\.kitz\.services$/,
+    ],
+    credentials: true,
+  });
 
   // Initialize memory system
   try { initMemory(); } catch (err) {
@@ -326,7 +343,7 @@ export async function createServer(kernel: KitzKernel) {
           } catch { /* non-blocking */ }
           return { command: 'ai', response: result.response, tools_used: result.toolsUsed, credits_consumed: result.creditsConsumed };
         } catch (err) {
-          console.error('[server] AI routing error:', (err as Error).message);
+          log.error('AI routing error', { error: (err as Error).message });
           return { command: 'error', response: `Something went wrong. Try again or type "help".` };
         }
       }
@@ -829,7 +846,7 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
     }
     try {
       await exchangeCode(code);
-      console.log('[server] Google Calendar OAuth completed successfully');
+      log.info('Google Calendar OAuth completed');
       return reply.type('text/html').send(`
         <!DOCTYPE html>
         <html><head><title>Kitz — Calendar Connected</title></head>
@@ -843,7 +860,7 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
         </body></html>
       `);
     } catch (err) {
-      console.error('[server] Google OAuth error:', (err as Error).message);
+      log.error('Google OAuth error', { error: (err as Error).message });
       return reply.status(500).send({ error: `OAuth failed: ${(err as Error).message}` });
     }
   });
@@ -1008,7 +1025,100 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
     };
   });
 
+  // ── Swarm Simulation Endpoints ──────────────
+
+  // Run a full swarm simulation
+  app.post<{ Body: { teams?: string[]; concurrency?: number; timeoutMs?: number; dryRun?: boolean } }>(
+    '/api/kitz/swarm/run',
+    async (req, reply) => {
+      const secret = req.headers['x-dev-secret'];
+      if (secret !== process.env.DEV_TOKEN_SECRET) {
+        return reply.code(401).send({ error: 'unauthorized' });
+      }
+
+      const { teams, concurrency, timeoutMs, dryRun } = req.body || {};
+
+      // Dynamic import to avoid circular dependency
+      const { SwarmRunner } = await import('../../aos/src/swarm/swarmRunner.js');
+      const runner = new SwarmRunner({
+        teams: teams as any,
+        concurrency: concurrency ?? 6,
+        timeoutMs: timeoutMs ?? 60_000,
+        dryRun: dryRun ?? false,
+        toolBridge: kernel.aos.toolBridge,
+      });
+
+      const result = await runner.run();
+      return result;
+    }
+  );
+
+  // Get swarm status / last run result
+  app.get('/api/kitz/swarm/status', async () => {
+    const knowledgeBridge = kernel.aos.knowledgeBridge;
+    const entries = knowledgeBridge.getEntries();
+    return {
+      knowledgeEntries: entries.length,
+      lastEntry: entries[entries.length - 1] ?? null,
+      teams: kernel.aos.teamRegistry.listTeams().map(t => ({
+        name: t.name,
+        memberCount: t.members.length,
+      })),
+    };
+  });
+
+  // Get swarm knowledge by team
+  app.get<{ Params: { team: string } }>(
+    '/api/kitz/swarm/knowledge/:team',
+    async (req) => {
+      const { team } = req.params;
+      const entries = kernel.aos.knowledgeBridge.getByTeam(team);
+      return { team, entries, count: entries.length };
+    }
+  );
+
+  // Clear swarm knowledge (post-report)
+  app.post('/api/kitz/swarm/knowledge/clear', async (req, reply) => {
+    const secret = req.headers['x-dev-secret'];
+    if (secret !== process.env.DEV_TOKEN_SECRET) {
+      return reply.code(401).send({ error: 'unauthorized' });
+    }
+    kernel.aos.knowledgeBridge.clear();
+    return { cleared: true };
+  });
+
+  // ── n8n Webhook Receiver — events FROM n8n workflows ──
+  app.post<{ Body: { event?: string; data?: Record<string, unknown>; workflow_id?: string } }>(
+    '/api/kitz/webhooks/n8n',
+    async (req, reply) => {
+      // Auth check — require service secret
+      const secret = req.headers['x-service-secret'] || req.headers['x-dev-secret'];
+      if (!secret || (secret !== process.env.SERVICE_SECRET && secret !== process.env.DEV_TOKEN_SECRET)) {
+        return reply.code(401).send({ error: 'unauthorized' });
+      }
+
+      const { event, data, workflow_id } = req.body || {};
+      const traceId = (req.headers['x-trace-id'] as string) || crypto.randomUUID();
+
+      log.info('n8n webhook received', { event, workflow_id, traceId });
+
+      // Publish to AOS EventBus so agents can react
+      try {
+        await kernel.aos.bus.publish({
+          type: `N8N_${(event || 'EVENT').toUpperCase().replace(/[^A-Z0-9_]/g, '_')}`,
+          source: `n8n:${workflow_id || 'unknown'}`,
+          severity: 'low',
+          payload: { ...data, workflow_id, traceId },
+        });
+      } catch (err) {
+        log.warn('Failed to publish n8n event to AOS bus', { error: (err as Error).message });
+      }
+
+      return { received: true, trace_id: traceId, event };
+    }
+  );
+
   await app.listen({ port: PORT, host: '0.0.0.0' });
-  console.log(`[server] KITZ OS listening on port ${PORT}`);
+  log.info('KITZ OS listening', { port: PORT });
   return app;
 }

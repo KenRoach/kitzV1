@@ -1,14 +1,16 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { useAuthStore } from '@/stores/authStore'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { LoginPage } from '@/pages/LoginPage'
-import { WhatsAppPage } from '@/pages/WhatsAppPage'
-import { DashboardPage } from '@/pages/DashboardPage'
-import { LearnPage } from '@/pages/LearnPage'
-import { GamePage } from '@/pages/GamePage'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { ToastContainer } from '@/components/ui/ToastContainer'
+
+// Code-split heavy pages (audit finding 6f)
+const DashboardPage = lazy(() => import('@/pages/DashboardPage').then(m => ({ default: m.DashboardPage })))
+const WhatsAppPage = lazy(() => import('@/pages/WhatsAppPage').then(m => ({ default: m.WhatsAppPage })))
+const LearnPage = lazy(() => import('@/pages/LearnPage').then(m => ({ default: m.LearnPage })))
+const GamePage = lazy(() => import('@/pages/GamePage').then(m => ({ default: m.GamePage })))
 
 export default function App() {
   const hydrate = useAuthStore((s) => s.hydrate)
@@ -20,42 +22,44 @@ export default function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route
-            path="/connect-whatsapp"
-            element={
-              <ProtectedRoute>
-                <WhatsAppPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/learn"
-            element={
-              <ProtectedRoute>
-                <LearnPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/game"
-            element={
-              <ProtectedRoute>
-                <GamePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><p className="text-gray-400">Loading...</p></div>}>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route
+              path="/connect-whatsapp"
+              element={
+                <ProtectedRoute>
+                  <WhatsAppPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/learn"
+              element={
+                <ProtectedRoute>
+                  <LearnPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/game"
+              element={
+                <ProtectedRoute>
+                  <GamePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
         <ToastContainer />
       </BrowserRouter>
     </ErrorBoundary>

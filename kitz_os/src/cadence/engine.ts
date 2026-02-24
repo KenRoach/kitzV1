@@ -76,7 +76,7 @@ export class CadenceEngine {
 
     console.log(`[cadence] Engine started — ${this.tasks.length} schedules active`);
     if (CADENCE_PHONE) {
-      console.log(`[cadence] Reports will be delivered to ${CADENCE_PHONE.slice(0, 4)}****`);
+      console.log(`[cadence] Reports will be delivered to ${CADENCE_PHONE.slice(0, 4)}${'*'.repeat(Math.max(0, CADENCE_PHONE.length - 4))}`);
     }
   }
 

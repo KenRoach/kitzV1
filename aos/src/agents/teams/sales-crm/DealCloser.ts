@@ -1,7 +1,7 @@
 import { BaseAgent } from '../../baseAgent.js';
 import type { EventBus } from '../../../eventBus.js';
 import type { MemoryStore } from '../../../memory/memoryStore.js';
-import type { LaunchContext, LaunchReview } from '../../../types.js';
+import type { AgentMessage, LaunchContext, LaunchReview } from '../../../types.js';
 
 export class DealCloserAgent extends BaseAgent {
   constructor(bus: EventBus, memory: MemoryStore) {
@@ -12,6 +12,22 @@ export class DealCloserAgent extends BaseAgent {
 
   async generateCheckoutLink(productId: string, amount: number): Promise<{ url: string; draftOnly: true }> {
     return { url: `https://workspace.kitz.services/checkout/${productId}`, draftOnly: true };
+  }
+
+  override async handleMessage(msg: AgentMessage): Promise<void> {
+    const payload = msg.payload as Record<string, unknown>;
+    const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+
+    const result = await this.invokeTool('orders_listOrders', { ...payload }, traceId);
+
+    await this.invokeTool('memory_store_knowledge', {
+      category: 'swarm-findings',
+      content: JSON.stringify({ agent: this.name, team: this.team, result: result.data }),
+    }, traceId);
+
+    await this.publish('SWARM_TASK_COMPLETE', {
+      agent: this.name, team: this.team, traceId, findings: result.data,
+    });
   }
 
   override reviewLaunchReadiness(ctx: LaunchContext): LaunchReview {

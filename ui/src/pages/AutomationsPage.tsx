@@ -12,6 +12,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import { PageHeader } from '@/components/home/PageHeader'
+import { AutoPilotTab } from '@/components/autopilot/AutoPilotTab'
 import { KITZ_MANIFEST } from '@/content/kitz-manifest'
 
 /* ── How Autopilot Works ── */
@@ -103,6 +104,11 @@ export function AutomationsPage() {
         title="Automations"
         description="Every automation follows the same trust cycle — trigger, draft, review, execute"
       />
+
+      {/* ── Live Auto-Pilot Command Center ── */}
+      <section className="mt-2 mb-10">
+        <AutoPilotTab />
+      </section>
 
       {/* ── How it works ── */}
       <section className="mt-2">

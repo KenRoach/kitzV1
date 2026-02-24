@@ -246,6 +246,8 @@ services:
       ELEVENLABS_VOICE_ID: ${ELEVENLABS_VOICE_ID:-21m00Tcm4TlvDq8ikWAM}
       ELEVENLABS_MODEL_ID: ${ELEVENLABS_MODEL_ID:-eleven_multilingual_v2}
       ELEVENLABS_AGENT_ID: ${ELEVENLABS_AGENT_ID:-}
+      N8N_API_URL: http://n8n:5678
+      N8N_API_KEY: ${N8N_API_KEY:-}
     depends_on:
       - kitz-gateway
       - kitz-llm-hub
@@ -299,6 +301,42 @@ services:
       <<: *env-common
       PORT: 3014
 
+  # ── n8n Workflow Automation (port 5678) ──
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    networks:
+      - kitz-net
+    ports:
+      - "5678:5678"
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: kitz
+      DB_POSTGRESDB_USER: kitz
+      DB_POSTGRESDB_PASSWORD: kitz
+      DB_POSTGRESDB_SCHEMA: n8n
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://localhost:5678/
+      GENERIC_TIMEZONE: America/Panama
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: ${N8N_AUTH_USER:-kitz}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_AUTH_PASSWORD:-kitz-n8n-2026}
+      KITZ_OS_URL: http://kitz-os:3012
+      KITZ_DEV_SECRET: ${DEV_TOKEN_SECRET:-dev-secret-change-me}
+      WORKSPACE_URL: http://workspace:3001
+      GATEWAY_URL: http://kitz-gateway:4000
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kitz-os:
+        condition: service_healthy
+
   # ── Brain (cron — no port) ──
   kitz-brain:
     build:
@@ -327,3 +365,4 @@ networks:
 
 volumes:
   pgdata:
+  n8n_data:
