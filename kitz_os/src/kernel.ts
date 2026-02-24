@@ -19,6 +19,7 @@ import { routeWithAI } from './interfaces/whatsapp/semanticRouter.js';
 import { createAOS, type AOSRuntime } from '../../aos/src/index.js';
 import type { LaunchContext } from '../../aos/src/types.js';
 import { createLogger } from './logger.js';
+import { loadCustomTools } from './tools/customToolLoader.js';
 
 const log = createLogger('kernel');
 
@@ -81,7 +82,19 @@ export class KitzKernel {
 
     // 3. Register all tools
     await this.tools.registerDefaults();
-    log.info(`${this.tools.count()} tools registered`, { toolCount: this.tools.count() });
+    const builtInCount = this.tools.count();
+
+    // 3.1. Load custom tools from disk
+    const customCount = await loadCustomTools(this.tools).catch(err => {
+      log.warn('Custom tool load failed', { error: (err as Error).message });
+      return 0;
+    });
+
+    log.info(`${this.tools.count()} tools registered`, {
+      builtIn: builtInCount,
+      custom: customCount,
+      total: this.tools.count(),
+    });
 
     // 3.5. Re-create AOS with tool bridge now that registry is populated
     this.aos = createAOS(undefined, this.tools);
