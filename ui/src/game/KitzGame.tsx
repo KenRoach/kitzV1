@@ -215,13 +215,21 @@ export function KitzGame() {
 
       {/* ── PAUSED ── */}
       {gameState === 'paused' && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/70 font-mono">
-          <h2 className="text-3xl font-bold tracking-widest text-white" style={{ textShadow: '0 0 20px #A855F7' }}>PAUSED</h2>
-          <div className="mt-6 flex gap-4">
-            <button onClick={handlePause} className="border-2 border-purple-500 bg-purple-600/80 px-8 py-2 font-mono text-sm font-bold uppercase tracking-wider text-white hover:bg-purple-500">
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center" style={{ fontFamily: '"Press Start 2P", "Courier New", monospace', background: 'radial-gradient(ellipse at center, #1a0a2e 0%, #000000cc 100%)' }}>
+          <h2 className="text-3xl font-bold tracking-widest text-white" style={{ textShadow: '0 0 30px #A855F7, 0 0 60px #7C3AED' }}>PAUSED</h2>
+          <div className="mt-8 flex gap-4">
+            <button
+              onClick={handlePause}
+              className="px-8 py-3 text-[10px] font-bold uppercase tracking-[0.3em] transition-all hover:scale-105 active:scale-95"
+              style={{ color: '#A855F7', background: 'linear-gradient(180deg, #2d1b4e 0%, #1a0a2e 100%)', border: '2px solid #A855F780', boxShadow: '0 0 15px #A855F720', textShadow: '0 0 10px #A855F780' }}
+            >
               Resume
             </button>
-            <button onClick={handleQuit} className="border-2 border-gray-500 bg-gray-700/80 px-8 py-2 font-mono text-sm font-bold uppercase tracking-wider text-white hover:bg-gray-600">
+            <button
+              onClick={handleQuit}
+              className="px-8 py-3 text-[10px] font-bold uppercase tracking-[0.3em] transition-all hover:scale-105 active:scale-95"
+              style={{ color: '#94a3b8', background: 'linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%)', border: '2px solid #33335580', boxShadow: '0 0 10px #33335520' }}
+            >
               Quit
             </button>
           </div>

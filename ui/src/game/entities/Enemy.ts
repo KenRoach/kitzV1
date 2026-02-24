@@ -33,17 +33,19 @@ export class Enemy {
   type: EnemyType
   hp: number
   alive = true
+  speedMultiplier = 1
 
   private def: EnemyDef
   private animFrame = 0
   private animTimer = 0
   private floatOffset = 0
 
-  constructor(type: EnemyType, x: number, y: number) {
+  constructor(type: EnemyType, x: number, y: number, speedMultiplier = 1) {
     this.type = type
     this.x = x
     this.def = ENEMY_DEFS[type]
     this.hp = this.def.hp
+    this.speedMultiplier = speedMultiplier
     this.y = this.def.flying ? y : GROUND_Y - this.def.h
   }
 
@@ -59,7 +61,7 @@ export class Enemy {
     if (!this.alive) return
 
     const dir = playerX < this.x ? -1 : 1
-    this.x += dir * this.def.speed * dt
+    this.x += dir * this.def.speed * this.speedMultiplier * dt
 
     if (this.def.flying) {
       this.floatOffset += 0.05 * dt

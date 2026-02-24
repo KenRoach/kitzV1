@@ -26,6 +26,16 @@ export interface GameCallbacks {
   onGameOver: (finalScore: number) => void
 }
 
+/** Difficulty scaling per world (1-5) */
+const WORLD_DIFFICULTY = [
+  null, // index 0 unused
+  { enemySpeed: 0.4, quizInterval: 350, label: 'Chill' },   // World 1: super easy, learn lots
+  { enemySpeed: 0.65, quizInterval: 450, label: 'Easy' },    // World 2: easy, still learning
+  { enemySpeed: 1.0, quizInterval: 600, label: 'Medium' },   // World 3: baseline
+  { enemySpeed: 1.3, quizInterval: 800, label: 'Hard' },     // World 4: challenging
+  { enemySpeed: 1.6, quizInterval: 1200, label: 'Beast' },   // World 5: beast mode
+]
+
 export class GameManager {
   private loop: GameLoop
   private canvas: Canvas
@@ -43,6 +53,10 @@ export class GameManager {
   private enemies: Enemy[] = []
   private coins: { x: number; y: number; collected: boolean }[] = []
   private xpEarned = 0
+
+  // Auto-quiz system: triggers quiz based on distance traveled
+  private lastQuizX = 0
+  private quizInterval = 500
 
   private callbacks: GameCallbacks
   private stars: { x: number; y: number; size: number; speed: number }[] = []
@@ -91,8 +105,14 @@ export class GameManager {
     this.player.level = playerLevel
     this.tookDamage = false
     this.xpEarned = 0
+    this.lastQuizX = 0
 
-    this.enemies = levelDef.enemies.map((s) => new Enemy(s.type, s.x, s.y))
+    // Get world difficulty
+    const diff = WORLD_DIFFICULTY[levelDef.world]
+    const speedMult = diff?.enemySpeed ?? 1
+    this.quizInterval = diff?.quizInterval ?? 500
+
+    this.enemies = levelDef.enemies.map((s) => new Enemy(s.type, s.x, s.y, speedMult))
     this.coins = levelDef.coins.map((c) => ({ ...c, collected: false }))
 
     for (const qt of levelDef.quizTriggers) {
@@ -204,14 +224,22 @@ export class GameManager {
       }
     }
 
-    // Quiz triggers
+    // Fixed quiz triggers from level data
     for (const qt of this.level.quizTriggers) {
       if (!qt.triggered && this.player.x >= qt.x) {
         qt.triggered = true
-        this.state = 'quiz'
-        this.loop.pause()
-        this.callbacks.onStateChange('quiz')
-        this.callbacks.onQuizTrigger()
+        this.triggerQuiz()
+        return
+      }
+    }
+
+    // Auto quiz trigger based on distance traveled (stealth learning)
+    if (this.player.x - this.lastQuizX >= this.quizInterval) {
+      this.lastQuizX = this.player.x
+      // Don't trigger too close to finish or start
+      if (this.player.x > 200 && this.player.x < this.level.finishX - 200) {
+        this.triggerQuiz()
+        return
       }
     }
 
@@ -222,6 +250,13 @@ export class GameManager {
 
     this.camera.update(this.player.x, this.player.y)
     this.input.endFrame()
+  }
+
+  private triggerQuiz() {
+    this.state = 'quiz'
+    this.loop.pause()
+    this.callbacks.onStateChange('quiz')
+    this.callbacks.onQuizTrigger()
   }
 
   private render() {
