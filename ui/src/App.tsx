@@ -6,6 +6,7 @@ import { LoginPage } from '@/pages/LoginPage'
 import { WhatsAppPage } from '@/pages/WhatsAppPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { LearnPage } from '@/pages/LearnPage'
+import { GamePage } from '@/pages/GamePage'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { ToastContainer } from '@/components/ui/ToastContainer'
 
@@ -42,6 +43,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <LearnPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/game"
+            element={
+              <ProtectedRoute>
+                <GamePage />
               </ProtectedRoute>
             }
           />

@@ -8,6 +8,7 @@ import { ActivityPage } from './ActivityPage'
 import { HowItWorksPage } from './HowItWorksPage'
 import { SettingsPage } from './SettingsPage'
 import { LearnPage } from './LearnPage'
+import { GamePage } from './GamePage'
 import { ChatPanel } from '@/components/layout/ChatPanel'
 import { TalkToKitzModal } from '@/components/talk/TalkToKitzModal'
 import { FloatingOrb } from '@/components/orb/FloatingOrb'
@@ -23,6 +24,8 @@ export function DashboardPage() {
     switch (currentNav) {
       case 'learn':
         return <LearnPage />
+      case 'game':
+        return <GamePage />
       case 'workspace':
         return <WorkspacePage />
       case 'agents':

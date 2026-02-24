@@ -328,7 +328,7 @@ const AURA_LAYERS = [
   { color: '#60A5FA', size: 13, blur: 12, opacity: 0.25, speed: 3 },     // Level 2: blue ring
   { color: '#FBBF24', size: 15, blur: 16, opacity: 0.3, speed: 2.5 },    // Level 3: gold ring
   { color: '#F9FAFB', size: 17, blur: 20, opacity: 0.2, speed: 2 },      // Level 4: white field
-  { color: '#E879F9', size: 19, blur: 24, opacity: 0.35, speed: 1.5 },   // Level 5: rainbow/pink
+  { color: '#7C3AED', size: 19, blur: 24, opacity: 0.35, speed: 1.5 },   // Level 5: Founder Mode (deep purple)
 ]
 
 function OrbAuras({ level }: { level: number }) {
@@ -365,7 +365,7 @@ function OrbAuras({ level }: { level: number }) {
             height: PX * 20,
             transform: 'translate(-50%, -50%)',
             borderRadius: '50%',
-            border: `2px solid #E879F930`,
+            border: `2px solid #FBBF2430`,
             animation: 'orb-breathe 1.2s ease-in-out infinite',
             pointerEvents: 'none',
           }}
