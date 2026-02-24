@@ -115,7 +115,11 @@ export function KitzGame() {
     setScore(0)
     setHp(PLAYER_MAX_HP)
     setLives(PLAYER_MAX_LIVES)
-    gameRef.current?.loadLevel(level, playerLevel)
+    // Resize after canvas becomes visible, then load
+    requestAnimationFrame(() => {
+      gameRef.current?.resize()
+      gameRef.current?.loadLevel(level, playerLevel)
+    })
   }, [playerLevel])
 
   const handleQuizAnswer = useCallback((correct: boolean) => {
@@ -160,26 +164,26 @@ export function KitzGame() {
     }
   }, [currentLevel, handleSelectLevel, handleQuit])
 
-  if (gameState === 'menu') {
-    if (showLeaderboard) {
-      return <Leaderboard onBack={() => setShowLeaderboard(false)} />
-    }
-    return (
-      <LevelSelect
-        onSelectLevel={handleSelectLevel}
-        highScores={highScores}
-        onShowLeaderboard={() => setShowLeaderboard(true)}
-      />
-    )
-  }
-
   return (
     <div className="relative flex h-full w-full items-center justify-center bg-[#0D0D12]">
+      {/* Canvas is always mounted so GameManager can initialize */}
       <canvas
         ref={canvasRef}
-        className="block"
+        className={gameState === 'menu' ? 'absolute opacity-0 pointer-events-none' : 'block'}
         style={{ imageRendering: 'pixelated' }}
       />
+
+      {gameState === 'menu' && (
+        showLeaderboard ? (
+          <Leaderboard onBack={() => setShowLeaderboard(false)} />
+        ) : (
+          <LevelSelect
+            onSelectLevel={handleSelectLevel}
+            highScores={highScores}
+            onShowLeaderboard={() => setShowLeaderboard(true)}
+          />
+        )
+      )}
 
       {currentLevel && gameState === 'playing' && (
         <HUD
