@@ -212,10 +212,10 @@ function useFloatingKitz(_containerRef: React.RefObject<HTMLDivElement | null>, 
 export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
   const user = useAuthStore((s) => s.user)
   const openTalk = useOrbStore((s) => s.open)
-  const orbState = useOrbStore((s) => s.state)
   const teleportToChat = useOrbStore((s) => s.teleportToChat)
   const injectWelcome = useOrbStore((s) => s.injectWelcome)
   const [orbTeleporting, setOrbTeleporting] = useState(false)
+  const [orbInChatbox, setOrbInChatbox] = useState(false)
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const userName = user?.email?.split('@')[0] ?? 'there'
   const heroRef = useRef<HTMLDivElement>(null)
@@ -244,9 +244,9 @@ export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
           <h1 className="mt-1 text-2xl font-bold text-black">{userName}</h1>
           <MissionBlock />
         </div>
-        {/* Kitz — puffs out when teleporting to chatbox, clickable to focus chat */}
+        {/* Kitz — puffs out when teleporting, then enters meditation mode in hero card */}
         <div
-          className={`absolute z-20 ${(orbState === 'thinking' || orbTeleporting) ? 'kitz-puff-out' : ''}`}
+          className={`absolute z-20 ${orbTeleporting ? 'kitz-puff-out' : ''} ${orbInChatbox && !orbTeleporting ? 'kitz-meditation' : ''}`}
           style={{
             left: sleeping ? `${SLEEP_X_FRAC * 100}%` : `${kitzPos.x}%`,
             top: sleeping ? `${SLEEP_Y_FRAC * 100}%` : `${kitzPos.y}%`,
@@ -259,6 +259,11 @@ export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
           }}
           onClick={() => {
             if (sleeping) return
+            if (orbInChatbox) {
+              // Already in chatbox — click focuses the chat input
+              injectWelcome()
+              return
+            }
             // Single click: full puff teleport to chatbox. Double click handled below.
             if (clickTimerRef.current) return // double-click pending, skip
             clickTimerRef.current = setTimeout(() => {
@@ -266,12 +271,15 @@ export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
               // Trigger the full puff teleport (smoke + sparkles + PUFF text + glow)
               setOrbTeleporting(true)
               teleportToChat()
-              // Hide hero Kitz while FloatingOrb handles the animation
-              setTimeout(() => setOrbTeleporting(false), 3500)
+              // After puff animation completes, enter meditation mode
+              setTimeout(() => {
+                setOrbTeleporting(false)
+                setOrbInChatbox(true)
+              }, 3500)
             }, 250) // wait 250ms to rule out double-click
           }}
           onDoubleClick={() => {
-            if (sleeping) return
+            if (sleeping || orbInChatbox) return
             // Double click: Kitz stays in place — activate chatbox with welcome + status message
             if (clickTimerRef.current) {
               clearTimeout(clickTimerRef.current)
@@ -282,6 +290,22 @@ export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
         >
           <Orb sleeping={sleeping} disableClick />
         </div>
+        {/* "Currently in chatbox" text — appears below orb in meditation mode */}
+        {orbInChatbox && !orbTeleporting && (
+          <div
+            className="kitz-meditation-text absolute z-20 text-center"
+            style={{
+              left: sleeping ? `${SLEEP_X_FRAC * 100}%` : `${kitzPos.x}%`,
+              top: sleeping ? `${(SLEEP_Y_FRAC * 100) + 12}%` : `${kitzPos.y + 12}%`,
+              transform: 'translateX(-50%)',
+              transition: 'left 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), top 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)',
+            }}
+          >
+            <span className="text-[10px] font-medium tracking-wide text-purple-400/60">
+              currently in chatbox
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Quick actions */}

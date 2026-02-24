@@ -85,6 +85,8 @@ app.get('/whatsapp/connect', async (req: any, reply) => {
 
   // Send the userId so the client knows its session ID
   reply.raw.write(`event: session\ndata: ${JSON.stringify({ userId })}\n\n`);
+  // Immediate progress feedback — user sees "Generating QR..." instead of blank spinner
+  reply.raw.write(`event: progress\ndata: ${JSON.stringify({ step: 'connecting', message: 'Generating QR code...' })}\n\n`);
 
   // SSE listener — forwards session events to the client
   const listener = (event: string, data: string) => {

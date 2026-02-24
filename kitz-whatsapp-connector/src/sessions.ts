@@ -56,17 +56,26 @@ async function getBaileysVersion(): Promise<[number, number, number]> {
     return cachedVersion;
   }
   try {
-    const { version } = await fetchLatestBaileysVersion();
+    // 5-second timeout — prevents QR page hanging if version endpoint is slow/unreachable
+    const { version } = await Promise.race([
+      fetchLatestBaileysVersion(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Version fetch timeout')), 5000),
+      ),
+    ]);
     cachedVersion = version;
     cachedVersionAt = now;
     return version;
   } catch {
-    // If fetch fails and we have a cached version, use it
+    // If fetch fails/times out and we have a cached version, use it
     if (cachedVersion) return cachedVersion;
-    // Fallback: let Baileys use its own default
+    // Fallback: hardcoded known-good version
     return [2, 3000, 0];
   }
 }
+
+// Prefetch version on module load so first QR connect is instant
+getBaileysVersion().catch(() => { /* non-blocking warm-up */ });
 
 // ── Track Kitz-sent message IDs to prevent echo loops in self-chat ──
 const kitzSentIds = new Set<string>();

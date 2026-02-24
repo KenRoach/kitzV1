@@ -21,6 +21,8 @@ interface OrbStore {
   chatFocused: boolean
   /* Chatbox glow animation — stays true for ~1.5s after puff arrival */
   chatGlowing: boolean
+  /* Chatbox shake animation — phone-vibration rattle on puff arrival */
+  chatShaking: boolean
   /* Welcome message injected flag — prevents duplicate welcomes */
   welcomeInjected: boolean
   /* TTS speaking state — Orb shows talking mood */
@@ -36,7 +38,7 @@ interface OrbStore {
   close: () => void
   focusChat: () => void
   blurChat: () => void
-  /** Trigger the chatbox glow animation (auto-clears after 1.8s) */
+  /** Trigger the chatbox glow + shake animation */
   glowChat: () => void
   /** Inject welcome + status message into chatbox (like WhatsApp greeting) */
   injectWelcome: () => void
@@ -52,6 +54,7 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
   isOpen: false,
   chatFocused: false,
   chatGlowing: false,
+  chatShaking: false,
   welcomeInjected: false,
   speaking: false,
   teleportSeq: 0,
@@ -66,7 +69,9 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
   teleportToChat: () => set((s) => ({ teleportSeq: s.teleportSeq + 1 })),
   glowChat: () => {
     if (_glowTimer) clearTimeout(_glowTimer)
-    set({ chatGlowing: true })
+    set({ chatGlowing: true, chatShaking: true })
+    // Shake is short — 0.4s vibration then stop
+    setTimeout(() => set({ chatShaking: false }), 400)
     _glowTimer = setTimeout(() => {
       set({ chatGlowing: false })
       _glowTimer = null
@@ -100,7 +105,7 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
 
     // Fetch live status from backend and update welcome message
     apiFetch<{ status?: string; tools_registered?: number; battery?: { todayCredits?: number; dailyLimit?: number } }>(
-      `${API.KITZ_OS}/api/kitz/status`,
+      `${API.KITZ_OS}/status`,
     ).then((status) => {
       const liveTools = status.tools_registered ?? tools
       const batteryUsed = status.battery?.todayCredits ?? 0
@@ -138,12 +143,19 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
     // Show agent chain while waiting for backend
     useAgentThinkingStore.getState().startThinking(content)
 
+    // Build conversation history for backend context (last 10 messages, excluding the one we just added)
+    const currentMessages = get().messages
+    const chatHistory = currentMessages
+      .filter((m) => m.role === 'user' || m.role === 'assistant')
+      .slice(-10)
+      .map((m) => ({ role: m.role, content: m.content }))
+
     try {
       const res = await apiFetch<{ reply?: string; response?: string; message?: string; tools_used?: string[] }>(
         `${API.KITZ_OS}`,
         {
           method: 'POST',
-          body: JSON.stringify({ message: content, channel: 'web', user_id: userId }),
+          body: JSON.stringify({ message: content, channel: 'web', user_id: userId, chat_history: chatHistory }),
         },
       )
       const assistantMsg: ChatMessage = {

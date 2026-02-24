@@ -113,7 +113,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   fetchLeads: async () => {
     set({ isLoading: true })
     try {
-      const res = await apiFetch<{ contacts?: Lead[]; data?: Lead[] } | Lead[]>(`${API.KITZ_OS}/api/kitz`, {
+      const res = await apiFetch<{ contacts?: Lead[]; data?: Lead[] } | Lead[]>(`${API.KITZ_OS}`, {
         method: 'POST',
         body: JSON.stringify({ message: 'list contacts', channel: 'api', user_id: 'default' }),
       })
@@ -222,7 +222,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   fetchPayments: async () => {
     set({ isLoading: true })
     try {
-      const res = await apiFetch<{ transactions?: Payment[]; data?: Payment[] } | Payment[]>(`${API.KITZ_OS}/api/kitz`, {
+      const res = await apiFetch<{ transactions?: Payment[]; data?: Payment[] } | Payment[]>(`${API.KITZ_OS}`, {
         method: 'POST',
         body: JSON.stringify({ message: 'list transactions', channel: 'api', user_id: 'default' }),
       })

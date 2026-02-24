@@ -28,7 +28,7 @@ export function MessagesTab() {
       setIsLoading(true)
       try {
         const res = await apiFetch<{ conversations?: Conversation[]; data?: Conversation[] } | Conversation[]>(
-          `${API.KITZ_OS}/api/kitz`,
+          `${API.KITZ_OS}`,
           {
             method: 'POST',
             body: JSON.stringify({ message: 'list recent conversations', channel: 'api', user_id: 'default' }),

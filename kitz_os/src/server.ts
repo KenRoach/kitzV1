@@ -32,6 +32,10 @@
 import Fastify from 'fastify';
 import rateLimit from '@fastify/rate-limit';
 import cors from '@fastify/cors';
+import fastifyStatic from '@fastify/static';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { existsSync } from 'fs';
 import type { KitzKernel } from './kernel.js';
 import { parseWhatsAppCommand } from './interfaces/whatsapp/commandParser.js';
 import { routeWithAI, getDraftQueue, approveDraft, rejectDraft } from './interfaces/whatsapp/semanticRouter.js';
@@ -58,10 +62,25 @@ export async function createServer(kernel: KitzKernel) {
       'http://localhost:3001',
       'https://kitz.services',
       'https://workspace.kitz.services',
+      'https://kenroach.github.io',
       /\.kitz\.services$/,
     ],
     credentials: true,
   });
+
+  // ── Static SPA hosting — serve KITZ Command Center from /public ──
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+  const spaRoot = join(__dirname, '..', 'public');
+  if (existsSync(spaRoot)) {
+    await app.register(fastifyStatic, {
+      root: spaRoot,
+      prefix: '/',
+      wildcard: false,         // Don't catch /api/* routes
+      decorateReply: true,
+    });
+    log.info('SPA static hosting enabled', { root: spaRoot });
+  }
 
   // Initialize memory system
   try { initMemory(); } catch (err) {
@@ -71,9 +90,11 @@ export async function createServer(kernel: KitzKernel) {
   // ── Service auth — inter-service requests must provide a shared secret ──
   const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
   app.addHook('onRequest', async (req, reply) => {
-    // Skip auth for health, status, OAuth callbacks, and webhook endpoints
+    // Skip auth for health, status, OAuth callbacks, webhook endpoints, and static SPA assets
     const path = req.url.split('?')[0];
-    const skipAuth = path === '/health' ||
+    const isStaticAsset = req.method === 'GET' && !path.startsWith('/api/');
+    const skipAuth = isStaticAsset ||
+      path === '/health' ||
       path === '/api/kitz/status' ||
       path.startsWith('/api/payments/webhook/') ||
       path.startsWith('/api/kitz/oauth/google/callback');
@@ -95,11 +116,11 @@ export async function createServer(kernel: KitzKernel) {
   });
 
   // ── Main WhatsApp webhook ──
-  app.post<{ Body: { message: string; sender?: string; user_id?: string; trace_id?: string; reply_context?: unknown; location?: string; channel?: string } }>(
+  app.post<{ Body: { message: string; sender?: string; user_id?: string; trace_id?: string; reply_context?: unknown; location?: string; channel?: string; chat_history?: Array<{ role: 'user' | 'assistant'; content: string }> } }>(
     '/api/kitz',
     { config: { rateLimit: { max: 30, timeWindow: '1 minute' } } },
     async (req, reply) => {
-      const { message, sender, user_id, trace_id, channel: reqChannel } = req.body || {};
+      const { message, sender, user_id, trace_id, channel: reqChannel, chat_history } = req.body || {};
       if (!message) return reply.code(400).send({ error: 'message required' });
       const channel = (reqChannel === 'web' ? 'web' : 'whatsapp') as 'web' | 'whatsapp';
 
@@ -337,7 +358,7 @@ export async function createServer(kernel: KitzKernel) {
 
       if (hasAI) {
         try {
-          const result = await routeWithAI(message, kernel.tools, traceId, undefined, userId, channel);
+          const result = await routeWithAI(message, kernel.tools, traceId, undefined, userId, channel, chat_history);
           // Store AI response in memory
           try {
             storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'assistant', content: result.response, traceId });
@@ -1118,6 +1139,17 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
       return { received: true, trace_id: traceId, event };
     }
   );
+
+  // ── SPA fallback — serve index.html for client-side routing ──
+  if (existsSync(spaRoot)) {
+    app.setNotFoundHandler(async (req, reply) => {
+      // Only serve SPA for non-API GET requests (browser navigation)
+      if (req.method === 'GET' && !req.url.startsWith('/api/')) {
+        return reply.sendFile('index.html');
+      }
+      return reply.code(404).send({ error: 'Not Found' });
+    });
+  }
 
   await app.listen({ port: PORT, host: '0.0.0.0' });
   log.info('KITZ OS listening', { port: PORT });

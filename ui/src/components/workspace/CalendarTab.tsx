@@ -28,7 +28,7 @@ export function CalendarTab() {
       setIsLoading(true)
       try {
         const res = await apiFetch<{ events?: CalendarEvent[]; data?: CalendarEvent[] } | CalendarEvent[]>(
-          `${API.KITZ_OS}/api/kitz`,
+          `${API.KITZ_OS}`,
           {
             method: 'POST',
             body: JSON.stringify({ message: 'what is on my calendar today', channel: 'api', user_id: 'default' }),

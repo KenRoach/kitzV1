@@ -244,6 +244,46 @@ body {
   }
 }
 
+/* ── Kitz chatbox shake — phone vibration rattle on puff arrival ── */
+.kitz-chatbox-shake {
+  animation: kitz-shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+@keyframes kitz-shake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-4px); }
+  20% { transform: translateX(4px); }
+  30% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  50% { transform: translateX(-2px); }
+  60% { transform: translateX(2px); }
+  70% { transform: translateX(-1px); }
+  80% { transform: translateX(1px); }
+  90% { transform: translateX(0); }
+}
+
+/* ── Kitz meditation aura — enlightened orb in hero card while in chatbox ── */
+.kitz-meditation {
+  animation: kitz-meditation-breathe 3s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes kitz-meditation-breathe {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.3)) grayscale(0.3) brightness(0.7);
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  50% {
+    filter: drop-shadow(0 0 18px rgba(192, 132, 252, 0.5)) grayscale(0.15) brightness(0.85);
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+}
+.kitz-meditation-text {
+  animation: kitz-meditation-text-pulse 2.5s ease-in-out infinite;
+}
+@keyframes kitz-meditation-text-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.65; }
+}
+
 /* ── Kitz chatbox loading bar — exaggerated fill effect on double-click ── */
 
 /* Border pulses bright purple while loading */

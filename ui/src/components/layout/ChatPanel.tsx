@@ -9,7 +9,7 @@ import { MessageBubble } from '@/components/chat/MessageBubble'
 import { TypingIndicator } from '@/components/chat/TypingIndicator'
 
 export function ChatPanel() {
-  const { messages, state, sendMessage, chatFocused, blurChat, chatGlowing } = useOrbStore()
+  const { messages, state, sendMessage, chatFocused, blurChat, chatGlowing, chatShaking } = useOrbStore()
   const user = useAuthStore((s) => s.user)
   const [input, setInput] = useState('')
   const [echoToWhatsApp, setEchoToWhatsApp] = useState(false)
@@ -89,17 +89,16 @@ export function ChatPanel() {
         {/* Input */}
         <form onSubmit={handleSubmit} className="flex items-center gap-2" data-orb-chatbox>
           <div className="relative flex-1">
-            <button type="button" className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition z-10">
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
-            </button>
             <input
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask Kitz..."
+              aria-label="Send message to Kitz"
               className={cn(
-                "w-full rounded-xl border border-white/40 bg-white/10 py-2.5 pl-10 pr-4 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/70 focus:ring-2 focus:ring-white/20",
+                "w-full rounded-xl border border-white/40 bg-white/10 py-2.5 pl-4 pr-4 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/70 focus:ring-2 focus:ring-white/20",
                 chatGlowing && "kitz-chatbox-glow",
+                chatShaking && "kitz-chatbox-shake",
               )}
             />
           </div>

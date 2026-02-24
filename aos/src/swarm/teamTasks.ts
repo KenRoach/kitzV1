@@ -89,10 +89,12 @@ export const TEAM_TASK_SEEDS: TeamTaskSeed[] = [
   },
   {
     team: 'frontend',
-    description: 'Audit UI components and accessibility',
+    description: 'Validate KITZ Command Center deployment at workspace.kitz.services and audit UI',
     tools: [
+      { name: 'lovable_listProjects', args: {} },
+      { name: 'web_scrape', args: { url: 'https://workspace.kitz.services' } },
       { name: 'web_scrape', args: { url: 'https://kitz.services' } },
-      { name: 'memory_search', args: { query: 'UI components design system', limit: 10 } },
+      { name: 'memory_search', args: { query: 'UI components design system deployment', limit: 10 } },
     ],
   },
   {
@@ -105,10 +107,12 @@ export const TEAM_TASK_SEEDS: TeamTaskSeed[] = [
   },
   {
     team: 'devops-ci',
-    description: 'Check CI/CD pipeline health and deployment status',
+    description: 'Validate production deployment, check CI/CD pipeline health, and verify domain routing',
     tools: [
+      { name: 'lovable_listProjects', args: {} },
+      { name: 'web_scrape', args: { url: 'https://kitzv1-production.up.railway.app/health' } },
       { name: 'dashboard_metrics', args: {} },
-      { name: 'memory_search', args: { query: 'deployment pipeline status', limit: 10 } },
+      { name: 'memory_search', args: { query: 'deployment pipeline status domain routing', limit: 10 } },
       { name: 'n8n_healthCheck', args: {} },
       { name: 'n8n_listWorkflows', args: {} },
     ],

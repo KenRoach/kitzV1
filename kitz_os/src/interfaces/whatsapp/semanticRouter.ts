@@ -22,6 +22,7 @@ import { callWorkspaceMcp } from '../../tools/mcpClient.js';
 import type { OsToolRegistry } from '../../tools/registry.js';
 import { recordLLMSpend } from '../../aiBattery.js';
 import { searchSOPs } from '../../sops/store.js';
+import { getConversationHistory } from '../../memory/manager.js';
 
 // ── Tool-to-MCP Mapping ──
 // Maps KITZ OS tool names to workspace MCP tool names for direct execution
@@ -298,6 +299,7 @@ export async function routeWithAI(
   mediaContext?: { media_base64: string; mime_type: string },
   userId?: string,
   channel: 'whatsapp' | 'web' = 'whatsapp',
+  chatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
 ): Promise<{ response: string; toolsUsed: string[]; creditsConsumed: number }> {
 
   cleanExpiredDrafts();
@@ -315,14 +317,38 @@ export async function routeWithAI(
 
   const systemPrompt = buildSystemPrompt(registry.count(), channel, sopContext);
 
+  // ── Build conversation context ──
+  // Priority: frontend chat history > backend memory manager > empty
+  // Last 10 messages to keep context window reasonable (avoid token bloat)
+  const MAX_HISTORY = 10;
+  let historyMessages: ChatMessage[] = [];
+
+  if (chatHistory && chatHistory.length > 0) {
+    // Use frontend-provided history (most accurate for web channel)
+    historyMessages = chatHistory
+      .slice(-MAX_HISTORY)
+      .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+  } else if (userId) {
+    // Fall back to backend memory manager (better for WhatsApp where frontend doesn't send history)
+    try {
+      const stored = getConversationHistory(userId, 'unknown', MAX_HISTORY);
+      historyMessages = stored.map(m => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      }));
+    } catch { /* non-blocking — proceed without history */ }
+  }
+
   const messages: ChatMessage[] = [
     { role: 'system', content: systemPrompt },
+    ...historyMessages,
     { role: 'user', content: userMessage },
   ];
 
-  // Add media context if present
+  // Add media context if present (modify the LAST message — the current user message)
   if (mediaContext) {
-    messages[1].content = `${userMessage}\n\n[Attached: ${mediaContext.mime_type} document/image — use doc_scan or braindump_process tool to process it]`;
+    const lastMsg = messages[messages.length - 1];
+    lastMsg.content = `${userMessage}\n\n[Attached: ${mediaContext.mime_type} document/image — use doc_scan or braindump_process tool to process it]`;
   }
 
   // Agentic loop — max 5 iterations (WhatsApp has ~15s timeout)
@@ -346,12 +372,13 @@ export async function routeWithAI(
 
     // If error, return the error message
     if (result.finishReason === 'error') {
-      return { response: result.message.content || 'Something went wrong.', toolsUsed, creditsConsumed: totalCreditsConsumed };
+      return { response: result.message.content || 'Something went wrong — try again in a sec, boss.', toolsUsed, creditsConsumed: totalCreditsConsumed };
     }
 
     // If no tool calls, we have the final response
     if (!result.message.tool_calls || result.message.tool_calls.length === 0) {
-      return { response: result.message.content || 'Done.', toolsUsed, creditsConsumed: totalCreditsConsumed };
+      const content = result.message.content?.trim();
+      return { response: content || 'Ran the tools but got no response — try asking again, boss.', toolsUsed, creditsConsumed: totalCreditsConsumed };
     }
 
     // Add assistant message with tool calls

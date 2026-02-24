@@ -42,7 +42,7 @@ export const useAgentStore = create<AgentStore>((set) => ({
   fetchAgents: async () => {
     try {
       const res = await apiFetch<{ agents?: Array<{ name: string; team?: string; role?: string; status?: string }> }>(
-        `${API.KITZ_OS}/api/kitz/agents`,
+        `${API.KITZ_OS}/agents`,
       )
       if (res.agents && Array.isArray(res.agents)) {
         const mapped: AgentInfo[] = res.agents.map((a, i) => ({
@@ -63,7 +63,7 @@ export const useAgentStore = create<AgentStore>((set) => ({
   fetchDrafts: async () => {
     try {
       const res = await apiFetch<{ drafts?: Draft[] }>(
-        `${API.KITZ_OS}/api/kitz/drafts`,
+        `${API.KITZ_OS}/drafts`,
       )
       if (res.drafts && Array.isArray(res.drafts)) {
         set({ drafts: res.drafts })
@@ -89,7 +89,7 @@ export const useAgentStore = create<AgentStore>((set) => ({
         d.id === id ? { ...d, status: 'approved' as const } : d,
       ),
     }))
-    apiFetch(`${API.KITZ_OS}/api/kitz/drafts/decide`, {
+    apiFetch(`${API.KITZ_OS}/drafts/decide`, {
       method: 'POST',
       body: JSON.stringify({ trace_id: id, action: 'approve' }),
     }).catch(() => { /* local-first */ })
@@ -101,7 +101,7 @@ export const useAgentStore = create<AgentStore>((set) => ({
         d.id === id ? { ...d, status: 'rejected' as const } : d,
       ),
     }))
-    apiFetch(`${API.KITZ_OS}/api/kitz/drafts/decide`, {
+    apiFetch(`${API.KITZ_OS}/drafts/decide`, {
       method: 'POST',
       body: JSON.stringify({ trace_id: id, action: 'reject' }),
     }).catch(() => { /* local-first */ })
