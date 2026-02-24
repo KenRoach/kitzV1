@@ -11,6 +11,7 @@ export async function apiFetch<T>(
   if (token) {
     headers.set('Authorization', `Bearer ${token}`)
   }
+  headers.set('x-dev-secret', 'dev-secret-change-me')
   headers.set('x-trace-id', generateTraceId())
   if (!headers.has('Content-Type') && options.body) {
     headers.set('Content-Type', 'application/json')

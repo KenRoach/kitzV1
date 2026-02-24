@@ -161,7 +161,7 @@ export function ChatPanel() {
       {/* Bottom bar: input + stats */}
       <div className="border-t border-white/20 px-4 py-3 space-y-3">
         {/* Input */}
-        <form onSubmit={handleSubmit} className="flex items-center gap-2">
+        <form onSubmit={handleSubmit} className="flex items-center gap-2" data-orb-chatbox>
           <div className="relative flex-1">
             <button type="button" className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>

@@ -212,6 +212,7 @@ function useFloatingKitz(_containerRef: React.RefObject<HTMLDivElement | null>, 
 export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
   const user = useAuthStore((s) => s.user)
   const openTalk = useOrbStore((s) => s.open)
+  const orbState = useOrbStore((s) => s.state)
   const userName = user?.email?.split('@')[0] ?? 'there'
   const heroRef = useRef<HTMLDivElement>(null)
   const sleeping = !showKitz
@@ -230,6 +231,7 @@ export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
       {/* Hero — greeting + mission + Kitz bouncing */}
       <div
         ref={heroRef}
+        data-orb-home
         className="relative min-h-[200px] overflow-hidden rounded-2xl bg-gradient-to-br from-gray-50 to-white border border-gray-100 p-6"
       >
         {/* Text content */}
@@ -239,15 +241,17 @@ export function HomePage({ onNavigate, showKitz = true }: HomePageProps) {
           <MissionBlock />
         </div>
         {/* Kitz — both states use % + translate(-50%,-50%) so transitions are seamless */}
+        {/* Hidden when FloatingOrb takes over (thinking/responding) */}
         <div
           className="absolute z-20"
           style={{
             left: sleeping ? `${SLEEP_X_FRAC * 100}%` : `${kitzPos.x}%`,
             top: sleeping ? `${SLEEP_Y_FRAC * 100}%` : `${kitzPos.y}%`,
             transform: 'translate(-50%, -50%)',
+            opacity: orbState === 'thinking' ? 0 : 1,
             transition: sleeping
-              ? 'left 1s cubic-bezier(0.4, 0, 0.2, 1), top 1s cubic-bezier(0.4, 0, 0.2, 1)'
-              : 'left 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), top 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)',
+              ? 'left 1s cubic-bezier(0.4, 0, 0.2, 1), top 1s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease'
+              : 'left 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), top 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.4s ease',
             willChange: sleeping ? undefined : 'left, top',
           }}
         >
