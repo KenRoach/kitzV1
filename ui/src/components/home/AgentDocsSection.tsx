@@ -58,14 +58,14 @@ export function AgentDocsSection({ onNavigate }: AgentDocsSectionProps) {
             className="flex flex-col items-start rounded-2xl border border-gray-200 bg-white p-5 text-left transition-all hover:shadow-md cursor-pointer"
           >
             <div className="flex w-full items-center justify-between">
-              <span className="text-sm font-semibold text-black">{team.displayName}</span>
+              <span className="text-sm font-semibold text-black">{team.name}</span>
               <span className="flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-semibold text-purple-600">
                 <Users className="h-3 w-3" />
                 {team.agents.length}
               </span>
             </div>
 
-            <span className="mt-1 text-xs text-gray-400">Led by {team.lead}</span>
+            <span className="mt-1 text-xs text-gray-400">Led by {team.agents[0]}</span>
 
             {/* Capabilities */}
             <div className="mt-3 flex flex-wrap gap-1.5">

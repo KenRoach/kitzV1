@@ -181,23 +181,22 @@ export function AgentsPage() {
               className="flex flex-col items-start rounded-2xl border border-gray-200 bg-white p-5"
             >
               <div className="flex w-full items-center justify-between">
-                <span className="text-sm font-semibold text-black">{team.displayName}</span>
+                <span className="text-sm font-semibold text-black">{team.name}</span>
                 <span className="flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-semibold text-purple-600">
                   <Users className="h-3 w-3" />
                   {team.agents.length}
                 </span>
               </div>
 
-              <span className="mt-1 text-xs text-gray-400">Led by {team.lead}</span>
+              <span className="mt-1 text-xs text-gray-400">Led by {team.agents[0]}</span>
 
-              {/* Agent roster with functions */}
+              {/* Agent roster */}
               <div className="mt-3 w-full space-y-1.5">
                 {team.agents.map((agent) => (
-                  <div key={agent.name} className="flex items-start gap-2 rounded-lg bg-gray-50 px-3 py-2">
+                  <div key={agent} className="flex items-start gap-2 rounded-lg bg-gray-50 px-3 py-2">
                     <code className="shrink-0 rounded-md bg-gray-900 px-1.5 py-0.5 font-mono text-[10px] text-gray-300">
-                      {agent.name}
+                      {agent}
                     </code>
-                    <span className="text-[11px] leading-relaxed text-gray-500">{agent.fn}</span>
                   </div>
                 ))}
               </div>

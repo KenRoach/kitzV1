@@ -20,6 +20,7 @@ import { createAOS, type AOSRuntime } from '../../aos/src/index.js';
 import type { LaunchContext } from '../../aos/src/types.js';
 import { createLogger } from './logger.js';
 import { loadCustomTools } from './tools/customToolLoader.js';
+import { setToolFactoryRegistry } from './tools/toolFactoryTools.js';
 
 const log = createLogger('kernel');
 
@@ -89,6 +90,9 @@ export class KitzKernel {
       log.warn('Custom tool load failed', { error: (err as Error).message });
       return 0;
     });
+
+    // 3.2. Wire registry into tool factory for runtime tool creation
+    setToolFactoryRegistry(this.tools);
 
     log.info(`${this.tools.count()} tools registered`, {
       builtIn: builtInCount,

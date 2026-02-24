@@ -33,6 +33,10 @@ export class OsToolRegistry {
     return this.tools.has(name);
   }
 
+  unregister(name: string): boolean {
+    return this.tools.delete(name);
+  }
+
   async invoke(name: string, args: Record<string, unknown>, traceId?: string): Promise<unknown> {
     const tool = this.tools.get(name);
     if (!tool) return { error: `Tool "${name}" not found` };
@@ -78,6 +82,7 @@ export class OsToolRegistry {
       import('./llmTools.js'),
       import('./inventoryTools.js'),
       import('./n8nTools.js'),
+      import('./toolFactoryTools.js'),
     ]);
 
     const getterNames = [
@@ -103,6 +108,7 @@ export class OsToolRegistry {
       'getAllLlmTools',
       'getAllInventoryTools',
       'getAllN8nTools',
+      'getAllToolFactoryTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {
