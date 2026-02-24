@@ -1,5 +1,5 @@
 import { Users, Wrench, BookOpen, Clock } from 'lucide-react'
-import { KITZ_MANIFEST } from '@/data/kitz-manifest'
+import { KITZ_MANIFEST } from '@/content/kitz-manifest'
 
 const stats = [
   { label: `${KITZ_MANIFEST.capabilities.totalAgents}+ AI Agents`, icon: Users },

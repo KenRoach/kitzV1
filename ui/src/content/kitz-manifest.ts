@@ -1,0 +1,38 @@
+export const KITZ_MANIFEST = {
+  tagline: 'Your hustle deserves infrastructure.',
+  mission: 'Give every small business the same operational power as a Fortune 500 — powered by AI agents.',
+  capabilities: {
+    totalAgents: 106,
+    agentTeams: 18,
+    tools: 68,
+    sops: 6,
+  },
+  governance: {
+    aiBatteryDailyLimit: 5,
+    roiMinimum: '2x',
+  },
+  endpoints: {
+    api: '/api',
+    workspace: 'workspace.kitz.services',
+  },
+  agentTeams: [
+    { id: 'sales', name: 'Sales', agents: ['SDR', 'Closer', 'Account Manager', 'Sales Ops'], customerFacing: true, capabilities: ['Lead qualification', 'Follow-up sequences', 'Pipeline management'] },
+    { id: 'marketing', name: 'Marketing', agents: ['Content Creator', 'Social Media', 'SEO', 'Analytics'], customerFacing: true, capabilities: ['Content creation', 'Campaign management', 'Audience growth'] },
+    { id: 'support', name: 'Support', agents: ['Tier 1', 'Tier 2', 'Knowledge Base', 'Escalation'], customerFacing: true, capabilities: ['Customer inquiries', 'Issue resolution', 'FAQ management'] },
+    { id: 'operations', name: 'Operations', agents: ['Order Fulfillment', 'Inventory', 'Scheduling', 'Quality'], customerFacing: false, capabilities: ['Order processing', 'Inventory tracking', 'Workflow automation'] },
+    { id: 'finance', name: 'Finance', agents: ['Invoicing', 'Collections', 'Reporting', 'Compliance'], customerFacing: false, capabilities: ['Payment tracking', 'Revenue reports', 'Tax compliance'] },
+    { id: 'hr', name: 'HR', agents: ['Recruiting', 'Onboarding', 'Training', 'Culture'], customerFacing: false, capabilities: ['Hiring workflows', 'Team onboarding', 'Skill development'] },
+    { id: 'product', name: 'Product', agents: ['Research', 'Design', 'Feedback', 'Roadmap'], customerFacing: false, capabilities: ['User research', 'Feature prioritization', 'Feedback analysis'] },
+    { id: 'engineering', name: 'Engineering', agents: ['Frontend', 'Backend', 'DevOps', 'QA'], customerFacing: false, capabilities: ['Code review', 'Deployment', 'Testing', 'Monitoring'] },
+    { id: 'legal', name: 'Legal', agents: ['Contracts', 'Compliance', 'IP', 'Privacy'], customerFacing: false, capabilities: ['Contract review', 'Regulatory compliance', 'Data privacy'] },
+    { id: 'strategy', name: 'Strategy', agents: ['Market Analysis', 'Competitive Intel', 'Growth', 'Partnerships'], customerFacing: false, capabilities: ['Market research', 'Growth planning', 'Partnership evaluation'] },
+    { id: 'communications', name: 'Communications', agents: ['WhatsApp', 'Email', 'SMS', 'Voice'], customerFacing: true, capabilities: ['Multi-channel messaging', 'Response management', 'Broadcast'] },
+    { id: 'analytics', name: 'Analytics', agents: ['Data', 'Insights', 'Reporting', 'Forecasting'], customerFacing: false, capabilities: ['Business intelligence', 'Trend analysis', 'Forecasting'] },
+    { id: 'content', name: 'Content', agents: ['Writer', 'Editor', 'Designer', 'Publisher'], customerFacing: true, capabilities: ['Blog posts', 'Social content', 'Visual design'] },
+    { id: 'crm', name: 'CRM', agents: ['Contact Manager', 'Pipeline', 'Segmentation', 'Retention'], customerFacing: true, capabilities: ['Contact management', 'Deal tracking', 'Customer segmentation'] },
+    { id: 'payments', name: 'Payments', agents: ['Checkout', 'Reconciliation', 'Refunds', 'Subscriptions'], customerFacing: true, capabilities: ['Payment processing', 'Invoice generation', 'Subscription management'] },
+    { id: 'security', name: 'Security', agents: ['Access Control', 'Audit', 'Threat Detection', 'Encryption'], customerFacing: false, capabilities: ['Authentication', 'Activity logging', 'Data protection'] },
+    { id: 'integration', name: 'Integration', agents: ['API', 'Webhooks', 'Sync', 'Migration'], customerFacing: false, capabilities: ['Third-party connections', 'Data sync', 'Platform migration'] },
+    { id: 'training', name: 'Training', agents: ['Onboarding Guide', 'Tutorial', 'Assessment', 'Certification'], customerFacing: true, capabilities: ['User education', 'Skill assessment', 'Best practices'] },
+  ],
+}

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Users, ChevronRight } from 'lucide-react'
-import { KITZ_MANIFEST } from '@/data/kitz-manifest'
+import { KITZ_MANIFEST } from '@/content/kitz-manifest'
 import { cn } from '@/lib/utils'
 
 interface AgentDocsSectionProps {

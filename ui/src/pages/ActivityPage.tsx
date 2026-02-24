@@ -13,7 +13,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import { PageHeader } from '@/components/home/PageHeader'
-import { KITZ_MANIFEST } from '@/data/kitz-manifest'
+import { KITZ_MANIFEST } from '@/content/kitz-manifest'
 import { cn } from '@/lib/utils'
 
 /* ── Event types tracked ── */

@@ -11,7 +11,7 @@ import {
   Globe,
 } from 'lucide-react'
 import { PageHeader } from '@/components/home/PageHeader'
-import { KITZ_MANIFEST } from '@/data/kitz-manifest'
+import { KITZ_MANIFEST } from '@/content/kitz-manifest'
 
 /* ── Steps ── */
 const steps = [
