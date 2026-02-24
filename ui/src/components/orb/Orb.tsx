@@ -313,6 +313,7 @@ interface OrbProps {
   sleeping?: boolean
   /** Render a frozen idle state — no animations, no interactions */
   static?: boolean
+  level?: number
 }
 
 /* Wake phase: sleeping → stirring (eyes flutter) → waking (color returns) → awake (fully active) */
@@ -321,7 +322,60 @@ type WakePhase = 'sleeping' | 'stirring' | 'waking' | 'awake'
 /* ── Moody phrases when tapped while sleeping — chill, never rude ── */
 const MOODY_PHRASES = ['five more min...', 'not yet... 😴', 'shhh...', 'zzz... later', 'still charging ⚡']
 
-export function Orb({ sleeping = false, static: isStatic = false }: OrbProps) {
+/* ── Level-based aura layers ── */
+const AURA_LAYERS = [
+  null, // Level 1: no extra aura (base purple glow only)
+  { color: '#60A5FA', size: 13, blur: 12, opacity: 0.25, speed: 3 },     // Level 2: blue ring
+  { color: '#FBBF24', size: 15, blur: 16, opacity: 0.3, speed: 2.5 },    // Level 3: gold ring
+  { color: '#F9FAFB', size: 17, blur: 20, opacity: 0.2, speed: 2 },      // Level 4: white field
+  { color: '#E879F9', size: 19, blur: 24, opacity: 0.35, speed: 1.5 },   // Level 5: rainbow/pink
+]
+
+function OrbAuras({ level }: { level: number }) {
+  const layers = AURA_LAYERS.slice(1, level)
+  if (layers.length === 0) return null
+
+  return (
+    <>
+      {layers.map((layer, i) => layer && (
+        <div
+          key={i}
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            width: PX * layer.size,
+            height: PX * layer.size,
+            transform: 'translate(-50%, -50%)',
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${layer.color}${Math.round(layer.opacity * 255).toString(16).padStart(2, '0')} 0%, transparent 70%)`,
+            animation: `orb-breathe ${layer.speed}s ease-in-out infinite`,
+            pointerEvents: 'none',
+            filter: `blur(${layer.blur}px)`,
+          }}
+        />
+      ))}
+      {level >= 5 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            width: PX * 20,
+            height: PX * 20,
+            transform: 'translate(-50%, -50%)',
+            borderRadius: '50%',
+            border: `2px solid #E879F930`,
+            animation: 'orb-breathe 1.2s ease-in-out infinite',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+    </>
+  )
+}
+
+export function Orb({ sleeping = false, static: isStatic = false, level = 1 }: OrbProps) {
   const { open, focusChat, state, speaking } = useOrbStore()
   const [feetFrame, setFeetFrame] = useState(0)
   const [bounceY, setBounceY] = useState(0)
@@ -660,6 +714,9 @@ export function Orb({ sleeping = false, static: isStatic = false }: OrbProps) {
             }}
           />
         )}
+
+        {/* Level-based stacking auras */}
+        <OrbAuras level={level} />
 
         {/* Antenna */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: -1 }}>

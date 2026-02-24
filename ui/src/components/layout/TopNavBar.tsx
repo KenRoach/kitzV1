@@ -1,4 +1,4 @@
-import { Home, Briefcase, Bot, Zap, Activity, HelpCircle, Settings } from 'lucide-react'
+import { Home, Briefcase, Bot, Zap, Activity, HelpCircle, Settings, GraduationCap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSettingsStore } from '@/stores/settingsStore'
 import type { Language } from '@/stores/settingsStore'
@@ -11,6 +11,7 @@ interface TopNavBarProps {
 
 const navItems = [
   { id: 'home', label: 'Home', icon: Home },
+  { id: 'learn', label: 'Learn', icon: GraduationCap },
   { id: 'how-it-works', label: 'How it Works', icon: HelpCircle },
   { id: 'workspace', label: 'Workspace', icon: Briefcase },
   { id: 'agents', label: 'Agents', icon: Bot },

@@ -5,6 +5,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { LoginPage } from '@/pages/LoginPage'
 import { WhatsAppPage } from '@/pages/WhatsAppPage'
 import { DashboardPage } from '@/pages/DashboardPage'
+import { LearnPage } from '@/pages/LearnPage'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { ToastContainer } from '@/components/ui/ToastContainer'
 
@@ -33,6 +34,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/learn"
+            element={
+              <ProtectedRoute>
+                <LearnPage />
               </ProtectedRoute>
             }
           />
