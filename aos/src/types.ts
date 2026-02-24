@@ -31,7 +31,8 @@ export type TeamName =
   | 'legal-compliance'
   | 'strategy-intel'
   | 'governance-pmo'
-  | 'coaches';
+  | 'coaches'
+  | 'meta-tooling';
 
 // ── Message Types ──
 

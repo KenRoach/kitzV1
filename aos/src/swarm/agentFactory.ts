@@ -149,6 +149,13 @@ import { OnboardingCoachAgent } from '../agents/teams/coaches/OnboardingCoach.js
 import { ProcessCoachAgent } from '../agents/teams/coaches/ProcessCoach.js';
 import { PerformanceReviewerAgent } from '../agents/teams/coaches/PerformanceReviewer.js';
 
+// ── Meta-Tooling ──
+import { ToolInventoryAgent } from '../agents/teams/meta-tooling/ToolInventory.js';
+import { TemplateDeployerAgent } from '../agents/teams/meta-tooling/TemplateDeployer.js';
+import { WorkflowGeneratorAgent } from '../agents/teams/meta-tooling/WorkflowGenerator.js';
+import { ComputeBuilderAgent } from '../agents/teams/meta-tooling/ComputeBuilder.js';
+import { ToolCuratorAgent } from '../agents/teams/meta-tooling/ToolCurator.js';
+
 /** Agent constructor type */
 type AgentCtor = new (bus: EventBus, memory: MemoryStore) => BaseAgent;
 
@@ -274,6 +281,12 @@ const AGENT_CTORS: Record<string, AgentCtor> = {
   OnboardingCoach: OnboardingCoachAgent,
   ProcessCoach: ProcessCoachAgent,
   PerformanceReviewer: PerformanceReviewerAgent,
+  // Meta-Tooling
+  ToolInventory: ToolInventoryAgent,
+  TemplateDeployer: TemplateDeployerAgent,
+  WorkflowGenerator: WorkflowGeneratorAgent,
+  ComputeBuilder: ComputeBuilderAgent,
+  ToolCurator: ToolCuratorAgent,
 };
 
 /** Instantiate a single agent by name */

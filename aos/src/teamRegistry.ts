@@ -168,6 +168,13 @@ export const TEAM_DEFINITIONS: TeamConfig[] = [
     members: ['AgentSkillTrainer', 'PlaybookCoach', 'OnboardingCoach', 'ProcessCoach', 'PerformanceReviewer'],
     description: 'Agent training, playbook management, process optimization',
   },
+  {
+    name: 'meta-tooling',
+    displayName: 'Meta-Tooling',
+    lead: 'CTO',
+    members: ['ToolInventory', 'TemplateDeployer', 'WorkflowGenerator', 'ComputeBuilder', 'ToolCurator'],
+    description: 'Custom tool creation, n8n workflow deployment, compute DSL, tool lifecycle management',
+  },
 ];
 
 /** Create and populate a TeamRegistry with all 18 teams */

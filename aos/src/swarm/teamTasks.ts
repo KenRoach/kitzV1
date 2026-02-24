@@ -166,6 +166,16 @@ export const TEAM_TASK_SEEDS: TeamTaskSeed[] = [
       { name: 'memory_stats', args: {} },
     ],
   },
+  {
+    team: 'meta-tooling',
+    description: 'Audit custom tools, verify n8n connectivity, and review tool factory health',
+    tools: [
+      { name: 'toolFactory_listCustomTools', args: {} },
+      { name: 'n8n_healthCheck', args: {} },
+      { name: 'n8n_listWorkflows', args: {} },
+      { name: 'toolFactory_listCustomTools', args: { type: 'compute' } },
+    ],
+  },
 ];
 
 /** Get seed tasks for a specific team */
