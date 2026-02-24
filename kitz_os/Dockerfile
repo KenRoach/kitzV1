@@ -5,8 +5,8 @@ FROM node:20-alpine AS base
 # ── Stage 1: Build the KITZ Command Center SPA ──
 FROM base AS spa-builder
 WORKDIR /spa
-COPY ui/package.json ui/package-lock.json ./
-RUN npm ci
+COPY ui/package.json ./
+RUN npm install
 COPY ui/src/ src/
 COPY ui/public/ public/
 COPY ui/index.html ui/vite.config.ts ui/tsconfig.json ui/vite-env.d.ts ./

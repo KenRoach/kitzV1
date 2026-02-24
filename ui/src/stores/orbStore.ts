@@ -3,7 +3,7 @@ import { apiFetch } from '@/lib/api'
 import { API } from '@/lib/constants'
 import { useAgentThinkingStore } from './agentThinkingStore'
 import { useOrbNavigatorStore, detectNavHint } from '@/hooks/useOrbNavigator'
-import { KITZ_MANIFEST } from '@/data/kitz-manifest'
+import { KITZ_MANIFEST } from '@/content/kitz-manifest'
 
 interface ChatMessage {
   id: string
