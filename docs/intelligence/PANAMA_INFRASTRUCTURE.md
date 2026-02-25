@@ -184,6 +184,112 @@ Compra Click complements Yappy by accepting card payments from any bank, not jus
 
 ---
 
+### 2.4 Stripe (International Card Payments)
+
+**What it is:**
+Stripe is the global leader in developer-first payment infrastructure. It supports card payments (Visa, Mastercard, AMEX, Discover), digital wallets (Apple Pay, Google Pay), bank debits, and 135+ currencies. Stripe launched support for Panama-based businesses, enabling local merchants to accept international card payments with direct payouts to Panamanian bank accounts.
+
+**Why Kitz needs it:**
+Stripe is essential for three scenarios that Yappy and BAC Compra Click cannot cover:
+1. **International customers:** Tourists, foreign businesses, and diaspora customers paying with non-Panamanian cards get the best acceptance rates through Stripe.
+2. **Recurring/subscription payments:** Stripe Billing handles subscription lifecycle (trials, upgrades, dunning) out of the box — critical for Kitz workspaces that sell subscription services.
+3. **E-commerce/storefront:** Stripe Checkout and Payment Links integrate directly into Kitz's storefront module with minimal code.
+
+Kitz's `paymentTools.ts` already includes `'stripe'` in its provider enum — this is the most mature integration path.
+
+**Technical integration:**
+
+| Aspect | Detail |
+|---|---|
+| Developer docs | https://docs.stripe.com/ |
+| Node.js SDK | `stripe` (npm) — official, well-maintained |
+| Authentication | `STRIPE_SECRET_KEY` (per workspace) + `STRIPE_PUBLISHABLE_KEY` |
+| Webhook signing | `STRIPE_WEBHOOK_SECRET` for signature verification |
+| Panama support | Stripe Atlas or direct Panama entity registration |
+| PCI compliance | Stripe.js / Stripe Elements handle card data — PCI SAQ-A eligible |
+| Payout currency | USD (standard for Panama) |
+| Settlement | T+2 to Panamanian bank account (USD) |
+| Pricing | 2.9% + $0.30 per transaction (standard), volume discounts available |
+
+**Integration pattern for Kitz:**
+
+```typescript
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-01-27.acacia',
+});
+
+// Create a Payment Intent for an invoice
+async function createPaymentForInvoice(invoiceId: string, amount: number, currency = 'usd') {
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: Math.round(amount * 100), // Stripe uses cents
+    currency,
+    metadata: { invoiceId, source: 'kitz' },
+    automatic_payment_methods: { enabled: true },
+  });
+  return paymentIntent.client_secret;
+}
+
+// Webhook handler
+async function handleStripeWebhook(payload: Buffer, sig: string) {
+  const event = stripe.webhooks.constructEvent(
+    payload,
+    sig,
+    process.env.STRIPE_WEBHOOK_SECRET!,
+  );
+
+  if (event.type === 'payment_intent.succeeded') {
+    const pi = event.data.object as Stripe.PaymentIntent;
+    // -> payments_processWebhook(provider: 'stripe', provider_transaction_id: pi.id)
+    // -> Invoice status -> 'paid'
+    // -> CRM contact updated
+    // -> WhatsApp receipt sent
+  }
+}
+```
+
+**Key Stripe products relevant to Kitz:**
+
+| Product | Use Case | Priority |
+|---|---|---|
+| **Payment Intents** | One-time invoice payments | NOW |
+| **Checkout** | Hosted payment page (lowest PCI burden) | NOW |
+| **Payment Links** | No-code payment collection via WhatsApp/email | NOW |
+| **Billing** | Recurring subscriptions for service-based SMBs | Q2 2026 |
+| **Connect** | Marketplace payments (if Kitz facilitates payments between businesses) | Q3 2026 |
+| **Invoicing** | Stripe-native invoicing (evaluate vs Kitz's own) | Evaluate |
+| **Terminal** | In-person card payments with Stripe readers | Future |
+| **Radar** | Fraud detection (included with payments) | Automatic |
+
+**Multi-provider strategy with Stripe:**
+
+```
+Customer in Panama with Yappy    -> Yappy (fastest, cheapest, 0% fee)
+Customer in Panama with card     -> BAC Compra Click (local acquirer, lower fees)
+International customer with card -> Stripe (best acceptance, 135+ currencies)
+Recurring subscription           -> Stripe Billing (lifecycle management)
+E-commerce storefront            -> Stripe Checkout (hosted, PCI-free)
+```
+
+**Compliance requirements:**
+- Kitz workspace owner needs a Stripe account linked to a Panama business entity.
+- PCI-DSS: Handled by Stripe (use Stripe.js/Elements — never handle raw card numbers).
+- SBP: Stripe operates as a licensed payment facilitator; Kitz does not need separate licensing for card processing via Stripe.
+- Data retention: Stripe retains transaction data; Kitz should mirror key fields for local compliance.
+
+**Implementation timeline:** NOW (Q1 2026) — highest priority for international payments; Stripe is already in the provider enum.
+
+**Action items:**
+1. Build Stripe Connect onboarding flow for per-workspace Stripe accounts (or use platform-level Stripe with transfers).
+2. Implement Payment Intent creation in `paymentTools.ts` for invoice payments.
+3. Add Stripe webhook receiver to `payments_processWebhook`.
+4. Generate Stripe Payment Links for WhatsApp/email invoice delivery.
+5. Evaluate Stripe Checkout vs custom payment form for storefront module.
+6. Build Stripe Billing integration for workspace owners who sell subscriptions.
+
+---
+
 ## 3. Banking & Interbank Infrastructure
 
 ### 3.1 ACH Directo (Interbank Clearing)
@@ -711,9 +817,9 @@ provider_transaction_id: { type: 'string' } // e.g., Yappy reference code
 
 ```
 Priority 1 (Now):     Yappy         -- 70%+ of Panama P2P/P2B payments
-Priority 2 (Q2 2026): BAC Compra    -- Card payments, international customers
-Priority 3 (Q3 2026): ACH Directo   -- B2B bank transfers
-Priority 4 (Future):  Stripe        -- International customers, subscriptions
+Priority 2 (Now):     Stripe        -- International cards, subscriptions, e-commerce (already in provider enum)
+Priority 3 (Q2 2026): BAC Compra    -- Local card payments, installments
+Priority 4 (Q3 2026): ACH Directo   -- B2B bank transfers
 Priority 5 (Future):  PayPal        -- International fallback
 ```
 
@@ -982,6 +1088,14 @@ Before Kitz can process payments and generate invoices in Panama, the following 
 - Panama Payment Rails (Transfi): https://www.transfi.com/blog/panamas-payment-rails-how-they-work---ach-credit-cards-mobile-payments
 - Panama Instant Payments (Lightspark): https://www.lightspark.com/knowledge/instant-payments-panama
 - Fintech 2025 Panama (Chambers): https://practiceguides.chambers.com/practice-guides/fintech-2025/panama/trends-and-developments
+
+### Payment Platforms
+- Stripe Docs: https://docs.stripe.com/
+- Stripe Panama: https://stripe.com/pa
+- Stripe Node.js SDK: https://github.com/stripe/stripe-node
+- Stripe Webhooks: https://docs.stripe.com/webhooks
+- Stripe Connect (Marketplace): https://docs.stripe.com/connect
+- Stripe Billing (Subscriptions): https://docs.stripe.com/billing
 
 ### Kitz Codebase References
 - Payment tools: `kitz_os/src/tools/paymentTools.ts`
