@@ -94,6 +94,10 @@ export class OsToolRegistry {
       import('./emailBuilderTools.js'),
       import('./flyerPromoTools.js'),
       import('./websiteTools.js'),
+      import('./ragPipelineTools.js'),
+      import('./countryConfigTools.js'),
+      import('./contentLoopTools.js'),
+      import('./advisorTools.js'),
     ]);
 
     const getterNames = [
@@ -131,6 +135,10 @@ export class OsToolRegistry {
       'getAllEmailBuilderTools',
       'getAllFlyerPromoTools',
       'getAllWebsiteTools',
+      'getAllRagPipelineTools',
+      'getAllCountryConfigTools',
+      'getAllContentLoopTools',
+      'getAllAdvisorTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {
