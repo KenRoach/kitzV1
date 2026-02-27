@@ -347,7 +347,7 @@ export async function processInboundEmail(
   if (ADMIN_EMAIL) {
     (async () => {
       try {
-        const draft = await generateDraftResponse(emailBody, subject, sender.name, language, caseNumber);
+        const draft = await generateDraftResponse(emailBody, subject, sender.name, language, caseNumber, traceId);
         const pending = createPendingDraft({
           caseNumber,
           originalFrom: sender.email,

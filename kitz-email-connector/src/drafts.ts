@@ -123,9 +123,10 @@ export function approveDraft(token: string): PendingDraft | null {
   return draft;
 }
 
-// ── AI Draft Generation (Claude Sonnet) ──
+// ── AI Draft Generation (kitz_os brain → fallback to direct Claude) ──
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
+const KITZ_OS_URL = process.env.KITZ_OS_URL || '';
 
 const LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
   en: 'English',
@@ -134,19 +135,81 @@ const LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
   fr: 'French',
 };
 
+function buildBrainPrompt(
+  originalBody: string,
+  originalSubject: string,
+  senderName: string,
+  language: SupportedLanguage,
+  caseNumber: string,
+): string {
+  const langName = LANGUAGE_NAMES[language];
+  return [
+    `Respond to this inbound customer email for KITZ (case ${caseNumber}).`,
+    `The customer wrote in ${langName}. Respond in ${langName}.`,
+    `Tone: Gen Z clarity + disciplined founder. Direct, warm, no fluff.`,
+    `Keep it concise — 3-5 short paragraphs max. Sign off as "Kenneth @ KITZ".`,
+    `The sender already received an auto-reply with their case number.`,
+    ``,
+    `Subject: ${originalSubject}`,
+    `From: ${senderName}`,
+    ``,
+    originalBody.slice(0, 4000),
+  ].join('\n');
+}
+
+function getStaticFallback(senderName: string, language: SupportedLanguage): string {
+  if (language === 'es') return `Hola ${senderName}, gracias por contactarnos. Estamos revisando tu solicitud y te responderemos pronto.\n\nKenneth @ KITZ`;
+  if (language === 'pt') return `Olá ${senderName}, obrigado por entrar em contato. Estamos analisando sua solicitação e responderemos em breve.\n\nKenneth @ KITZ`;
+  if (language === 'fr') return `Bonjour ${senderName}, merci de nous avoir contactés. Nous examinons votre demande et vous répondrons bientôt.\n\nKenneth @ KITZ`;
+  return `Hey ${senderName}, thanks for reaching out. We're reviewing your request and will get back to you soon.\n\nKenneth @ KITZ`;
+}
+
 export async function generateDraftResponse(
   originalBody: string,
   originalSubject: string,
   senderName: string,
   language: SupportedLanguage,
   caseNumber: string,
+  traceId?: string,
 ): Promise<{ draftBody: string; draftHtml: string; draftSubject: string }> {
-  const langName = LANGUAGE_NAMES[language];
+  const draftSubject = `Re: ${originalSubject} — ${caseNumber}`;
 
-  const systemPrompt = `You are KITZ, an AI Business Operating System for small businesses. You're drafting a response to a customer email.
+  // 1. Route through kitz_os brain (semantic router → skills → agents)
+  if (KITZ_OS_URL) {
+    try {
+      const res = await fetch(`${KITZ_OS_URL}/api/kitz`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: buildBrainPrompt(originalBody, originalSubject, senderName, language, caseNumber),
+          channel: 'email',
+          user_id: caseNumber,
+          trace_id: traceId || `email-${caseNumber}`,
+        }),
+        signal: AbortSignal.timeout(30_000),
+      });
+
+      if (res.ok) {
+        const data = (await res.json()) as { response?: string; command?: string };
+        const draftBody = data.response?.trim() || '';
+        if (draftBody.length > 20) {
+          return {
+            draftBody,
+            draftHtml: wrapInBrandedHtml(draftBody, caseNumber, senderName, language),
+            draftSubject,
+          };
+        }
+      }
+    } catch { /* fallback to direct Claude */ }
+  }
+
+  // 2. Fallback: direct Claude Sonnet (when kitz_os unavailable)
+  if (ANTHROPIC_API_KEY) {
+    try {
+      const systemPrompt = `You are KITZ, an AI Business Operating System for small businesses. You're drafting a response to a customer email.
 
 Rules:
-- Respond in ${langName}
+- Respond in ${LANGUAGE_NAMES[language]}
 - Tone: Gen Z clarity + disciplined founder. Direct, warm, no fluff
 - Be helpful and specific to their actual question
 - Keep it concise — 3-5 short paragraphs max
@@ -157,63 +220,39 @@ Rules:
 
 This is case ${caseNumber}. The sender already received an auto-reply with their case number.`;
 
-  const userMessage = `Subject: ${originalSubject}\nFrom: ${senderName}\n\n${originalBody.slice(0, 4000)}`;
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1024,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: `Subject: ${originalSubject}\nFrom: ${senderName}\n\n${originalBody.slice(0, 4000)}` }],
+        }),
+        signal: AbortSignal.timeout(30_000),
+      });
 
-  const draftSubject = `Re: ${originalSubject} — ${caseNumber}`;
-
-  if (!ANTHROPIC_API_KEY) {
-    const fallback = language === 'es'
-      ? `Hola ${senderName}, gracias por contactarnos. Estamos revisando tu solicitud y te responderemos pronto.\n\nKenneth @ KITZ`
-      : language === 'pt'
-        ? `Olá ${senderName}, obrigado por entrar em contato. Estamos analisando sua solicitação e responderemos em breve.\n\nKenneth @ KITZ`
-        : language === 'fr'
-          ? `Bonjour ${senderName}, merci de nous avoir contactés. Nous examinons votre demande et vous répondrons bientôt.\n\nKenneth @ KITZ`
-          : `Hey ${senderName}, thanks for reaching out. We're reviewing your request and will get back to you soon.\n\nKenneth @ KITZ`;
-    return { draftBody: fallback, draftHtml: wrapInBrandedHtml(fallback, caseNumber, senderName, language), draftSubject };
+      if (res.ok) {
+        const data = (await res.json()) as { content?: Array<{ text?: string }> };
+        const draftBody = data.content?.[0]?.text?.trim() || '';
+        if (draftBody) {
+          return {
+            draftBody,
+            draftHtml: wrapInBrandedHtml(draftBody, caseNumber, senderName, language),
+            draftSubject,
+          };
+        }
+      }
+    } catch { /* fallback to static */ }
   }
 
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userMessage }],
-      }),
-      signal: AbortSignal.timeout(30_000),
-    });
-
-    if (!res.ok) {
-      throw new Error(`Anthropic ${res.status}`);
-    }
-
-    const data = (await res.json()) as { content?: Array<{ text?: string }> };
-    const draftBody = data.content?.[0]?.text?.trim() || '';
-
-    if (!draftBody) throw new Error('Empty response from Claude');
-
-    return {
-      draftBody,
-      draftHtml: wrapInBrandedHtml(draftBody, caseNumber, senderName, language),
-      draftSubject,
-    };
-  } catch {
-    // Fallback: generic response
-    const fallback = language === 'es'
-      ? `Hola ${senderName}, gracias por contactarnos. Estamos revisando tu solicitud y te responderemos pronto.\n\nKenneth @ KITZ`
-      : language === 'pt'
-        ? `Olá ${senderName}, obrigado por entrar em contato. Estamos analisando sua solicitação e responderemos em breve.\n\nKenneth @ KITZ`
-        : language === 'fr'
-          ? `Bonjour ${senderName}, merci de nous avoir contactés. Nous examinons votre demande et vous répondrons bientôt.\n\nKenneth @ KITZ`
-          : `Hey ${senderName}, thanks for reaching out. We're reviewing your request and will get back to you soon.\n\nKenneth @ KITZ`;
-    return { draftBody: fallback, draftHtml: wrapInBrandedHtml(fallback, caseNumber, senderName, language), draftSubject };
-  }
+  // 3. Static fallback (no AI available)
+  const fallback = getStaticFallback(senderName, language);
+  return { draftBody: fallback, draftHtml: wrapInBrandedHtml(fallback, caseNumber, senderName, language), draftSubject };
 }
 
 // ── Branded HTML for the actual draft email sent to sender ──
