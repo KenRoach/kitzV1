@@ -144,17 +144,25 @@ function buildBrainPrompt(
   caseNumber: string,
 ): string {
   const langName = LANGUAGE_NAMES[language];
+  const body = originalBody.trim() || '(no body — respond based on the subject line)';
   return [
-    `Respond to this inbound customer email for KITZ (case ${caseNumber}).`,
+    `IMPORTANT: Write the ACTUAL email response text. Do NOT invoke tools, do NOT use email_compose, do NOT output JSON or draft actions. Just write the plain text email body that will be sent to the customer.`,
+    ``,
+    `You are drafting an email response for KITZ (case ${caseNumber}).`,
     `The customer wrote in ${langName}. Respond in ${langName}.`,
     `Tone: Gen Z clarity + disciplined founder. Direct, warm, no fluff.`,
     `Keep it concise — 3-5 short paragraphs max. Sign off as "Kenneth @ KITZ".`,
     `The sender already received an auto-reply with their case number.`,
+    `Read BOTH the subject and body carefully and respond to what they're actually asking.`,
     ``,
+    `--- CUSTOMER EMAIL ---`,
     `Subject: ${originalSubject}`,
     `From: ${senderName}`,
+    `Body:`,
+    body.slice(0, 4000),
+    `--- END ---`,
     ``,
-    originalBody.slice(0, 4000),
+    `Now write the email response (plain text only, no JSON, no tool calls):`,
   ].join('\n');
 }
 
