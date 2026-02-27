@@ -224,6 +224,7 @@ const AUTO_REPLY_COOLDOWN_MS = 4 * 60 * 60 * 1000; // 4 hours between auto-repli
 // ── Session Manager ──
 class SessionManager {
   private sessions = new Map<string, UserSession>();
+  private phoneToUserId = new Map<string, string>(); // Reverse lookup: phone → userId (prevents multi-session collisions)
   private groupMetaCache = new Map<string, { subject?: string; participants?: string[]; expires: number }>();
   private autoReplySent = new Map<string, number>(); // key: `${userId}:${senderJid}` → timestamp
   private static GROUP_META_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -355,6 +356,16 @@ class SessionManager {
           const me = sock.user;
           if (me?.id) {
             session.phoneNumber = me.id.split(':')[0].split('@')[0];
+          }
+
+          // ── Phone collision detection: kill old session if same phone reconnects under new userId ──
+          if (session.phoneNumber) {
+            const existingUserId = this.phoneToUserId.get(session.phoneNumber);
+            if (existingUserId && existingUserId !== userId) {
+              console.log(`[session:${userId}] Phone +${session.phoneNumber} was on session ${existingUserId} — killing old session`);
+              this.stopSession(existingUserId);
+            }
+            this.phoneToUserId.set(session.phoneNumber, userId);
           }
 
           console.log(`[session:${userId}] CONNECTED as +${session.phoneNumber}`);
@@ -564,12 +575,23 @@ class SessionManager {
     } else if (isLoggedOut) {
       console.log(`[session:${userId}] Logged out — cleaning up session`);
       this.emit(session, 'logged_out', '');
+      if (session.phoneNumber) this.phoneToUserId.delete(session.phoneNumber);
+      const dir = join(AUTH_ROOT, userId);
+      rm(dir, { recursive: true, force: true }).catch(() => {});
+      session.listeners.clear();
+      this.sessions.delete(userId);
+    } else if (flags.statusCode === 401) {
+      // 401 device_removed — WhatsApp permanently revoked this session.
+      // Do NOT self-heal — user must re-scan QR.
+      console.log(`[session:${userId}] 401 device_removed — session revoked, cleaning up`);
+      this.emit(session, 'logged_out', '');
+      if (session.phoneNumber) this.phoneToUserId.delete(session.phoneNumber);
       const dir = join(AUTH_ROOT, userId);
       rm(dir, { recursive: true, force: true }).catch(() => {});
       session.listeners.clear();
       this.sessions.delete(userId);
     } else if (flags.statusCode && session.phoneNumber) {
-      // Self-healing: even after max attempts, if we had a valid session, wait and retry
+      // Self-healing: for transient errors (not 401), wait and retry
       session.reconnectAttempts = 0;
       const healDelay = 60_000; // 1 minute cooldown, then restart backoff cycle
       console.log(`[session:${userId}] Max reconnect attempts — self-healing in 60s`);
@@ -949,6 +971,19 @@ class SessionManager {
     return this.sessions.get(userId);
   }
 
+  /** Find the userId for a connected phone number */
+  findUserIdByPhone(phone: string): string | undefined {
+    return this.phoneToUserId.get(phone);
+  }
+
+  /** Get any active (connected or connecting) session — for single-user setups */
+  getActiveSession(): UserSession | undefined {
+    for (const session of this.sessions.values()) {
+      if (session.isConnected || session.lastQr) return session;
+    }
+    return undefined;
+  }
+
   /** Stop a session (keep auth for re-scan) */
   stopSession(userId: string): boolean {
     const session = this.sessions.get(userId);
@@ -962,6 +997,8 @@ class SessionManager {
     session.isConnected = false;
     session.lastQr = null;
     session.lastEmittedQr = null;
+    // Clean up phone reverse lookup
+    if (session.phoneNumber) this.phoneToUserId.delete(session.phoneNumber);
     this.emit(session, 'disconnected', '');
     session.listeners.clear();
     this.sessions.delete(userId);

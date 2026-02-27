@@ -74,7 +74,10 @@ app.get('/whatsapp/login', async (_req, reply) => {
 
 // ── SSE: Stream QR codes for a new session ──
 app.get('/whatsapp/connect', async (req: any, reply) => {
-  const userId = (req.query as any).userId || randomUUID();
+  // Reuse existing active session if available (prevents multi-session collision)
+  const requestedUserId = (req.query as any).userId;
+  const activeSession = !requestedUserId ? sessionManager.getActiveSession() : undefined;
+  const userId = requestedUserId || activeSession?.userId || randomUUID();
 
   reply.raw.writeHead(200, {
     'Content-Type': 'text/event-stream',
