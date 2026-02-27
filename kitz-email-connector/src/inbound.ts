@@ -214,7 +214,7 @@ export function getAutoReplyHtml(
 </div>
 <div style="padding:20px 24px;text-align:center">
 <p style="color:#999;font-size:11px;line-height:1.5;margin:0 0 8px">${t.aiDisclaimer}</p>
-<p style="color:#bbb;font-size:11px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none">KITZ</a> &mdash; kitz.services</p>
+<p style="color:#bbb;font-size:11px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none">KITZ</a></p>
 </div>
 </div>`;
 }
