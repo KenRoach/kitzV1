@@ -343,10 +343,12 @@ export async function processInboundEmail(
     sendResult: { ok: sendResult.ok, provider: sendResult.provider },
   });
 
-  // 5. Generate AI draft + send to admin for approval (fire-and-forget)
+  // 5. Generate AI draft + send to admin for approval (fire-and-forget, 5min delay)
   if (ADMIN_EMAIL) {
     (async () => {
       try {
+        // Wait 5 minutes so auto-reply lands first and brain has time to think
+        await new Promise((r) => setTimeout(r, 5 * 60 * 1000));
         log.info({ event: 'inbound.draft_start', traceId, caseNumber, adminEmail: ADMIN_EMAIL });
 
         const draft = await generateDraftResponse(emailBody, subject, sender.name, language, caseNumber, traceId);
