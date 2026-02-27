@@ -1,7 +1,16 @@
 import 'dotenv/config';
 import Fastify from 'fastify';
 import { randomUUID } from 'node:crypto';
-import type { EventEnvelope } from 'kitz-schemas';
+// EventEnvelope type inlined from kitz-schemas (type-only — no runtime dependency)
+interface EventEnvelope {
+  orgId: string;
+  userId: string;
+  source: string;
+  event: string;
+  payload: unknown;
+  traceId: string;
+  ts: string;
+}
 import { sendEmail } from './providers/resend.js';
 import { processInboundEmail } from './inbound.js';
 import type { InboundPayload } from './inbound.js';
