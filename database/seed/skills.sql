@@ -45,7 +45,19 @@ INSERT INTO skills (slug, name, description, category, tier, credits_per_use) VA
   ('social-media-planner',      'Social Media Planner',      'Platform-specific content strategy, weekly calendar, engagement tactics',                'content',      'haiku',  0.5),
   ('cold-outreach-coach',       'Cold Outreach Coach',       'WhatsApp/email outreach sequences, personalization, response templates',                 'intelligence', 'haiku',  0.5),
   ('sales-objection-handler',   'Sales Objection Handler',   'Chris Voss tactical empathy scripts for price/timing/trust objections',                  'intelligence', 'haiku',  0.5),
-  ('referral-program-builder',  'Referral Program Builder',  'Referral programs with tiers, rewards, WhatsApp flow, viral loops',                     'intelligence', 'haiku',  0.5)
+  ('referral-program-builder',  'Referral Program Builder',  'Referral programs with tiers, rewards, WhatsApp flow, viral loops',                     'intelligence', 'haiku',  0.5),
+  -- Phase 3: Week 3 skills
+  ('inventory-optimizer',       'Inventory Optimizer',       'Demand forecasting, reorder points, dead stock detection, stock optimization',         'operations',   'haiku',  0.5),
+  ('supply-chain-advisor',      'Supply Chain Advisor',      'Supplier evaluation, negotiation scripts, logistics optimization',                     'operations',   'haiku',  0.5),
+  ('payment-method-advisor',    'Payment Method Advisor',    'Gateway selection by country (Yappy/PIX/OXXO/Nequi), fee comparison',                 'intelligence', 'haiku',  0.5),
+  ('customer-retention-advisor', 'Customer Retention Advisor', 'Churn prediction, win-back sequences, loyalty programs',                           'intelligence', 'haiku',  0.5),
+  ('sales-funnel-analyzer',     'Sales Funnel Analyzer',     'Conversion bottleneck diagnosis, revenue leakage, A/B test ideas',                    'intelligence', 'haiku',  0.5),
+  -- Phase 4: Week 4 skills
+  ('panama-business-advisor',   'Panama Business Advisor',   'Registro Público, DGI (ITBMS 7%), CSS, labor code, municipality permits',             'compliance',   'haiku',  0.5),
+  ('mexico-business-advisor',   'Mexico Business Advisor',   'SAT (RFC, CFDI), IMSS, INFONAVIT, ISR, IVA, RESICO regime, labor law',               'compliance',   'haiku',  0.5),
+  ('colombia-business-advisor', 'Colombia Business Advisor', 'DIAN (NIT, RUT), Cámara de Comercio, EPS, ARL, SAS, factura electrónica',            'compliance',   'haiku',  0.5),
+  ('brazil-business-advisor',   'Brazil Business Advisor',   'Receita Federal (CNPJ), Simples Nacional, MEI, PIX, NF-e, CLT labor',                'compliance',   'haiku',  0.5),
+  ('latam-compliance-navigator', 'LATAM Compliance Navigator', 'Cross-border data privacy (LGPD, LFPDPPP, Ley 1581), e-commerce, WhatsApp rules', 'compliance',   'haiku',  0.5)
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,

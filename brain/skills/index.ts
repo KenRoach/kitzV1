@@ -115,4 +115,34 @@ export type { ObjectionHandlerResult, ObjectionOptions, ObjectionScript } from '
 export { buildReferralProgram } from './referralProgramBuilder.js';
 export type { ReferralProgram, ReferralOptions, ReferralTier } from './referralProgramBuilder.js';
 
+export { optimizeInventory } from './inventoryOptimizer.js';
+export type { InventoryOptimization, InventoryOptions, ReorderPoint } from './inventoryOptimizer.js';
+
+export { adviseSupplyChain } from './supplyChainAdvisor.js';
+export type { SupplyChainAdvice, SupplyChainOptions, SupplierScore } from './supplyChainAdvisor.js';
+
+export { advisePaymentMethods } from './paymentMethodAdvisor.js';
+export type { PaymentMethodAdvice, PaymentMethodOptions, PaymentGateway } from './paymentMethodAdvisor.js';
+
+export { adviseRetention } from './customerRetentionAdvisor.js';
+export type { RetentionStrategy, RetentionOptions, ChurnSignal } from './customerRetentionAdvisor.js';
+
+export { analyzeFunnel } from './salesFunnelAnalyzer.js';
+export type { FunnelAnalysis, SalesFunnelOptions, FunnelStage } from './salesFunnelAnalyzer.js';
+
+export { advisePanamaBusiness } from './panamaBusinessAdvisor.js';
+export type { PanamaBusinessAdvice, PanamaBusinessOptions } from './panamaBusinessAdvisor.js';
+
+export { adviseMexicoBusiness } from './mexicoBusinessAdvisor.js';
+export type { MexicoBusinessAdvice, MexicoBusinessOptions } from './mexicoBusinessAdvisor.js';
+
+export { adviseColombianBusiness } from './colombiaBusinessAdvisor.js';
+export type { ColombiaBusinessAdvice, ColombiaBusinessOptions } from './colombiaBusinessAdvisor.js';
+
+export { adviseBrazilBusiness } from './brazilBusinessAdvisor.js';
+export type { BrazilBusinessAdvice, BrazilBusinessOptions } from './brazilBusinessAdvisor.js';
+
+export { navigateLatamCompliance } from './latamComplianceNavigator.js';
+export type { LatamComplianceAdvice, LatamComplianceOptions, CountryCompliance } from './latamComplianceNavigator.js';
+
 export { PROMPTS } from '../prompts/templates.js';

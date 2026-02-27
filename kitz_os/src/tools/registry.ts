@@ -133,6 +133,16 @@ export class OsToolRegistry {
       import('./coldOutreachCoachTools.js'),
       import('./salesObjectionHandlerTools.js'),
       import('./referralProgramBuilderTools.js'),
+      import('./inventoryOptimizerTools.js'),
+      import('./supplyChainAdvisorTools.js'),
+      import('./paymentMethodAdvisorTools.js'),
+      import('./customerRetentionAdvisorTools.js'),
+      import('./salesFunnelAnalyzerTools.js'),
+      import('./panamaBusinessAdvisorTools.js'),
+      import('./mexicoBusinessAdvisorTools.js'),
+      import('./colombiaBusinessAdvisorTools.js'),
+      import('./brazilBusinessAdvisorTools.js'),
+      import('./latamComplianceNavigatorTools.js'),
     ]);
 
     const getterNames = [
@@ -209,6 +219,16 @@ export class OsToolRegistry {
       'getAllColdOutreachCoachTools',
       'getAllSalesObjectionHandlerTools',
       'getAllReferralProgramBuilderTools',
+      'getAllInventoryOptimizerTools',
+      'getAllSupplyChainAdvisorTools',
+      'getAllPaymentMethodAdvisorTools',
+      'getAllCustomerRetentionAdvisorTools',
+      'getAllSalesFunnelAnalyzerTools',
+      'getAllPanamaBusinessAdvisorTools',
+      'getAllMexicoBusinessAdvisorTools',
+      'getAllColombiaBusinessAdvisorTools',
+      'getAllBrazilBusinessAdvisorTools',
+      'getAllLatamComplianceNavigatorTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {
