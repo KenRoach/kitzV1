@@ -391,7 +391,21 @@ export async function createServer(kernel: KitzKernel) {
             });
           }
 
-          return { command: 'ai', response: result.response, tools_used: result.toolsUsed, credits_consumed: result.creditsConsumed };
+          // Extract structured data from tool results for frontend rendering
+          const responsePayload: Record<string, unknown> = {
+            command: 'ai',
+            response: result.response,
+            tools_used: result.toolsUsed,
+            credits_consumed: result.creditsConsumed,
+          };
+
+          // If image_generate was used, extract the DALL-E URL for inline rendering
+          if (result.toolsUsed?.includes('image_generate')) {
+            const urlMatch = result.response.match(/https:\/\/oaidalleapiprodscus\.blob\.core\.windows\.net\/[^\s)]+/);
+            if (urlMatch) responsePayload.image_url = urlMatch[0];
+          }
+
+          return responsePayload;
         } catch (err) {
           log.error('AI routing error', { error: (err as Error).message });
           return { command: 'error', response: `Something went wrong. Try again or type "help".` };

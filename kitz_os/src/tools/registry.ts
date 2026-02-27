@@ -98,6 +98,8 @@ export class OsToolRegistry {
       import('./countryConfigTools.js'),
       import('./contentLoopTools.js'),
       import('./advisorTools.js'),
+      import('./imageGenerationTools.js'),
+      import('./pdfGenerationTools.js'),
     ]);
 
     const getterNames = [
@@ -139,6 +141,8 @@ export class OsToolRegistry {
       'getAllCountryConfigTools',
       'getAllContentLoopTools',
       'getAllAdvisorTools',
+      'getAllImageGenerationTools',
+      'getAllPdfGenerationTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {

@@ -52,7 +52,14 @@ export function ChatPanel() {
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {/* Chat messages */}
         {messages.map((msg) => (
-          <MessageBubble key={msg.id} role={msg.role} content={msg.content} variant="dark" />
+          <MessageBubble
+            key={msg.id}
+            role={msg.role}
+            content={msg.content}
+            variant="dark"
+            imageUrl={msg.imageUrl}
+            attachments={msg.attachments}
+          />
         ))}
 
         {/* Typing indicator — bouncing dots while KITZ is thinking */}

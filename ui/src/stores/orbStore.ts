@@ -5,11 +5,21 @@ import { useAgentThinkingStore } from './agentThinkingStore'
 import { useOrbNavigatorStore, detectNavHint } from '@/hooks/useOrbNavigator'
 import { KITZ_MANIFEST } from '@/content/kitz-manifest'
 
+interface ChatAttachment {
+  type: 'image' | 'html' | 'document'
+  url?: string
+  html?: string
+  filename?: string
+}
+
 interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
   content: string
   timestamp: number
+  imageUrl?: string
+  toolsUsed?: string[]
+  attachments?: ChatAttachment[]
 }
 
 type OrbState = 'idle' | 'thinking' | 'success' | 'error'
@@ -157,7 +167,14 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
 
     try {
       const echoChannels = get().echoToWhatsApp ? ['whatsapp'] : []
-      const res = await apiFetch<{ reply?: string; response?: string; message?: string; tools_used?: string[] }>(
+      const res = await apiFetch<{
+        reply?: string
+        response?: string
+        message?: string
+        tools_used?: string[]
+        image_url?: string
+        attachments?: ChatAttachment[]
+      }>(
         `${API.KITZ_OS}`,
         {
           method: 'POST',
@@ -169,6 +186,9 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
         role: 'assistant',
         content: res.reply ?? res.response ?? res.message ?? 'Done.',
         timestamp: Date.now(),
+        imageUrl: res.image_url,
+        toolsUsed: res.tools_used,
+        attachments: res.attachments,
       }
       set((s) => ({ messages: [...s.messages, assistantMsg], state: 'success' }))
       // Resolve thinking steps with real tools used from backend

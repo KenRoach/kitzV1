@@ -103,6 +103,10 @@ const DIRECT_EXECUTE_TOOLS = new Set([
   'advisor_employerCost', 'advisor_severance', 'advisor_pricing',
   'advisor_breakeven', 'advisor_unitEconomics', 'advisor_runway',
   'advisor_invoiceTax', 'advisor_loanPayment',
+  // Image generation (DALL-E)
+  'image_generate',
+  // PDF/document generation
+  'pdf_generate',
 ]);
 
 // ── Draft-First Classification ──
@@ -303,6 +307,8 @@ CAPABILITIES:
 - **COUNTRY CONFIG** — Auto-configure workspace by country: tax rates, currency, payment providers, invoice requirements, tax ID validation. Supports 17 countries.
 - **CONTENT LOOP** — Publish content → measure performance → suggest boosting top performers → create paid promotions. Closed-loop content optimization.
 - **ADVISOR** — Business calculators: employer cost, severance, pricing strategy, break-even, unit economics (CAC/LTV), runway, invoice tax, loan payments.
+- **IMAGE GENERATION** — Create images from text prompts (DALL-E 3). Product photos, social media graphics, flyers, logos. Use image_generate tool.
+- **PDF/DOCUMENT** — Generate branded HTML documents for print-to-PDF. Reports, proposals, summaries, letters. Use pdf_generate tool.
 
 EXECUTION RULES:
 1. Execute READ operations directly — no confirmation needed.
@@ -325,7 +331,9 @@ EXECUTION RULES:
 18. For country/tax/compliance questions, use rag_search to find intelligence + country_getConfig for current setup.
 19. For employer costs, severance, pricing, break-even, runway — use advisor_* calculators. Give exact numbers.
 20. For content performance: content_measure to track, content_suggestBoost to find winners, content_promote to boost.
-21. When user mentions a country or asks about tax/payments, search intelligence with rag_search first for deep context.${sopSection}${intelSection}`;
+21. When user mentions a country or asks about tax/payments, search intelligence with rag_search first for deep context.
+22. For image generation (logos, product photos, graphics, flyers), use image_generate. Always include the image URL in your response so the user can see it.
+23. For document/report generation (proposals, reports, summaries, letters), use pdf_generate. Mention the document title in your response.${sopSection}${intelSection}`;
 }
 
 // ── Execute a tool ──

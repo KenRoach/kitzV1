@@ -40,7 +40,7 @@ export interface BrandKit {
 
 export interface ContentItem {
   contentId: string;
-  type: 'invoice' | 'quote' | 'deck' | 'email' | 'flyer' | 'promo' | 'landing' | 'catalog' | 'biolink';
+  type: 'invoice' | 'quote' | 'deck' | 'email' | 'flyer' | 'promo' | 'landing' | 'catalog' | 'biolink' | 'document';
   html: string;
   data: Record<string, unknown>;
   status: 'draft' | 'previewing' | 'editing' | 'approved' | 'shipped' | 'archived';
