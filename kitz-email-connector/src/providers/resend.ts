@@ -87,6 +87,11 @@ async function sendViaSendGrid(payload: EmailPayload): Promise<SendResult> {
   return { ok: true, provider: 'sendgrid', messageId };
 }
 
+/** Send auto-reply — bypasses draft-first, uses noreply sender. */
+export async function sendAutoReply(payload: Omit<EmailPayload, 'from'>): Promise<SendResult> {
+  return sendEmail({ ...payload, from: FROM_EMAIL_NOREPLY });
+}
+
 /** Send email via Resend (primary) with SendGrid fallback. */
 export async function sendEmail(payload: EmailPayload): Promise<SendResult> {
   // Try Resend first

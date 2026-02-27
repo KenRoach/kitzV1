@@ -3,6 +3,8 @@ import Fastify from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { EventEnvelope } from 'kitz-schemas';
 import { sendEmail } from './providers/resend.js';
+import { processInboundEmail } from './inbound.js';
+import type { InboundPayload } from './inbound.js';
 import {
   upsertTemplate, getTemplate, listTemplates,
   setConsent, hasConsent,
@@ -25,13 +27,38 @@ const audit = (event: string, payload: unknown, traceId: string): EventEnvelope 
 // ── Health ──
 app.get('/health', async () => ({ status: 'ok', service: 'kitz-email-connector' }));
 
-// ── Inbound webhook ──
+// ── Inbound webhook (Resend) ──
 app.post('/webhooks/inbound', async (req: any, reply) => {
-  if (!req.headers['x-provider-signature']) {
-    return reply.code(400).send({ ok: false, message: 'Missing signature' });
-  }
   const traceId = String(req.headers['x-trace-id'] || randomUUID());
-  app.log.info(audit('email.inbound', req.body, traceId));
+
+  // Resend inbound webhooks wrap payload in { type, created_at, data: { from, to, subject, text, html } }
+  const body = req.body as Record<string, unknown>;
+  const data = (body?.data ?? body) as Record<string, unknown>;
+
+  // Validate minimum fields
+  if (!data?.from || !data?.subject) {
+    return reply.code(400).send({ ok: false, message: 'Missing from or subject', traceId });
+  }
+
+  const payload: InboundPayload = {
+    type: String(body?.type || 'email.received'),
+    created_at: String(body?.created_at || new Date().toISOString()),
+    data: {
+      from: String(data.from),
+      to: Array.isArray(data.to) ? data.to.map(String) : [String(data.to || '')],
+      subject: String(data.subject),
+      text: data.text ? String(data.text) : undefined,
+      html: data.html ? String(data.html) : undefined,
+    },
+  };
+
+  app.log.info(audit('email.inbound', payload, traceId));
+
+  // Process async — return 200 fast for webhook
+  processInboundEmail(payload, traceId, app.log).catch((err) => {
+    app.log.error({ event: 'inbound.process_error', traceId, error: (err as Error).message });
+  });
+
   return { ok: true, traceId };
 });
 
@@ -46,7 +73,8 @@ app.post('/outbound/send', async (req: any, reply) => {
     return reply.code(409).send({ ok: false, message: 'Recipient is in suppression list', traceId });
   }
 
-  const draftOnly = Boolean(req.body?.draftOnly ?? true);
+  const autoReply = Boolean(req.body?.autoReply);
+  const draftOnly = autoReply ? false : Boolean(req.body?.draftOnly ?? true);
   if (draftOnly) {
     app.log.info(audit('email.outbound.draft', req.body, traceId));
     return { queued: true, draftOnly: true, traceId };
