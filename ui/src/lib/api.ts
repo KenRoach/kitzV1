@@ -17,7 +17,21 @@ export async function apiFetch<T>(
     headers.set('Content-Type', 'application/json')
   }
 
-  const res = await fetch(url, { ...options, headers })
+  // AI calls can take 30-60s through the semantic router — use 2min timeout
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 120_000)
+
+  let res: Response
+  try {
+    res = await fetch(url, { ...options, headers, signal: controller.signal })
+  } catch (err) {
+    clearTimeout(timeoutId)
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Request timed out — KITZ is still thinking. Try again.')
+    }
+    throw new Error('Could not reach KITZ backend. Is the server running?')
+  }
+  clearTimeout(timeoutId)
 
   if (!res.ok) {
     const body = await res.text()

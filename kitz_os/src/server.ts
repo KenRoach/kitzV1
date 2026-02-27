@@ -52,7 +52,7 @@ import { createLogger } from './logger.js';
 const log = createLogger('server');
 
 export async function createServer(kernel: KitzKernel) {
-  const app = Fastify({ logger: false, bodyLimit: 20_000_000 });  // 20MB for media payloads
+  const app = Fastify({ logger: false, bodyLimit: 20_000_000, requestTimeout: 120_000 });  // 20MB for media, 2min for AI calls
   const PORT = Number(process.env.PORT) || 3012;
 
   // Rate limiting — 120 req/min global, 30 req/min on AI endpoints

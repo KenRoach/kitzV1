@@ -37,6 +37,13 @@ export default defineConfig({
       },
       '/api/kitz': {
         target: 'http://localhost:3012',
+        timeout: 120_000, // AI semantic router can take 30-60s
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            // Extend socket timeout for long-running AI calls
+            proxyReq.socket.setTimeout(120_000)
+          })
+        },
       },
       '/api/comms': {
         target: 'http://localhost:3013',
