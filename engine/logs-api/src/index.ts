@@ -1,70 +1,67 @@
 import Fastify from 'fastify'
+import { insertLog, updateLogStatus, queryLogs, getMemLogs, type LogEntry } from './db.js'
 
 const app = Fastify({ logger: true })
 const PORT = Number(process.env.PORT) || 3014
 
-// In-memory log store
-interface LogEntry {
-  id: string
-  type: 'agent_action' | 'crm' | 'order' | 'message' | 'system' | 'draft'
-  actor: { name: string; isAgent: boolean }
-  action: string
-  detail?: string
-  timestamp: string
-  traceId?: string
-  status?: 'pending' | 'approved' | 'rejected'
-  meta?: Record<string, unknown>
-}
+// ── Health ──
+app.get('/health', async () => ({
+  status: 'ok',
+  service: 'logs-api',
+  entries: getMemLogs().length,
+}))
 
-const logs: LogEntry[] = []
-
-// Health check
-app.get('/health', async () => ({ status: 'ok', service: 'logs-api', entries: logs.length }))
-
-// Ingest a new log entry
+// ── Ingest a new log entry ──
 app.post<{ Body: Omit<LogEntry, 'id'> }>('/logs', async (req, reply) => {
   const entry: LogEntry = {
     id: `log_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
     ...req.body,
     timestamp: req.body.timestamp || new Date().toISOString(),
   }
-  logs.unshift(entry) // newest first
-  if (logs.length > 10000) logs.length = 10000 // cap at 10k
+
+  await insertLog(entry)
   reply.status(201)
   return entry
 })
 
-// Query logs with filters
+// ── Query logs with filters, date-range, full-text search ──
 app.get<{
-  Querystring: { type?: string; limit?: string; offset?: string; agentId?: string; status?: string }
+  Querystring: {
+    type?: string
+    limit?: string
+    offset?: string
+    agentId?: string
+    status?: string
+    search?: string
+    from?: string
+    to?: string
+  }
 }>('/logs', async (req) => {
-  let filtered = [...logs]
-  const { type, limit: limitStr, offset: offsetStr, agentId, status } = req.query
+  const { type, limit: limitStr, offset: offsetStr, agentId, status, search, from, to } = req.query
 
-  if (type) filtered = filtered.filter((l) => l.type === type)
-  if (agentId) filtered = filtered.filter((l) => l.meta?.agentId === agentId)
-  if (status) filtered = filtered.filter((l) => l.status === status)
-
-  const offset = Number(offsetStr) || 0
-  const limit = Number(limitStr) || 50
-
-  const page = filtered.slice(offset, offset + limit)
-  return { entries: page, total: filtered.length, hasMore: offset + limit < filtered.length }
+  return queryLogs({
+    type,
+    agentId,
+    status,
+    search,
+    from,
+    to,
+    limit: Number(limitStr) || 50,
+    offset: Number(offsetStr) || 0,
+  })
 })
 
-// Approve a draft
+// ── Approve a draft ──
 app.patch<{ Params: { id: string } }>('/logs/:id/approve', async (req, reply) => {
-  const entry = logs.find((l) => l.id === req.params.id)
+  const entry = await updateLogStatus(req.params.id, 'approved')
   if (!entry) { reply.status(404); return { error: 'Not found' } }
-  entry.status = 'approved'
   return entry
 })
 
-// Reject a draft
+// ── Reject a draft ──
 app.patch<{ Params: { id: string } }>('/logs/:id/reject', async (req, reply) => {
-  const entry = logs.find((l) => l.id === req.params.id)
+  const entry = await updateLogStatus(req.params.id, 'rejected')
   if (!entry) { reply.status(404); return { error: 'Not found' } }
-  entry.status = 'rejected'
   return entry
 })
 

@@ -9,10 +9,9 @@ import { MessageBubble } from '@/components/chat/MessageBubble'
 import { TypingIndicator } from '@/components/chat/TypingIndicator'
 
 export function ChatPanel() {
-  const { messages, state, sendMessage, chatFocused, blurChat, chatGlowing, chatShaking } = useOrbStore()
+  const { messages, state, sendMessage, chatFocused, blurChat, chatGlowing, chatShaking, echoToWhatsApp, setEchoToWhatsApp } = useOrbStore()
   const user = useAuthStore((s) => s.user)
   const [input, setInput] = useState('')
-  const [echoToWhatsApp, setEchoToWhatsApp] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const agentSteps = useAgentThinkingStore((s) => s.steps)
@@ -125,7 +124,7 @@ export function ChatPanel() {
           </button>
           <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/10">
             <span className="text-white/50">Active Agents</span>
-            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold text-white">{agentSteps.filter((s) => s.status === 'pending').length || 0}</span>
+            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold text-white">{agentSteps.filter((s) => s.status === 'active').length || 0}</span>
           </button>
           <button
             onClick={() => setEchoToWhatsApp(!echoToWhatsApp)}

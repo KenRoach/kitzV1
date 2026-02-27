@@ -3,6 +3,8 @@
 interface ImportMetaEnv {
   readonly VITE_PAY_DOMAIN?: string
   readonly VITE_API_BASE_URL?: string
+  readonly VITE_KITZ_OS_URL?: string
+  readonly VITE_WA_CONNECTOR_URL?: string
   readonly VITE_SERVICE_SECRET?: string
 }
 

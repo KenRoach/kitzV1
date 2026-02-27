@@ -29,6 +29,8 @@ interface OrbStore {
   speaking: boolean
   /** Incremented each time user clicks Kitz to puff-teleport to chatbox */
   teleportSeq: number
+  /** Echo responses to WhatsApp when enabled */
+  echoToWhatsApp: boolean
 
   state: OrbState
   messages: ChatMessage[]
@@ -45,6 +47,7 @@ interface OrbStore {
   /** Signal a puff-teleport to chatbox (FloatingOrb listens) */
   teleportToChat: () => void
   setSpeaking: (val: boolean) => void
+  setEchoToWhatsApp: (val: boolean) => void
   sendMessage: (content: string, userId: string) => Promise<void>
 }
 
@@ -58,6 +61,7 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
   welcomeInjected: false,
   speaking: false,
   teleportSeq: 0,
+  echoToWhatsApp: false,
   state: 'idle',
   messages: [],
 
@@ -130,6 +134,7 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
     })
   },
   setSpeaking: (val) => set({ speaking: val }),
+  setEchoToWhatsApp: (val) => set({ echoToWhatsApp: val }),
 
   sendMessage: async (content, userId) => {
     const userMsg: ChatMessage = {
@@ -151,11 +156,12 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
       .map((m) => ({ role: m.role, content: m.content }))
 
     try {
+      const echoChannels = get().echoToWhatsApp ? ['whatsapp'] : []
       const res = await apiFetch<{ reply?: string; response?: string; message?: string; tools_used?: string[] }>(
         `${API.KITZ_OS}`,
         {
           method: 'POST',
-          body: JSON.stringify({ message: content, channel: 'web', user_id: userId, chat_history: chatHistory }),
+          body: JSON.stringify({ message: content, channel: 'web', user_id: userId, chat_history: chatHistory, echo_channels: echoChannels }),
         },
       )
       const assistantMsg: ChatMessage = {

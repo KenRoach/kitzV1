@@ -20,6 +20,7 @@
   "dependencies": {
     "fastify": "^4.26.2",
     "@fastify/rate-limit": "^9.1.0",
+    "googleapis": "^144.0.0",
     "kitz-schemas": "file:../kitz-schemas"
   }
 }

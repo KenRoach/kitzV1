@@ -188,3 +188,162 @@ export interface WarRoomConfig {
   dissolvedAt?: string;
   postMortem?: string;
 }
+
+// ── LLM Hub Contracts ──
+
+export type LLMProvider = 'claude' | 'openai' | 'gemini' | 'perplexity' | 'deepseek';
+export type LLMTier = 'opus' | 'sonnet' | 'haiku' | 'mini';
+export type LLMTaskType = 'drafting' | 'summarizing' | 'search' | 'ideation' | 'coding' | 'classification' | 'extraction' | 'strategy';
+
+export interface LLMCompletionRequest {
+  prompt: string;
+  system?: string;
+  tier?: LLMTier;
+  taskType?: LLMTaskType;
+  provider?: LLMProvider;
+  tools?: ToolDef[];
+  messages?: ChatMessage[];
+  maxTokens?: number;
+  temperature?: number;
+  traceId: string;
+  orgId?: string;
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
+export interface ToolDef {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+}
+
+export interface LLMCompletionResponse {
+  text: string;
+  provider: LLMProvider;
+  model: string;
+  tier: LLMTier;
+  tokensUsed: number;
+  toolCalls?: Array<{ name: string; args: Record<string, unknown> }>;
+  traceId: string;
+  durationMs: number;
+}
+
+// ── Notification Queue Contracts ──
+
+export type NotificationChannel = 'whatsapp' | 'email' | 'sms' | 'voice' | 'push';
+export type NotificationStatus = 'queued' | 'processing' | 'delivered' | 'failed' | 'draft';
+
+export interface NotificationJob {
+  id: string;
+  channel: NotificationChannel;
+  to: string;
+  subject?: string;
+  body: string;
+  orgId: string;
+  userId: string;
+  traceId: string;
+  status: NotificationStatus;
+  draftOnly: boolean;
+  idempotencyKey?: string;
+  attempts: number;
+  maxAttempts: number;
+  createdAt: string;
+  processedAt?: string;
+  error?: string;
+}
+
+// ── Comms API Contracts ──
+
+export type CommsChannel = 'voice' | 'sms' | 'email';
+
+export interface CommsRequest {
+  to: string;
+  message?: string;
+  subject?: string;
+  body?: string;
+  channel: CommsChannel;
+  orgId: string;
+  traceId: string;
+  draftOnly: boolean;
+}
+
+export interface CommsResponse {
+  id: string;
+  channel: CommsChannel;
+  status: 'queued' | 'draft' | 'sent' | 'delivered' | 'failed';
+  draftOnly: boolean;
+  traceId: string;
+}
+
+// ── Logs API Contracts ──
+
+export type LogEntryType = 'agent_action' | 'crm' | 'order' | 'message' | 'system' | 'draft';
+export type LogEntryStatus = 'pending' | 'approved' | 'rejected';
+
+export interface LogEntry {
+  id: string;
+  type: LogEntryType;
+  actor: string;
+  action: string;
+  detail: string;
+  timestamp: string;
+  traceId: string;
+  status: LogEntryStatus;
+  meta?: Record<string, unknown>;
+}
+
+// ── Multi-Channel Output Contracts ──
+
+export type OutputChannel = 'whatsapp' | 'email' | 'sms' | 'voice' | 'web';
+
+export interface ChannelFormattedOutput {
+  channel: OutputChannel;
+  body: string;
+  html?: string;
+  subject?: string;
+  ttsText?: string;
+  truncated: boolean;
+}
+
+export interface MultiChannelDispatchRequest {
+  rawResponse: string;
+  originChannel: OutputChannel;
+  echoChannels: OutputChannel[];
+  recipientInfo: {
+    userId: string;
+    phone?: string;
+    email?: string;
+    whatsappUserId?: string;
+  };
+  traceId: string;
+  orgId?: string;
+  draftOnly: boolean;
+}
+
+export interface MultiChannelDispatchResult {
+  originDelivery: { channel: OutputChannel; status: string };
+  echoDeliveries: Array<{ channel: OutputChannel; status: string; error?: string }>;
+  traceId: string;
+}
+
+export interface UserChannelPreferences {
+  userId: string;
+  echoChannels: OutputChannel[];
+  phone?: string;
+  email?: string;
+  updatedAt: string;
+}
+
+// ── Google OAuth Login Contracts ──
+
+export type AuthProvider = 'email' | 'google';
+
+export interface GoogleUserProfile {
+  googleId: string;
+  email: string;
+  name: string;
+  picture?: string;
+}

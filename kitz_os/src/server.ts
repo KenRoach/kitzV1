@@ -44,12 +44,15 @@ import { getBatteryStatus, recordRecharge, getLedger } from './aiBattery.js';
 import { initMemory, storeMessage, buildContextWindow } from './memory/manager.js';
 import { verifyStripeSignature, verifyHmacSha256, verifyPayPalHeaders } from './webhookVerify.js';
 import { isGoogleOAuthConfigured, getAuthUrl, exchangeCode, hasStoredTokens, revokeTokens } from './auth/googleOAuth.js';
+import { dispatchMultiChannel } from './channels/dispatcher.js';
+import { getUserPreferences, setUserPreferences } from './channels/preferences.js';
+import type { OutputChannel } from 'kitz-schemas';
 import { createLogger } from './logger.js';
 
 const log = createLogger('server');
 
 export async function createServer(kernel: KitzKernel) {
-  const app = Fastify({ logger: false, bodyLimit: 20_000_000 });  // 20MB for media payloads
+  const app = Fastify({ logger: false, bodyLimit: 20_000_000, requestTimeout: 120_000 });  // 20MB for media, 2min for AI calls
   const PORT = Number(process.env.PORT) || 3012;
 
   // Rate limiting — 120 req/min global, 30 req/min on AI endpoints
@@ -116,13 +119,16 @@ export async function createServer(kernel: KitzKernel) {
   });
 
   // ── Main WhatsApp webhook ──
-  app.post<{ Body: { message: string; sender?: string; user_id?: string; trace_id?: string; reply_context?: unknown; location?: string; channel?: string; chat_history?: Array<{ role: 'user' | 'assistant'; content: string }> } }>(
+  app.post<{ Body: { message: string; sender?: string; user_id?: string; trace_id?: string; reply_context?: unknown; location?: string; channel?: string; echo_channels?: OutputChannel[]; chat_history?: Array<{ role: 'user' | 'assistant'; content: string }> } }>(
     '/api/kitz',
     { config: { rateLimit: { max: 30, timeWindow: '1 minute' } } },
     async (req, reply) => {
-      const { message, sender, user_id, trace_id, channel: reqChannel, chat_history } = req.body || {};
+      const { message, sender, user_id, trace_id, channel: reqChannel, echo_channels, chat_history } = req.body || {};
       if (!message) return reply.code(400).send({ error: 'message required' });
-      const channel = (reqChannel === 'web' ? 'web' : 'whatsapp') as 'web' | 'whatsapp';
+      const validChannels: OutputChannel[] = ['whatsapp', 'web', 'email', 'sms', 'voice'];
+      const channel: OutputChannel = validChannels.includes(reqChannel as OutputChannel)
+        ? (reqChannel as OutputChannel)
+        : 'whatsapp';
 
       const traceId = trace_id || crypto.randomUUID();
       const userId = user_id || 'default';
@@ -363,6 +369,28 @@ export async function createServer(kernel: KitzKernel) {
           try {
             storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'assistant', content: result.response, traceId });
           } catch { /* non-blocking */ }
+
+          // Fire-and-forget: dispatch to echo channels if any
+          const echoList = echo_channels?.filter(ch => validChannels.includes(ch)) || [];
+          if (echoList.length > 0) {
+            const prefs = getUserPreferences(userId);
+            dispatchMultiChannel({
+              rawResponse: result.response,
+              originChannel: channel,
+              echoChannels: echoList,
+              recipientInfo: {
+                userId,
+                phone: prefs.phone,
+                email: prefs.email,
+                whatsappUserId: userId,
+              },
+              traceId,
+              draftOnly: true,
+            }).catch(err => {
+              log.warn('Echo dispatch failed', { error: (err as Error).message, traceId });
+            });
+          }
+
           return { command: 'ai', response: result.response, tools_used: result.toolsUsed, credits_consumed: result.creditsConsumed };
         } catch (err) {
           log.error('AI routing error', { error: (err as Error).message });
@@ -1137,6 +1165,23 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
       }
 
       return { received: true, trace_id: traceId, event };
+    }
+  );
+
+  // ── Channel Preferences Endpoints ──────────────
+
+  app.get<{ Params: { userId: string } }>(
+    '/api/kitz/preferences/:userId',
+    async (req) => {
+      return getUserPreferences(req.params.userId);
+    }
+  );
+
+  app.put<{ Params: { userId: string }; Body: { echoChannels?: OutputChannel[]; phone?: string; email?: string } }>(
+    '/api/kitz/preferences/:userId',
+    async (req) => {
+      const { echoChannels, phone, email } = req.body || {};
+      return setUserPreferences(req.params.userId, { echoChannels, phone, email });
     }
   );
 

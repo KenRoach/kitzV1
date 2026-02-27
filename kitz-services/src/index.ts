@@ -4,6 +4,8 @@ import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { runCompliancePipeline } from './compliance-agent/run.js';
 import { readHistory, readLatest } from './compliance-agent/storage.js';
+import { generateContent, type ContentRequest } from './content/generator.js';
+import { listTemplates, getTemplateByName, upsertTemplate, renderTemplate, type ContentTemplate } from './content/templateStore.js';
 
 export const health = { status: 'ok' };
 
@@ -33,16 +35,58 @@ export const createApp = () => {
   app.get('/content/free-guides', async () => ({
     guides: [
       { slug: 'lead-follow-up-basics', title: 'Lead Follow-up Basics' },
-      { slug: 'manual-first-ops-playbook', title: 'Manual-first Ops Playbook' }
+      { slug: 'manual-first-ops-playbook', title: 'Manual-first Ops Playbook' },
+      { slug: 'whatsapp-sales-playbook', title: 'WhatsApp Sales Playbook' },
+      { slug: 'pricing-strategy-101', title: 'Pricing Strategy 101' },
     ]
   }));
 
-  app.get('/content/templates', async () => ({
-    templates: [
-      { kind: 'whatsapp', name: 'check-in-reminder' },
-      { kind: 'email', name: 'invoice-follow-up' }
-    ]
-  }));
+  // ── Content templates (CRUD) ──
+  app.get('/content/templates', async (req: any) => {
+    const orgId = String(req.headers['x-org-id'] || 'default');
+    const kind = (req.query as { kind?: string }).kind;
+    return { templates: await listTemplates(orgId, kind) };
+  });
+
+  app.get('/content/templates/:name', async (req: any, reply) => {
+    const orgId = String(req.headers['x-org-id'] || 'default');
+    const template = await getTemplateByName(orgId, req.params.name);
+    if (!template) return reply.code(404).send({ error: 'Template not found' });
+    return template;
+  });
+
+  app.post('/content/templates', async (req: any) => {
+    const orgId = String(req.headers['x-org-id'] || 'default');
+    const body = req.body as { kind: string; name: string; content: string; language?: string };
+    const now = new Date().toISOString();
+    const template: ContentTemplate = {
+      id: `tpl_${Date.now()}_${randomUUID().slice(0, 8)}`,
+      orgId,
+      kind: body.kind as ContentTemplate['kind'],
+      name: body.name,
+      content: body.content,
+      language: body.language || 'es',
+      createdAt: now,
+      updatedAt: now,
+    };
+    await upsertTemplate(template);
+    return { ok: true, template };
+  });
+
+  app.post('/content/templates/:name/render', async (req: any, reply) => {
+    const orgId = String(req.headers['x-org-id'] || 'default');
+    const template = await getTemplateByName(orgId, req.params.name);
+    if (!template) return reply.code(404).send({ error: 'Template not found' });
+    const vars = (req.body as { vars?: Record<string, string> })?.vars || {};
+    return { rendered: renderTemplate(template.content, vars) };
+  });
+
+  // ── Content generation (LLM-powered) ──
+  app.post('/content/generate', async (req: any) => {
+    const body = req.body as ContentRequest;
+    const result = await generateContent(body);
+    return result;
+  });
 
   app.get('/compliance', async () => ({ page: '/compliance/panama', country: 'Panama' }));
 

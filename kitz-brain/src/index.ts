@@ -30,25 +30,25 @@ const enforcePolicy = async (action: string, traceId: string): Promise<void> => 
 
 async function runDaily(): Promise<void> {
   const traceId = randomUUID();
-  logRun('daily.start', traceId, { agent: salesAgent.name, summary: salesAgent.run() });
+  logRun('daily.start', traceId, { agent: salesAgent.name });
 
-  await toolRegistry.invoke('crm.getLeadsSummary', { window: '24h' }, traceId);
-  await toolRegistry.invoke('crm.createTask', { title: 'Follow up warm leads', dueDate: 'today' }, traceId);
+  const salesReport = await salesAgent.run(traceId);
+  logRun('daily.sales', traceId, salesReport);
+
   await enforcePolicy('messaging.send', traceId);
-
-  const response = await llmHubClient.complete('summarizing', 'Create a daily summary for leads and orders', traceId);
-  logRun('daily.complete', traceId, response);
+  logRun('daily.complete', traceId, { summary: salesReport.summary });
 }
 
 async function runWeekly(): Promise<void> {
   const traceId = randomUUID();
-  logRun('weekly.start', traceId, {
-    ops: opsAgent.run(),
-    cfo: cfoAgent.run(),
-    growthExecutionPolicy
-  });
+  logRun('weekly.start', traceId, { growthExecutionPolicy });
 
-  await toolRegistry.invoke('orders.getOpenOrders', { includeAging: true }, traceId);
+  // Run ops and cfo agents
+  const opsReport = await opsAgent.run(traceId);
+  logRun('weekly.ops', traceId, opsReport);
+
+  const cfoReport = await cfoAgent.run(traceId);
+  logRun('weekly.cfo', traceId, cfoReport);
 
   const roiPlan = buildRoiPlan('weekly-campaign-expansion');
   logRun('weekly.free-validation', traceId, roiPlan.freeValidationSteps);
@@ -72,8 +72,7 @@ async function runWeekly(): Promise<void> {
     logRun('weekly.funding-blocked', traceId, 'Funding request skipped: validation or ROI threshold not met.');
   }
 
-  const response = await llmHubClient.complete('drafting', 'Draft weekly revenue and operations briefing', traceId);
-  logRun('weekly.complete', traceId, response);
+  logRun('weekly.complete', traceId, { ops: opsReport.summary, cfo: cfoReport.summary });
 }
 
 /** Trigger AOS launch review via kitz_os API */

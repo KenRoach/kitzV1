@@ -3,6 +3,7 @@ import { Check, RefreshCw, Loader2 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useSSE } from '@/hooks/useSSE'
 import { useAuthStore } from '@/stores/authStore'
+import { API } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 
 type ScanState = 'waiting' | 'scanning' | 'connected' | 'error'
@@ -32,7 +33,7 @@ export function QRScanner({ onConnected }: QRScannerProps) {
     if (cleanedRef.current) return
     cleanedRef.current = true
     const userId = user?.id ?? 'default'
-    fetch(`/api/whatsapp/whatsapp/sessions/${userId}`, { method: 'DELETE' }).catch(() => {})
+    fetch(`${API.WHATSAPP}/whatsapp/sessions/${userId}`, { method: 'DELETE' }).catch(() => {})
   }, [user?.id])
 
   const resetTimer = useCallback(() => {
@@ -96,7 +97,7 @@ export function QRScanner({ onConnected }: QRScannerProps) {
     [resetTimer, onConnected],
   )
 
-  const sseUrl = `/api/whatsapp/whatsapp/connect?userId=${user?.id ?? 'default'}`
+  const sseUrl = `${API.WHATSAPP}/whatsapp/connect?userId=${user?.id ?? 'default'}`
 
   const { close } = useSSE({
     url: sseUrl,
