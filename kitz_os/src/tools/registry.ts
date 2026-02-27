@@ -167,6 +167,30 @@ export class OsToolRegistry {
       import('./teamCultureBuilderTools.js'),
       import('./compensationAdvisorTools.js'),
       import('./psychologicalSafetyAdvisorTools.js'),
+      // Week 9: E-Commerce Integrations skills
+      import('./shopifyOptimizerTools.js'),
+      import('./mercadoLibreAdvisorTools.js'),
+      import('./wooCommerceAdvisorTools.js'),
+      import('./whatsappBusinessAdvisorTools.js'),
+      import('./pixIntegrationAdvisorTools.js'),
+      // Week 10: Advanced Content skills
+      import('./blogPostAdvisorTools.js'),
+      import('./personalBrandBuilderTools.js'),
+      import('./podcastAdvisorTools.js'),
+      import('./prWriterTools.js'),
+      import('./productLaunchAdvisorTools.js'),
+      // Week 11: Deep Analytics skills
+      import('./dripCampaignAdvisorTools.js'),
+      import('./documentArchiveAdvisorTools.js'),
+      import('./mailMergeAdvisorTools.js'),
+      import('./schedulingAdvisorTools.js'),
+      import('./invoicingAdvisorTools.js'),
+      // Week 12: LATAM Expansion skills
+      import('./chileBusinessAdvisorTools.js'),
+      import('./peruBusinessAdvisorTools.js'),
+      import('./argentinaBusinessAdvisorTools.js'),
+      import('./costaRicaBusinessAdvisorTools.js'),
+      import('./crossBorderTradeAdvisorTools.js'),
     ]);
 
     const getterNames = [
@@ -277,6 +301,30 @@ export class OsToolRegistry {
       'getAllTeamCultureBuilderTools',
       'getAllCompensationAdvisorTools',
       'getAllPsychologicalSafetyAdvisorTools',
+      // Week 9
+      'getAllShopifyOptimizerTools',
+      'getAllMercadoLibreAdvisorTools',
+      'getAllWooCommerceAdvisorTools',
+      'getAllWhatsappBusinessAdvisorTools',
+      'getAllPixIntegrationAdvisorTools',
+      // Week 10
+      'getAllBlogPostAdvisorTools',
+      'getAllPersonalBrandBuilderTools',
+      'getAllPodcastAdvisorTools',
+      'getAllPrWriterTools',
+      'getAllProductLaunchAdvisorTools',
+      // Week 11
+      'getAllDripCampaignAdvisorTools',
+      'getAllDocumentArchiveAdvisorTools',
+      'getAllMailMergeAdvisorTools',
+      'getAllSchedulingAdvisorTools',
+      'getAllInvoicingAdvisorTools',
+      // Week 12
+      'getAllChileBusinessAdvisorTools',
+      'getAllPeruBusinessAdvisorTools',
+      'getAllArgentinaBusinessAdvisorTools',
+      'getAllCostaRicaBusinessAdvisorTools',
+      'getAllCrossBorderTradeAdvisorTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {

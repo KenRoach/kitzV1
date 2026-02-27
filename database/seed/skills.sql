@@ -81,7 +81,31 @@ INSERT INTO skills (slug, name, description, category, tier, credits_per_use) VA
   ('employee-onboarding-builder', 'Employee Onboarding Builder', 'Onboarding plans, first-day checklists, training schedules, 30/60/90',           'operations',   'haiku',  0.5),
   ('team-culture-builder',       'Team Culture Builder',       'Team values, rituals, communication norms, recognition programs',                    'operations',   'haiku',  0.5),
   ('compensation-advisor',       'Compensation Advisor',       'Salary bands, benefits packages, bonus structures, equity guidance',                 'operations',   'haiku',  0.5),
-  ('psychological-safety-advisor', 'Psychological Safety Advisor', 'Edmondson assessment, trust-building, feedback frameworks, inclusion',          'operations',   'haiku',  0.5)
+  ('psychological-safety-advisor', 'Psychological Safety Advisor', 'Edmondson assessment, trust-building, feedback frameworks, inclusion',          'operations',   'haiku',  0.5),
+  -- Phase 9: Week 9 skills
+  ('shopify-optimizer',           'Shopify Optimizer',            'Shopify store setup, theme, apps, conversion optimization, SEO',                 'intelligence', 'haiku',  0.5),
+  ('mercadolibre-advisor',        'Mercado Libre Advisor',        'Listings, pricing, Product Ads, reputation building for LatAm sellers',          'intelligence', 'haiku',  0.5),
+  ('woocommerce-advisor',         'WooCommerce Advisor',          'Store optimization, plugins, performance, local payment gateways',               'intelligence', 'haiku',  0.5),
+  ('whatsapp-business-advisor',   'WhatsApp Business Advisor',    'Catalog, automation, broadcasts, WhatsApp Business API migration',               'intelligence', 'haiku',  0.5),
+  ('pix-integration-advisor',     'PIX Integration Advisor',      'Brazil PIX instant payments: QR codes, webhooks, BCB compliance',                'compliance',   'haiku',  0.5),
+  -- Phase 10: Week 10 skills
+  ('blog-post-advisor',           'Blog Post Advisor',            'SEO blog strategy, content structure, promotion, repurposing',                   'content',      'haiku',  0.5),
+  ('personal-brand-builder',      'Personal Brand Builder',       'Founder branding, positioning, thought leadership, content strategy',            'content',      'haiku',  0.5),
+  ('podcast-advisor',             'Podcast Advisor',              'Podcast launch, production workflow, growth, monetization',                       'content',      'haiku',  0.5),
+  ('pr-writer',                   'PR Writer',                    'Press releases, media outreach, crisis communications',                          'content',      'haiku',  0.5),
+  ('product-launch-advisor',      'Product Launch Advisor',       'Launch strategy, pre-launch buzz, go-to-market, post-launch iteration',          'intelligence', 'sonnet', 1.0),
+  -- Phase 11: Week 11 skills
+  ('drip-campaign-advisor',       'Drip Campaign Advisor',        'Email/WhatsApp automated sequences, triggers, segmentation, optimization',       'content',      'haiku',  0.5),
+  ('document-archive-advisor',    'Document Archive Advisor',     'Document management, organization, digitization, compliance',                     'operations',   'haiku',  0.5),
+  ('mail-merge-advisor',          'Mail Merge Advisor',           'Personalized bulk communications, templates, channels, compliance',               'content',      'haiku',  0.5),
+  ('scheduling-advisor',          'Scheduling Advisor',           'Appointment booking, calendar management, no-show reduction',                     'operations',   'haiku',  0.5),
+  ('invoicing-advisor',           'Invoicing Advisor',            'Invoice management, payment terms, collections, electronic invoicing',            'operations',   'haiku',  0.5),
+  -- Phase 12: Week 12 skills
+  ('chile-business-advisor',      'Chile Business Advisor',       'SII, IVA 19%, Renta, AFP, SpA, labor code, electronic invoicing',                'compliance',   'haiku',  0.5),
+  ('peru-business-advisor',       'Peru Business Advisor',        'SUNAT, RUC, IGV 18%, MYPE Tributario, EsSalud, CTS, gratificaciones',            'compliance',   'haiku',  0.5),
+  ('argentina-business-advisor',  'Argentina Business Advisor',   'AFIP, CUIT, Monotributo, IVA 21%, Ganancias, SAS, labor LCT',                   'compliance',   'haiku',  0.5),
+  ('costa-rica-business-advisor', 'Costa Rica Business Advisor',  'Hacienda, IVA 13%, CCSS, patentes, labor code, electronic invoicing',            'compliance',   'haiku',  0.5),
+  ('cross-border-trade-advisor',  'Cross-Border Trade Advisor',   'Import/export regulations, customs, trade agreements, LatAm logistics',          'compliance',   'haiku',  0.5)
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,

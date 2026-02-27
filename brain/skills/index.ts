@@ -193,4 +193,52 @@ export type { CompensationPlan, CompensationOptions } from './compensationAdviso
 export { advisePsychologicalSafety } from './psychologicalSafetyAdvisor.js';
 export type { PsychSafetyPlan, PsychSafetyOptions } from './psychologicalSafetyAdvisor.js';
 
+// Week 9
+export { optimizeShopify } from './shopifyOptimizer.js';
+export type { ShopifyOptimization, ShopifyOptions } from './shopifyOptimizer.js';
+export { adviseMercadoLibre } from './mercadoLibreAdvisor.js';
+export type { MercadoLibreAdvice, MercadoLibreOptions } from './mercadoLibreAdvisor.js';
+export { adviseWooCommerce } from './wooCommerceAdvisor.js';
+export type { WooCommerceAdvice, WooCommerceOptions } from './wooCommerceAdvisor.js';
+export { adviseWhatsAppBusiness } from './whatsappBusinessAdvisor.js';
+export type { WhatsAppBusinessAdvice, WhatsAppBusinessOptions } from './whatsappBusinessAdvisor.js';
+export { advisePixIntegration } from './pixIntegrationAdvisor.js';
+export type { PixIntegrationAdvice, PixIntegrationOptions } from './pixIntegrationAdvisor.js';
+
+// Week 10
+export { adviseBlogPost } from './blogPostAdvisor.js';
+export type { BlogPostAdvice, BlogPostOptions } from './blogPostAdvisor.js';
+export { buildPersonalBrand } from './personalBrandBuilder.js';
+export type { PersonalBrandAdvice, PersonalBrandOptions } from './personalBrandBuilder.js';
+export { advisePodcast } from './podcastAdvisor.js';
+export type { PodcastAdvice, PodcastOptions } from './podcastAdvisor.js';
+export { writePr } from './prWriter.js';
+export type { PrWriterAdvice, PrWriterOptions } from './prWriter.js';
+export { adviseProductLaunch } from './productLaunchAdvisor.js';
+export type { ProductLaunchAdvice, ProductLaunchOptions } from './productLaunchAdvisor.js';
+
+// Week 11
+export { adviseDripCampaign } from './dripCampaignAdvisor.js';
+export type { DripCampaignAdvice, DripCampaignOptions } from './dripCampaignAdvisor.js';
+export { adviseDocumentArchive } from './documentArchiveAdvisor.js';
+export type { DocumentArchiveAdvice, DocumentArchiveOptions } from './documentArchiveAdvisor.js';
+export { adviseMailMerge } from './mailMergeAdvisor.js';
+export type { MailMergeAdvice, MailMergeOptions } from './mailMergeAdvisor.js';
+export { adviseScheduling } from './schedulingAdvisor.js';
+export type { SchedulingAdvice, SchedulingOptions } from './schedulingAdvisor.js';
+export { adviseInvoicing } from './invoicingAdvisor.js';
+export type { InvoicingAdvice, InvoicingOptions } from './invoicingAdvisor.js';
+
+// Week 12
+export { adviseChileBusiness } from './chileBusinessAdvisor.js';
+export type { ChileBusinessAdvice, ChileBusinessOptions } from './chileBusinessAdvisor.js';
+export { advisePeruBusiness } from './peruBusinessAdvisor.js';
+export type { PeruBusinessAdvice, PeruBusinessOptions } from './peruBusinessAdvisor.js';
+export { adviseArgentinaBusiness } from './argentinaBusinessAdvisor.js';
+export type { ArgentinaBusinessAdvice, ArgentinaBusinessOptions } from './argentinaBusinessAdvisor.js';
+export { adviseCostaRicaBusiness } from './costaRicaBusinessAdvisor.js';
+export type { CostaRicaBusinessAdvice, CostaRicaBusinessOptions } from './costaRicaBusinessAdvisor.js';
+export { adviseCrossBorderTrade } from './crossBorderTradeAdvisor.js';
+export type { CrossBorderTradeAdvice, CrossBorderTradeOptions } from './crossBorderTradeAdvisor.js';
+
 export { PROMPTS } from '../prompts/templates.js';
