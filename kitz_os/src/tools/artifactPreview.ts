@@ -268,7 +268,7 @@ export function wrapInArtifact(innerHtml: string, options: {
   </main>
 
   <footer class="kitz-artifact-footer">
-    KITZ is an AI tool that may make mistakes. Please review carefully.<br>
+    This content was created by AI. Please review thoroughly before taking action.<br>
     <a href="${baseUrl}">Powered by KITZ</a> — Your business deserves infrastructure.
   </footer>
 

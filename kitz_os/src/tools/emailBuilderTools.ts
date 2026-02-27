@@ -112,7 +112,7 @@ const EMAIL_TEMPLATES: Record<string, { name: string; description: string; struc
 </div>
 </div>
 <div style="padding:20px 24px;text-align:center">
-<p style="color:#999;font-size:11px;line-height:1.5;margin:0 0 8px">KITZ is an AI tool that may make mistakes. Please review carefully.</p>
+<p style="color:#999;font-size:11px;line-height:1.5;margin:0 0 8px">This content was created by AI. Please review thoroughly before taking action.</p>
 <p style="color:#bbb;font-size:11px;margin:0 0 4px">{{businessName}} &middot; Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none">KITZ</a></p>
 <p style="color:#bbb;font-size:11px;margin:0"><a href="{{unsubscribeUrl}}" style="color:#999;text-decoration:underline">Unsubscribe</a> &middot; <a href="mailto:{{contactEmail}}" style="color:#999;text-decoration:underline">Contact</a></p>
 </div>
@@ -149,7 +149,7 @@ Preview available at kitz.services
 </div>
 </div>
 <div style="padding:20px 24px;text-align:center">
-<p style="color:#999;font-size:11px;line-height:1.5;margin:0 0 8px">KITZ is an AI tool that may make mistakes. Please review carefully.</p>
+<p style="color:#999;font-size:11px;line-height:1.5;margin:0 0 8px">This content was created by AI. Please review thoroughly before taking action.</p>
 <p style="color:#bbb;font-size:11px;margin:0 0 4px">{{businessName}} &middot; Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none">KITZ</a></p>
 <p style="color:#bbb;font-size:11px;margin:0"><a href="{{unsubscribeUrl}}" style="color:#999;text-decoration:underline">Unsubscribe</a></p>
 </div>
