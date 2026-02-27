@@ -23,6 +23,7 @@ import type { OsToolRegistry } from '../../tools/registry.js';
 import { recordLLMSpend } from '../../aiBattery.js';
 import { searchSOPs } from '../../sops/store.js';
 import { getConversationHistory } from '../../memory/manager.js';
+import type { OutputChannel } from 'kitz-schemas';
 
 // ── Tool-to-MCP Mapping ──
 // Maps KITZ OS tool names to workspace MCP tool names for direct execution
@@ -82,6 +83,8 @@ const DIRECT_EXECUTE_TOOLS = new Set([
   'voice_speak', 'voice_listVoices', 'voice_getConfig', 'voice_getWidget', 'voice_getSignedUrl',
   // WhatsApp voice + call tools
   'outbound_sendVoiceNote', 'outbound_makeCall',
+  // SMS + Voice call tools (Twilio via comms-api)
+  'outbound_sendSMS', 'outbound_sendVoiceCall',
   // Web scraping + search tools
   'web_scrape', 'web_search', 'web_summarize', 'web_extract',
   // SOP tools
@@ -107,6 +110,7 @@ const WRITE_TOOLS = new Set([
   // Outbound messages (highest risk — sends to real humans)
   'outbound_sendWhatsApp', 'outbound_sendEmail',
   'outbound_sendVoiceNote', 'outbound_makeCall',
+  'outbound_sendSMS', 'outbound_sendVoiceCall',
   // Email compose/send
   'email_compose', 'email_sendApprovalRequest',
   // Calendar writes
@@ -176,34 +180,63 @@ function formatDraftSummary(drafts: DraftAction[]): string {
 }
 
 // ── System Prompt ──
-function buildSystemPrompt(toolCount: number, channel: 'whatsapp' | 'web' = 'whatsapp', sopContext?: string): string {
+function buildSystemPrompt(toolCount: number, channel: OutputChannel = 'whatsapp', sopContext?: string): string {
   const sopSection = sopContext
     ? `\n\nRELEVANT SOPS (follow these procedures when applicable):\n${sopContext}`
     : '';
 
-  const isWeb = channel === 'web';
-
   // Channel-specific formatting instructions
-  const formatRules = isWeb
-    ? `RESPONSE FORMAT (Web Dashboard):
+  const formatRulesMap: Record<OutputChannel, string> = {
+    web: `RESPONSE FORMAT (Web Dashboard):
 - You can be slightly longer than WhatsApp — but still concise.
 - Default: 1-2 short sentences. Tight.
 - If more detail: structured sections with **bold** headers, bullet points.
 - Complex topics: use the 5-step structure below.
 - Max 4096 chars. No walls of text.
 - Use markdown: **bold**, bullet points (- or •), short paragraphs.
-- Emojis: yes, sparingly — for visual scanning, not decoration.`
-    : `RESPONSE FORMAT (WhatsApp):
+- Emojis: yes, sparingly — for visual scanning, not decoration.`,
+    whatsapp: `RESPONSE FORMAT (WhatsApp):
 - Default replies: 5-7 words. Keep it tight.
 - If more detail needed: 15-23 words max.
 - Complex topics: break into chunks of 30 words max.
 - If it truly requires more detail: say "I'll send the details by email" and use email tool.
 - Format for WhatsApp: short paragraphs, *bold* headers, bullet points with •
-- Use emojis sparingly for visual scanning (📋, 📦, 💰, 📊, 🧠, ✅, ⚠️)`;
+- Use emojis sparingly for visual scanning (📋, 📦, 💰, 📊, 🧠, ✅, ⚠️)`,
+    email: `RESPONSE FORMAT (Email):
+- Use clear subject-appropriate structure with sections.
+- First line becomes the email subject — keep it under 60 chars.
+- Use **bold** headers, bullet points, numbered lists.
+- Can be longer and more detailed than WhatsApp.
+- Include relevant data, tables, summaries.
+- Professional tone — slightly more formal than WhatsApp.
+- Max 4096 chars.`,
+    sms: `RESPONSE FORMAT (SMS):
+- Ultra-concise: 155 characters max (single SMS segment).
+- No formatting, no emojis, no markdown.
+- First sentence only — get to the point immediately.
+- If more detail needed, say "Check WhatsApp for details."
+- Plain text only.`,
+    voice: `RESPONSE FORMAT (Voice / TTS):
+- Write as spoken language — natural, conversational.
+- No markdown, no bullets, no special characters.
+- Use commas and periods for natural pauses.
+- Spell out numbers and abbreviations (e.g., "five hundred dollars" not "$500").
+- Keep under 5000 characters (ElevenLabs limit).
+- Avoid lists — convert to flowing sentences.`,
+  };
+
+  const formatRules = formatRulesMap[channel] || formatRulesMap.whatsapp;
+  const channelLabel: Record<OutputChannel, string> = {
+    web: 'web dashboard',
+    whatsapp: 'WhatsApp',
+    email: 'email',
+    sms: 'SMS',
+    voice: 'voice call',
+  };
 
   return `You are KITZ — an AI Business Operating System. You are an execution engine, not a chatbot.
 You exist to make a small business run like a Fortune 500 company at a fraction of the cost.
-You have ${toolCount} tools available. You are responding via ${isWeb ? 'web dashboard' : 'WhatsApp'}.
+You have ${toolCount} tools available. You are responding via ${channelLabel[channel] || 'WhatsApp'}.
 
 IDENTITY & TONE:
 - Gen Z clarity + disciplined founder energy. Direct, concise, no corporate fluff.
@@ -241,6 +274,8 @@ CAPABILITIES:
 - **LOVABLE** — Manage Lovable.dev projects: add, list, link, remove projects. Push artifacts. Send prompts to Lovable AI chat.
 - **PAYMENTS** — View payment transactions by provider (Stripe, PayPal, Yappy, BAC), status, or date range. Revenue summaries. Receive-only — never send money outbound.
 - **VOICE** — KITZ has a female voice (ElevenLabs). Text to speech, voice notes via WhatsApp, WhatsApp calls, voice widget.
+- **SMS** — Send SMS text messages via Twilio. Use outbound_sendSMS. Max 160 chars recommended for single segment.
+- **VOICE CALL** — Initiate voice calls via Twilio with TTS message. Use outbound_sendVoiceCall.
 - **WEB** — Browse the internet: web_search, web_scrape, web_summarize, web_extract. Research, competitive analysis, price checking.
 - **BROADCAST** — Send bulk WhatsApp messages to CRM contacts. Preview filters, then send. Max 200 recipients.
 - **AUTO-REPLY** — Configure WhatsApp auto-reply: view, update, enable/disable, cooldown.
@@ -298,7 +333,7 @@ export async function routeWithAI(
   traceId: string,
   mediaContext?: { media_base64: string; mime_type: string },
   userId?: string,
-  channel: 'whatsapp' | 'web' = 'whatsapp',
+  channel: OutputChannel = 'whatsapp',
   chatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
 ): Promise<{ response: string; toolsUsed: string[]; creditsConsumed: number }> {
 

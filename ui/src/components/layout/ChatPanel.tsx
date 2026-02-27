@@ -9,10 +9,9 @@ import { MessageBubble } from '@/components/chat/MessageBubble'
 import { TypingIndicator } from '@/components/chat/TypingIndicator'
 
 export function ChatPanel() {
-  const { messages, state, sendMessage, chatFocused, blurChat, chatGlowing, chatShaking } = useOrbStore()
+  const { messages, state, sendMessage, chatFocused, blurChat, chatGlowing, chatShaking, echoToWhatsApp, setEchoToWhatsApp } = useOrbStore()
   const user = useAuthStore((s) => s.user)
   const [input, setInput] = useState('')
-  const [echoToWhatsApp, setEchoToWhatsApp] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const agentSteps = useAgentThinkingStore((s) => s.steps)

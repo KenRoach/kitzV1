@@ -1,11 +1,13 @@
 /**
- * Outbound Tools — Send messages, voice notes, and calls via WhatsApp and email.
+ * Outbound Tools — Send messages, voice notes, and calls via WhatsApp, email, SMS, and voice.
  *
- * 4 tools:
- *   - outbound_sendWhatsApp    (high)   — Send text message
+ * 6 tools:
+ *   - outbound_sendWhatsApp    (high)   — Send text message via WhatsApp
  *   - outbound_sendEmail       (high)   — Send email (admin_assistant only)
  *   - outbound_sendVoiceNote   (high)   — Generate TTS audio + send as WhatsApp voice note
  *   - outbound_makeCall        (high)   — Initiate WhatsApp voice call with KITZ's voice
+ *   - outbound_sendSMS         (high)   — Send SMS text message via Twilio
+ *   - outbound_sendVoiceCall   (high)   — Initiate Twilio voice call with TTS message
  *
  * All outbound tools follow draft-first policy in alpha mode.
  * Voice tools use ElevenLabs TTS for KITZ's female voice.
@@ -14,6 +16,7 @@ import { textToSpeech, isElevenLabsConfigured } from '../llm/elevenLabsClient.js
 import type { ToolSchema } from './registry.js';
 
 const WA_CONNECTOR_URL = process.env.WA_CONNECTOR_URL || 'http://localhost:3006';
+const COMMS_API_URL = process.env.COMMS_API_URL || 'http://localhost:3013';
 const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
 const serviceHeaders: Record<string, string> = {
   'Content-Type': 'application/json',
@@ -302,6 +305,100 @@ export function getAllOutboundTools(): ToolSchema[] {
           },
           note: 'Call queued. WhatsApp connector will execute when available.',
         };
+      },
+    },
+
+    // ── SMS (via Twilio / comms-api) ──
+    {
+      name: 'outbound_sendSMS',
+      description: 'Send an SMS text message to a phone number via Twilio. Max 160 chars recommended for single segment.',
+      parameters: {
+        type: 'object',
+        properties: {
+          phone: { type: 'string', description: 'Phone number with country code (e.g., +50761234567)' },
+          message: { type: 'string', description: 'SMS text message (160 chars recommended)' },
+        },
+        required: ['phone', 'message'],
+      },
+      riskLevel: 'high',
+      execute: async (args, traceId) => {
+        const phone = String(args.phone || '').replace(/[\s\-()]/g, '');
+        const message = String(args.message || '').trim();
+
+        if (!phone || !message) {
+          return { error: 'Both phone and message are required.' };
+        }
+
+        try {
+          const res = await fetch(`${COMMS_API_URL}/text`, {
+            method: 'POST',
+            headers: serviceHeaders,
+            body: JSON.stringify({ to: phone, message }),
+            signal: AbortSignal.timeout(10_000),
+          });
+
+          if (res.ok) {
+            const data = await res.json() as Record<string, unknown>;
+            return {
+              status: 'draft',
+              id: data.id,
+              message: `📱 SMS drafted to ${phone}: "${message.slice(0, 100)}"`,
+              note: 'SMS is draft-first. Approve via comms-api to send.',
+            };
+          }
+
+          const errBody = await res.text().catch(() => '');
+          return { status: 'failed', error: `SMS send failed (${res.status}): ${errBody.slice(0, 200)}` };
+        } catch (err) {
+          return { status: 'failed', error: `Comms API unreachable: ${(err as Error).message}` };
+        }
+      },
+    },
+
+    // ── Twilio Voice Call ──
+    {
+      name: 'outbound_sendVoiceCall',
+      description: 'Initiate a voice call via Twilio with a text-to-speech message. The recipient hears the message spoken aloud.',
+      parameters: {
+        type: 'object',
+        properties: {
+          phone: { type: 'string', description: 'Phone number with country code' },
+          message: { type: 'string', description: 'Message to speak on the call' },
+        },
+        required: ['phone', 'message'],
+      },
+      riskLevel: 'high',
+      execute: async (args, traceId) => {
+        const phone = String(args.phone || '').replace(/[\s\-()]/g, '');
+        const message = String(args.message || '').trim();
+
+        if (!phone || !message) {
+          return { error: 'Both phone and message are required.' };
+        }
+
+        try {
+          const res = await fetch(`${COMMS_API_URL}/talk`, {
+            method: 'POST',
+            headers: serviceHeaders,
+            body: JSON.stringify({ to: phone, message }),
+            signal: AbortSignal.timeout(10_000),
+          });
+
+          if (res.ok) {
+            const data = await res.json() as Record<string, unknown>;
+            return {
+              status: 'draft',
+              id: data.id,
+              message: `📞 Voice call drafted to ${phone}: "${message.slice(0, 100)}"`,
+              note: 'Call is draft-first. Approve via comms-api to initiate.',
+            };
+          }
+
+          const errBody = await res.text().catch(() => '');
+          return { status: 'failed', error: `Voice call failed (${res.status}): ${errBody.slice(0, 200)}` };
+        } catch (err) {
+          return { status: 'failed', error: `Comms API unreachable: ${(err as Error).message}` };
+        }
       },
     },
   ];

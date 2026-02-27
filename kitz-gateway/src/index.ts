@@ -10,6 +10,7 @@ import type {
 } from 'kitz-schemas';
 import { verifyJwt, signJwt } from './jwt.js';
 import { FileBackedRateLimitStore } from './rateLimitStore.js';
+import { isGoogleLoginConfigured, getLoginAuthUrl, exchangeLoginCode } from './googleAuth.js';
 
 export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
@@ -20,7 +21,7 @@ const JWT_SECRET = process.env.JWT_SECRET || process.env.DEV_TOKEN_SECRET || '';
 const TOKEN_EXPIRY_SECONDS = 86400 * 7; // 7 days
 
 /** In-memory user store (MVP — replace with Supabase in production) */
-interface UserRecord { id: string; email: string; name: string; passwordHash: string; orgId: string; createdAt: string; }
+interface UserRecord { id: string; email: string; name: string; passwordHash: string; orgId: string; createdAt: string; authProvider?: 'email' | 'google'; googleId?: string; picture?: string; }
 const users = new Map<string, UserRecord>(); // keyed by email
 
 function hashPassword(password: string): string {
@@ -32,7 +33,7 @@ const getTraceId = (req: FastifyRequest): string => String(req.headers['x-trace-
 const getOrgId = (req: FastifyRequest): string => String(req.headers['x-org-id']);
 
 /** Routes that skip auth */
-const PUBLIC_PATHS = ['/auth/signup', '/auth/token', '/health'];
+const PUBLIC_PATHS = ['/auth/signup', '/auth/token', '/auth/google/url', '/auth/google/callback', '/health'];
 
 const requireAuth = async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
   if (PUBLIC_PATHS.some(p => req.url.startsWith(p))) return;
@@ -240,6 +241,66 @@ app.post('/auth/token', async (req, reply) => {
 
   audit('auth.token', { userId: user.id, email: user.email }, req);
   return { token, userId: user.id, orgId: user.orgId, name: user.name, expiresIn: TOKEN_EXPIRY_SECONDS };
+});
+
+/* ── Google OAuth Login (public — no token required) ── */
+
+app.get('/auth/google/url', async (_req, reply) => {
+  if (!isGoogleLoginConfigured()) {
+    return reply.code(503).send(buildError('GOOGLE_NOT_CONFIGURED', 'Google OAuth not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.', getTraceId(_req)));
+  }
+  return { url: getLoginAuthUrl() };
+});
+
+app.post('/auth/google/callback', async (req, reply) => {
+  const { code } = (req.body || {}) as { code?: string };
+  const traceId = getTraceId(req);
+
+  if (!code) {
+    return reply.code(400).send(buildError('VALIDATION', 'Authorization code is required', traceId));
+  }
+
+  try {
+    const profile = await exchangeLoginCode(code);
+
+    // Find or create user by email
+    let user = users.get(profile.email.toLowerCase());
+    if (!user) {
+      const userId = randomUUID();
+      const orgId = randomUUID();
+      user = {
+        id: userId,
+        email: profile.email.toLowerCase(),
+        name: profile.name,
+        passwordHash: '',
+        orgId,
+        createdAt: new Date().toISOString(),
+        authProvider: 'google',
+        googleId: profile.googleId,
+        picture: profile.picture,
+      };
+      users.set(user.email, user);
+    } else {
+      // Update existing user with Google info
+      user.googleId = profile.googleId;
+      user.picture = profile.picture;
+      if (!user.authProvider) user.authProvider = 'google';
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    const token = signJwt({
+      sub: user.id,
+      org_id: user.orgId,
+      scopes: ['battery:read', 'payments:write', 'tools:invoke', 'events:write', 'notifications:write', 'messages:write'],
+      iat: now,
+      exp: now + TOKEN_EXPIRY_SECONDS,
+    }, JWT_SECRET);
+
+    audit('auth.google', { userId: user.id, email: user.email, googleId: profile.googleId }, req);
+    return { token, userId: user.id, orgId: user.orgId, name: user.name, picture: user.picture, expiresIn: TOKEN_EXPIRY_SECONDS };
+  } catch (err) {
+    return reply.code(401).send(buildError('GOOGLE_AUTH_FAILED', (err as Error).message, traceId));
+  }
 });
 
 /* ── Admin Endpoints (protected by DEV_TOKEN_SECRET) ── */

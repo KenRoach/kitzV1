@@ -6,6 +6,9 @@ interface User {
   id: string
   email: string
   orgId?: string
+  name?: string
+  picture?: string
+  authProvider?: 'email' | 'google'
 }
 
 interface AuthState {
@@ -14,6 +17,8 @@ interface AuthState {
   isLoading: boolean
   error: string | null
   login: (email: string, password: string) => Promise<void>
+  loginWithGoogle: (code: string) => Promise<void>
+  getGoogleAuthUrl: () => Promise<string>
   logout: () => void
   hydrate: () => void
 }
@@ -34,7 +39,7 @@ export const useAuthStore = create<AuthState>((set) => ({
           body: JSON.stringify({ email, password }),
         },
       )
-      const user: User = { id: data.userId, email, orgId: data.orgId }
+      const user: User = { id: data.userId, email, orgId: data.orgId, authProvider: 'email' }
       localStorage.setItem(AUTH_TOKEN_KEY, data.token)
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user))
       set({ user, token: data.token, isLoading: false })
@@ -45,6 +50,43 @@ export const useAuthStore = create<AuthState>((set) => ({
       })
       throw err
     }
+  },
+
+  loginWithGoogle: async (code) => {
+    set({ isLoading: true, error: null })
+    try {
+      const data = await apiFetch<{ token: string; userId: string; orgId?: string; name?: string; picture?: string }>(
+        `${API.GATEWAY}/auth/google/callback`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ code }),
+        },
+      )
+      const user: User = {
+        id: data.userId,
+        email: '',
+        orgId: data.orgId,
+        name: data.name,
+        picture: data.picture,
+        authProvider: 'google',
+      }
+      localStorage.setItem(AUTH_TOKEN_KEY, data.token)
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user))
+      set({ user, token: data.token, isLoading: false })
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : 'Google login failed',
+        isLoading: false,
+      })
+      throw err
+    }
+  },
+
+  getGoogleAuthUrl: async () => {
+    const data = await apiFetch<{ url: string }>(
+      `${API.GATEWAY}/auth/google/url`,
+    )
+    return data.url
   },
 
   logout: () => {

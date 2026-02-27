@@ -233,7 +233,7 @@ export interface LLMCompletionResponse {
 
 // ── Notification Queue Contracts ──
 
-export type NotificationChannel = 'whatsapp' | 'email' | 'sms' | 'push';
+export type NotificationChannel = 'whatsapp' | 'email' | 'sms' | 'voice' | 'push';
 export type NotificationStatus = 'queued' | 'processing' | 'delivered' | 'failed' | 'draft';
 
 export interface NotificationJob {
@@ -293,4 +293,57 @@ export interface LogEntry {
   traceId: string;
   status: LogEntryStatus;
   meta?: Record<string, unknown>;
+}
+
+// ── Multi-Channel Output Contracts ──
+
+export type OutputChannel = 'whatsapp' | 'email' | 'sms' | 'voice' | 'web';
+
+export interface ChannelFormattedOutput {
+  channel: OutputChannel;
+  body: string;
+  html?: string;
+  subject?: string;
+  ttsText?: string;
+  truncated: boolean;
+}
+
+export interface MultiChannelDispatchRequest {
+  rawResponse: string;
+  originChannel: OutputChannel;
+  echoChannels: OutputChannel[];
+  recipientInfo: {
+    userId: string;
+    phone?: string;
+    email?: string;
+    whatsappUserId?: string;
+  };
+  traceId: string;
+  orgId?: string;
+  draftOnly: boolean;
+}
+
+export interface MultiChannelDispatchResult {
+  originDelivery: { channel: OutputChannel; status: string };
+  echoDeliveries: Array<{ channel: OutputChannel; status: string; error?: string }>;
+  traceId: string;
+}
+
+export interface UserChannelPreferences {
+  userId: string;
+  echoChannels: OutputChannel[];
+  phone?: string;
+  email?: string;
+  updatedAt: string;
+}
+
+// ── Google OAuth Login Contracts ──
+
+export type AuthProvider = 'email' | 'google';
+
+export interface GoogleUserProfile {
+  googleId: string;
+  email: string;
+  name: string;
+  picture?: string;
 }

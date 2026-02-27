@@ -8,12 +8,21 @@ export const health = { status: 'ok' };
 // ── Connector URLs (from docker-compose env) ──
 const WA_CONNECTOR_URL = process.env.WA_CONNECTOR_URL || 'http://kitz-whatsapp-connector:3006';
 const EMAIL_CONNECTOR_URL = process.env.EMAIL_CONNECTOR_URL || 'http://kitz-email-connector:3007';
+const COMMS_API_URL = process.env.COMMS_API_URL || 'http://comms-api:3013';
+
+/** Map channel to its connector endpoint */
+function getConnectorUrl(channel: NotificationJob['channel']): string {
+  switch (channel) {
+    case 'whatsapp': return `${WA_CONNECTOR_URL}/send`;
+    case 'email': return `${EMAIL_CONNECTOR_URL}/send`;
+    case 'sms': return `${COMMS_API_URL}/text`;
+    case 'voice': return `${COMMS_API_URL}/talk`;
+  }
+}
 
 /** Attempt to deliver a notification via the appropriate connector */
 async function deliverNotification(job: NotificationJob): Promise<boolean> {
-  const url = job.channel === 'whatsapp'
-    ? `${WA_CONNECTOR_URL}/send`
-    : `${EMAIL_CONNECTOR_URL}/send`;
+  const url = getConnectorUrl(job.channel);
 
   try {
     const res = await fetch(url, {
@@ -36,7 +45,7 @@ async function deliverNotification(job: NotificationJob): Promise<boolean> {
 interface NotificationJob {
   id: string;
   idempotencyKey: string;
-  channel: 'whatsapp' | 'email';
+  channel: 'whatsapp' | 'email' | 'sms' | 'voice';
   draftOnly: boolean;
   orgId: string;
   traceId: string;
