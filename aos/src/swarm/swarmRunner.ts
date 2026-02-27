@@ -221,9 +221,9 @@ export class SwarmRunner {
           timestamp: new Date().toISOString(),
         };
 
-        // Execute with timeout
+        // Execute with timeout — use handleSwarmTask to iterate ALL seedTools
         await Promise.race([
-          agent.handleMessage(msg),
+          agent.handleSwarmTask(msg),
           new Promise<never>((_, reject) =>
             setTimeout(() => reject(new Error(`Agent ${memberName} timed out`)), timeoutMs),
           ),

@@ -7,6 +7,9 @@ export const API = {
   GATEWAY: `${BASE}/api/gateway`,
   WORKSPACE: `${BASE}/api/workspace`,
   KITZ_OS: `${BASE}/api/kitz`,
+  // Dev: /api/whatsapp → Vite proxy strips prefix → localhost:3006/...
+  // Prod: Railway IS the WhatsApp connector, so call it directly (no /api/whatsapp prefix)
+  WHATSAPP: BASE ? BASE : '/api/whatsapp',
   COMMS: `${BASE}/api/comms`,
   LOGS: `${BASE}/api/logs`,
 } as const

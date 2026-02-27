@@ -1,0 +1,17 @@
+#!/usr/bin/env tsx
+/**
+ * KITZ CLI launcher — run from repo root: ./bin/kitz
+ * Or globally after: npm link
+ *
+ * Modes:
+ *   kitz          → Full-screen TUI dashboard (default)
+ *   kitz --simple → Simple readline REPL
+ *   kitz --tui    → Full-screen TUI (explicit)
+ */
+const args = process.argv.slice(2)
+
+if (args.includes('--simple') || args.includes('-s')) {
+  await import('../kitz_os/src/cli.js')
+} else {
+  await import('../kitz_os/src/tui.js')
+}

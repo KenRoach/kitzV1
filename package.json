@@ -1,0 +1,22 @@
+{
+  "name": "kitzv1",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "description": "KITZ — AI-Powered Business Operating System",
+  "bin": {
+    "kitz": "./bin/kitz"
+  },
+  "scripts": {
+    "kitz": "tsx kitz_os/src/tui.ts",
+    "tui": "tsx kitz_os/src/tui.ts",
+    "cli": "tsx kitz_os/src/cli.ts",
+    "dev:os": "cd kitz_os && npm run dev",
+    "dev:wa": "cd kitz-whatsapp-connector && npm run dev",
+    "dev:ui": "cd ui && npm run dev"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

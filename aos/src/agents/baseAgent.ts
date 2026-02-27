@@ -141,6 +141,53 @@ export class BaseAgent {
     // Default: no-op. Subclasses implement domain logic.
   }
 
+  /**
+   * Execute a swarm task by iterating through ALL seedTools from the payload.
+   * Called by SwarmRunner instead of handleMessage — ensures every agent
+   * invokes every seeded tool, regardless of handleMessage overrides.
+   */
+  async handleSwarmTask(msg: AgentMessage): Promise<void> {
+    const payload = msg.payload as Record<string, unknown>;
+    const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const seedTools = payload.seedTools as Array<{ name: string; args: Record<string, unknown> }> | undefined;
+
+    if (!seedTools || seedTools.length === 0) {
+      // Fallback: run the subclass's handleMessage for backwards compat
+      await this.handleMessage(msg);
+      return;
+    }
+
+    const findings: unknown[] = [];
+    for (const tool of seedTools) {
+      try {
+        const result = await this.invokeTool(tool.name, tool.args, traceId);
+        if (result.success && result.data != null) {
+          findings.push({ tool: tool.name, data: result.data });
+        } else if (!result.success) {
+          findings.push({ tool: tool.name, error: result.error });
+        }
+      } catch (err) {
+        findings.push({ tool: tool.name, error: err instanceof Error ? err.message : String(err) });
+      }
+    }
+
+    // Store findings in memory for knowledge bridge
+    if (findings.length > 0) {
+      await this.invokeTool('memory_store_knowledge', {
+        category: 'swarm-findings',
+        content: JSON.stringify({ agent: this.name, team: this.team, findings }),
+      }, traceId).catch(() => { /* best-effort */ });
+    }
+
+    // Publish completion with findings
+    await this.publish('SWARM_TASK_COMPLETE', {
+      agent: this.name,
+      team: this.team,
+      traceId,
+      findings,
+    });
+  }
+
   // ── Status ──
 
   getStatus(): AgentStatus {
