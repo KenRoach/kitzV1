@@ -362,6 +362,66 @@ async function executeTool(
   return JSON.stringify({ error: `Unknown tool: ${toolName}` });
 }
 
+// ── Intent-based tool filtering ──
+// gpt-4o-mini can't reliably select from 170+ tools.
+// Pre-filter by intent keywords to keep tool list under ~80.
+const INTENT_TOOL_MAP: Array<{ pattern: RegExp; tools: string[] }> = [
+  { pattern: /\b(image|picture|photo|logo|graphic|visual|illustration|generate.*image|create.*image|draw|dall-?e|design.*logo)\b/i,
+    tools: ['image_generate'] },
+  { pattern: /\b(pdf|document|report|proposal|letter|summary|print|branded.*doc)\b/i,
+    tools: ['pdf_generate'] },
+  { pattern: /\b(invoice|quote|cotiza|factura)\b/i,
+    tools: ['invoice_create', 'invoice_list', 'invoice_update', 'quote_create', 'advisor_invoiceTax'] },
+  { pattern: /\b(flyer|promo|poster|banner|promotional)\b/i,
+    tools: ['flyer_create', 'promo_create'] },
+  { pattern: /\b(deck|presentation|slides|pitch)\b/i,
+    tools: ['deck_create', 'deck_list'] },
+  { pattern: /\b(website|landing.*page|biolink|web.*page)\b/i,
+    tools: ['website_create', 'website_list', 'biolink_create'] },
+  { pattern: /\b(email.*build|newsletter|email.*template|email.*campaign)\b/i,
+    tools: ['emailBuilder_create', 'emailBuilder_list'] },
+];
+
+// Core tools always included (CRM, orders, dashboard, etc.)
+const ALWAYS_INCLUDE_PREFIXES = [
+  'crm_', 'order_', 'storefront_', 'product_', 'dashboard_',
+  'email_', 'braindump_', 'calendar_', 'sop_', 'rag_',
+  'web_', 'outbound_', 'voice_', 'agent_',
+];
+
+const MAX_TOOLS = 80;
+
+function filterToolsByIntent(message: string, allTools: ToolDef[]): ToolDef[] {
+  // Find intent-matched tool names
+  const intentTools = new Set<string>();
+  for (const { pattern, tools } of INTENT_TOOL_MAP) {
+    if (pattern.test(message)) {
+      for (const t of tools) intentTools.add(t);
+    }
+  }
+
+  // If no specific intent detected and tools are under limit, pass all
+  if (intentTools.size === 0 && allTools.length <= MAX_TOOLS) {
+    return allTools;
+  }
+
+  // If no specific intent but too many tools, take core + trim
+  if (intentTools.size === 0) {
+    const core = allTools.filter(t =>
+      ALWAYS_INCLUDE_PREFIXES.some(p => t.function.name.startsWith(p))
+    );
+    return core.slice(0, MAX_TOOLS);
+  }
+
+  // Intent detected: include intent tools + core tools
+  const filtered = allTools.filter(t => {
+    if (intentTools.has(t.function.name)) return true;
+    return ALWAYS_INCLUDE_PREFIXES.some(p => t.function.name.startsWith(p));
+  });
+
+  return filtered.slice(0, MAX_TOOLS);
+}
+
 // ── Main Router ──
 export async function routeWithAI(
   userMessage: string,
@@ -374,7 +434,13 @@ export async function routeWithAI(
 ): Promise<{ response: string; toolsUsed: string[]; creditsConsumed: number }> {
 
   cleanExpiredDrafts();
-  const toolDefs: ToolDef[] = registry.toOpenAITools();
+  const allToolDefs: ToolDef[] = registry.toOpenAITools();
+  // ── Intent-based tool filtering ──
+  // gpt-4o-mini struggles with 170+ tools. Pre-filter by intent for reliability.
+  const toolDefs = filterToolsByIntent(userMessage, allToolDefs);
+  if (toolDefs.length < allToolDefs.length) {
+    console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'semanticRouter', action: 'tool_filter', total: allToolDefs.length, filtered: toolDefs.length, trace_id: traceId }));
+  }
   const toolsUsed: string[] = [];
   let totalCreditsConsumed = 0;
   const aiModel = getAiModel();
