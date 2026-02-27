@@ -127,6 +127,7 @@ export function approveDraft(token: string): PendingDraft | null {
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
 const KITZ_OS_URL = process.env.KITZ_OS_URL || '';
+const DEV_TOKEN_SECRET = process.env.DEV_TOKEN_SECRET || '';
 
 const LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
   en: 'English',
@@ -179,7 +180,10 @@ export async function generateDraftResponse(
     try {
       const res = await fetch(`${KITZ_OS_URL}/api/kitz`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(DEV_TOKEN_SECRET ? { 'x-dev-secret': DEV_TOKEN_SECRET } : {}),
+        },
         body: JSON.stringify({
           message: buildBrainPrompt(originalBody, originalSubject, senderName, language, caseNumber),
           channel: 'email',
