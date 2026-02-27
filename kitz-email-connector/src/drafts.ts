@@ -289,21 +289,19 @@ function wrapInBrandedHtml(body: string, caseNumber: string, senderName: string,
     fr: "Ce contenu a été créé par l'IA. Veuillez le vérifier attentivement avant d'agir.",
   };
 
-  return `<div style="max-width:600px;margin:0 auto;font-family:'Inter',Arial,Helvetica,sans-serif;background:#f8f7ff">
-<div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:28px 24px">
+  return `<div style="max-width:600px;margin:0 auto;font-family:'Inter',Arial,Helvetica,sans-serif;background:#f8f7ff;border-radius:16px;overflow:hidden">
+<div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:24px">
 <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-<td><span style="color:#ffffff;font-size:20px;font-weight:700;line-height:1.2">KITZ</span><br><span style="color:rgba(255,255,255,0.75);font-size:12px">Your business, handled.</span></td>
-<td style="text-align:right"><span style="background:rgba(255,255,255,0.2);color:#fff;font-size:11px;padding:4px 12px;border-radius:20px;font-weight:600">${caseLabel} ${caseNumber}</span></td>
+<td><span style="color:#fff;font-size:22px;font-weight:700;letter-spacing:0.5px">KITZ</span><br><span style="color:rgba(255,255,255,0.7);font-size:12px">Your business, handled.</span></td>
+<td style="text-align:right"><span style="background:rgba(255,255,255,0.2);color:#fff;font-size:11px;padding:4px 14px;border-radius:20px;font-weight:600">${caseLabel} ${caseNumber}</span></td>
 </tr></table>
 </div>
-<div style="background:#ffffff;margin:0 16px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(124,58,237,0.08)">
-<div style="padding:32px 24px">
-<p style="color:#555;font-size:15px;line-height:1.6;margin:0">${bodyHtml}</p>
+<div style="background:#fff;padding:32px 24px">
+<p style="color:#444;font-size:15px;line-height:1.7;margin:0">${bodyHtml}</p>
 </div>
-</div>
-<div style="padding:20px 24px;text-align:center">
-<p style="color:#999;font-size:11px;line-height:1.5;margin:0 0 8px">${disclaimer[language]}</p>
-<p style="color:#bbb;font-size:11px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none">KITZ</a></p>
+<div style="padding:16px 24px 20px;text-align:center;background:#faf9ff">
+<p style="color:#aaa;font-size:10px;line-height:1.5;margin:0 0 6px">${disclaimer[language]}</p>
+<p style="color:#ccc;font-size:10px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none;font-weight:600">KITZ</a></p>
 </div>
 </div>`;
 }
@@ -319,31 +317,30 @@ export function getApprovalEmailHtml(
   const draftBodyHtml = draft.draftBody.replace(/\n/g, '<br>');
   const langName = LANGUAGE_NAMES[draft.language];
 
-  return `<div style="max-width:600px;margin:0 auto;font-family:'Inter',Arial,Helvetica,sans-serif;background:#f8f7ff">
-<div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:28px 24px">
+  return `<div style="max-width:600px;margin:0 auto;font-family:'Inter',Arial,Helvetica,sans-serif;background:#f8f7ff;border-radius:16px;overflow:hidden">
+<div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:24px">
 <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-<td><span style="color:#ffffff;font-size:20px;font-weight:700;line-height:1.2">KITZ</span><br><span style="color:rgba(255,255,255,0.75);font-size:12px">Draft Review</span></td>
-<td style="text-align:right"><span style="background:rgba(255,255,255,0.2);color:#fff;font-size:11px;padding:4px 12px;border-radius:20px;font-weight:600">${draft.caseNumber}</span></td>
+<td><span style="color:#fff;font-size:22px;font-weight:700;letter-spacing:0.5px">KITZ</span><br><span style="color:rgba(255,255,255,0.7);font-size:12px">Draft Review</span></td>
+<td style="text-align:right"><span style="background:rgba(255,255,255,0.2);color:#fff;font-size:11px;padding:4px 14px;border-radius:20px;font-weight:600">${draft.caseNumber}</span></td>
 </tr></table>
 </div>
 
-<div style="background:#ffffff;margin:0 16px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(124,58,237,0.08)">
-<div style="padding:24px">
+<div style="background:#fff;padding:24px">
 
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px">
-<tr><td style="color:#999;font-size:12px;padding:2px 0">From</td><td style="color:#333;font-size:13px;padding:2px 0">${draft.originalFromName} &lt;${draft.originalFrom}&gt;</td></tr>
-<tr><td style="color:#999;font-size:12px;padding:2px 0">Subject</td><td style="color:#333;font-size:13px;padding:2px 0">${draft.originalSubject}</td></tr>
-<tr><td style="color:#999;font-size:12px;padding:2px 0">Language</td><td style="color:#333;font-size:13px;padding:2px 0">${langName}</td></tr>
+<tr><td style="color:#aaa;font-size:12px;padding:4px 0;width:70px">From</td><td style="color:#333;font-size:13px;padding:4px 0">${draft.originalFromName} &lt;${draft.originalFrom}&gt;</td></tr>
+<tr><td style="color:#aaa;font-size:12px;padding:4px 0">Subject</td><td style="color:#333;font-size:13px;padding:4px 0">${draft.originalSubject}</td></tr>
+<tr><td style="color:#aaa;font-size:12px;padding:4px 0">Language</td><td style="color:#333;font-size:13px;padding:4px 0">${langName}</td></tr>
 </table>
 
 <div style="margin-bottom:20px">
-<p style="color:#999;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;font-weight:600">Original Email</p>
-<div style="background:#f5f5f5;border-radius:8px;padding:16px;color:#555;font-size:14px;line-height:1.5">${originalHtml}</div>
+<p style="color:#aaa;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;font-weight:600">Original Email</p>
+<div style="background:#f7f7f7;border-radius:8px;padding:16px;color:#555;font-size:14px;line-height:1.6">${originalHtml || '<span style="color:#bbb;font-style:italic">No body — subject only</span>'}</div>
 </div>
 
 <div style="margin-bottom:24px">
-<p style="color:#999;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;font-weight:600">AI Draft Response</p>
-<div style="background:#fff;border-left:3px solid #A855F7;border-radius:0 8px 8px 0;padding:16px;color:#333;font-size:14px;line-height:1.6;box-shadow:0 1px 4px rgba(0,0,0,0.06)">${draftBodyHtml}</div>
+<p style="color:#aaa;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;font-weight:600">AI Draft Response</p>
+<div style="border-left:3px solid #A855F7;border-radius:0 8px 8px 0;padding:16px;color:#333;font-size:14px;line-height:1.7;background:#faf9ff">${draftBodyHtml}</div>
 </div>
 
 <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
@@ -356,12 +353,11 @@ export function getApprovalEmailHtml(
 </tr></table>
 
 </div>
-</div>
 
-<div style="padding:20px 24px;text-align:center">
-<p style="color:#999;font-size:11px;line-height:1.5;margin:0 0 4px">AI-generated draft. Review carefully before approving.</p>
-<p style="color:#bbb;font-size:11px;margin:0 0 4px">This link expires in 72 hours.</p>
-<p style="color:#bbb;font-size:11px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none">KITZ</a></p>
+<div style="padding:16px 24px 20px;text-align:center;background:#faf9ff">
+<p style="color:#aaa;font-size:10px;line-height:1.5;margin:0 0 4px">AI-generated draft. Review carefully before approving.</p>
+<p style="color:#ccc;font-size:10px;margin:0 0 4px">This link expires in 72 hours.</p>
+<p style="color:#ccc;font-size:10px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none;font-weight:600">KITZ</a></p>
 </div>
 </div>`;
 }
@@ -371,17 +367,19 @@ export function getApprovalEmailHtml(
 export function getConfirmationPageHtml(caseNumber: string, recipientEmail: string): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Approved — KITZ</title></head>
 <body style="margin:0;padding:40px 16px;background:#f8f7ff;font-family:'Inter',Arial,Helvetica,sans-serif">
-<div style="max-width:480px;margin:0 auto;text-align:center">
-<div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:24px;border-radius:16px 16px 0 0">
-<span style="color:#fff;font-size:24px;font-weight:700">KITZ</span>
+<div style="max-width:480px;margin:0 auto;text-align:center;border-radius:16px;overflow:hidden">
+<div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:24px">
+<span style="color:#fff;font-size:22px;font-weight:700;letter-spacing:0.5px">KITZ</span>
 </div>
-<div style="background:#fff;padding:40px 24px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(124,58,237,0.08)">
+<div style="background:#fff;padding:40px 24px">
 <div style="width:56px;height:56px;background:#e8f5e9;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center">
 <span style="font-size:28px">&#10003;</span>
 </div>
 <h2 style="color:#1a1a2e;margin:0 0 8px;font-size:20px">Response Sent</h2>
-<p style="color:#666;font-size:14px;line-height:1.5;margin:0">${caseNumber} response delivered to<br><strong>${recipientEmail}</strong></p>
-<p style="color:#999;font-size:12px;margin:24px 0 0">You can close this tab.</p>
+<p style="color:#555;font-size:14px;line-height:1.6;margin:0">${caseNumber} response delivered to<br><strong>${recipientEmail}</strong></p>
+</div>
+<div style="padding:16px 24px 20px;background:#faf9ff">
+<p style="color:#ccc;font-size:10px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none;font-weight:600">KITZ</a></p>
 </div>
 </div>
 </body></html>`;
@@ -392,17 +390,20 @@ export function getConfirmationPageHtml(caseNumber: string, recipientEmail: stri
 export function getErrorPageHtml(message: string): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Error — KITZ</title></head>
 <body style="margin:0;padding:40px 16px;background:#f8f7ff;font-family:'Inter',Arial,Helvetica,sans-serif">
-<div style="max-width:480px;margin:0 auto;text-align:center">
-<div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:24px;border-radius:16px 16px 0 0">
-<span style="color:#fff;font-size:24px;font-weight:700">KITZ</span>
+<div style="max-width:480px;margin:0 auto;text-align:center;border-radius:16px;overflow:hidden">
+<div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:24px">
+<span style="color:#fff;font-size:22px;font-weight:700;letter-spacing:0.5px">KITZ</span>
 </div>
-<div style="background:#fff;padding:40px 24px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(124,58,237,0.08)">
+<div style="background:#fff;padding:40px 24px">
 <div style="width:56px;height:56px;background:#fce4ec;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center">
 <span style="font-size:28px">&#10007;</span>
 </div>
 <h2 style="color:#1a1a2e;margin:0 0 8px;font-size:20px">Link Invalid</h2>
-<p style="color:#666;font-size:14px;line-height:1.5;margin:0">${message}</p>
-<p style="color:#999;font-size:12px;margin:24px 0 0">If you need to respond, do so manually via email.</p>
+<p style="color:#555;font-size:14px;line-height:1.6;margin:0">${message}</p>
+<p style="color:#aaa;font-size:12px;margin:24px 0 0">If you need to respond, do so manually via email.</p>
+</div>
+<div style="padding:16px 24px 20px;background:#faf9ff">
+<p style="color:#ccc;font-size:10px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none;font-weight:600">KITZ</a></p>
 </div>
 </div>
 </body></html>`;

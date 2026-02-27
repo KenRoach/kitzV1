@@ -200,22 +200,20 @@ export function getAutoReplyHtml(
   const t = TEMPLATES[language];
   const bodyHtml = t.body(caseNumber).replace(/\n/g, '<br>');
 
-  return `<div style="max-width:600px;margin:0 auto;font-family:'Inter',Arial,Helvetica,sans-serif;background:#f8f7ff">
-<div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:28px 24px">
+  return `<div style="max-width:600px;margin:0 auto;font-family:'Inter',Arial,Helvetica,sans-serif;background:#f8f7ff;border-radius:16px;overflow:hidden">
+<div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:24px">
 <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-<td><span style="color:#ffffff;font-size:20px;font-weight:700;line-height:1.2">KITZ</span><br><span style="color:rgba(255,255,255,0.75);font-size:12px">Your business, handled.</span></td>
-<td style="text-align:right"><span style="background:rgba(255,255,255,0.2);color:#fff;font-size:11px;padding:4px 12px;border-radius:20px;font-weight:600">${t.caseLabel} ${caseNumber}</span></td>
+<td><span style="color:#fff;font-size:22px;font-weight:700;letter-spacing:0.5px">KITZ</span><br><span style="color:rgba(255,255,255,0.7);font-size:12px">Your business, handled.</span></td>
+<td style="text-align:right"><span style="background:rgba(255,255,255,0.2);color:#fff;font-size:11px;padding:4px 14px;border-radius:20px;font-weight:600">${t.caseLabel} ${caseNumber}</span></td>
 </tr></table>
 </div>
-<div style="background:#ffffff;margin:0 16px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(124,58,237,0.08)">
-<div style="padding:32px 24px">
-<p style="color:#1a1a2e;margin:0 0 16px;font-size:17px;font-weight:600">${t.greeting(senderName)}</p>
-<p style="color:#555;font-size:15px;line-height:1.6;margin:0">${bodyHtml}</p>
+<div style="background:#fff;padding:32px 24px">
+<p style="color:#1a1a2e;margin:0 0 16px;font-size:16px;font-weight:600">${t.greeting(senderName)}</p>
+<p style="color:#444;font-size:15px;line-height:1.7;margin:0">${bodyHtml}</p>
 </div>
-</div>
-<div style="padding:20px 24px;text-align:center">
-<p style="color:#999;font-size:11px;line-height:1.5;margin:0 0 8px">${t.aiDisclaimer}</p>
-<p style="color:#bbb;font-size:11px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none">KITZ</a></p>
+<div style="padding:16px 24px 20px;text-align:center;background:#faf9ff">
+<p style="color:#aaa;font-size:10px;line-height:1.5;margin:0 0 6px">${t.aiDisclaimer}</p>
+<p style="color:#ccc;font-size:10px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none;font-weight:600">KITZ</a></p>
 </div>
 </div>`;
 }
