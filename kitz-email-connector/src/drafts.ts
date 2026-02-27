@@ -148,21 +148,25 @@ function buildBrainPrompt(
   const hasBody = body.length > 0;
   return [
     `CRITICAL INSTRUCTIONS — follow exactly:`,
-    `1. Write the ACTUAL email response text that will be sent directly to the customer.`,
+    `1. Write the ACTUAL email response that will be sent DIRECTLY to the customer. This is the FINAL draft — it must be polished, complete, and ready to send as-is.`,
     `2. Do NOT invoke tools, do NOT use email_compose, do NOT output JSON, draft actions, or approval prompts.`,
     `3. Do NOT say the body is empty or ask for more content. If the body is empty, respond based on the subject line alone.`,
     `4. Do NOT comment on the email itself. Just write the response as if you are Kenneth replying.`,
-    `5. Output ONLY the email body — no "Subject:" prefix, no metadata.`,
+    `5. Output ONLY the email body — no "Subject:" prefix, no metadata, no placeholders.`,
     ``,
-    `You are Kenneth from KITZ, responding to a customer email (case ${caseNumber}).`,
+    `You are Kenneth from KITZ, an AI-powered Business Operating System for small businesses in Latin America.`,
+    `This is case ${caseNumber}. Your response is the FIRST AND FINAL draft — one shot, ready to send.`,
+    ``,
     `Respond in ${langName}. Tone: Gen Z clarity + disciplined founder. Direct, warm, no fluff.`,
+    `Understand exactly what the customer wants and address it fully. Be specific, not generic.`,
+    `If they ask a question, answer it. If they need help, give actionable next steps.`,
     `Keep it concise — 3 short paragraphs max. Sign off as "Kenneth @ KITZ".`,
     ``,
     `Customer email subject: "${originalSubject}"`,
     `Customer name: ${senderName}`,
     hasBody ? `Customer message:\n${body.slice(0, 4000)}` : `(Customer sent only the subject with no body — respond helpfully based on the subject.)`,
     ``,
-    `Write Kenneth's reply now:`,
+    `Write the final response now:`,
   ].join('\n');
 }
 
@@ -228,16 +232,18 @@ export async function generateDraftResponse(
   // 2. Fallback: direct Claude Sonnet (when kitz_os unavailable)
   if (ANTHROPIC_API_KEY) {
     try {
-      const systemPrompt = `You are KITZ, an AI Business Operating System for small businesses. You're drafting a response to a customer email.
+      const systemPrompt = `You are Kenneth from KITZ, an AI-powered Business Operating System for small businesses in Latin America.
+You're writing the FINAL response to a customer email — first draft = final draft, ready to send as-is.
 
 Rules:
 - Respond in ${LANGUAGE_NAMES[language]}
 - Tone: Gen Z clarity + disciplined founder. Direct, warm, no fluff
-- Be helpful and specific to their actual question
-- Keep it concise — 3-5 short paragraphs max
+- Understand exactly what the customer wants and address it fully
+- If they ask a question, answer it. If they need help, give actionable next steps
+- Keep it concise — 3 short paragraphs max
 - Never promise things you can't deliver
 - Sign off as "Kenneth @ KITZ"
-- Output ONLY the email body text — no subject line, no greetings prefix like "Subject:"
+- Output ONLY the email body text — no subject line, no metadata, no placeholders
 - If the email is vague or just a greeting, respond warmly and ask what they need help with
 
 This is case ${caseNumber}. The sender already received an auto-reply with their case number.`;
@@ -339,7 +345,7 @@ export function getApprovalEmailHtml(
 </div>
 
 <div style="margin-bottom:20px">
-<p style="color:#aaa;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;font-weight:600">AI Draft Response</p>
+<p style="color:#aaa;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;font-weight:600">Final Draft</p>
 <div style="border-left:3px solid #A855F7;border-radius:0 8px 8px 0;padding:14px;color:#333;font-size:14px;line-height:1.7;background:#faf9ff">${draftBodyHtml}</div>
 </div>
 
@@ -355,7 +361,7 @@ export function getApprovalEmailHtml(
 </div>
 
 <div style="padding:14px 16px 16px;text-align:center;background:#faf9ff">
-<p style="color:#aaa;font-size:11px;line-height:1.5;margin:0 0 4px">AI-generated draft. Review carefully before approving.</p>
+<p style="color:#aaa;font-size:11px;line-height:1.5;margin:0 0 4px">Final AI draft — ready to send. Review before approving.</p>
 <p style="color:#ccc;font-size:11px;margin:0 0 4px">This link expires in 72 hours.</p>
 <p style="color:#ccc;font-size:11px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none;font-weight:600">KITZ</a></p>
 </div>
