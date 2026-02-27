@@ -265,7 +265,7 @@ const SERVICE_URL = process.env.SERVICE_URL || `http://localhost:${process.env.P
 const WA_CONNECTOR_URL = process.env.WA_CONNECTOR_URL || '';
 const ADMIN_PHONE = process.env.ADMIN_PHONE || '';
 
-async function callWorkspaceMcp(
+export async function callWorkspaceMcp(
   toolName: string,
   args: Record<string, unknown>,
 ): Promise<unknown> {

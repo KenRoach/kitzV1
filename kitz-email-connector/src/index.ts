@@ -12,7 +12,7 @@ interface EventEnvelope {
   ts: string;
 }
 import { sendEmail } from './providers/resend.js';
-import { processInboundEmail } from './inbound.js';
+import { processInboundEmail, callWorkspaceMcp } from './inbound.js';
 import type { InboundPayload } from './inbound.js';
 import { approveDraft, getPendingDraft, getConfirmationPageHtml, getErrorPageHtml } from './drafts.js';
 import {
@@ -208,6 +208,14 @@ app.get('/approve/:token', async (req: any, reply) => {
     to: draft.originalFrom,
     sendResult: { ok: result.ok, provider: result.provider },
   }, traceId));
+
+  // Update workspace task to done
+  callWorkspaceMcp('tasks_create', {
+    title: `[${draft.caseNumber}] ${draft.originalSubject}`,
+    description: `Response approved and sent to ${draft.originalFrom}.`,
+    status: 'done',
+    priority: 'medium',
+  }).catch(() => {});
 
   reply.type('text/html');
   return getConfirmationPageHtml(draft.caseNumber, draft.originalFrom);
