@@ -9,7 +9,7 @@ import { MessageBubble } from '@/components/chat/MessageBubble'
 import { TypingIndicator } from '@/components/chat/TypingIndicator'
 
 export function ChatPanel() {
-  const { messages, state, sendMessage, chatFocused, blurChat, chatGlowing, chatShaking, echoToWhatsApp, setEchoToWhatsApp } = useOrbStore()
+  const { messages, state, sendMessage, chatFocused, blurChat, chatGlowing, chatShaking, echoToWhatsApp, setEchoToWhatsApp, batteryRemaining } = useOrbStore()
   const user = useAuthStore((s) => s.user)
   const [input, setInput] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -127,7 +127,7 @@ export function ChatPanel() {
         <div className="flex items-center justify-center gap-5 font-mono text-[11px]">
           <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/10">
             <span className="text-white/50">AI Battery</span>
-            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold text-white">5</span>
+            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold text-white">{Math.round(batteryRemaining)}</span>
           </button>
           <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/10">
             <span className="text-white/50">Active Agents</span>
