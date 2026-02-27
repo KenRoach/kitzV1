@@ -1081,3 +1081,1853 @@ global average. 50% of all homicides in the Americas are connected to organized 
 > of private security, insurance premiums, loss from theft/extortion, and employee turnover due
 > to violence makes security the third-largest operating cost category after labor and rent in
 > many LatAm markets. Kitz should factor this into profitability models and break-even analysis.
+
+---
+
+# 13. TypeScript Implementation
+
+> This section provides production-ready TypeScript modules for political and regulatory risk
+> assessment. These integrate with Kitz's existing tool architecture (`ToolSchema` pattern from
+> `registry.ts`) and country configuration system (`countryConfigTools.ts`).
+
+---
+
+## 13.1 Core Types and Risk Data Model
+
+```typescript
+/**
+ * Political & Regulatory Risk Engine -- Core Types
+ *
+ * Integrates with countryConfigTools.ts for country-level configuration
+ * and advisorTools.ts for SMB-facing recommendations.
+ */
+
+// ── Risk Tier Enum ──
+
+export enum RiskTier {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  MEDIUM_HIGH = 'MEDIUM_HIGH',
+  HIGH = 'HIGH',
+  CRITICAL = 'CRITICAL',
+}
+
+// ── Country Code (ISO 3166-1 alpha-2) ──
+
+export type LatAmCountryCode =
+  | 'MX' | 'CO' | 'BR' | 'AR' | 'CL' | 'PE' | 'PA' | 'CR'
+  | 'EC' | 'UY' | 'PY' | 'DO' | 'GT' | 'SV' | 'HN' | 'BO'
+  | 'NI' | 'VE' | 'HT' | 'CU';
+
+// ── Dimension Scores ──
+
+export interface PoliticalRiskDimensions {
+  politicalStability: number;     // 0-100 (WGI percentile)
+  ruleOfLaw: number;              // 0-100 (WGI percentile)
+  governmentEffectiveness: number; // 0-100 (WGI percentile)
+  regulatoryQuality: number;      // 0-100 (WGI percentile)
+  controlOfCorruption: number;    // 0-100 (CPI score)
+  democracyIndex: number;         // 0-10 (EIU)
+  amlCompliance: number;          // 0-100 (custom: FATF status weighted)
+  sanctionsExposure: number;      // 0-100 (0 = no sanctions, 100 = comprehensive)
+  securityEnvironment: number;    // 0-100 (inverted homicide + crime index)
+  contractEnforceability: number; // 0-100 (inverted enforcement time + cost)
+  digitalReadiness: number;       // 0-100 (regulation maturity + infrastructure)
+  tradeOpenness: number;          // 0-100 (FTAs + tariff levels)
+}
+
+// ── Country Risk Profile ──
+
+export interface CountryRiskProfile {
+  countryCode: LatAmCountryCode;
+  countryName: string;
+  headOfState: string;
+  politicalOrientation: 'left' | 'center-left' | 'center' | 'center-right' | 'right' | 'authoritarian-left' | 'authoritarian-right' | 'libertarian-right';
+  dimensions: PoliticalRiskDimensions;
+  compositeScore: number;         // 0-100 weighted average
+  riskTier: RiskTier;
+  fatfStatus: 'clean' | 'grey_list' | 'black_list' | 'suspended';
+  sanctionsRegime: 'none' | 'targeted' | 'sectoral' | 'comprehensive';
+  nextPresidentialElection: ElectionEvent | null;
+  nextLegislativeElection: ElectionEvent | null;
+  electionWindowActive: boolean;  // true if within 6 months of election
+  activeReforms: RegulatoryReform[];
+  keyRisks: string[];
+  lastUpdated: string;            // ISO 8601
+}
+
+// ── Election Event ──
+
+export interface ElectionEvent {
+  type: 'presidential' | 'legislative' | 'municipal' | 'subnational' | 'referendum';
+  date: string;                   // ISO 8601 date
+  runoffDate?: string;            // ISO 8601 date if applicable
+  country: LatAmCountryCode;
+  description: string;
+  incumbentCanRun: boolean;
+  policyShiftRisk: RiskTier;      // Likelihood of major policy change
+  keyIssues: string[];
+}
+
+// ── Regulatory Reform ──
+
+export interface RegulatoryReform {
+  id: string;
+  country: LatAmCountryCode;
+  category: 'tax' | 'labor' | 'trade' | 'digital' | 'financial' | 'environmental' | 'anti_corruption';
+  title: string;
+  status: 'proposed' | 'in_committee' | 'approved' | 'enacted' | 'implementing' | 'effective';
+  description: string;
+  smbImpact: 'positive' | 'negative' | 'neutral' | 'mixed';
+  impactScore: number;            // -10 to +10 (negative = harmful to SMBs)
+  effectiveDate?: string;
+  transitionDeadline?: string;
+  kitzActionRequired: string[];
+}
+
+// ── Compliance Check Result ──
+
+export interface ComplianceCheckResult {
+  country: LatAmCountryCode;
+  timestamp: string;
+  sanctions: {
+    cleared: boolean;
+    matchedEntries: SanctionsMatch[];
+    listsChecked: string[];
+  };
+  aml: {
+    kycComplete: boolean;
+    enhancedDueDiligenceRequired: boolean;
+    strThreshold: { amount: number; currency: string };
+    beneficialOwnershipFiled: boolean;
+  };
+  regulatory: {
+    businessRegistered: boolean;
+    taxCompliant: boolean;
+    laborCompliant: boolean;
+    dataProtectionCompliant: boolean;
+    sectorPermits: PermitStatus[];
+  };
+  overallStatus: 'compliant' | 'action_required' | 'blocked';
+  requiredActions: string[];
+}
+
+export interface SanctionsMatch {
+  listName: string;
+  matchedName: string;
+  matchScore: number;             // 0-100 fuzzy match confidence
+  sdnType: string;
+  programs: string[];
+}
+
+export interface PermitStatus {
+  permitType: string;
+  status: 'valid' | 'expired' | 'pending' | 'not_required';
+  expiryDate?: string;
+  renewalDeadline?: string;
+}
+```
+
+---
+
+## 13.2 Country Risk Database
+
+```typescript
+/**
+ * Country Risk Database -- Static data refreshed quarterly.
+ *
+ * Sources: World Bank WGI (2025), TI CPI (2025), EIU Democracy Index (2025),
+ * FATF (Feb 2026), OFAC SDN List (Feb 2026), InSight Crime (2024-2025).
+ */
+
+const COUNTRY_RISK_DB: Record<LatAmCountryCode, Omit<CountryRiskProfile, 'electionWindowActive' | 'compositeScore' | 'riskTier'>> = {
+  UY: {
+    countryCode: 'UY',
+    countryName: 'Uruguay',
+    headOfState: 'Yamandu Orsi',
+    politicalOrientation: 'center-left',
+    dimensions: {
+      politicalStability: 78,
+      ruleOfLaw: 71,
+      governmentEffectiveness: 68,
+      regulatoryQuality: 70,
+      controlOfCorruption: 73,
+      democracyIndex: 8.61,
+      amlCompliance: 82,
+      sanctionsExposure: 0,
+      securityEnvironment: 60,
+      contractEnforceability: 55,
+      digitalReadiness: 65,
+      tradeOpenness: 55,
+    },
+    fatfStatus: 'clean',
+    sanctionsRegime: 'none',
+    nextPresidentialElection: {
+      type: 'presidential',
+      date: '2029-10-26',
+      runoffDate: '2029-11-30',
+      country: 'UY',
+      description: 'Uruguayan presidential election 2029',
+      incumbentCanRun: false,
+      policyShiftRisk: RiskTier.LOW,
+      keyIssues: ['fiscal_policy', 'security', 'education'],
+    },
+    nextLegislativeElection: {
+      type: 'legislative',
+      date: '2029-10-26',
+      country: 'UY',
+      description: 'Uruguayan legislative election 2029 (concurrent with presidential)',
+      incumbentCanRun: true,
+      policyShiftRisk: RiskTier.LOW,
+      keyIssues: ['fiscal_policy', 'security'],
+    },
+    activeReforms: [],
+    keyRisks: ['MERCOSUR dependency', 'Small domestic market', 'Regional contagion from Argentina/Brazil'],
+    lastUpdated: '2026-02-25',
+  },
+
+  CL: {
+    countryCode: 'CL',
+    countryName: 'Chile',
+    headOfState: 'Jose Antonio Kast',
+    politicalOrientation: 'center-right',
+    dimensions: {
+      politicalStability: 55,
+      ruleOfLaw: 80,
+      governmentEffectiveness: 75,
+      regulatoryQuality: 82,
+      controlOfCorruption: 65,
+      democracyIndex: 7.92,
+      amlCompliance: 85,
+      sanctionsExposure: 0,
+      securityEnvironment: 58,
+      contractEnforceability: 62,
+      digitalReadiness: 72,
+      tradeOpenness: 85,
+    },
+    fatfStatus: 'clean',
+    sanctionsRegime: 'none',
+    nextPresidentialElection: {
+      type: 'presidential',
+      date: '2029-11-16',
+      runoffDate: '2029-12-14',
+      country: 'CL',
+      description: 'Chilean presidential election 2029',
+      incumbentCanRun: false,
+      policyShiftRisk: RiskTier.MEDIUM,
+      keyIssues: ['security', 'mining_regulation', 'pension_reform', 'immigration'],
+    },
+    nextLegislativeElection: {
+      type: 'legislative',
+      date: '2029-11-16',
+      country: 'CL',
+      description: 'Chilean congressional election 2029',
+      incumbentCanRun: true,
+      policyShiftRisk: RiskTier.MEDIUM,
+      keyIssues: ['security', 'tax_reform'],
+    },
+    activeReforms: [
+      {
+        id: 'CL-TAX-2024',
+        country: 'CL',
+        category: 'tax',
+        title: 'Tax Compliance Program (Cumplimiento Tributario)',
+        status: 'implementing',
+        description: 'Enhanced anti-evasion measures, digital reporting, SII data-matching expansion',
+        smbImpact: 'mixed',
+        impactScore: -2,
+        effectiveDate: '2024-09-01',
+        transitionDeadline: '2026-12-31',
+        kitzActionRequired: ['Update SII reporting formats', 'Enhanced audit trail for transactions'],
+      },
+      {
+        id: 'CL-LABOR-2024',
+        country: 'CL',
+        category: 'labor',
+        title: '40-Hour Workweek (Ley 21.561)',
+        status: 'implementing',
+        description: 'Gradual reduction from 45 to 40 hours per week',
+        smbImpact: 'negative',
+        impactScore: -4,
+        effectiveDate: '2024-04-26',
+        transitionDeadline: '2028-04-26',
+        kitzActionRequired: ['Payroll calculator update for phased reduction', 'Overtime threshold adjustment'],
+      },
+    ],
+    keyRisks: ['Rising crime rates', 'Lithium nationalization debate', 'Immigration pressures', 'Divided congress'],
+    lastUpdated: '2026-02-25',
+  },
+
+  MX: {
+    countryCode: 'MX',
+    countryName: 'Mexico',
+    headOfState: 'Claudia Sheinbaum',
+    politicalOrientation: 'left',
+    dimensions: {
+      politicalStability: 15,
+      ruleOfLaw: 28,
+      governmentEffectiveness: 42,
+      regulatoryQuality: 58,
+      controlOfCorruption: 27,
+      democracyIndex: 5.69,
+      amlCompliance: 62,
+      sanctionsExposure: 5,
+      securityEnvironment: 22,
+      contractEnforceability: 55,
+      digitalReadiness: 60,
+      tradeOpenness: 75,
+    },
+    fatfStatus: 'clean',
+    sanctionsRegime: 'none',
+    nextPresidentialElection: {
+      type: 'presidential',
+      date: '2030-06-07',
+      country: 'MX',
+      description: 'Mexican presidential election 2030',
+      incumbentCanRun: false,
+      policyShiftRisk: RiskTier.MEDIUM_HIGH,
+      keyIssues: ['security', 'USMCA', 'energy_policy', 'nearshoring'],
+    },
+    nextLegislativeElection: {
+      type: 'legislative',
+      date: '2027-06-06',
+      country: 'MX',
+      description: 'Mexican midterm elections 2027 (Chamber of Deputies)',
+      incumbentCanRun: false,
+      policyShiftRisk: RiskTier.MEDIUM,
+      keyIssues: ['MORENA supermajority', 'judicial_reform', 'security'],
+    },
+    activeReforms: [
+      {
+        id: 'MX-LABOR-2025',
+        country: 'MX',
+        category: 'labor',
+        title: 'Workweek Reduction to 40 Hours',
+        status: 'proposed',
+        description: 'Bill to reduce from 48 to 40 hours per week by 2030 (2 hours/year from 2027)',
+        smbImpact: 'negative',
+        impactScore: -6,
+        effectiveDate: '2027-01-01',
+        transitionDeadline: '2030-01-01',
+        kitzActionRequired: ['Payroll cost projections', 'Overtime recalculation engine', 'Shift scheduling update'],
+      },
+      {
+        id: 'MX-TAX-2026',
+        country: 'MX',
+        category: 'tax',
+        title: 'Ley de Ingresos 2026 -- Enhanced SAT Enforcement',
+        status: 'effective',
+        description: 'No new taxes but expanded electronic audit, beneficial ownership reporting, RESICO tightening',
+        smbImpact: 'mixed',
+        impactScore: -3,
+        effectiveDate: '2026-01-01',
+        kitzActionRequired: ['Beneficial ownership reporting module', 'RESICO eligibility checker update', 'CFDI compliance hardening'],
+      },
+      {
+        id: 'MX-TRADE-2026',
+        country: 'MX',
+        category: 'trade',
+        title: 'USMCA 2026 Joint Review',
+        status: 'in_committee',
+        description: 'Mandatory tripartite review of USMCA by July 1, 2026',
+        smbImpact: 'mixed',
+        impactScore: -2,
+        effectiveDate: '2026-07-01',
+        kitzActionRequired: ['Monitor review outcomes', 'Prepare tariff recalculation engine', 'Alert affected import/export SMBs'],
+      },
+    ],
+    keyRisks: ['Cartel violence', 'USMCA review risk', 'Judicial reform impact', 'SAT audit escalation', 'Energy sector restrictions'],
+    lastUpdated: '2026-02-25',
+  },
+
+  CO: {
+    countryCode: 'CO',
+    countryName: 'Colombia',
+    headOfState: 'Gustavo Petro',
+    politicalOrientation: 'left',
+    dimensions: {
+      politicalStability: 10,
+      ruleOfLaw: 35,
+      governmentEffectiveness: 40,
+      regulatoryQuality: 55,
+      controlOfCorruption: 37,
+      democracyIndex: 6.72,
+      amlCompliance: 65,
+      sanctionsExposure: 5,
+      securityEnvironment: 28,
+      contractEnforceability: 30,
+      digitalReadiness: 58,
+      tradeOpenness: 62,
+    },
+    fatfStatus: 'clean',
+    sanctionsRegime: 'none',
+    nextPresidentialElection: {
+      type: 'presidential',
+      date: '2026-05-31',
+      runoffDate: '2026-06-21',
+      country: 'CO',
+      description: 'Colombian presidential election 2026 -- Petro term-limited',
+      incumbentCanRun: false,
+      policyShiftRisk: RiskTier.HIGH,
+      keyIssues: ['tax_reform', 'peace_process', 'energy_transition', 'labor_reform'],
+    },
+    nextLegislativeElection: {
+      type: 'legislative',
+      date: '2026-03-08',
+      country: 'CO',
+      description: 'Colombian congressional election March 2026',
+      incumbentCanRun: true,
+      policyShiftRisk: RiskTier.MEDIUM_HIGH,
+      keyIssues: ['coalition_dynamics', 'reform_agenda'],
+    },
+    activeReforms: [
+      {
+        id: 'CO-LABOR-2025',
+        country: 'CO',
+        category: 'labor',
+        title: 'Workweek Reduction (Ley 2101/2021)',
+        status: 'implementing',
+        description: 'Gradual reduction from 48 to 42 hours/week by July 2026',
+        smbImpact: 'negative',
+        impactScore: -4,
+        effectiveDate: '2023-07-15',
+        transitionDeadline: '2026-07-15',
+        kitzActionRequired: ['Payroll recalculation for 42-hour week', 'Overtime threshold updates'],
+      },
+    ],
+    keyRisks: ['Election uncertainty (May 2026)', 'Armed group violence', 'Tax reform risk under new president', 'Peso volatility', 'CPI corruption score declining'],
+    lastUpdated: '2026-02-25',
+  },
+
+  BR: {
+    countryCode: 'BR',
+    countryName: 'Brazil',
+    headOfState: 'Luiz Inacio Lula da Silva',
+    politicalOrientation: 'center-left',
+    dimensions: {
+      politicalStability: 30,
+      ruleOfLaw: 44,
+      governmentEffectiveness: 48,
+      regulatoryQuality: 42,
+      controlOfCorruption: 35,
+      democracyIndex: 6.68,
+      amlCompliance: 72,
+      sanctionsExposure: 0,
+      securityEnvironment: 25,
+      contractEnforceability: 35,
+      digitalReadiness: 65,
+      tradeOpenness: 40,
+    },
+    fatfStatus: 'clean',
+    sanctionsRegime: 'none',
+    nextPresidentialElection: {
+      type: 'presidential',
+      date: '2026-10-04',
+      runoffDate: '2026-10-25',
+      country: 'BR',
+      description: 'Brazilian general election 2026 -- Lula can run for consecutive reelection',
+      incumbentCanRun: true,
+      policyShiftRisk: RiskTier.HIGH,
+      keyIssues: ['fiscal_policy', 'tax_reform_implementation', 'deforestation', 'inflation'],
+    },
+    nextLegislativeElection: {
+      type: 'legislative',
+      date: '2026-10-04',
+      country: 'BR',
+      description: 'Brazilian congressional + gubernatorial elections 2026',
+      incumbentCanRun: true,
+      policyShiftRisk: RiskTier.MEDIUM_HIGH,
+      keyIssues: ['fiscal_austerity', 'reform_continuation'],
+    },
+    activeReforms: [
+      {
+        id: 'BR-TAX-2023',
+        country: 'BR',
+        category: 'tax',
+        title: 'CBS/IBS Indirect Tax Reform (EC 132/2023)',
+        status: 'implementing',
+        description: 'Replaces PIS/COFINS/IPI/ICMS/ISS with CBS (federal) and IBS (subnational). 2026-2033 transition.',
+        smbImpact: 'mixed',
+        impactScore: -3,
+        effectiveDate: '2026-01-01',
+        transitionDeadline: '2033-01-01',
+        kitzActionRequired: [
+          'Dual tax code support for transition period',
+          'CBS 0.9% + IBS 0.1% test rates in 2026',
+          'Simples Nacional compatibility layer',
+          'Input credit tracking system',
+          'Destination-based tax calculation engine',
+        ],
+      },
+      {
+        id: 'BR-AI-2026',
+        country: 'BR',
+        category: 'digital',
+        title: 'AI Regulation Framework (PL 2338/2023)',
+        status: 'in_committee',
+        description: 'EU AI Act-inspired risk-based regulation; impact assessments for high-risk AI',
+        smbImpact: 'mixed',
+        impactScore: -2,
+        kitzActionRequired: [
+          'Classify Kitz AI features by risk tier',
+          'Prepare algorithmic impact assessments',
+          'Implement explainability for financial recommendations',
+          'Human-in-the-loop for credit-adjacent decisions',
+        ],
+      },
+    ],
+    keyRisks: ['Tax reform complexity (CBS/IBS transition)', 'Election October 2026', 'Real volatility', 'Fiscal deficit concerns', 'AI regulation impact on Kitz', 'World-highest tax compliance hours'],
+    lastUpdated: '2026-02-25',
+  },
+
+  AR: {
+    countryCode: 'AR',
+    countryName: 'Argentina',
+    headOfState: 'Javier Milei',
+    politicalOrientation: 'libertarian-right',
+    dimensions: {
+      politicalStability: 35,
+      ruleOfLaw: 32,
+      governmentEffectiveness: 38,
+      regulatoryQuality: 18,
+      controlOfCorruption: 38,
+      democracyIndex: 6.41,
+      amlCompliance: 58,
+      sanctionsExposure: 0,
+      securityEnvironment: 52,
+      contractEnforceability: 42,
+      digitalReadiness: 55,
+      tradeOpenness: 30,
+    },
+    fatfStatus: 'clean',
+    sanctionsRegime: 'none',
+    nextPresidentialElection: {
+      type: 'presidential',
+      date: '2027-10-24',
+      country: 'AR',
+      description: 'Argentine midterm legislative elections 2027',
+      incumbentCanRun: true,
+      policyShiftRisk: RiskTier.MEDIUM_HIGH,
+      keyIssues: ['dollarization_debate', 'deregulation', 'fiscal_balance', 'inflation'],
+    },
+    nextLegislativeElection: {
+      type: 'legislative',
+      date: '2027-10-24',
+      country: 'AR',
+      description: 'Argentine midterm elections 2027 -- Milei referendum',
+      incumbentCanRun: true,
+      policyShiftRisk: RiskTier.MEDIUM_HIGH,
+      keyIssues: ['reform_mandate', 'economic_stabilization'],
+    },
+    activeReforms: [
+      {
+        id: 'AR-TAX-2024',
+        country: 'AR',
+        category: 'tax',
+        title: 'Milei Tax Simplification Package',
+        status: 'implementing',
+        description: 'Export tax elimination, Ingresos Brutos reduction, Monotributo simplification, check tax phase-out',
+        smbImpact: 'positive',
+        impactScore: 7,
+        kitzActionRequired: ['Monotributo category recalculation', 'Provincial tax rate updates', 'Export tax removal for affected products'],
+      },
+    ],
+    keyRisks: ['Currency controls still partially in place', 'Peso volatility', 'Political polarization', 'Midterm risk to reform agenda', 'Informal economy 40%+'],
+    lastUpdated: '2026-02-25',
+  },
+
+  PE: {
+    countryCode: 'PE',
+    countryName: 'Peru',
+    headOfState: 'Dina Boluarte',
+    politicalOrientation: 'center-right',
+    dimensions: {
+      politicalStability: 18,
+      ruleOfLaw: 30,
+      governmentEffectiveness: 33,
+      regulatoryQuality: 52,
+      controlOfCorruption: 33,
+      democracyIndex: 5.85,
+      amlCompliance: 62,
+      sanctionsExposure: 0,
+      securityEnvironment: 40,
+      contractEnforceability: 50,
+      digitalReadiness: 48,
+      tradeOpenness: 68,
+    },
+    fatfStatus: 'clean',
+    sanctionsRegime: 'none',
+    nextPresidentialElection: {
+      type: 'presidential',
+      date: '2026-04-12',
+      runoffDate: '2026-06-07',
+      country: 'PE',
+      description: 'Peruvian general election April 2026 -- highly uncertain outcome',
+      incumbentCanRun: false,
+      policyShiftRisk: RiskTier.HIGH,
+      keyIssues: ['mining_regulation', 'tax_reform', 'security', 'constitutional_reform'],
+    },
+    nextLegislativeElection: {
+      type: 'legislative',
+      date: '2026-04-12',
+      country: 'PE',
+      description: 'Peruvian congressional election April 2026 (concurrent)',
+      incumbentCanRun: true,
+      policyShiftRisk: RiskTier.HIGH,
+      keyIssues: ['fragmented_congress', 'governance_reform'],
+    },
+    activeReforms: [],
+    keyRisks: ['Extreme political instability (6 presidents in 5 years)', 'April 2026 election uncertainty', 'Rising crime', 'Mining sector regulation risk', 'Fragmented Congress blocks all reform'],
+    lastUpdated: '2026-02-25',
+  },
+
+  PA: {
+    countryCode: 'PA',
+    countryName: 'Panama',
+    headOfState: 'Jose Raul Mulino',
+    politicalOrientation: 'center-right',
+    dimensions: {
+      politicalStability: 52,
+      ruleOfLaw: 45,
+      governmentEffectiveness: 42,
+      regulatoryQuality: 55,
+      controlOfCorruption: 36,
+      democracyIndex: 7.05,
+      amlCompliance: 60,
+      sanctionsExposure: 0,
+      securityEnvironment: 55,
+      contractEnforceability: 35,
+      digitalReadiness: 52,
+      tradeOpenness: 78,
+    },
+    fatfStatus: 'clean',
+    sanctionsRegime: 'none',
+    nextPresidentialElection: {
+      type: 'presidential',
+      date: '2029-05-06',
+      country: 'PA',
+      description: 'Panamanian presidential election 2029 -- Mulino term-limited (single term)',
+      incumbentCanRun: false,
+      policyShiftRisk: RiskTier.MEDIUM,
+      keyIssues: ['canal_management', 'mining_moratorium', 'fiscal_policy', 'AML_compliance'],
+    },
+    nextLegislativeElection: {
+      type: 'legislative',
+      date: '2029-05-06',
+      country: 'PA',
+      description: 'Panamanian legislative election 2029 (concurrent)',
+      incumbentCanRun: true,
+      policyShiftRisk: RiskTier.MEDIUM,
+      keyIssues: ['fiscal_reform', 'public_spending'],
+    },
+    activeReforms: [],
+    keyRisks: ['Post-FATF grey list monitoring', 'First Quantum mining dispute', 'Canal water level issues', 'Darien migration corridor', 'High contract enforcement costs'],
+    lastUpdated: '2026-02-25',
+  },
+
+  CR: {
+    countryCode: 'CR',
+    countryName: 'Costa Rica',
+    headOfState: 'TBD (Feb 2026 election)',
+    politicalOrientation: 'center',
+    dimensions: {
+      politicalStability: 62,
+      ruleOfLaw: 65,
+      governmentEffectiveness: 58,
+      regulatoryQuality: 67,
+      controlOfCorruption: 54,
+      democracyIndex: 7.88,
+      amlCompliance: 75,
+      sanctionsExposure: 0,
+      securityEnvironment: 48,
+      contractEnforceability: 38,
+      digitalReadiness: 60,
+      tradeOpenness: 72,
+    },
+    fatfStatus: 'clean',
+    sanctionsRegime: 'none',
+    nextPresidentialElection: {
+      type: 'presidential',
+      date: '2026-02-01',
+      runoffDate: '2026-04-05',
+      country: 'CR',
+      description: 'Costa Rican presidential election February 2026',
+      incumbentCanRun: false,
+      policyShiftRisk: RiskTier.MEDIUM,
+      keyIssues: ['fiscal_deficit', 'security', 'nearshoring_opportunity', 'healthcare'],
+    },
+    nextLegislativeElection: {
+      type: 'legislative',
+      date: '2026-02-01',
+      country: 'CR',
+      description: 'Costa Rican legislative election February 2026 (concurrent)',
+      incumbentCanRun: true,
+      policyShiftRisk: RiskTier.MEDIUM,
+      keyIssues: ['fiscal_reform', 'security_spending'],
+    },
+    activeReforms: [],
+    keyRisks: ['New government transition (Feb-May 2026)', 'Rising drug trafficking violence', 'Fiscal deficit', 'High labor costs relative to region'],
+    lastUpdated: '2026-02-25',
+  },
+
+  EC: {
+    countryCode: 'EC',
+    countryName: 'Ecuador',
+    headOfState: 'Daniel Noboa',
+    politicalOrientation: 'center-right',
+    dimensions: {
+      politicalStability: 8,
+      ruleOfLaw: 22,
+      governmentEffectiveness: 28,
+      regulatoryQuality: 30,
+      controlOfCorruption: 28,
+      democracyIndex: 5.80,
+      amlCompliance: 52,
+      sanctionsExposure: 0,
+      securityEnvironment: 15,
+      contractEnforceability: 42,
+      digitalReadiness: 38,
+      tradeOpenness: 48,
+    },
+    fatfStatus: 'clean',
+    sanctionsRegime: 'none',
+    nextPresidentialElection: {
+      type: 'presidential',
+      date: '2029-02-17',
+      runoffDate: '2029-04-14',
+      country: 'EC',
+      description: 'Ecuadorian presidential election 2029',
+      incumbentCanRun: true,
+      policyShiftRisk: RiskTier.MEDIUM_HIGH,
+      keyIssues: ['security_crisis', 'economic_reform', 'dollarization', 'mining_policy'],
+    },
+    nextLegislativeElection: {
+      type: 'legislative',
+      date: '2029-02-17',
+      country: 'EC',
+      description: 'Ecuadorian legislative election 2029 (concurrent)',
+      incumbentCanRun: true,
+      policyShiftRisk: RiskTier.MEDIUM,
+      keyIssues: ['security_spending', 'fiscal_reform'],
+    },
+    activeReforms: [],
+    keyRisks: ['Extreme security crisis (547% homicide rise)', 'Drug trafficking wars', 'Energy blackouts', 'Fiscal pressures', 'ICSID arbitration exposure'],
+    lastUpdated: '2026-02-25',
+  },
+
+  DO: {
+    countryCode: 'DO',
+    countryName: 'Dominican Republic',
+    headOfState: 'Luis Abinader',
+    politicalOrientation: 'center-right',
+    dimensions: {
+      politicalStability: 48,
+      ruleOfLaw: 38,
+      governmentEffectiveness: 35,
+      regulatoryQuality: 45,
+      controlOfCorruption: 37,
+      democracyIndex: 6.45,
+      amlCompliance: 62,
+      sanctionsExposure: 0,
+      securityEnvironment: 42,
+      contractEnforceability: 45,
+      digitalReadiness: 42,
+      tradeOpenness: 60,
+    },
+    fatfStatus: 'clean',
+    sanctionsRegime: 'none',
+    nextPresidentialElection: {
+      type: 'presidential',
+      date: '2028-05-21',
+      country: 'DO',
+      description: 'Dominican Republic presidential election 2028 -- Abinader term-limited',
+      incumbentCanRun: false,
+      policyShiftRisk: RiskTier.MEDIUM,
+      keyIssues: ['fiscal_reform', 'energy_sector', 'Haiti_relations', 'tourism'],
+    },
+    nextLegislativeElection: {
+      type: 'legislative',
+      date: '2028-05-21',
+      country: 'DO',
+      description: 'Dominican Republic congressional election 2028',
+      incumbentCanRun: true,
+      policyShiftRisk: RiskTier.MEDIUM,
+      keyIssues: ['fiscal_reform', 'energy_reform'],
+    },
+    activeReforms: [
+      {
+        id: 'DO-LABOR-2025',
+        country: 'DO',
+        category: 'labor',
+        title: 'Phased Minimum Wage Increase',
+        status: 'implementing',
+        description: '25% minimum wage increase phased over 2025-2026',
+        smbImpact: 'negative',
+        impactScore: -5,
+        effectiveDate: '2025-04-01',
+        transitionDeadline: '2026-12-31',
+        kitzActionRequired: ['Payroll recalculation for phased increases', 'Cost projection models'],
+      },
+    ],
+    keyRisks: ['Haiti border security', 'Energy infrastructure fragility', 'Tourism dependency', 'Minimum wage escalation'],
+    lastUpdated: '2026-02-25',
+  },
+
+  PY: {
+    countryCode: 'PY',
+    countryName: 'Paraguay',
+    headOfState: 'Santiago Pena',
+    politicalOrientation: 'center-right',
+    dimensions: {
+      politicalStability: 38,
+      ruleOfLaw: 25,
+      governmentEffectiveness: 20,
+      regulatoryQuality: 32,
+      controlOfCorruption: 28,
+      democracyIndex: 6.14,
+      amlCompliance: 48,
+      sanctionsExposure: 0,
+      securityEnvironment: 48,
+      contractEnforceability: 38,
+      digitalReadiness: 28,
+      tradeOpenness: 52,
+    },
+    fatfStatus: 'clean',
+    sanctionsRegime: 'none',
+    nextPresidentialElection: {
+      type: 'presidential',
+      date: '2028-04-22',
+      country: 'PY',
+      description: 'Paraguayan presidential election 2028',
+      incumbentCanRun: false,
+      policyShiftRisk: RiskTier.MEDIUM,
+      keyIssues: ['corruption', 'infrastructure', 'triple_border_security'],
+    },
+    nextLegislativeElection: {
+      type: 'legislative',
+      date: '2028-04-22',
+      country: 'PY',
+      description: 'Paraguayan congressional election 2028 (concurrent)',
+      incumbentCanRun: true,
+      policyShiftRisk: RiskTier.MEDIUM,
+      keyIssues: ['fiscal_reform', 'institutional_reform'],
+    },
+    activeReforms: [],
+    keyRisks: ['Triple border AML concerns', 'Contraband economy', 'Low institutional capacity', 'Corruption', 'Slow business registration'],
+    lastUpdated: '2026-02-25',
+  },
+
+  GT: {
+    countryCode: 'GT',
+    countryName: 'Guatemala',
+    headOfState: 'Bernardo Arevalo',
+    politicalOrientation: 'center-left',
+    dimensions: {
+      politicalStability: 22, ruleOfLaw: 12, governmentEffectiveness: 18, regulatoryQuality: 35,
+      controlOfCorruption: 24, democracyIndex: 4.80, amlCompliance: 40, sanctionsExposure: 5,
+      securityEnvironment: 32, contractEnforceability: 35, digitalReadiness: 25, tradeOpenness: 55,
+    },
+    fatfStatus: 'clean', sanctionsRegime: 'targeted',
+    nextPresidentialElection: { type: 'presidential', date: '2028-06-16', country: 'GT', description: 'Guatemalan presidential election 2028', incumbentCanRun: false, policyShiftRisk: RiskTier.HIGH, keyIssues: ['anti_corruption', 'security', 'migration'] },
+    nextLegislativeElection: { type: 'legislative', date: '2028-06-16', country: 'GT', description: 'Guatemalan congressional election 2028', incumbentCanRun: true, policyShiftRisk: RiskTier.HIGH, keyIssues: ['anti_corruption', 'judicial_independence'] },
+    activeReforms: [],
+    keyRisks: ['Anti-corruption backlash from political establishment', 'Gang violence', 'Weak institutions', 'Magnitsky sanctions on officials', 'Permit corruption'],
+    lastUpdated: '2026-02-25',
+  },
+
+  SV: {
+    countryCode: 'SV',
+    countryName: 'El Salvador',
+    headOfState: 'Nayib Bukele',
+    politicalOrientation: 'authoritarian-right',
+    dimensions: {
+      politicalStability: 42, ruleOfLaw: 20, governmentEffectiveness: 30, regulatoryQuality: 42,
+      controlOfCorruption: 32, democracyIndex: 4.18, amlCompliance: 45, sanctionsExposure: 5,
+      securityEnvironment: 70, contractEnforceability: 40, digitalReadiness: 42, tradeOpenness: 58,
+    },
+    fatfStatus: 'clean', sanctionsRegime: 'targeted',
+    nextPresidentialElection: { type: 'presidential', date: '2030-02-03', country: 'SV', description: 'Salvadoran presidential election 2030', incumbentCanRun: true, policyShiftRisk: RiskTier.LOW, keyIssues: ['bitcoin_policy', 'democratic_norms', 'economy'] },
+    nextLegislativeElection: { type: 'legislative', date: '2030-02-03', country: 'SV', description: 'Salvadoran legislative election 2030', incumbentCanRun: true, policyShiftRisk: RiskTier.LOW, keyIssues: ['Nuevas Ideas dominance'] },
+    activeReforms: [],
+    keyRisks: ['Bitcoin legal tender experiment', 'Democratic backsliding', 'FATF monitoring of crypto AML', 'Concentrated executive power', 'US relations volatility'],
+    lastUpdated: '2026-02-25',
+  },
+
+  HN: {
+    countryCode: 'HN',
+    countryName: 'Honduras',
+    headOfState: 'Xiomara Castro',
+    politicalOrientation: 'left',
+    dimensions: {
+      politicalStability: 15, ruleOfLaw: 10, governmentEffectiveness: 12, regulatoryQuality: 28,
+      controlOfCorruption: 22, democracyIndex: 4.65, amlCompliance: 38, sanctionsExposure: 5,
+      securityEnvironment: 18, contractEnforceability: 30, digitalReadiness: 20, tradeOpenness: 55,
+    },
+    fatfStatus: 'clean', sanctionsRegime: 'targeted',
+    nextPresidentialElection: { type: 'presidential', date: '2027-11-28', country: 'HN', description: 'Honduran presidential election 2027', incumbentCanRun: false, policyShiftRisk: RiskTier.HIGH, keyIssues: ['security', 'corruption', 'economic_policy'] },
+    nextLegislativeElection: { type: 'legislative', date: '2027-11-28', country: 'HN', description: 'Honduran congressional election 2027', incumbentCanRun: true, policyShiftRisk: RiskTier.HIGH, keyIssues: ['security', 'institutional_reform'] },
+    activeReforms: [],
+    keyRisks: ['Extreme violence and extortion', 'Corruption', 'Weak institutions', 'Drug trafficking', 'Magnitsky sanctions on officials'],
+    lastUpdated: '2026-02-25',
+  },
+
+  BO: {
+    countryCode: 'BO',
+    countryName: 'Bolivia',
+    headOfState: 'Luis Arce',
+    politicalOrientation: 'left',
+    dimensions: {
+      politicalStability: 12, ruleOfLaw: 15, governmentEffectiveness: 18, regulatoryQuality: 12,
+      controlOfCorruption: 27, democracyIndex: 4.48, amlCompliance: 25, sanctionsExposure: 5,
+      securityEnvironment: 45, contractEnforceability: 25, digitalReadiness: 18, tradeOpenness: 35,
+    },
+    fatfStatus: 'grey_list', sanctionsRegime: 'targeted',
+    nextPresidentialElection: { type: 'presidential', date: '2030-10-18', country: 'BO', description: 'Bolivian presidential election 2030', incumbentCanRun: true, policyShiftRisk: RiskTier.HIGH, keyIssues: ['MAS_internal_split', 'economic_crisis', 'gas_decline'] },
+    nextLegislativeElection: { type: 'legislative', date: '2030-10-18', country: 'BO', description: 'Bolivian legislative election 2030', incumbentCanRun: true, policyShiftRisk: RiskTier.HIGH, keyIssues: ['MAS_factions', 'fiscal_crisis'] },
+    activeReforms: [],
+    keyRisks: ['FATF grey list -- banking access issues', 'Gas revenue decline', 'Currency peg under pressure', 'MAS political crisis', 'ICSID re-accession complications', 'Highest regulatory burden in LatAm'],
+    lastUpdated: '2026-02-25',
+  },
+
+  NI: {
+    countryCode: 'NI',
+    countryName: 'Nicaragua',
+    headOfState: 'Daniel Ortega',
+    politicalOrientation: 'authoritarian-left',
+    dimensions: {
+      politicalStability: 18, ruleOfLaw: 5, governmentEffectiveness: 8, regulatoryQuality: 10,
+      controlOfCorruption: 14, democracyIndex: 2.64, amlCompliance: 20, sanctionsExposure: 55,
+      securityEnvironment: 55, contractEnforceability: 18, digitalReadiness: 12, tradeOpenness: 40,
+    },
+    fatfStatus: 'clean', sanctionsRegime: 'targeted',
+    nextPresidentialElection: null,
+    nextLegislativeElection: null,
+    activeReforms: [],
+    keyRisks: ['Authoritarian regime', 'US/EU targeted sanctions', 'Civil society repression', 'NICA Act restrictions', 'No independent judiciary', 'DR-CAFTA suspension risk'],
+    lastUpdated: '2026-02-25',
+  },
+
+  VE: {
+    countryCode: 'VE',
+    countryName: 'Venezuela',
+    headOfState: 'Post-Maduro transition',
+    politicalOrientation: 'authoritarian-left',
+    dimensions: {
+      politicalStability: 3, ruleOfLaw: 1, governmentEffectiveness: 2, regulatoryQuality: 2,
+      controlOfCorruption: 10, democracyIndex: 2.08, amlCompliance: 8, sanctionsExposure: 85,
+      securityEnvironment: 8, contractEnforceability: 5, digitalReadiness: 8, tradeOpenness: 10,
+    },
+    fatfStatus: 'grey_list', sanctionsRegime: 'comprehensive',
+    nextPresidentialElection: null,
+    nextLegislativeElection: null,
+    activeReforms: [],
+    keyRisks: ['Comprehensive OFAC sanctions (evolving post-Maduro)', 'FATF grey list', 'Collapsed institutions', 'Hyperinflation legacy', 'SDN list density', 'Oil sector GL complexity', 'Banking access near-impossible'],
+    lastUpdated: '2026-02-25',
+  },
+
+  HT: {
+    countryCode: 'HT',
+    countryName: 'Haiti',
+    headOfState: 'Transitional Council',
+    politicalOrientation: 'center',
+    dimensions: {
+      politicalStability: 2, ruleOfLaw: 3, governmentEffectiveness: 2, regulatoryQuality: 5,
+      controlOfCorruption: 16, democracyIndex: 2.80, amlCompliance: 15, sanctionsExposure: 25,
+      securityEnvironment: 5, contractEnforceability: 8, digitalReadiness: 5, tradeOpenness: 30,
+    },
+    fatfStatus: 'clean', sanctionsRegime: 'targeted',
+    nextPresidentialElection: { type: 'presidential', date: '2026-08-30', runoffDate: '2026-12-06', country: 'HT', description: 'Haitian presidential election 2026 (tentative)', incumbentCanRun: false, policyShiftRisk: RiskTier.CRITICAL, keyIssues: ['gang_control', 'state_rebuilding', 'humanitarian_crisis'] },
+    nextLegislativeElection: { type: 'legislative', date: '2026-08-30', country: 'HT', description: 'Haitian legislative election 2026 (tentative)', incumbentCanRun: false, policyShiftRisk: RiskTier.CRITICAL, keyIssues: ['institutional_rebuilding'] },
+    activeReforms: [],
+    keyRisks: ['Failed state conditions', 'Gang control of 80%+ of Port-au-Prince', 'No functioning government', 'Humanitarian crisis', 'MINUSMA/international intervention', 'Zero business viability for most sectors'],
+    lastUpdated: '2026-02-25',
+  },
+
+  CU: {
+    countryCode: 'CU',
+    countryName: 'Cuba',
+    headOfState: 'Miguel Diaz-Canel',
+    politicalOrientation: 'authoritarian-left',
+    dimensions: {
+      politicalStability: 30, ruleOfLaw: 15, governmentEffectiveness: 12, regulatoryQuality: 5,
+      controlOfCorruption: 42, democracyIndex: 2.50, amlCompliance: 20, sanctionsExposure: 95,
+      securityEnvironment: 65, contractEnforceability: 10, digitalReadiness: 10, tradeOpenness: 5,
+    },
+    fatfStatus: 'clean', sanctionsRegime: 'comprehensive',
+    nextPresidentialElection: null,
+    nextLegislativeElection: null,
+    activeReforms: [],
+    keyRisks: ['Comprehensive US embargo', 'Near-total financial isolation', 'Energy crisis', 'Economic collapse', 'No private sector framework', 'Kitz cannot operate'],
+    lastUpdated: '2026-02-25',
+  },
+};
+```
+
+---
+
+## 13.3 Risk Scoring Engine
+
+```typescript
+/**
+ * Risk Scoring Engine
+ *
+ * Calculates composite country risk scores using a weighted average of
+ * dimension scores. Weights are calibrated for SMB operational relevance.
+ */
+
+const DIMENSION_WEIGHTS: Record<keyof PoliticalRiskDimensions, number> = {
+  politicalStability: 0.10,
+  ruleOfLaw: 0.12,
+  governmentEffectiveness: 0.08,
+  regulatoryQuality: 0.10,
+  controlOfCorruption: 0.10,
+  democracyIndex: 0.05,          // Normalized to 0-100 in calculation
+  amlCompliance: 0.10,
+  sanctionsExposure: 0.10,       // Inverted: 100 - exposure = score
+  securityEnvironment: 0.08,
+  contractEnforceability: 0.07,
+  digitalReadiness: 0.05,
+  tradeOpenness: 0.05,
+};
+
+function calculateCompositeScore(dimensions: PoliticalRiskDimensions): number {
+  let weightedSum = 0;
+  let totalWeight = 0;
+
+  for (const [key, weight] of Object.entries(DIMENSION_WEIGHTS)) {
+    const dim = key as keyof PoliticalRiskDimensions;
+    let value = dimensions[dim];
+
+    // Normalize democracy index from 0-10 to 0-100
+    if (dim === 'democracyIndex') {
+      value = value * 10;
+    }
+
+    // Invert sanctions exposure (higher exposure = lower score)
+    if (dim === 'sanctionsExposure') {
+      value = 100 - value;
+    }
+
+    weightedSum += value * weight;
+    totalWeight += weight;
+  }
+
+  return Math.round(weightedSum / totalWeight);
+}
+
+function scoreToRiskTier(score: number): RiskTier {
+  if (score >= 70) return RiskTier.LOW;
+  if (score >= 50) return RiskTier.MEDIUM;
+  if (score >= 35) return RiskTier.MEDIUM_HIGH;
+  if (score >= 20) return RiskTier.HIGH;
+  return RiskTier.CRITICAL;
+}
+
+function isElectionWindowActive(election: ElectionEvent | null): boolean {
+  if (!election) return false;
+  const electionDate = new Date(election.date);
+  const now = new Date();
+  const sixMonthsBefore = new Date(electionDate);
+  sixMonthsBefore.setMonth(sixMonthsBefore.getMonth() - 6);
+  return now >= sixMonthsBefore && now <= electionDate;
+}
+
+export function getCountryRiskProfile(countryCode: LatAmCountryCode): CountryRiskProfile {
+  const raw = COUNTRY_RISK_DB[countryCode];
+  if (!raw) {
+    throw new Error(`Country ${countryCode} not found in risk database`);
+  }
+
+  const compositeScore = calculateCompositeScore(raw.dimensions);
+  const riskTier = scoreToRiskTier(compositeScore);
+  const electionWindowActive =
+    isElectionWindowActive(raw.nextPresidentialElection) ||
+    isElectionWindowActive(raw.nextLegislativeElection);
+
+  return {
+    ...raw,
+    compositeScore,
+    riskTier,
+    electionWindowActive,
+  };
+}
+
+export function getAllCountryRiskProfiles(): CountryRiskProfile[] {
+  return (Object.keys(COUNTRY_RISK_DB) as LatAmCountryCode[])
+    .map(getCountryRiskProfile)
+    .sort((a, b) => b.compositeScore - a.compositeScore);
+}
+
+export function getCountriesByRiskTier(tier: RiskTier): CountryRiskProfile[] {
+  return getAllCountryRiskProfiles().filter(p => p.riskTier === tier);
+}
+
+export function getCountriesInElectionWindow(): CountryRiskProfile[] {
+  return getAllCountryRiskProfiles().filter(p => p.electionWindowActive);
+}
+```
+
+---
+
+## 13.4 Election Countdown Tracker
+
+```typescript
+/**
+ * Election Countdown Tracker
+ *
+ * Provides countdown timers, alerts, and advisory content for upcoming
+ * elections that may affect SMB operations.
+ */
+
+export interface ElectionCountdown {
+  event: ElectionEvent;
+  daysUntilElection: number;
+  daysUntilRunoff: number | null;
+  phase: 'pre_campaign' | 'campaign' | 'election_week' | 'post_election' | 'transition' | 'past';
+  urgency: 'none' | 'low' | 'medium' | 'high' | 'critical';
+  advisories: string[];
+}
+
+export function getElectionCountdown(event: ElectionEvent): ElectionCountdown {
+  const now = new Date();
+  const electionDate = new Date(event.date);
+  const diffMs = electionDate.getTime() - now.getTime();
+  const daysUntil = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  let daysUntilRunoff: number | null = null;
+  if (event.runoffDate) {
+    const runoffDate = new Date(event.runoffDate);
+    daysUntilRunoff = Math.ceil((runoffDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  }
+
+  // Determine election phase
+  let phase: ElectionCountdown['phase'];
+  if (daysUntil > 180) {
+    phase = 'pre_campaign';
+  } else if (daysUntil > 7) {
+    phase = 'campaign';
+  } else if (daysUntil >= -1) {
+    phase = 'election_week';
+  } else if (daysUntil >= -90) {
+    phase = 'post_election';
+  } else if (daysUntil >= -180) {
+    phase = 'transition';
+  } else {
+    phase = 'past';
+  }
+
+  // Calculate urgency
+  let urgency: ElectionCountdown['urgency'];
+  if (daysUntil > 365) {
+    urgency = 'none';
+  } else if (daysUntil > 180) {
+    urgency = 'low';
+  } else if (daysUntil > 60) {
+    urgency = 'medium';
+  } else if (daysUntil > 14) {
+    urgency = 'high';
+  } else if (daysUntil > -90) {
+    urgency = 'critical';
+  } else {
+    urgency = 'none';
+  }
+
+  // Generate advisories based on phase and risk
+  const advisories: string[] = [];
+
+  if (phase === 'campaign' && event.policyShiftRisk !== RiskTier.LOW) {
+    advisories.push(
+      `Election in ${event.country} in ${daysUntil} days. Policy shift risk: ${event.policyShiftRisk}.`
+    );
+    advisories.push('Consider locking in contracts and supplier terms before election.');
+    advisories.push('Review tax and labor compliance for potential post-election changes.');
+    if (event.keyIssues.includes('tax_reform')) {
+      advisories.push('TAX REFORM is a key election issue. Defer non-essential tax planning until outcome is clear.');
+    }
+    if (event.keyIssues.includes('labor_reform')) {
+      advisories.push('LABOR REFORM is a key election issue. Review payroll cost projections for both scenarios.');
+    }
+  }
+
+  if (phase === 'election_week') {
+    advisories.push(`ELECTION WEEK in ${event.country}. Expect potential market volatility.`);
+    advisories.push('Avoid large currency conversions this week.');
+    advisories.push('Ensure all pending government filings are completed before election day.');
+  }
+
+  if (phase === 'post_election') {
+    advisories.push(`Post-election period in ${event.country}. Monitor new administration\'s policy announcements.`);
+    advisories.push('Expect 60-90 day policy clarification period before major changes.');
+    if (daysUntilRunoff && daysUntilRunoff > 0) {
+      advisories.push(`Runoff election in ${daysUntilRunoff} days. Outcome still uncertain.`);
+    }
+  }
+
+  if (phase === 'transition') {
+    advisories.push(`New government transition in ${event.country}. Regulatory changes may begin taking effect.`);
+    advisories.push('Review all compliance obligations against new government\'s announced agenda.');
+  }
+
+  return {
+    event,
+    daysUntilElection: daysUntil,
+    daysUntilRunoff,
+    phase,
+    urgency,
+    advisories,
+  };
+}
+
+export function getUpcomingElections(months: number = 12): ElectionCountdown[] {
+  const allProfiles = getAllCountryRiskProfiles();
+  const cutoff = new Date();
+  cutoff.setMonth(cutoff.getMonth() + months);
+
+  const elections: ElectionCountdown[] = [];
+
+  for (const profile of allProfiles) {
+    for (const election of [profile.nextPresidentialElection, profile.nextLegislativeElection]) {
+      if (election && new Date(election.date) <= cutoff && new Date(election.date) >= new Date()) {
+        elections.push(getElectionCountdown(election));
+      }
+    }
+  }
+
+  return elections.sort((a, b) => a.daysUntilElection - b.daysUntilElection);
+}
+```
+
+---
+
+## 13.5 Regulatory Change Monitor
+
+```typescript
+/**
+ * Regulatory Change Monitor
+ *
+ * Tracks active regulatory reforms and generates alerts for SMBs
+ * based on their country, sector, and compliance status.
+ */
+
+export interface RegulatoryAlert {
+  id: string;
+  country: LatAmCountryCode;
+  reform: RegulatoryReform;
+  alertType: 'new_reform' | 'deadline_approaching' | 'status_change' | 'kitz_action_needed';
+  severity: 'info' | 'warning' | 'urgent' | 'critical';
+  message: string;
+  daysUntilDeadline: number | null;
+  actionItems: string[];
+}
+
+export function getActiveReforms(countryCode?: LatAmCountryCode): RegulatoryReform[] {
+  if (countryCode) {
+    const profile = COUNTRY_RISK_DB[countryCode];
+    return profile ? profile.activeReforms : [];
+  }
+
+  return Object.values(COUNTRY_RISK_DB).flatMap(p => p.activeReforms);
+}
+
+export function getReformsByCategory(category: RegulatoryReform['category']): RegulatoryReform[] {
+  return getActiveReforms().filter(r => r.category === category);
+}
+
+export function generateRegulatoryAlerts(
+  countryCode: LatAmCountryCode,
+  businessSectors: string[] = []
+): RegulatoryAlert[] {
+  const reforms = getActiveReforms(countryCode);
+  const alerts: RegulatoryAlert[] = [];
+  const now = new Date();
+
+  for (const reform of reforms) {
+    // Check for approaching deadlines
+    if (reform.transitionDeadline) {
+      const deadline = new Date(reform.transitionDeadline);
+      const daysUntil = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (daysUntil <= 90 && daysUntil > 0) {
+        const severity = daysUntil <= 30 ? 'critical' : daysUntil <= 60 ? 'urgent' : 'warning';
+        alerts.push({
+          id: `${reform.id}-deadline`,
+          country: countryCode,
+          reform,
+          alertType: 'deadline_approaching',
+          severity,
+          message: `Compliance deadline for "${reform.title}" in ${daysUntil} days (${reform.transitionDeadline}).`,
+          daysUntilDeadline: daysUntil,
+          actionItems: reform.kitzActionRequired,
+        });
+      }
+    }
+
+    // Check for Kitz platform action needed
+    if (reform.kitzActionRequired.length > 0 && reform.status !== 'effective') {
+      alerts.push({
+        id: `${reform.id}-action`,
+        country: countryCode,
+        reform,
+        alertType: 'kitz_action_needed',
+        severity: reform.impactScore <= -5 ? 'urgent' : 'warning',
+        message: `Kitz platform updates needed for "${reform.title}" (${reform.status}).`,
+        daysUntilDeadline: reform.transitionDeadline
+          ? Math.ceil((new Date(reform.transitionDeadline).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+          : null,
+        actionItems: reform.kitzActionRequired,
+      });
+    }
+
+    // Impact severity alert for negative SMB impact
+    if (reform.smbImpact === 'negative' && reform.impactScore <= -4) {
+      alerts.push({
+        id: `${reform.id}-impact`,
+        country: countryCode,
+        reform,
+        alertType: 'new_reform',
+        severity: reform.impactScore <= -7 ? 'critical' : 'warning',
+        message: `High-impact regulatory change: "${reform.title}" -- negative SMB impact score: ${reform.impactScore}/10.`,
+        daysUntilDeadline: null,
+        actionItems: [
+          `Review ${reform.category} compliance for ${COUNTRY_RISK_DB[countryCode]?.countryName}`,
+          'Update cost projections for affected business operations',
+          ...reform.kitzActionRequired,
+        ],
+      });
+    }
+  }
+
+  return alerts.sort((a, b) => {
+    const severityOrder = { critical: 0, urgent: 1, warning: 2, info: 3 };
+    return severityOrder[a.severity] - severityOrder[b.severity];
+  });
+}
+```
+
+---
+
+## 13.6 Compliance Checker
+
+```typescript
+/**
+ * Compliance Checker
+ *
+ * Validates SMB compliance status against country-specific requirements.
+ * Integrates with sanctions screening and AML obligations.
+ */
+
+export interface SanctionsScreeningInput {
+  name: string;
+  aliases?: string[];
+  countryCode: LatAmCountryCode;
+  taxId?: string;
+  dateOfBirth?: string;
+}
+
+const SDN_LISTS = [
+  'OFAC SDN',
+  'OFAC Consolidated',
+  'EU Consolidated Sanctions',
+  'UN Security Council',
+  'UK HMT Sanctions',
+] as const;
+
+// STR thresholds by country (in local currency)
+const STR_THRESHOLDS: Record<string, { amount: number; currency: string; type: string }> = {
+  MX: { amount: 64_710, currency: 'MXN', type: 'cash' },      // ~$3,340 USD
+  BR: { amount: 50_000, currency: 'BRL', type: 'single' },
+  CO: { amount: 50_000_000, currency: 'COP', type: 'single' }, // ~$11K USD
+  AR: { amount: 960_000, currency: 'ARS', type: 'cash' },      // ~$5K USD equivalent
+  CL: { amount: 13_500_000, currency: 'CLP', type: 'single' }, // UF 450 ~$16K
+  PE: { amount: 10_000, currency: 'PEN', type: 'single' },
+  PA: { amount: 10_000, currency: 'USD', type: 'cash' },
+  CR: { amount: 10_000, currency: 'USD', type: 'all' },
+  EC: { amount: 10_000, currency: 'USD', type: 'single' },
+  UY: { amount: 400_000, currency: 'UYU', type: 'cash' },      // ~$10K USD
+  DO: { amount: 600_000, currency: 'DOP', type: 'single' },    // ~$10K USD
+  PY: { amount: 75_000_000, currency: 'PYG', type: 'single' }, // ~$10K USD
+  GT: { amount: 75_000, currency: 'GTQ', type: 'single' },     // ~$10K USD
+  SV: { amount: 10_000, currency: 'USD', type: 'single' },
+  HN: { amount: 250_000, currency: 'HNL', type: 'single' },    // ~$10K USD
+  BO: { amount: 70_000, currency: 'BOB', type: 'single' },     // ~$10K USD
+};
+
+/**
+ * Fuzzy name matching for sanctions screening.
+ * Uses Levenshtein distance normalized to a 0-100 confidence score.
+ */
+function fuzzyNameMatch(name1: string, name2: string): number {
+  const s1 = name1.toLowerCase().trim();
+  const s2 = name2.toLowerCase().trim();
+
+  if (s1 === s2) return 100;
+
+  const len1 = s1.length;
+  const len2 = s2.length;
+  const matrix: number[][] = [];
+
+  for (let i = 0; i <= len1; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= len2; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= len1; i++) {
+    for (let j = 1; j <= len2; j++) {
+      const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,       // deletion
+        matrix[i][j - 1] + 1,       // insertion
+        matrix[i - 1][j - 1] + cost  // substitution
+      );
+    }
+  }
+
+  const maxLen = Math.max(len1, len2);
+  const distance = matrix[len1][len2];
+  return Math.round((1 - distance / maxLen) * 100);
+}
+
+/**
+ * Screen a name against sanctions lists.
+ * In production, this would call OFAC's API or a sanctions screening service.
+ * This implementation demonstrates the matching logic.
+ */
+export async function screenAgainstSanctions(
+  input: SanctionsScreeningInput
+): Promise<ComplianceCheckResult['sanctions']> {
+  const namesToCheck = [input.name, ...(input.aliases || [])];
+  const matchedEntries: SanctionsMatch[] = [];
+
+  // In production: call OFAC screening API, OpenSanctions, or Dow Jones Risk
+  // This is a stub showing the matching logic pattern
+  const sanctionsEntries: Array<{ name: string; sdnType: string; programs: string[]; list: string }> = [];
+
+  // Screen each name variant against each list
+  for (const nameToCheck of namesToCheck) {
+    for (const entry of sanctionsEntries) {
+      const score = fuzzyNameMatch(nameToCheck, entry.name);
+      if (score >= 85) { // 85% threshold for potential match
+        matchedEntries.push({
+          listName: entry.list,
+          matchedName: entry.name,
+          matchScore: score,
+          sdnType: entry.sdnType,
+          programs: entry.programs,
+        });
+      }
+    }
+  }
+
+  return {
+    cleared: matchedEntries.length === 0,
+    matchedEntries,
+    listsChecked: [...SDN_LISTS],
+  };
+}
+
+export function getAmlRequirements(countryCode: LatAmCountryCode): ComplianceCheckResult['aml'] {
+  const threshold = STR_THRESHOLDS[countryCode] || { amount: 10_000, currency: 'USD', type: 'single' };
+  const profile = getCountryRiskProfile(countryCode);
+
+  return {
+    kycComplete: false, // Populated by workspace-level data
+    enhancedDueDiligenceRequired:
+      profile.riskTier === RiskTier.HIGH ||
+      profile.riskTier === RiskTier.CRITICAL ||
+      profile.fatfStatus === 'grey_list',
+    strThreshold: { amount: threshold.amount, currency: threshold.currency },
+    beneficialOwnershipFiled: false, // Populated by workspace-level data
+  };
+}
+
+export async function runComplianceCheck(
+  countryCode: LatAmCountryCode,
+  entityName: string,
+  aliases?: string[]
+): Promise<ComplianceCheckResult> {
+  const sanctions = await screenAgainstSanctions({
+    name: entityName,
+    aliases,
+    countryCode,
+  });
+
+  const aml = getAmlRequirements(countryCode);
+  const profile = getCountryRiskProfile(countryCode);
+
+  const requiredActions: string[] = [];
+
+  if (!sanctions.cleared) {
+    requiredActions.push('CRITICAL: Potential sanctions match detected. Do NOT process transaction. Escalate to compliance officer.');
+  }
+
+  if (aml.enhancedDueDiligenceRequired) {
+    requiredActions.push(`Enhanced due diligence required for ${profile.countryName} (${profile.fatfStatus === 'grey_list' ? 'FATF grey list' : 'high-risk tier'}).`);
+  }
+
+  if (!aml.kycComplete) {
+    requiredActions.push('Complete KYC documentation before processing transactions.');
+  }
+
+  if (!aml.beneficialOwnershipFiled) {
+    requiredActions.push('File beneficial ownership declaration with relevant authority.');
+  }
+
+  if (profile.sanctionsRegime === 'comprehensive') {
+    requiredActions.push(`BLOCKED: ${profile.countryName} is under comprehensive sanctions. No transactions permitted without specific license.`);
+  }
+
+  const overallStatus: ComplianceCheckResult['overallStatus'] =
+    !sanctions.cleared || profile.sanctionsRegime === 'comprehensive'
+      ? 'blocked'
+      : requiredActions.length > 0
+        ? 'action_required'
+        : 'compliant';
+
+  return {
+    country: countryCode,
+    timestamp: new Date().toISOString(),
+    sanctions,
+    aml,
+    regulatory: {
+      businessRegistered: false, // Populated from workspace data
+      taxCompliant: false,
+      laborCompliant: false,
+      dataProtectionCompliant: false,
+      sectorPermits: [],
+    },
+    overallStatus,
+    requiredActions,
+  };
+}
+```
+
+---
+
+## 13.7 Country Risk Dashboard Tool (ToolSchema Integration)
+
+```typescript
+/**
+ * Country Risk Dashboard Tools -- MCP-compatible tool definitions.
+ *
+ * Registers with Kitz's tool registry (registry.ts) to expose political
+ * and regulatory risk analysis through the agent conversation interface.
+ */
+
+import type { ToolSchema } from './registry.js';
+
+export function getAllPoliticalRiskTools(): ToolSchema[] {
+  return [
+    {
+      name: 'risk_countryProfile',
+      description:
+        'Get the full political and regulatory risk profile for a LatAm country. ' +
+        'Returns composite risk score, risk tier, political stability metrics, ' +
+        'election status, active reforms, sanctions status, and key risks.',
+      parameters: {
+        type: 'object',
+        properties: {
+          countryCode: {
+            type: 'string',
+            description: 'ISO 3166-1 alpha-2 country code (e.g., MX, CO, BR, PA)',
+            enum: [
+              'MX', 'CO', 'BR', 'AR', 'CL', 'PE', 'PA', 'CR',
+              'EC', 'UY', 'PY', 'DO', 'GT', 'SV', 'HN', 'BO',
+              'NI', 'VE', 'HT', 'CU',
+            ],
+          },
+        },
+        required: ['countryCode'],
+      },
+      riskLevel: 'low',
+      execute: async (args: { countryCode: LatAmCountryCode }) => {
+        const profile = getCountryRiskProfile(args.countryCode);
+        return {
+          success: true,
+          data: profile,
+          summary: `${profile.countryName}: Risk tier ${profile.riskTier} (score: ${profile.compositeScore}/100). ` +
+            `Head of state: ${profile.headOfState} (${profile.politicalOrientation}). ` +
+            `FATF: ${profile.fatfStatus}. Sanctions: ${profile.sanctionsRegime}. ` +
+            `Election window active: ${profile.electionWindowActive}. ` +
+            `Key risks: ${profile.keyRisks.slice(0, 3).join('; ')}.`,
+        };
+      },
+    },
+
+    {
+      name: 'risk_electionCalendar',
+      description:
+        'Get upcoming elections across LatAm with countdown timers, ' +
+        'policy shift risk assessments, and SMB advisory content.',
+      parameters: {
+        type: 'object',
+        properties: {
+          months: {
+            type: 'number',
+            description: 'Number of months ahead to look (default: 12)',
+          },
+        },
+      },
+      riskLevel: 'low',
+      execute: async (args: { months?: number }) => {
+        const elections = getUpcomingElections(args.months || 12);
+        return {
+          success: true,
+          data: elections,
+          summary: `${elections.length} upcoming elections in the next ${args.months || 12} months. ` +
+            elections
+              .filter(e => e.urgency !== 'none')
+              .map(e => `${e.event.country}: ${e.event.type} in ${e.daysUntilElection} days (${e.urgency})`)
+              .join('; '),
+        };
+      },
+    },
+
+    {
+      name: 'risk_regulatoryAlerts',
+      description:
+        'Get regulatory change alerts for a specific country. Returns ' +
+        'active reforms, approaching deadlines, and required Kitz platform actions.',
+      parameters: {
+        type: 'object',
+        properties: {
+          countryCode: {
+            type: 'string',
+            description: 'ISO 3166-1 alpha-2 country code',
+          },
+          businessSectors: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Business sectors to filter alerts (e.g., retail, food, transport)',
+          },
+        },
+        required: ['countryCode'],
+      },
+      riskLevel: 'low',
+      execute: async (args: { countryCode: LatAmCountryCode; businessSectors?: string[] }) => {
+        const alerts = generateRegulatoryAlerts(args.countryCode, args.businessSectors);
+        return {
+          success: true,
+          data: alerts,
+          summary: `${alerts.length} regulatory alerts for ${args.countryCode}. ` +
+            `Critical: ${alerts.filter(a => a.severity === 'critical').length}. ` +
+            `Urgent: ${alerts.filter(a => a.severity === 'urgent').length}. ` +
+            `Warning: ${alerts.filter(a => a.severity === 'warning').length}.`,
+        };
+      },
+    },
+
+    {
+      name: 'risk_complianceCheck',
+      description:
+        'Run a compliance check on an entity -- screens against sanctions lists, ' +
+        'checks AML requirements, and validates country-level compliance status.',
+      parameters: {
+        type: 'object',
+        properties: {
+          countryCode: {
+            type: 'string',
+            description: 'Country where the entity operates',
+          },
+          entityName: {
+            type: 'string',
+            description: 'Legal name of the entity to screen',
+          },
+          aliases: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Known aliases or trade names',
+          },
+        },
+        required: ['countryCode', 'entityName'],
+      },
+      riskLevel: 'medium',
+      execute: async (args: { countryCode: LatAmCountryCode; entityName: string; aliases?: string[] }) => {
+        const result = await runComplianceCheck(args.countryCode, args.entityName, args.aliases);
+        return {
+          success: true,
+          data: result,
+          summary: `Compliance check for "${args.entityName}" in ${args.countryCode}: ` +
+            `Status: ${result.overallStatus.toUpperCase()}. ` +
+            `Sanctions cleared: ${result.sanctions.cleared}. ` +
+            `EDD required: ${result.aml.enhancedDueDiligenceRequired}. ` +
+            `Actions needed: ${result.requiredActions.length}.`,
+        };
+      },
+    },
+
+    {
+      name: 'risk_compareCounsties',
+      description:
+        'Compare political and regulatory risk profiles across multiple countries. ' +
+        'Useful for expansion planning and market entry decisions.',
+      parameters: {
+        type: 'object',
+        properties: {
+          countryCodes: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Array of ISO 3166-1 alpha-2 country codes to compare',
+            minItems: 2,
+            maxItems: 6,
+          },
+        },
+        required: ['countryCodes'],
+      },
+      riskLevel: 'low',
+      execute: async (args: { countryCodes: LatAmCountryCode[] }) => {
+        const profiles = args.countryCodes.map(getCountryRiskProfile);
+        const ranked = profiles.sort((a, b) => b.compositeScore - a.compositeScore);
+
+        const comparison = ranked.map(p => ({
+          country: p.countryName,
+          code: p.countryCode,
+          compositeScore: p.compositeScore,
+          riskTier: p.riskTier,
+          fatfStatus: p.fatfStatus,
+          sanctionsRegime: p.sanctionsRegime,
+          electionWindow: p.electionWindowActive,
+          activeReformCount: p.activeReforms.length,
+          topRisks: p.keyRisks.slice(0, 2),
+        }));
+
+        return {
+          success: true,
+          data: comparison,
+          summary: `Country comparison (best to worst): ` +
+            ranked.map(p => `${p.countryCode}=${p.compositeScore}`).join(', ') +
+            `. Best for SMB expansion: ${ranked[0].countryName} (${ranked[0].riskTier}).`,
+        };
+      },
+    },
+
+    {
+      name: 'risk_dashboard',
+      description:
+        'Get the full political risk dashboard -- aggregated view of all LatAm countries ' +
+        'with risk tiers, active election windows, regulatory alerts, and sanctions status.',
+      parameters: { type: 'object', properties: {} },
+      riskLevel: 'low',
+      execute: async () => {
+        const profiles = getAllCountryRiskProfiles();
+        const electionsActive = profiles.filter(p => p.electionWindowActive);
+        const greyListCountries = profiles.filter(p => p.fatfStatus === 'grey_list');
+        const sanctionedCountries = profiles.filter(p => p.sanctionsRegime !== 'none');
+        const criticalCountries = profiles.filter(p => p.riskTier === RiskTier.CRITICAL);
+        const totalAlerts = profiles.reduce(
+          (sum, p) => sum + generateRegulatoryAlerts(p.countryCode).length,
+          0
+        );
+
+        return {
+          success: true,
+          data: {
+            totalCountries: profiles.length,
+            byTier: {
+              LOW: profiles.filter(p => p.riskTier === RiskTier.LOW).map(p => p.countryCode),
+              MEDIUM: profiles.filter(p => p.riskTier === RiskTier.MEDIUM).map(p => p.countryCode),
+              MEDIUM_HIGH: profiles.filter(p => p.riskTier === RiskTier.MEDIUM_HIGH).map(p => p.countryCode),
+              HIGH: profiles.filter(p => p.riskTier === RiskTier.HIGH).map(p => p.countryCode),
+              CRITICAL: profiles.filter(p => p.riskTier === RiskTier.CRITICAL).map(p => p.countryCode),
+            },
+            activeElectionWindows: electionsActive.map(p => ({
+              country: p.countryCode,
+              election: p.nextPresidentialElection?.date || p.nextLegislativeElection?.date,
+            })),
+            fatfGreyList: greyListCountries.map(p => p.countryCode),
+            sanctioned: sanctionedCountries.map(p => ({ country: p.countryCode, regime: p.sanctionsRegime })),
+            critical: criticalCountries.map(p => p.countryCode),
+            totalRegulatoryAlerts: totalAlerts,
+          },
+          summary:
+            `LatAm Risk Dashboard: ${profiles.length} countries tracked. ` +
+            `${electionsActive.length} in active election windows. ` +
+            `${greyListCountries.length} on FATF grey list. ` +
+            `${sanctionedCountries.length} under sanctions. ` +
+            `${criticalCountries.length} at CRITICAL risk. ` +
+            `${totalAlerts} active regulatory alerts.`,
+        };
+      },
+    },
+  ];
+}
+```
+
+---
+
+## 13.8 Usage Examples
+
+```typescript
+// ── Example 1: Get country risk profile ──
+const mexicoRisk = getCountryRiskProfile('MX');
+console.log(`Mexico risk: ${mexicoRisk.riskTier} (${mexicoRisk.compositeScore}/100)`);
+console.log(`Election window: ${mexicoRisk.electionWindowActive}`);
+console.log(`FATF: ${mexicoRisk.fatfStatus}, Sanctions: ${mexicoRisk.sanctionsRegime}`);
+
+// ── Example 2: Election countdown ──
+const elections = getUpcomingElections(12);
+for (const e of elections) {
+  console.log(`${e.event.country} ${e.event.type}: ${e.daysUntilElection} days (${e.urgency})`);
+  for (const advisory of e.advisories) {
+    console.log(`  -> ${advisory}`);
+  }
+}
+
+// ── Example 3: Regulatory alerts for Colombia ──
+const alerts = generateRegulatoryAlerts('CO');
+for (const alert of alerts) {
+  console.log(`[${alert.severity.toUpperCase()}] ${alert.message}`);
+  for (const action of alert.actionItems) {
+    console.log(`  Action: ${action}`);
+  }
+}
+
+// ── Example 4: Compliance check ──
+const check = await runComplianceCheck('VE', 'Petroleum Corp Venezuela', ['PCV SA']);
+console.log(`Status: ${check.overallStatus}`);
+console.log(`Sanctions cleared: ${check.sanctions.cleared}`);
+for (const action of check.requiredActions) {
+  console.log(`  Required: ${action}`);
+}
+
+// ── Example 5: Country comparison for expansion ──
+const tools = getAllPoliticalRiskTools();
+const compareTool = tools.find(t => t.name === 'risk_compareCounsties');
+if (compareTool) {
+  const result = await compareTool.execute({ countryCodes: ['PA', 'CR', 'CO', 'MX'] });
+  console.log(result.summary);
+}
+
+// ── Example 6: Full dashboard ──
+const dashboardTool = tools.find(t => t.name === 'risk_dashboard');
+if (dashboardTool) {
+  const dashboard = await dashboardTool.execute({});
+  console.log(dashboard.summary);
+}
+```
+
+---
+
+## Appendix: Data Sources and Refresh Cadence
+
+| Source | Data Used | URL | Refresh Frequency |
+|---|---|---|---|
+| World Bank WGI | Political stability, rule of law, gov. effectiveness, regulatory quality, corruption control | info.worldbank.org/governance/wgi | Annually (December) |
+| Transparency International CPI | Corruption scores | transparency.org/en/cpi | Annually (January) |
+| EIU Democracy Index | Democracy classification and scores | eiu.com/n/campaigns/democracy-index | Annually (February) |
+| FATF | Grey/black list status, AML compliance | fatf-gafi.org/en/countries/black-and-grey-lists | Tri-annually (Feb, Jun, Oct) |
+| OFAC | Sanctions lists, SDN entries, general licenses | ofac.treasury.gov | Bi-monthly or as updated |
+| AS/COA | Election calendar, political analysis | as-coa.org | Continuous |
+| Georgetown SIGLA | Electoral data, political indicators | sigla.georgetown.domains | Continuous |
+| InSight Crime | Homicide rates, organized crime analysis | insightcrime.org | Quarterly |
+| World Bank B-READY | Business environment, regulatory quality | worldbank.org/en/businessready | Annually |
+| ECLAC | Trade data, tariff analysis | cepal.org | Annually |
+| National tax authorities | Tax rates, reform details, compliance rules | Various (SAT, DIAN, Receita, SII, etc.) | As updated |
+
+---
+
+*End of document. This intelligence brief should be refreshed quarterly or upon any major
+political event (election, coup, sanctions change, FATF plenary). The TypeScript
+implementation should be deployed as `politicalRiskTools.ts` in `kitz_os/src/tools/` and
+registered in `registry.ts`.*

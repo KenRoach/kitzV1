@@ -216,6 +216,57 @@ All colors are defined as CSS custom properties and mapped into Tailwind via the
 | `surface-overlay`   | `rgba(0, 0, 0, 0.5)`    | `--color-surface-overlay`     | Modal/dialog backdrop              |
 | `surface-dark`      | `#1e1b4b`                | `--color-surface-dark`        | AI chat panel, dark regions        |
 
+#### 60/30/10 Color Distribution Rule
+
+The Kitz UI follows the **60/30/10 rule** — a proven design principle that ensures visual harmony, brand recognition, and intuitive hierarchy across every screen.
+
+| Role | Weight | Colors | Where It Appears |
+|------|--------|--------|------------------|
+| **60% Dominant** | Backgrounds, large surfaces | White (`#ffffff`), `gray-50` (`#f8fafc`), `gray-100` (`#f1f5f9`) | Page backgrounds, content areas, card bodies, sidebar fills, modal bodies, table cells |
+| **30% Secondary** | Structure, text, depth | `gray-200`-`gray-900` range | Body text, headings, borders, dividers, card outlines, table headers, secondary panels, input borders, placeholder text |
+| **10% Accent** | Brand, interaction, focus | `purple-500` (`#a855f7`), `purple-600`, `purple-700`, `purple-50`-`purple-200` for tints | Primary buttons, active nav items, focus rings, links, selected rows, tab indicators, badges, toggle states, the Kitz Orb |
+
+**CSS Custom Properties (registered in `@theme`):**
+
+```css
+/* 60% Dominant */
+--color-dominant:       #ffffff;     /* Primary background */
+--color-dominant-alt:   #f8fafc;     /* Secondary background (sidebar, panels) */
+--color-dominant-muted: #f1f5f9;     /* Tertiary background (inset areas) */
+
+/* 30% Secondary */
+--color-secondary:         #64748b;  /* Default text */
+--color-secondary-strong:  #334155;  /* Emphasized text, headings */
+--color-secondary-subtle:  #e2e8f0;  /* Borders, dividers */
+--color-secondary-surface: #f1f5f9;  /* Structural fills (table headers) */
+
+/* 10% Accent */
+--color-accent:        #a855f7;      /* Primary CTA, buttons */
+--color-accent-hover:  #9333ea;      /* Hover state */
+--color-accent-active: #7c3aed;      /* Active/pressed state */
+--color-accent-soft:   #f3e8ff;      /* Accent background tint */
+--color-accent-muted:  #e9d5ff;      /* Accent decorative fill */
+--color-accent-text:   #7c3aed;      /* Accent text (meets AA on white) */
+```
+
+**Guidelines for maintaining the 60/30/10 balance:**
+
+1. **Backgrounds must stay dominant (60%).** The majority of any screen should be white or near-white. Never use purple or gray as a full-page background (except `surface-dark` for the AI chat panel).
+2. **Gray provides structure (30%).** Text, borders, and dividers create the visual skeleton. This is where readability lives — body text at `gray-700`, headings at `gray-900`, borders at `gray-200`.
+3. **Purple is reserved for impact (10%).** Every purple element should draw the eye to something actionable or important. If purple appears everywhere, it loses its power. Use it for: primary buttons, active states, focus rings, brand marks, and the Kitz Orb. Never use purple for body text or large background fills (except subtle `purple-50` tints on selected rows).
+4. **Semantic colors are exempt.** Success (green), error (red), warning (amber), and info (blue) operate outside the 60/30/10 system. They appear contextually and sparingly.
+5. **Dark mode exception.** The AI chat panel (`surface-dark: #1e1b4b`) inverts the dominant — here, dark is the 60%, light text is the 30%, and purple accents remain the 10%.
+
+**Visual audit checklist — use when reviewing any new screen:**
+
+- [ ] Is 60%+ of the visible area white/light neutral?
+- [ ] Are gray tones used for text, borders, and structural elements (~30%)?
+- [ ] Is purple limited to interactive/brand elements (~10%)?
+- [ ] Does every purple element serve a purpose (CTA, active state, brand)?
+- [ ] Are semantic colors (green/red/amber/blue) used only for status, not decoration?
+
+---
+
 **Tailwind v4 CSS registration:**
 
 ```css
@@ -1874,6 +1925,24 @@ Below is the recommended Tailwind CSS v4 entry point that registers all design t
   --color-surface-elevated: #ffffff;
   --color-surface-overlay: rgba(0, 0, 0, 0.5);
   --color-surface-dark: #1e1b4b;
+
+  /* ===== 60/30/10 Color Roles ===== */
+  /* 60% Dominant — backgrounds, large surfaces */
+  --color-dominant: #ffffff;
+  --color-dominant-alt: #f8fafc;
+  --color-dominant-muted: #f1f5f9;
+  /* 30% Secondary — structure, text, depth */
+  --color-secondary: #64748b;
+  --color-secondary-strong: #334155;
+  --color-secondary-subtle: #e2e8f0;
+  --color-secondary-surface: #f1f5f9;
+  /* 10% Accent — brand, CTAs, interaction */
+  --color-accent: #a855f7;
+  --color-accent-hover: #9333ea;
+  --color-accent-active: #7c3aed;
+  --color-accent-soft: #f3e8ff;
+  --color-accent-muted: #e9d5ff;
+  --color-accent-text: #7c3aed;
 
   /* ===== Border Radius ===== */
   --radius-none: 0;

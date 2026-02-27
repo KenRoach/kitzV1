@@ -45,6 +45,31 @@
   --color-surface-tertiary: #f1f5f9;
   --color-surface-dark: #1e1b4b;
 
+  /* ── 60/30/10 Color Roles ──
+   * 60% Dominant  — backgrounds, large surfaces, content areas
+   * 30% Secondary — structure, borders, text, cards, supporting UI
+   * 10% Accent    — CTAs, active states, brand highlights, focus rings
+   */
+
+  /* 60% Dominant — white/light neutrals covering most screen area */
+  --color-dominant: #ffffff;
+  --color-dominant-alt: #f8fafc;
+  --color-dominant-muted: #f1f5f9;
+
+  /* 30% Secondary — grays for structure, text, depth */
+  --color-secondary: #64748b;
+  --color-secondary-strong: #334155;
+  --color-secondary-subtle: #e2e8f0;
+  --color-secondary-surface: #f1f5f9;
+
+  /* 10% Accent — purple brand for impact elements */
+  --color-accent: #a855f7;
+  --color-accent-hover: #9333ea;
+  --color-accent-active: #7c3aed;
+  --color-accent-soft: #f3e8ff;
+  --color-accent-muted: #e9d5ff;
+  --color-accent-text: #7c3aed;
+
   /* ── Radius ── */
   --radius-sm: 4px;
   --radius-md: 8px;
