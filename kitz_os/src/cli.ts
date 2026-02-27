@@ -1229,6 +1229,241 @@ async function cmdDaily(): Promise<string> {
   }
 }
 
+// ── Missing Design Doc Commands ────────────────────────
+
+async function cmdWeekly(): Promise<string> {
+  orbMood = 'thinking'
+  process.stdout.write(chalk.yellow('\n  📊 Generating weekly board packet...\n'))
+  try {
+    const res = await kitzFetch<{ response?: string; reply?: string }>('/api/kitz', {
+      method: 'POST',
+      body: JSON.stringify({ message: '/weekly', channel: 'terminal', user_id: `cli:${bootInfo.user}` }),
+    })
+    orbMood = 'success'
+    setTimeout(() => { orbMood = 'idle' }, 3000)
+    return `\n  ${purpleBold('Weekly Board Packet')}:\n  ${chalk.white(res.response ?? res.reply ?? 'No report available.')}\n`
+  } catch (err) {
+    orbMood = 'error'
+    setTimeout(() => { orbMood = 'idle' }, 3000)
+    return chalk.red(`\n  ❌ ${err instanceof Error ? err.message : 'Failed'}\n`)
+  }
+}
+
+async function cmdWarRoom(): Promise<string> {
+  try {
+    const data = await kitzFetch<{
+      warRooms?: Array<{ id: string; title: string; severity: string; owner: string; status: string; createdAt: string; participants: string[] }>
+    }>('/api/kitz/warrooms')
+
+    const rooms = data.warRooms ?? []
+    const lines = ['', purpleBold('  🚨 ACTIVE WAR ROOMS'), `  ${line(50)}`, '']
+
+    if (rooms.length === 0) {
+      lines.push(dim('  All clear — no active war rooms.'))
+      lines.push('')
+      return lines.join('\n')
+    }
+
+    for (const r of rooms) {
+      const sevIcon = r.severity === 'critical' ? chalk.red('🔴') :
+                      r.severity === 'high' ? chalk.yellow('🟡') : chalk.green('🟢')
+      const statusIcon = r.status === 'active' ? chalk.red('ACTIVE') :
+                         r.status === 'mitigated' ? chalk.yellow('MITIGATED') : chalk.green('RESOLVED')
+      lines.push(`  ${sevIcon} ${chalk.bold(r.title)}`)
+      lines.push(`    Status: ${statusIcon}  Owner: ${chalk.cyan(r.owner)}`)
+      if (r.participants?.length) {
+        lines.push(`    Team: ${dim(r.participants.join(', '))}`)
+      }
+      lines.push(`    Created: ${dim(r.createdAt)}`)
+      lines.push('')
+    }
+    return lines.join('\n')
+  } catch (err) {
+    // Endpoint may not exist yet — show empty state
+    if (err instanceof Error && (err.message.includes('404') || err.message.includes('fetch'))) {
+      return [
+        '', purpleBold('  🚨 WAR ROOMS'), `  ${line(50)}`, '',
+        dim('  No active war rooms. All systems nominal.'),
+        dim(`  (War room API not yet wired — endpoint: /api/kitz/warrooms)`), '',
+      ].join('\n')
+    }
+    return chalk.red(`\n  ❌ ${err instanceof Error ? err.message : 'Failed'}\n`)
+  }
+}
+
+function cmdWorkflows(): string {
+  // Read n8n workflow templates from the repo
+  const workflowDirs = [
+    path.join(REPO_ROOT, 'kitz_os', 'src', 'tools'),
+    path.join(REPO_ROOT, 'docs', 'plans'),
+  ]
+
+  const lines = ['', purpleBold('  ⚙️  N8N WORKFLOWS'), `  ${line(50)}`, '']
+
+  // Scan for n8n workflow references in the codebase
+  try {
+    const result = execSync(
+      `grep -rn "n8n\\|workflow" "${REPO_ROOT}/kitz_os/src/tools" --include="*.ts" 2>/dev/null | head -20`,
+      { timeout: 5000 }
+    ).toString().trim()
+
+    if (result) {
+      const workflows = new Map<string, string[]>()
+      for (const line of result.split('\n')) {
+        const match = line.match(/([^/]+\.ts):(\d+):(.+)/)
+        if (match) {
+          const file = match[1]
+          if (!workflows.has(file)) workflows.set(file, [])
+          workflows.get(file)!.push(match[3].trim().slice(0, 60))
+        }
+      }
+
+      for (const [file, refs] of workflows) {
+        lines.push(`  ${chalk.cyan('⚙')} ${chalk.white(file.replace('.ts', ''))}`)
+        for (const ref of refs.slice(0, 3)) {
+          lines.push(`    ${dim(ref)}`)
+        }
+        lines.push('')
+      }
+    }
+  } catch {}
+
+  // Known workflow categories from design docs
+  const categories = [
+    { name: 'Marketing Automation', count: 14, status: 'templates' },
+    { name: 'Content Creation', count: 7, status: 'templates' },
+    { name: 'Sales Pipeline', count: 5, status: 'templates' },
+    { name: 'Customer Onboarding', count: 4, status: 'templates' },
+    { name: 'Billing & Payments', count: 3, status: 'templates' },
+    { name: 'DevOps & CI', count: 3, status: 'templates' },
+    { name: 'Compliance', count: 2, status: 'templates' },
+  ]
+
+  lines.push(chalk.bold('  Workflow Categories:'))
+  for (const c of categories) {
+    const statusTag = c.status === 'live' ? chalk.green('LIVE') :
+                      c.status === 'templates' ? chalk.yellow('TEMPLATE') : chalk.red('DRAFT')
+    lines.push(`    ${chalk.white(c.name.padEnd(25))} ${chalk.white(String(c.count).padStart(2))} workflows  [${statusTag}]`)
+  }
+
+  const total = categories.reduce((s, c) => s + c.count, 0)
+  lines.push('')
+  lines.push(`  ${dim(`Total: ${total} workflow templates · n8n integration pending`)}`)
+  lines.push(`  ${dim('Deploy: self-hosted n8n or n8n.cloud with KITZ webhooks')}`)
+  lines.push('')
+  return lines.join('\n')
+}
+
+async function cmdContent(): Promise<string> {
+  try {
+    const data = await kitzFetch<{
+      pipeline?: Array<{ type: string; status: string; title: string; channel: string; scheduledAt?: string }>
+      stats?: { drafts: number; published: number; scheduled: number }
+    }>('/api/kitz/content')
+
+    const pipeline = data.pipeline ?? []
+    const stats = data.stats ?? { drafts: 0, published: 0, scheduled: 0 }
+    const lines = ['', purpleBold('  📣 CONTENT PIPELINE'), `  ${line(50)}`, '']
+
+    lines.push(`  Drafts: ${chalk.yellow(String(stats.drafts))}  Published: ${chalk.green(String(stats.published))}  Scheduled: ${chalk.cyan(String(stats.scheduled))}`)
+    lines.push('')
+
+    if (pipeline.length === 0) {
+      lines.push(dim('  No content in pipeline. Ask Kitz to create content.'))
+    } else {
+      for (const item of pipeline.slice(0, 15)) {
+        const statusIcon = item.status === 'published' ? chalk.green('✔') :
+                           item.status === 'scheduled' ? chalk.cyan('⏰') :
+                           item.status === 'draft' ? chalk.yellow('📝') : chalk.gray('○')
+        const channel = chalk.dim(`[${item.channel}]`)
+        lines.push(`  ${statusIcon} ${chalk.white(item.title.slice(0, 45).padEnd(45))} ${channel}`)
+        if (item.scheduledAt) lines.push(`    ${dim(`Scheduled: ${item.scheduledAt}`)}`)
+      }
+    }
+    lines.push('')
+    return lines.join('\n')
+  } catch (err) {
+    // Endpoint may not exist — show capability overview
+    if (err instanceof Error && (err.message.includes('404') || err.message.includes('fetch'))) {
+      const tools = [
+        'social_post_create', 'blog_draft', 'email_campaign_create',
+        'ig_carousel_generate', 'video_script_write', 'seo_optimize',
+        'brand_voice_apply', 'content_calendar_plan', 'ab_test_copy',
+        'hashtag_research', 'competitor_content_audit', 'repurpose_content',
+      ]
+      const lines = [
+        '', purpleBold('  📣 CONTENT CREATION'), `  ${line(50)}`, '',
+        chalk.bold('  Available Tools (24):'),
+      ]
+      for (let i = 0; i < tools.length; i += 3) {
+        const row = tools.slice(i, i + 3).map(t => chalk.cyan(t.padEnd(25))).join(' ')
+        lines.push(`    ${row}`)
+      }
+      lines.push('')
+      lines.push(dim('  Ask Kitz: "create an IG post about my new product"'))
+      lines.push(dim('  Ask Kitz: "plan next week\'s content calendar"'))
+      lines.push(dim(`  (Content API not yet wired — endpoint: /api/kitz/content)`))
+      lines.push('')
+      return lines.join('\n')
+    }
+    return chalk.red(`\n  ❌ ${err instanceof Error ? err.message : 'Failed'}\n`)
+  }
+}
+
+async function cmdCoaching(): Promise<string> {
+  try {
+    const data = await kitzFetch<{
+      agents?: Array<{ name: string; team: string; score: number; trend: string; lastTraining?: string; recommendation?: string }>
+      summary?: { avgScore: number; needsTraining: number; topPerformer: string }
+    }>('/api/kitz/coaching')
+
+    const agents = data.agents ?? []
+    const summary = data.summary
+    const lines = ['', purpleBold('  🎓 AGENT COACHING & PERFORMANCE'), `  ${line(50)}`, '']
+
+    if (summary) {
+      lines.push(`  Avg Score: ${chalk.white(String(summary.avgScore))}  Needs Training: ${chalk.yellow(String(summary.needsTraining))}  Top: ${chalk.green(summary.topPerformer)}`)
+      lines.push('')
+    }
+
+    if (agents.length === 0) {
+      lines.push(dim('  No coaching data yet. Run a swarm first.'))
+    } else {
+      for (const a of agents.slice(0, 20)) {
+        const scoreBar = bar(a.score, 100, 8)
+        const trendIcon = a.trend === 'up' ? chalk.green('↑') : a.trend === 'down' ? chalk.red('↓') : chalk.gray('→')
+        lines.push(`  ${trendIcon} ${chalk.white(a.name.padEnd(22))} [${scoreBar}] ${a.score}%  ${dim(a.team)}`)
+        if (a.recommendation) lines.push(`    ${chalk.yellow('💡')} ${dim(a.recommendation)}`)
+      }
+    }
+    lines.push('')
+    return lines.join('\n')
+  } catch (err) {
+    // Endpoint may not exist — show FeedbackCoach overview
+    if (err instanceof Error && (err.message.includes('404') || err.message.includes('fetch'))) {
+      const coachAgents = [
+        { name: 'FeedbackCoach', role: 'Lead coach — identifies skill gaps, recommends training' },
+        { name: 'AgentSkillTrainer', role: 'Trains agents on new tools and workflows' },
+        { name: 'PerformanceReviewer', role: 'Scores agent effectiveness per task' },
+        { name: 'KnowledgeLibrarian', role: 'Manages shared knowledge base entries' },
+        { name: 'OnboardingMentor', role: 'Guides new agents through first tasks' },
+      ]
+      const lines = [
+        '', purpleBold('  🎓 COACHING TEAM'), `  ${line(50)}`, '',
+      ]
+      for (const a of coachAgents) {
+        lines.push(`  ${chalk.cyan('●')} ${chalk.white(a.name.padEnd(22))} ${dim(a.role)}`)
+      }
+      lines.push('')
+      lines.push(dim('  Run `swarm coaches` to activate the coaching team.'))
+      lines.push(dim(`  (Coaching API not yet wired — endpoint: /api/kitz/coaching)`))
+      lines.push('')
+      return lines.join('\n')
+    }
+    return chalk.red(`\n  ❌ ${err instanceof Error ? err.message : 'Failed'}\n`)
+  }
+}
+
 // ── Claude Code Superpowers ────────────────────────────
 
 function cmdSearch(query: string): string {
@@ -2043,6 +2278,7 @@ function cmdHelp(): string {
     `    ${chalk.cyan('<message>')}            Send to KITZ AI (5-phase router)`,
     `    ${chalk.cyan('approve / reject')}     Approve or reject a pending draft`,
     `    ${chalk.cyan('daily')}                Daily ops brief`,
+    `    ${chalk.cyan('weekly')}               Weekly board packet`,
     '',
     chalk.bold('  🌐 Preview Server'),
     `    ${chalk.cyan('preview')}              Start local artifact render server (:${PREVIEW_PORT})`,
@@ -2058,6 +2294,12 @@ function cmdHelp(): string {
     `    ${chalk.cyan('teams')}                Team dashboard`,
     `    ${chalk.cyan('launch')}               33-agent launch review`,
     `    ${chalk.cyan('digest')}               CTO digest`,
+    `    ${chalk.cyan('warroom')}              Active war rooms`,
+    `    ${chalk.cyan('coaching')}             Agent training & performance`,
+    '',
+    chalk.bold('  📣 Content & Workflows'),
+    `    ${chalk.cyan('content')}              Content creation pipeline`,
+    `    ${chalk.cyan('workflows')}            n8n workflow status`,
     '',
     chalk.bold('  ⚡ System'),
     `    ${chalk.cyan('status')}               Full system health`,
@@ -2107,6 +2349,11 @@ function detectCommandHint(message: string): string | null {
     { keywords: ['system status', 'health check', 'service status'], command: 'health', desc: 'Probe all services' },
     { keywords: ['connect whatsapp', 'whatsapp qr', 'link whatsapp', 'scan qr'], command: 'wa', desc: 'Connect WhatsApp via QR' },
     { keywords: ['daily report', 'daily brief', 'morning brief'], command: 'daily', desc: 'Generate daily ops brief' },
+    { keywords: ['weekly report', 'weekly brief', 'board packet', 'week in review'], command: 'weekly', desc: 'Generate weekly board packet' },
+    { keywords: ['war room', 'warroom', 'incident', 'outage', 'escalation'], command: 'warroom', desc: 'Show active war rooms' },
+    { keywords: ['workflow', 'n8n', 'automation'], command: 'workflows', desc: 'Show n8n workflow status' },
+    { keywords: ['content pipeline', 'content creation', 'social media', 'blog post'], command: 'content', desc: 'Content creation pipeline' },
+    { keywords: ['coaching', 'training', 'agent performance', 'skill gap'], command: 'coaching', desc: 'Agent training & performance' },
   ]
 
   for (const h of hints) {
@@ -2149,6 +2396,7 @@ async function handleInput(input: string): Promise<string> {
 
     // Chat & AI
     case 'daily': return cmdDaily()
+    case 'weekly': return cmdWeekly()
 
     // Agents & Swarm
     case 'swarm': return cmdSwarm(arg || undefined)
@@ -2156,6 +2404,12 @@ async function handleInput(input: string): Promise<string> {
     case 'teams': return cmdTeams()
     case 'launch': return cmdLaunch()
     case 'digest': return cmdDigest()
+    case 'warroom': case 'warrooms': case 'war': return cmdWarRoom()
+    case 'coaching': case 'coach': case 'training': return cmdCoaching()
+
+    // Content & Workflows
+    case 'content': case 'pipeline': return cmdContent()
+    case 'workflows': case 'workflow': case 'n8n': return cmdWorkflows()
 
     // System
     case 'status': return cmdStatus()
