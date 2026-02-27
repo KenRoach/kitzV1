@@ -159,10 +159,10 @@ function buildBrainPrompt(
 }
 
 function getStaticFallback(senderName: string, language: SupportedLanguage): string {
-  if (language === 'es') return `Hola ${senderName}, gracias por contactarnos. Estamos revisando tu solicitud y te responderemos pronto.\n\nKenneth @ KITZ`;
-  if (language === 'pt') return `Olá ${senderName}, obrigado por entrar em contato. Estamos analisando sua solicitação e responderemos em breve.\n\nKenneth @ KITZ`;
-  if (language === 'fr') return `Bonjour ${senderName}, merci de nous avoir contactés. Nous examinons votre demande et vous répondrons bientôt.\n\nKenneth @ KITZ`;
-  return `Hey ${senderName}, thanks for reaching out. We're reviewing your request and will get back to you soon.\n\nKenneth @ KITZ`;
+  if (language === 'es') return `Hola ${senderName},\n\nEstamos temporalmente no disponibles. Te responderemos lo antes posible.\n\nKenneth @ KITZ`;
+  if (language === 'pt') return `Olá ${senderName},\n\nEstamos temporariamente indisponíveis. Retornaremos o mais breve possível.\n\nKenneth @ KITZ`;
+  if (language === 'fr') return `Bonjour ${senderName},\n\nNous sommes temporairement indisponibles. Nous vous répondrons dès que possible.\n\nKenneth @ KITZ`;
+  return `Hey ${senderName},\n\nWe're currently unavailable. We will get back to you as soon as possible.\n\nKenneth @ KITZ`;
 }
 
 export async function generateDraftResponse(
