@@ -125,7 +125,7 @@ export function ChatPanel() {
           </button>
           <button className="flex items-center gap-1.5 rounded-lg px-2 py-1 transition hover:bg-white/10">
             <span className="text-white/50">Active Agents</span>
-            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold text-white">{agentSteps.filter((s) => s.status === 'pending').length || 0}</span>
+            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold text-white">{agentSteps.filter((s) => s.status === 'active').length || 0}</span>
           </button>
           <button
             onClick={() => setEchoToWhatsApp(!echoToWhatsApp)}
