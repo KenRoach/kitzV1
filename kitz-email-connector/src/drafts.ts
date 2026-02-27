@@ -289,10 +289,10 @@ function wrapInBrandedHtml(body: string, caseNumber: string, senderName: string,
   const bodyHtml = body.replace(/\n/g, '<br>');
   const caseLabel = language === 'fr' ? 'Dossier' : language === 'en' ? 'Case' : 'Caso';
   const disclaimer: Record<SupportedLanguage, string> = {
-    en: 'This content was created by AI. Please review thoroughly before taking action.',
-    es: 'Este contenido fue creado por IA. Por favor revisa cuidadosamente antes de tomar accion.',
-    pt: 'Este conteudo foi criado por IA. Por favor, revise cuidadosamente antes de tomar qualquer acao.',
-    fr: "Ce contenu a été créé par l'IA. Veuillez le vérifier attentivement avant d'agir.",
+    en: 'This content was created by AI. Please review carefully.',
+    es: 'Este contenido fue creado por IA, revisar con calma.',
+    pt: 'Este conteúdo foi criado por IA. Revise com calma.',
+    fr: "Ce contenu a été créé par l'IA. Veuillez vérifier avec soin.",
   };
 
   return `<div style="max-width:600px;margin:0 auto;font-family:'Inter',-apple-system,Arial,sans-serif;background:#f8f7ff;border-radius:16px;overflow:hidden">

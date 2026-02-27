@@ -162,7 +162,7 @@ const TEMPLATES: Record<SupportedLanguage, {
     greeting: (name) => `Hey ${name},`,
     body: (cn) => `Got your message. Your case number is <strong>${cn}</strong>.\n\nWe're on it. Expect a response within <strong>24 hours</strong>. Reply here to add details.`,
     replyHint: 'Reply to this email to add more details.',
-    aiDisclaimer: 'This content was created by AI. Please review thoroughly before taking action.',
+    aiDisclaimer: 'This content was created by AI. Please review carefully.',
   },
   es: {
     subjectPrefix: 'Re:',
@@ -170,7 +170,7 @@ const TEMPLATES: Record<SupportedLanguage, {
     greeting: (name) => `Hola ${name},`,
     body: (cn) => `Recibimos tu mensaje. Tu numero de caso es <strong>${cn}</strong>.\n\nEstamos en ello. Espera una respuesta dentro de <strong>24 horas</strong>. Responde a este correo para agregar mas detalles.`,
     replyHint: 'Responde a este correo para agregar mas detalles.',
-    aiDisclaimer: 'Este contenido fue creado por IA. Por favor revisa cuidadosamente antes de tomar accion.',
+    aiDisclaimer: 'Este contenido fue creado por IA, revisar con calma.',
   },
   pt: {
     subjectPrefix: 'Re:',
@@ -178,7 +178,7 @@ const TEMPLATES: Record<SupportedLanguage, {
     greeting: (name) => `Ola ${name},`,
     body: (cn) => `Recebemos sua mensagem. Seu numero de caso e <strong>${cn}</strong>.\n\nEstamos cuidando disso. Espere uma resposta dentro de <strong>24 horas</strong>. Responda este email para adicionar mais detalhes.`,
     replyHint: 'Responda este email para adicionar mais detalhes.',
-    aiDisclaimer: 'Este conteudo foi criado por IA. Por favor, revise cuidadosamente antes de tomar qualquer acao.',
+    aiDisclaimer: 'Este conteúdo foi criado por IA. Revise com calma.',
   },
   fr: {
     subjectPrefix: 'Re:',
@@ -186,7 +186,7 @@ const TEMPLATES: Record<SupportedLanguage, {
     greeting: (name) => `Bonjour ${name},`,
     body: (cn) => `Nous avons recu votre message. Votre numero de dossier est <strong>${cn}</strong>.\n\nOn s'en occupe. Attendez une reponse dans <strong>24 heures</strong>. Repondez a cet email pour ajouter des details.`,
     replyHint: 'Repondez a cet email pour ajouter des details.',
-    aiDisclaimer: 'Ce contenu a ete cree par l\'IA. Veuillez le verifier attentivement avant d\'agir.',
+    aiDisclaimer: "Ce contenu a été créé par l'IA. Veuillez vérifier avec soin.",
   },
 };
 
