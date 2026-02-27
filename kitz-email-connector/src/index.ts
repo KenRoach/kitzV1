@@ -49,6 +49,13 @@ app.post('/webhooks/inbound', async (req: any, reply) => {
     return reply.code(400).send({ ok: false, message: 'Missing from or subject', traceId });
   }
 
+  // Block own-domain emails to prevent auto-reply loops
+  const fromStr = String(data.from).toLowerCase();
+  if (fromStr.includes('@kitz.services')) {
+    app.log.info({ event: 'inbound.blocked_own_domain', traceId, from: fromStr });
+    return { ok: true, skipped: true, reason: 'own-domain', traceId };
+  }
+
   const payload: InboundPayload = {
     type: String(body?.type || 'email.received'),
     created_at: String(body?.created_at || new Date().toISOString()),

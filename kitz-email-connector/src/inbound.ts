@@ -300,6 +300,13 @@ export async function processInboundEmail(
 ): Promise<{ caseNumber: string; language: SupportedLanguage }> {
   const { from, subject, text, html } = payload.data;
   const sender = parseSender(from);
+
+  // Block own-domain emails to prevent auto-reply loops
+  if (sender.email.toLowerCase().endsWith('@kitz.services')) {
+    log.info({ event: 'inbound.skip_own_domain', traceId, from: sender.email });
+    return { caseNumber: 'SKIPPED', language: 'en' };
+  }
+
   const emailBody = text || html?.replace(/<[^>]+>/g, '') || '';
 
   // 1. Detect language
