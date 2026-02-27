@@ -123,6 +123,11 @@ export class OsToolRegistry {
       import('./powerDynamicsTools.js'),
       import('./relationshipBuilderTools.js'),
       import('./clarificationTools.js'),
+      import('./bookkeepingAdvisorTools.js'),
+      import('./pricingStrategistTools.js'),
+      import('./copyStrategistTools.js'),
+      import('./seoContentPlannerTools.js'),
+      import('./emailSequenceBuilderTools.js'),
     ]);
 
     const getterNames = [
@@ -189,6 +194,11 @@ export class OsToolRegistry {
       'getAllPowerDynamicsTools',
       'getAllRelationshipBuilderTools',
       'getAllClarificationTools',
+      'getAllBookkeepingAdvisorTools',
+      'getAllPricingStrategistTools',
+      'getAllCopyStrategistTools',
+      'getAllSeoContentPlannerTools',
+      'getAllEmailSequenceBuilderTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {

@@ -33,7 +33,13 @@ INSERT INTO skills (slug, name, description, category, tier, credits_per_use) VA
   ('funnel-architect',          'Funnel Architect',          'Russell Brunson sales funnels, value ladder, and traffic',      'intelligence', 'sonnet', 1.0),
   ('strategic-planner',         'Strategic Planner',         'Rumelt + Sun Tzu + Musashi + Machiavelli strategic planning',   'intelligence', 'sonnet', 1.0),
   ('power-dynamics-advisor',    'Power Dynamics Advisor',    'Robert Greene 48 Laws, 33 Strategies, Human Nature, Mastery',  'intelligence', 'sonnet', 1.0),
-  ('relationship-builder',      'Relationship Builder',      'Dale Carnegie 30 principles for influence and relationships',  'intelligence', 'sonnet', 1.0)
+  ('relationship-builder',      'Relationship Builder',      'Dale Carnegie 30 principles for influence and relationships',  'intelligence', 'sonnet', 1.0),
+  -- Phase 1: Week 1 skills
+  ('bookkeeping-advisor',       'Bookkeeping Advisor',       'P&L snapshots, cash flow forecasts, expense tracking, tax readiness for LatAm SMBs', 'intelligence', 'haiku',  0.5),
+  ('pricing-strategist',        'Pricing Strategist',        'Value-based pricing, tiers, anchoring, competitive analysis for products and services', 'intelligence', 'haiku',  0.5),
+  ('copy-strategist',           'Copy Strategist',           'Conversion copy: headlines, CTAs, email subjects, ad copy, WhatsApp messages (Copyhackers)', 'content', 'sonnet', 1.0),
+  ('seo-content-planner',       'SEO Content Planner',       'Keywords, topic clusters, content calendar, local SEO, quick wins for Spanish-first SEO', 'content', 'sonnet', 1.0),
+  ('email-sequence-builder',    'Email Sequence Builder',    'Automated email sequences: welcome, nurture, sales, onboarding, re-engagement drips',  'content', 'sonnet', 1.0)
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,

@@ -85,4 +85,19 @@ export type { PowerAnalysis, PowerOptions } from './powerDynamicsAdvisor.js';
 export { adviseRelationship } from './relationshipBuilder.js';
 export type { RelationshipAdvice, RelationshipOptions } from './relationshipBuilder.js';
 
+export { adviseBookkeeping } from './bookkeepingAdvisor.js';
+export type { BookkeepingAdvice, BookkeepingOptions, ExpenseCategory, CashFlowForecast } from './bookkeepingAdvisor.js';
+
+export { advisePricing } from './pricingStrategist.js';
+export type { PricingStrategy, PricingOptions, PriceTier, CompetitorPrice } from './pricingStrategist.js';
+
+export { createCopyStrategy } from './copyStrategist.js';
+export type { CopyStrategy, CopyOptions, HeadlineVariant, CTAVariant, CopyBlock } from './copyStrategist.js';
+
+export { planSEOContent } from './seoContentPlanner.js';
+export type { SEOContentPlan, SEOOptions, KeywordCluster, ContentPillar } from './seoContentPlanner.js';
+
+export { buildEmailSequence } from './emailSequenceBuilder.js';
+export type { EmailSequencePlan, EmailSequenceOptions, SequenceEmail, SegmentRule } from './emailSequenceBuilder.js';
+
 export { PROMPTS } from '../prompts/templates.js';
