@@ -213,7 +213,7 @@ export function wrapInArtifact(innerHtml: string, options: {
 
     .kitz-artifact-header{background:linear-gradient(135deg,${brandKit.colors.primary},${brandKit.colors.secondary});padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
     .kitz-artifact-header .brand{display:flex;align-items:center;gap:12px}
-    .kitz-artifact-header .logo{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:16px}
+    .kitz-artifact-header .logo{width:36px;height:36px;border-radius:8px;object-fit:contain}
     .kitz-artifact-header .title-group h1{font-size:18px;font-weight:700;color:#fff;line-height:1.2}
     .kitz-artifact-header .title-group .subtitle{font-size:12px;color:rgba(255,255,255,0.75);margin-top:2px}
     .kitz-artifact-header .badge{background:rgba(255,255,255,0.2);color:#fff;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600}
@@ -249,7 +249,7 @@ export function wrapInArtifact(innerHtml: string, options: {
 <body>
   <header class="kitz-artifact-header">
     <div class="brand">
-      <div class="logo">K</div>
+      <img class="logo" src="${baseUrl}/kitz-logo.png" alt="KITZ">
       <div class="title-group">
         <h1>${title}</h1>
         <div class="subtitle">${brandKit.businessName}${brandKit.tagline ? ` — ${brandKit.tagline}` : ''}</div>
