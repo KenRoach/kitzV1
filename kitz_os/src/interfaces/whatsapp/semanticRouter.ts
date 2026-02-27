@@ -24,6 +24,7 @@ import { recordLLMSpend } from '../../aiBattery.js';
 import { searchSOPs } from '../../sops/store.js';
 import { getConversationHistory } from '../../memory/manager.js';
 import type { OutputChannel } from 'kitz-schemas';
+import { getIntelligenceContext } from '../../tools/ragPipelineTools.js';
 
 // ── Tool-to-MCP Mapping ──
 // Maps KITZ OS tool names to workspace MCP tool names for direct execution
@@ -92,6 +93,16 @@ const DIRECT_EXECUTE_TOOLS = new Set([
   // Broadcast + auto-reply tools
   'broadcast_preview', 'broadcast_send', 'broadcast_history',
   'autoreply_get', 'autoreply_set',
+  // RAG Intelligence Pipeline
+  'rag_search', 'rag_index', 'rag_listDocs',
+  // Country Configuration
+  'country_configure', 'country_getConfig', 'country_validateTaxId',
+  // Content Loop
+  'content_publish', 'content_measure', 'content_suggestBoost', 'content_promote',
+  // AI Advisor Calculators
+  'advisor_employerCost', 'advisor_severance', 'advisor_pricing',
+  'advisor_breakeven', 'advisor_unitEconomics', 'advisor_runway',
+  'advisor_invoiceTax', 'advisor_loanPayment',
 ]);
 
 // ── Draft-First Classification ──
@@ -127,6 +138,10 @@ const WRITE_TOOLS = new Set([
   'broadcast_send',
   // Auto-reply config changes
   'autoreply_set',
+  // Content Loop writes (publishing and promoting costs money)
+  'content_publish', 'content_promote',
+  // Country configuration changes
+  'country_configure',
 ]);
 
 // In-memory draft queue: traceId → pending drafts
@@ -180,10 +195,15 @@ function formatDraftSummary(drafts: DraftAction[]): string {
 }
 
 // ── System Prompt ──
-function buildSystemPrompt(toolCount: number, channel: OutputChannel = 'whatsapp', sopContext?: string): string {
+function buildSystemPrompt(toolCount: number, channel: OutputChannel = 'whatsapp', sopContext?: string, intelligenceContext?: string): string {
   const sopSection = sopContext
     ? `\n\nRELEVANT SOPS (follow these procedures when applicable):\n${sopContext}`
     : '';
+
+  const intelSection = intelligenceContext
+    ? `\n\nRELEVANT INTELLIGENCE (use this context to give expert answers):\n${intelligenceContext}`
+    : '';
+
 
   // Channel-specific formatting instructions
   const formatRulesMap: Record<OutputChannel, string> = {
@@ -279,6 +299,10 @@ CAPABILITIES:
 - **WEB** — Browse the internet: web_search, web_scrape, web_summarize, web_extract. Research, competitive analysis, price checking.
 - **BROADCAST** — Send bulk WhatsApp messages to CRM contacts. Preview filters, then send. Max 200 recipients.
 - **AUTO-REPLY** — Configure WhatsApp auto-reply: view, update, enable/disable, cooldown.
+- **INTELLIGENCE** — Search 25+ intelligence docs covering LatAm business: country infrastructure, tax, payments, compliance, employment law, pricing, marketing, e-commerce, AI tools.
+- **COUNTRY CONFIG** — Auto-configure workspace by country: tax rates, currency, payment providers, invoice requirements, tax ID validation. Supports 17 countries.
+- **CONTENT LOOP** — Publish content → measure performance → suggest boosting top performers → create paid promotions. Closed-loop content optimization.
+- **ADVISOR** — Business calculators: employer cost, severance, pricing strategy, break-even, unit economics (CAC/LTV), runway, invoice tax, loan payments.
 
 EXECUTION RULES:
 1. Execute READ operations directly — no confirmation needed.
@@ -297,7 +321,11 @@ EXECUTION RULES:
 14. NEVER initiate outbound payments. Only receive and record incoming payments.
 15. For voice: use voice_speak to generate audio, outbound_sendVoiceNote to deliver.
 16. For SOP queries, use sop_search. For new SOPs, use sop_create (start as draft).
-17. For calendar: use calendar_today for daily view, calendar_addEvent for scheduling, calendar_findSlot for availability.${sopSection}`;
+17. For calendar: use calendar_today for daily view, calendar_addEvent for scheduling, calendar_findSlot for availability.
+18. For country/tax/compliance questions, use rag_search to find intelligence + country_getConfig for current setup.
+19. For employer costs, severance, pricing, break-even, runway — use advisor_* calculators. Give exact numbers.
+20. For content performance: content_measure to track, content_suggestBoost to find winners, content_promote to boost.
+21. When user mentions a country or asks about tax/payments, search intelligence with rag_search first for deep context.${sopSection}${intelSection}`;
 }
 
 // ── Execute a tool ──
@@ -350,7 +378,13 @@ export async function routeWithAI(
     ? relevantSOPs.map(sop => `[${sop.title}] ${sop.summary}`).join('\n')
     : undefined;
 
-  const systemPrompt = buildSystemPrompt(registry.count(), channel, sopContext);
+  // ── RAG Intelligence Context — auto-inject relevant business knowledge ──
+  let intelligenceContext = '';
+  try {
+    intelligenceContext = await getIntelligenceContext(userMessage, 2);
+  } catch { /* non-blocking — proceed without intelligence context */ }
+
+  const systemPrompt = buildSystemPrompt(registry.count(), channel, sopContext, intelligenceContext);
 
   // ── Build conversation context ──
   // Priority: frontend chat history > backend memory manager > empty

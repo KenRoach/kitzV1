@@ -60,6 +60,24 @@ const READ_TOOLS = [
   'n8n_getWorkflow',
   'n8n_getExecutions',
   'n8n_healthCheck',
+  // RAG Intelligence
+  'rag_search',
+  'rag_listDocs',
+  // Country Config
+  'country_getConfig',
+  'country_validateTaxId',
+  // Content Loop (read)
+  'content_measure',
+  'content_suggestBoost',
+  // AI Advisor Calculators
+  'advisor_employerCost',
+  'advisor_severance',
+  'advisor_pricing',
+  'advisor_breakeven',
+  'advisor_unitEconomics',
+  'advisor_runway',
+  'advisor_invoiceTax',
+  'advisor_loanPayment',
 ];
 
 /** CRM write tools — sales team + C-suite */
@@ -105,6 +123,9 @@ const CONTENT_TOOLS = [
   'media_scan_receipt',
   'media_describe',
   'media_ocr',
+  // Content Loop
+  'content_publish',
+  'content_promote',
 ];
 
 /** Calendar write tools — ops/admin */
@@ -120,6 +141,8 @@ const KNOWLEDGE_TOOLS = [
   'memory_store_knowledge',
   'sop_create',
   'sop_update',
+  'rag_index',
+  'country_configure',
 ];
 
 /** Lovable/frontend tools */
