@@ -100,6 +100,11 @@ export class OsToolRegistry {
       import('./advisorTools.js'),
       import('./imageGenerationTools.js'),
       import('./pdfGenerationTools.js'),
+      import('./voiceBrainDumpTools.js'),
+      import('./videoCreationTools.js'),
+      import('./browserAgentTools.js'),
+      import('./contentCreationTools.js'),
+      import('./officeAutomationTools.js'),
     ]);
 
     const getterNames = [
@@ -143,6 +148,11 @@ export class OsToolRegistry {
       'getAllAdvisorTools',
       'getAllImageGenerationTools',
       'getAllPdfGenerationTools',
+      'getAllVoiceBrainDumpTools',
+      'getAllVideoCreationTools',
+      'getAllBrowserAgentTools',
+      'getAllContentCreationTools',
+      'getAllOfficeAutomationTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {
