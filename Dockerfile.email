@@ -1,0 +1,16 @@
+FROM node:20-alpine
+WORKDIR /app
+
+# Copy shared schemas (local dependency)
+COPY kitz-schemas/package.json kitz-schemas/
+COPY kitz-schemas/src/ kitz-schemas/src/
+
+# Copy email connector and install
+COPY kitz-email-connector/package.json kitz-email-connector/
+RUN cd kitz-email-connector && npm install --production
+
+COPY kitz-email-connector/ kitz-email-connector/
+
+EXPOSE 3007
+
+CMD ["sh", "-c", "cd kitz-email-connector && npx tsx src/index.ts"]
