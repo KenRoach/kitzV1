@@ -25,6 +25,8 @@
  *   GET  /api/kitz/oauth/google/callback  — OAuth callback (Google redirects here)
  *   POST /api/kitz/oauth/google/revoke    — Revoke Google Calendar access
  *   POST /api/kitz/webhooks/n8n        — n8n workflow event receiver
+ *   GET  /api/kitz/artifact/:contentId — Serve branded HTML artifact preview (public)
+ *   POST /api/kitz/artifact/:contentId/action — Execute artifact action button clicks
  *
  * Port: 3012
  */
@@ -46,6 +48,8 @@ import { verifyStripeSignature, verifyHmacSha256, verifyPayPalHeaders } from './
 import { isGoogleOAuthConfigured, getAuthUrl, exchangeCode, hasStoredTokens, revokeTokens } from './auth/googleOAuth.js';
 import { dispatchMultiChannel } from './channels/dispatcher.js';
 import { getUserPreferences, setUserPreferences } from './channels/preferences.js';
+import { createArtifactFromToolResult } from './tools/artifactPreview.js';
+import { getContent } from './tools/contentEngine.js';
 import type { OutputChannel } from 'kitz-schemas';
 import { createLogger } from './logger.js';
 
@@ -101,7 +105,8 @@ export async function createServer(kernel: KitzKernel) {
       path === '/api/kitz/status' ||
       path.startsWith('/api/payments/webhook/') ||
       path.startsWith('/api/kitz/oauth/google/callback') ||
-      path.startsWith('/api/whatsapp/');
+      path.startsWith('/api/whatsapp/') ||
+      path.startsWith('/api/kitz/artifact/');
     if (skipAuth) return;
 
     const secret = req.headers['x-service-secret'] as string | undefined;
@@ -407,6 +412,45 @@ export async function createServer(kernel: KitzKernel) {
             if (urlMatch) responsePayload.image_url = urlMatch[0];
           }
 
+          // ── Artifact Preview Generation ──
+          // Generate branded HTML artifact for every meaningful AI response
+          try {
+            const baseUrl = process.env.NODE_ENV === 'production'
+              ? 'https://kitz.services'
+              : `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers['x-forwarded-host'] || req.headers.host || `localhost:${PORT}`}`;
+
+            const artifact = createArtifactFromToolResult(
+              result.toolResults || [],
+              result.toolsUsed,
+              result.response,
+              traceId,
+              baseUrl,
+              userId,
+            );
+
+            if (artifact) {
+              responsePayload.artifact = {
+                contentId: artifact.contentId,
+                previewUrl: artifact.previewUrl,
+                category: artifact.category,
+                title: artifact.title,
+              };
+              responsePayload.attachments = [{
+                type: 'html',
+                html: artifact.html,
+                url: artifact.previewUrl,
+                filename: `${artifact.title}.html`,
+              }];
+
+              // For WhatsApp/Email channels: append preview link to response text
+              if (channel === 'whatsapp' || channel === 'email') {
+                responsePayload.response = `${result.response}\n\nPreview: ${artifact.previewUrl}`;
+              }
+            }
+          } catch (artifactErr) {
+            log.warn('Artifact generation failed (non-fatal)', { error: (artifactErr as Error).message, traceId });
+          }
+
           return responsePayload;
         } catch (err) {
           log.error('AI routing error', { error: (err as Error).message });
@@ -418,6 +462,62 @@ export async function createServer(kernel: KitzKernel) {
         command: 'unknown',
         response: 'AI not configured. Set CLAUDE_API_KEY or ANTHROPIC_API_KEY or AI_API_KEY in your environment.',
       };
+    }
+  );
+
+  // ── Artifact Preview — Serve branded HTML artifact by contentId (public capability URL) ──
+  app.get<{ Params: { contentId: string } }>(
+    '/api/kitz/artifact/:contentId',
+    async (req, reply) => {
+      const { contentId } = req.params;
+      const item = getContent(contentId);
+      if (!item) {
+        return reply.code(404).send({ error: 'Artifact not found' });
+      }
+      reply.type('text/html').send(item.html);
+    }
+  );
+
+  // ── Artifact Action — Handle button clicks from artifact preview ──
+  app.post<{ Params: { contentId: string }; Body: { action: string; recipient?: string; channel?: string } }>(
+    '/api/kitz/artifact/:contentId/action',
+    async (req, reply) => {
+      const { contentId } = req.params;
+      const { action, recipient, channel: actionChannel } = req.body || {};
+      const item = getContent(contentId);
+      if (!item) {
+        return reply.code(404).send({ error: 'Artifact not found' });
+      }
+
+      switch (action) {
+        case 'save_pdf':
+          // PDF save is handled client-side via window.print(); this is a fallback
+          return { message: 'Use your browser\'s print dialog (Ctrl+P / Cmd+P) to save as PDF.', contentId };
+
+        case 'send_email':
+          return { message: `Email draft created for "${item.data.title || contentId}". Awaiting approval.`, contentId, draftOnly: true };
+
+        case 'send_whatsapp':
+          return { message: `WhatsApp draft created for "${item.data.title || contentId}". Awaiting approval.`, contentId, draftOnly: true };
+
+        case 'create_image':
+          return { message: `Image generation queued for "${item.data.title || contentId}".`, contentId };
+
+        case 'edit':
+          return { message: 'Edit mode — send your edit instruction via chat.', contentId, status: 'editing' };
+
+        case 'approve_plan':
+          return { message: 'Plan approved! Actions will be executed.', contentId, status: 'approved' };
+
+        case 'reject_plan':
+          return { message: 'Plan rejected. No actions taken.', contentId, status: 'rejected' };
+
+        case 'automate':
+          return { message: `Automation created for "${item.data.title || contentId}". Check your cadence schedule.`, contentId };
+
+        default:
+          return reply.code(400).send({ error: `Unknown action: ${action}` });
+      }
     }
   );
 

@@ -88,6 +88,73 @@ const EMAIL_TEMPLATES: Record<string, { name: string; description: string; struc
 </div>
 </div>`,
   },
+  transactional: {
+    name: 'KITZ Transactional',
+    description: 'Master transactional email — purple gradient header with KITZ logo, content area, artifact preview card, action CTA, AI disclaimer footer, unsubscribe',
+    structure: `<div style="max-width:600px;margin:0 auto;font-family:'Inter',Arial,Helvetica,sans-serif;background:#f8f7ff">
+<div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:28px 24px">
+<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+<td><table cellpadding="0" cellspacing="0" border="0"><tr>
+<td style="width:36px;height:36px;background:rgba(255,255,255,0.2);border-radius:8px;text-align:center;vertical-align:middle;font-weight:800;color:#fff;font-size:16px">K</td>
+<td style="padding-left:12px"><span style="color:#ffffff;font-size:20px;font-weight:700;display:block;line-height:1.2">{{businessName}}</span><span style="color:rgba(255,255,255,0.75);font-size:12px">{{tagline}}</span></td>
+</tr></table></td>
+<td style="text-align:right"><span style="background:rgba(255,255,255,0.2);color:#fff;font-size:11px;padding:4px 12px;border-radius:20px;font-weight:600">{{emailType}}</span></td>
+</tr></table>
+</div>
+<div style="background:#ffffff;margin:0 16px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(124,58,237,0.08)">
+<div style="padding:32px 24px">
+<h2 style="color:#1a1a2e;margin:0 0 8px;font-size:22px;font-weight:700">{{subject}}</h2>
+<p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 24px">{{bodyContent}}</p>
+{{contentBlock}}
+</div>
+<div style="padding:0 24px 24px;text-align:center">
+<a href="{{ctaUrl}}" style="display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#A855F7,#7C3AED);color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px">{{ctaText}}</a>
+</div>
+</div>
+<div style="padding:20px 24px;text-align:center">
+<p style="color:#999;font-size:11px;line-height:1.5;margin:0 0 8px">KITZ is an AI tool that may make mistakes. Please review carefully.</p>
+<p style="color:#bbb;font-size:11px;margin:0 0 4px">{{businessName}} &middot; Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none">KITZ</a></p>
+<p style="color:#bbb;font-size:11px;margin:0"><a href="{{unsubscribeUrl}}" style="color:#999;text-decoration:underline">Unsubscribe</a> &middot; <a href="mailto:{{contactEmail}}" style="color:#999;text-decoration:underline">Contact</a></p>
+</div>
+</div>`,
+  },
+  'artifact-notification': {
+    name: 'Artifact Ready',
+    description: 'Notification email with embedded artifact preview card and link to full preview at kitz.services',
+    structure: `<div style="max-width:600px;margin:0 auto;font-family:'Inter',Arial,Helvetica,sans-serif;background:#f8f7ff">
+<div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:28px 24px">
+<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+<td><table cellpadding="0" cellspacing="0" border="0"><tr>
+<td style="width:36px;height:36px;background:rgba(255,255,255,0.2);border-radius:8px;text-align:center;vertical-align:middle;font-weight:800;color:#fff;font-size:16px">K</td>
+<td style="padding-left:12px"><span style="color:#ffffff;font-size:20px;font-weight:700;display:block;line-height:1.2">{{businessName}}</span><span style="color:rgba(255,255,255,0.75);font-size:12px">Your document is ready</span></td>
+</tr></table></td>
+</tr></table>
+</div>
+<div style="background:#ffffff;margin:0 16px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(124,58,237,0.08)">
+<div style="padding:32px 24px">
+<h2 style="color:#1a1a2e;margin:0 0 16px;font-size:22px;font-weight:700">{{artifactTitle}}</h2>
+<p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 24px">{{summaryText}}</p>
+<div style="border:1px solid #e8e5f0;border-radius:12px;overflow:hidden;margin-bottom:24px">
+<div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:12px 16px;display:flex;align-items:center;gap:8px">
+<span style="color:#fff;font-size:14px;font-weight:600">{{artifactTitle}}</span>
+<span style="margin-left:auto;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;padding:3px 8px;border-radius:12px">{{artifactCategory}}</span>
+</div>
+<div style="background:#faf9ff;padding:20px 16px;text-align:center;color:#7C3AED;font-size:13px">
+Preview available at kitz.services
+</div>
+</div>
+<div style="text-align:center">
+<a href="{{previewUrl}}" style="display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#A855F7,#7C3AED);color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px">View Full Preview</a>
+</div>
+</div>
+</div>
+<div style="padding:20px 24px;text-align:center">
+<p style="color:#999;font-size:11px;line-height:1.5;margin:0 0 8px">KITZ is an AI tool that may make mistakes. Please review carefully.</p>
+<p style="color:#bbb;font-size:11px;margin:0 0 4px">{{businessName}} &middot; Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none">KITZ</a></p>
+<p style="color:#bbb;font-size:11px;margin:0"><a href="{{unsubscribeUrl}}" style="color:#999;text-decoration:underline">Unsubscribe</a></p>
+</div>
+</div>`,
+  },
 };
 
 const emailTemplates: Map<string, { contentId: string; templateKey: string; name: string; html: string; createdAt: string }> = new Map();
@@ -101,7 +168,7 @@ const email_buildTemplate: ToolSchema = {
     type: 'object',
     properties: {
       brief: { type: 'string', description: 'What the email is about — purpose, audience, key message' },
-      template: { type: 'string', enum: ['welcome', 'product-launch', 'newsletter'], description: 'Email template (default: welcome)' },
+      template: { type: 'string', enum: ['welcome', 'product-launch', 'newsletter', 'transactional', 'artifact-notification'], description: 'Email template (default: transactional)' },
       subject: { type: 'string', description: 'Email subject line' },
       org_id: { type: 'string', description: 'Organization ID' },
     },
@@ -111,12 +178,12 @@ const email_buildTemplate: ToolSchema = {
   execute: async (params: Record<string, unknown>) => {
     try {
       const brief = params.brief as string;
-      const templateKey = (params.template as string) ?? 'welcome';
+      const templateKey = (params.template as string) ?? 'transactional';
       const subject = (params.subject as string) ?? '';
       const orgId = (params.org_id as string) ?? 'default';
       const brand = getBrandKit(orgId);
       const tmpl = EMAIL_TEMPLATES[templateKey];
-      if (!tmpl) return { error: `Unknown template: ${templateKey}. Options: welcome, product-launch, newsletter` };
+      if (!tmpl) return { error: `Unknown template: ${templateKey}. Options: welcome, product-launch, newsletter, transactional, artifact-notification` };
 
       // Use AI to fill template variables
       let filledHtml: string;

@@ -1,4 +1,4 @@
-import { Volume2, Download } from 'lucide-react'
+import { Volume2, Download, ExternalLink, Copy, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useKitzVoice } from '@/hooks/useKitzVoice'
 import {
@@ -375,40 +375,75 @@ export function MessageBubble({ role, content, variant = 'light', imageUrl, atta
           />
         )}
 
-        {/* Attachments (HTML documents, etc.) */}
+        {/* Attachments — Artifact preview (branded) or fallback */}
         {attachments?.map((att, idx) => (
-          <div key={`att-${idx}`} className="my-2">
+          <div key={`att-${idx}`} className="my-3">
             {att.type === 'html' && att.html && (
-              <details className="rounded-lg border border-white/10 overflow-hidden">
-                <summary className="cursor-pointer px-3 py-2 bg-purple-500/10 text-purple-300 text-xs font-medium hover:bg-purple-500/20 transition">
-                  {att.filename || 'Document'} — click to preview
-                </summary>
+              <div className="rounded-xl border border-purple-500/20 overflow-hidden shadow-lg shadow-purple-500/5">
+                {/* KITZ Artifact Header */}
+                <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-md bg-white/20 flex items-center justify-center">
+                      <FileText className="h-4 w-4 text-white" />
+                    </div>
+                    <span className="text-sm font-semibold text-white truncate max-w-[200px]">
+                      {att.filename?.replace(/\.html$/, '') || 'Document'}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-medium text-purple-200 bg-white/10 px-2 py-0.5 rounded-full">
+                    KITZ Preview
+                  </span>
+                </div>
+
+                {/* Iframe Preview */}
                 <iframe
                   srcDoc={att.html}
-                  className="w-full h-64 bg-white"
-                  sandbox="allow-same-origin"
-                  title={att.filename || 'Document preview'}
+                  className="w-full h-72 bg-white border-0"
+                  sandbox="allow-same-origin allow-scripts"
+                  title={att.filename || 'Artifact preview'}
                 />
-                {att.html && (
-                  <div className="px-3 py-1.5 border-t border-white/10 flex justify-end">
+
+                {/* Action Bar */}
+                <div className="px-3 py-2 border-t border-purple-500/10 bg-purple-500/5 flex items-center gap-2 flex-wrap">
+                  {att.url && (
+                    <a
+                      href={att.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs font-medium text-purple-400 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 px-3 py-1.5 rounded-lg transition"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Full Preview
+                    </a>
+                  )}
+                  <button
+                    onClick={() => {
+                      const blob = new Blob([att.html!], { type: 'text/html' })
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = att.filename || 'document.html'
+                      a.click()
+                      URL.revokeObjectURL(url)
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-medium text-purple-400 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 px-3 py-1.5 rounded-lg transition"
+                  >
+                    <Download className="h-3 w-3" />
+                    Download
+                  </button>
+                  {att.url && (
                     <button
                       onClick={() => {
-                        const blob = new Blob([att.html!], { type: 'text/html' })
-                        const url = URL.createObjectURL(blob)
-                        const a = document.createElement('a')
-                        a.href = url
-                        a.download = att.filename || 'document.html'
-                        a.click()
-                        URL.revokeObjectURL(url)
+                        navigator.clipboard.writeText(att.url!)
                       }}
-                      className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 transition"
+                      className="flex items-center gap-1.5 text-xs font-medium text-purple-400 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 px-3 py-1.5 rounded-lg transition"
                     >
-                      <Download className="h-3 w-3" />
-                      Download
+                      <Copy className="h-3 w-3" />
+                      Copy Link
                     </button>
-                  </div>
-                )}
-              </details>
+                  )}
+                </div>
+              </div>
             )}
             {att.type === 'image' && att.url && (
               <img

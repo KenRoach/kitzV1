@@ -65,6 +65,7 @@ async function sendToChannel(
           headers: serviceHeaders(traceId, orgId),
           body: JSON.stringify({
             to: recipient.email,
+            from: process.env.FROM_EMAIL_NOREPLY || 'KITZ <noreply@kitz.services>',
             subject: formatted.subject || 'KITZ Update',
             body: formatted.body,
             html: formatted.html,

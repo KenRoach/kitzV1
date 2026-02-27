@@ -447,7 +447,7 @@ export async function routeWithAI(
   userId?: string,
   channel: OutputChannel = 'whatsapp',
   chatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
-): Promise<{ response: string; toolsUsed: string[]; creditsConsumed: number }> {
+): Promise<{ response: string; toolsUsed: string[]; creditsConsumed: number; toolResults: Record<string, unknown>[] }> {
 
   cleanExpiredDrafts();
 
@@ -461,10 +461,11 @@ export async function routeWithAI(
         response: `Here's your image, boss 🎨\n\n![Generated image](${result.imageUrl})\n\n${result.revisedPrompt ? `*${result.revisedPrompt}*` : ''}`,
         toolsUsed: ['image_generate'],
         creditsConsumed: 0,
+        toolResults: [result],
       };
     }
     if (result.error) {
-      return { response: `Couldn't generate the image: ${result.error}`, toolsUsed: ['image_generate'], creditsConsumed: 0 };
+      return { response: `Couldn't generate the image: ${result.error}`, toolsUsed: ['image_generate'], creditsConsumed: 0, toolResults: [result] };
     }
   }
 
@@ -476,6 +477,7 @@ export async function routeWithAI(
     console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'semanticRouter', action: 'tool_filter', total: allToolDefs.length, filtered: toolDefs.length, trace_id: traceId }));
   }
   const toolsUsed: string[] = [];
+  const toolResults: Record<string, unknown>[] = [];
   let totalCreditsConsumed = 0;
   const aiModel = getAiModel();
   const aiProvider = aiModel.startsWith('claude') ? 'claude' as const : 'openai' as const;
@@ -556,13 +558,13 @@ export async function routeWithAI(
         : rawError.includes('unreachable') || rawError.includes('timeout')
           ? 'AI service is taking too long — try again in a moment, boss.'
           : 'Something went wrong on my end — try again in a sec, boss.';
-      return { response: friendlyMsg, toolsUsed, creditsConsumed: totalCreditsConsumed };
+      return { response: friendlyMsg, toolsUsed, creditsConsumed: totalCreditsConsumed, toolResults };
     }
 
     // If no tool calls, we have the final response
     if (!result.message.tool_calls || result.message.tool_calls.length === 0) {
       const content = result.message.content?.trim();
-      return { response: content || 'Ran the tools but got no response — try asking again, boss.', toolsUsed, creditsConsumed: totalCreditsConsumed };
+      return { response: content || 'Ran the tools but got no response — try asking again, boss.', toolsUsed, creditsConsumed: totalCreditsConsumed, toolResults };
     }
 
     // Add assistant message with tool calls
@@ -620,6 +622,13 @@ export async function routeWithAI(
       } else {
         // Read-only tools execute immediately
         const toolResult = await executeTool(toolName, args, registry, traceId, userId);
+        // Collect parsed tool result for artifact generation
+        try {
+          const parsed = JSON.parse(toolResult);
+          toolResults.push(parsed);
+        } catch {
+          toolResults.push({ raw: toolResult });
+        }
         messages.push({
           role: 'tool',
           content: toolResult,
@@ -639,16 +648,17 @@ export async function routeWithAI(
       // then append the draft summary
       const draftSummary = formatDraftSummary(pendingDrafts);
       if (!result.message.content) {
-        return { response: draftSummary, toolsUsed, creditsConsumed: totalCreditsConsumed };
+        return { response: draftSummary, toolsUsed, creditsConsumed: totalCreditsConsumed, toolResults };
       }
       return {
         response: `${result.message.content}\n\n${draftSummary}`,
         toolsUsed,
         creditsConsumed: totalCreditsConsumed,
+        toolResults,
       };
     }
   }
 
   // If we hit max loops, return whatever we have
-  return { response: 'Reached maximum processing steps. Please try a simpler request.', toolsUsed, creditsConsumed: totalCreditsConsumed };
+  return { response: 'Reached maximum processing steps. Please try a simpler request.', toolsUsed, creditsConsumed: totalCreditsConsumed, toolResults };
 }

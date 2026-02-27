@@ -5,7 +5,8 @@
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '';
-const FROM_EMAIL = process.env.FROM_EMAIL || 'kitz@kitz.services';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'KITZ <kitz@kitz.services>';
+const FROM_EMAIL_NOREPLY = process.env.FROM_EMAIL_NOREPLY || 'KITZ <noreply@kitz.services>';
 
 export interface EmailPayload {
   to: string;
@@ -13,6 +14,7 @@ export interface EmailPayload {
   body: string;
   html?: string;
   replyTo?: string;
+  from?: string; // Override sender — e.g., 'KITZ <noreply@kitz.services>'
 }
 
 export interface SendResult {
@@ -20,6 +22,13 @@ export interface SendResult {
   provider: 'resend' | 'sendgrid' | 'stub';
   messageId?: string;
   error?: string;
+}
+
+/** Parse 'Name <email>' format into { email, name } for SendGrid */
+function parseFrom(from: string): { email: string; name: string } {
+  const match = from.match(/^(.+?)\s*<(.+?)>/);
+  if (match) return { name: match[1].trim(), email: match[2].trim() };
+  return { name: 'KITZ', email: from.trim() };
 }
 
 async function sendViaResend(payload: EmailPayload): Promise<SendResult> {
@@ -32,7 +41,7 @@ async function sendViaResend(payload: EmailPayload): Promise<SendResult> {
       Authorization: `Bearer ${RESEND_API_KEY}`,
     },
     body: JSON.stringify({
-      from: FROM_EMAIL,
+      from: payload.from || FROM_EMAIL,
       to: payload.to,
       subject: payload.subject,
       html: payload.html || payload.body,
@@ -61,7 +70,7 @@ async function sendViaSendGrid(payload: EmailPayload): Promise<SendResult> {
     },
     body: JSON.stringify({
       personalizations: [{ to: [{ email: payload.to }] }],
-      from: { email: FROM_EMAIL },
+      from: parseFrom(payload.from || FROM_EMAIL),
       subject: payload.subject,
       content: [{ type: 'text/html', value: payload.html || payload.body }],
       reply_to: payload.replyTo ? { email: payload.replyTo } : undefined,

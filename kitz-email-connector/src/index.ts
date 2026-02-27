@@ -58,6 +58,7 @@ app.post('/outbound/send', async (req: any, reply) => {
     body: String(req.body?.body || ''),
     html: req.body?.html,
     replyTo: req.body?.replyTo,
+    from: req.body?.from,
   });
 
   app.log.info(audit('email.outbound.sent', { ...result, orgId }, traceId));
