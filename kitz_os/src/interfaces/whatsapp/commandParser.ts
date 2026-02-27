@@ -149,12 +149,12 @@ export function parseWhatsAppCommand(text: string): KitzCommand | null {
   if (/^run\b/i.test(lower)) {
     return { action: 'run', raw, goal: raw.replace(/^run\s*/i, '').trim() };
   }
-  if (/^approve\b/i.test(lower)) {
-    const match = lower.match(/^approve\s+(.+)/i);
+  if (/^(?:approve|aprobar|si|sí|dale|listo)\b/i.test(lower)) {
+    const match = lower.match(/^(?:approve|aprobar|si|sí|dale|listo)\s+(.+)/i);
     return { action: 'approve', raw, runId: match?.[1] };
   }
-  if (/^reject\s+/i.test(lower)) {
-    const match = lower.match(/^reject\s+(.+)/i);
+  if (/^(?:reject|rechazar|no|cancel|cancelar)\b/i.test(lower)) {
+    const match = lower.match(/^(?:reject|rechazar|no|cancel|cancelar)\s+(.+)/i);
     return { action: 'reject', raw, runId: match?.[1] };
   }
 

@@ -40,20 +40,103 @@ import { dirname, join } from 'path';
 import { existsSync } from 'fs';
 import type { KitzKernel } from './kernel.js';
 import { parseWhatsAppCommand } from './interfaces/whatsapp/commandParser.js';
-import { routeWithAI, getDraftQueue, approveDraft, rejectDraft } from './interfaces/whatsapp/semanticRouter.js';
+import { routeWithAI, brainFirstRoute, getDraftQueue, approveDraft, rejectDraft } from './interfaces/whatsapp/semanticRouter.js';
 import { textToSpeech, getKitzVoiceConfig, getWidgetSnippet, isElevenLabsConfigured } from './llm/elevenLabsClient.js';
-import { getBatteryStatus, recordRecharge, getLedger } from './aiBattery.js';
+import { getBatteryStatus, recordRecharge, getLedger, hasBudget } from './aiBattery.js';
 import { initMemory, storeMessage, buildContextWindow } from './memory/manager.js';
 import { verifyStripeSignature, verifyHmacSha256, verifyPayPalHeaders } from './webhookVerify.js';
 import { isGoogleOAuthConfigured, getAuthUrl, exchangeCode, hasStoredTokens, revokeTokens } from './auth/googleOAuth.js';
 import { dispatchMultiChannel } from './channels/dispatcher.js';
 import { getUserPreferences, setUserPreferences } from './channels/preferences.js';
+import * as orchestrator from './orchestrator/channelOrchestrator.js';
+import { APPROVAL_MATRIX, getMatrixByRisk, getMatrixByCategory } from './approvals/approvalMatrix.js';
 import { createArtifactFromToolResult } from './tools/artifactPreview.js';
-import { getContent } from './tools/contentEngine.js';
+import { getContent, getContentBySlug, getBrandKit, approveContent, extendContent, cleanExpiredContent } from './tools/contentEngine.js';
 import type { OutputChannel } from 'kitz-schemas';
 import { createLogger } from './logger.js';
 
 const log = createLogger('server');
+
+function buildExpiredArtifactHtml(baseUrl: string): string {
+  const bk = getBrandKit();
+  return `<!DOCTYPE html>
+<html lang="${bk.language}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Expired — ${bk.businessName} | KITZ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8f7ff;color:#1a1a2e;min-height:100vh}
+
+    .kitz-artifact-header{background:linear-gradient(135deg,${bk.colors.primary},${bk.colors.secondary});padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+    .kitz-artifact-header .brand{display:flex;align-items:center;gap:12px}
+    .kitz-artifact-header .logo{width:36px;height:36px;border-radius:8px;object-fit:contain}
+    .kitz-artifact-header .title-group h1{font-size:18px;font-weight:700;color:#fff;line-height:1.2}
+    .kitz-artifact-header .title-group .subtitle{font-size:12px;color:rgba(255,255,255,0.75);margin-top:2px}
+    .kitz-artifact-header .badge{background:rgba(255,255,255,0.2);color:#fff;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600}
+
+    .kitz-artifact-content{max-width:900px;margin:24px auto;padding:0 16px}
+    .kitz-artifact-card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(124,58,237,0.08);overflow:hidden}
+
+    .kitz-expired-body{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:64px 32px;text-align:center}
+    .kitz-expired-icon{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,${bk.colors.primary}22,${bk.colors.secondary}22);display:flex;align-items:center;justify-content:center;margin-bottom:24px}
+    .kitz-expired-icon svg{width:40px;height:40px;color:${bk.colors.primary}}
+    .kitz-expired-body h2{font-size:24px;font-weight:800;color:${bk.colors.primary};margin-bottom:12px}
+    .kitz-expired-body p{font-size:15px;line-height:1.6;color:#666;max-width:400px}
+    .kitz-expired-body .hint{margin-top:24px;display:inline-block;padding:10px 24px;border-radius:8px;background:${bk.colors.primary};color:#fff;font-weight:600;font-size:14px;text-decoration:none;transition:opacity 0.2s}
+    .kitz-expired-body .hint:hover{opacity:0.85}
+    .kitz-expired-body .timer{margin-top:16px;font-size:12px;color:#999}
+
+    .kitz-artifact-footer{text-align:center;padding:20px 16px 32px;color:#999;font-size:12px;line-height:1.5}
+    .kitz-artifact-footer a{color:${bk.colors.primary};text-decoration:none}
+
+    @media(max-width:600px){
+      .kitz-artifact-header{padding:16px}
+      .kitz-artifact-header .title-group h1{font-size:16px}
+      .kitz-artifact-content{margin:16px auto;padding:0 12px}
+      .kitz-expired-body{padding:48px 20px}
+      .kitz-expired-body h2{font-size:20px}
+    }
+  </style>
+</head>
+<body>
+  <header class="kitz-artifact-header">
+    <div class="brand">
+      <img class="logo" src="${baseUrl}/kitz-logo.png" alt="KITZ" onerror="this.style.display='none'">
+      <div class="title-group">
+        <h1>Artifact Expired</h1>
+        <div class="subtitle">${bk.businessName}${bk.tagline ? ` \u2014 ${bk.tagline}` : ''}</div>
+      </div>
+    </div>
+    <span class="badge">Expired</span>
+  </header>
+
+  <main class="kitz-artifact-content">
+    <div class="kitz-artifact-card">
+      <div class="kitz-expired-body">
+        <div class="kitz-expired-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <h2>${bk.language === 'es' ? 'Este artefacto ha expirado' : 'This artifact has expired'}</h2>
+        <p>${bk.language === 'es'
+          ? 'Los borradores expiran despues de 24 horas si no son aprobados. Pide a KITZ que lo regenere.'
+          : 'Draft artifacts expire after 24 hours if not approved. Ask KITZ to regenerate it.'}</p>
+        <a class="hint" href="${baseUrl}">${bk.language === 'es' ? 'Volver a KITZ' : 'Back to KITZ'}</a>
+        <div class="timer">24h TTL &middot; Draft-first policy</div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="kitz-artifact-footer">
+    ${bk.language === 'es' ? 'Este contenido fue creado por IA.' : 'This content was created by AI.'}<br>
+    <a href="${baseUrl}">Powered by KITZ</a> &mdash; ${bk.language === 'es' ? 'Tu negocio merece infraestructura.' : 'Your business deserves infrastructure.'}
+  </footer>
+</body>
+</html>`;
+}
 
 export async function createServer(kernel: KitzKernel) {
   const app = Fastify({ logger: false, bodyLimit: 20_000_000, requestTimeout: 120_000 });  // 20MB for media, 2min for AI calls
@@ -369,8 +452,17 @@ export async function createServer(kernel: KitzKernel) {
       );
 
       if (hasAI) {
+        // Pre-flight credit check — block AI if daily limit exceeded
+        if (!hasBudget(1)) {
+          const battery = getBatteryStatus();
+          return reply.send({
+            command: 'battery_depleted',
+            response: `⚡ Tu batería AI está agotada (${battery.todayCredits}/${battery.dailyLimit} créditos hoy). Recarga con "recharge 10" o espera hasta mañana.`,
+            credits_consumed: 0,
+          });
+        }
         try {
-          const result = await routeWithAI(message, kernel.tools, traceId, undefined, userId, channel, chat_history);
+          const result = await brainFirstRoute(message, kernel.tools, traceId, undefined, userId, channel, chat_history);
           // Store AI response in memory
           try {
             storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'assistant', content: result.response, traceId });
@@ -470,9 +562,13 @@ export async function createServer(kernel: KitzKernel) {
     '/api/kitz/artifact/:contentId',
     async (req, reply) => {
       const { contentId } = req.params;
-      const item = getContent(contentId);
+      const item = getContent(contentId);  // returns undefined if expired
       if (!item) {
-        return reply.code(404).send({ error: 'Artifact not found' });
+        const base = process.env.NODE_ENV === 'production'
+          ? 'https://kitz.services'
+          : `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers['x-forwarded-host'] || req.headers.host || `localhost:${PORT}`}`;
+        reply.code(410).type('text/html').send(buildExpiredArtifactHtml(base));
+        return;
       }
       reply.type('text/html').send(item.html);
     }
@@ -495,18 +591,22 @@ export async function createServer(kernel: KitzKernel) {
           return { message: 'Use your browser\'s print dialog (Ctrl+P / Cmd+P) to save as PDF.', contentId };
 
         case 'send_email':
+          approveContent(contentId);
           return { message: `Email draft created for "${item.data.title || contentId}". Awaiting approval.`, contentId, draftOnly: true };
 
         case 'send_whatsapp':
+          approveContent(contentId);
           return { message: `WhatsApp draft created for "${item.data.title || contentId}". Awaiting approval.`, contentId, draftOnly: true };
 
         case 'create_image':
           return { message: `Image generation queued for "${item.data.title || contentId}".`, contentId };
 
         case 'edit':
+          extendContent(contentId);
           return { message: 'Edit mode — send your edit instruction via chat.', contentId, status: 'editing' };
 
         case 'approve_plan':
+          approveContent(contentId);
           return { message: 'Plan approved! Actions will be executed.', contentId, status: 'approved' };
 
         case 'reject_plan':
@@ -565,6 +665,9 @@ export async function createServer(kernel: KitzKernel) {
         if (action === 'approve') {
           const draft = approveDraft(trace_id, i);
           if (draft) {
+            // If this draft has an associated artifact, make it permanent
+            const cid = draft.args?.content_id as string;
+            if (cid) approveContent(cid);
             // Execute the approved tool
             const { routeWithAI: _, ...rest } = { routeWithAI: null }; // avoid unused
             try {
@@ -1372,6 +1475,161 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
     }
   });
 
+  // ── Brain Task Orchestrator (multi-channel draft-first lifecycle) ──
+
+  /** Create a brain task from any channel — returns ack + begins processing */
+  app.post<{ Body: { message: string; channel?: string; user_id?: string; org_id?: string; phone?: string; email?: string } }>(
+    '/api/kitz/tasks',
+    async (req) => {
+      const { message, channel, user_id, org_id, phone, email } = req.body || {};
+      const userId = user_id || (req.headers['x-user-id'] as string) || 'default';
+      const orgId = org_id || (req.headers['x-org-id'] as string) || '';
+      const originChannel = (channel || 'web') as OutputChannel;
+
+      const { task, ackMessage } = orchestrator.createTask({
+        userId,
+        orgId,
+        originChannel,
+        userMessage: message || '',
+        recipient: { phone, email, userId },
+      });
+
+      // Begin processing in background (non-blocking)
+      orchestrator.markProcessing(task.id);
+      const hasAI = !!(process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.AI_API_KEY);
+
+      if (hasAI && message) {
+        // Process asynchronously — don't block the ack
+        void (async () => {
+          try {
+            const result = await routeWithAI(message, kernel.tools, task.traceId, undefined, userId, originChannel);
+            // Check if result contains a clarification request
+            const hasClarification = result.toolResults?.some((r: any) => r?.type === 'clarification_request');
+            if (hasClarification) {
+              const clarif = result.toolResults.find((r: any) => r?.type === 'clarification_request') as any;
+              orchestrator.requestClarification(task.id, clarif.question, clarif.context);
+            } else {
+              orchestrator.setDraftOutput(task.id, result.response, result.toolsUsed, result.creditsConsumed);
+            }
+          } catch (err) {
+            orchestrator.setDraftOutput(task.id, `Error processing request: ${(err as Error).message}`, [], 0);
+          }
+        })();
+      }
+
+      return { taskId: task.id, status: task.status, ackMessage, slaDeadline: task.slaDeadline };
+    }
+  );
+
+  /** Get a specific brain task */
+  app.get<{ Params: { taskId: string } }>(
+    '/api/kitz/tasks/:taskId',
+    async (req, reply) => {
+      const task = orchestrator.getTask(req.params.taskId);
+      if (!task) return reply.code(404).send({ error: 'Task not found' });
+      return task;
+    }
+  );
+
+  /** List brain tasks for a user */
+  app.get<{ Querystring: { user_id?: string; status?: string } }>(
+    '/api/kitz/tasks',
+    async (req) => {
+      const userId = req.query.user_id || (req.headers['x-user-id'] as string);
+      if (userId) {
+        const tasks = orchestrator.getTasksByUser(userId);
+        if (req.query.status) {
+          return { tasks: tasks.filter(t => t.status === req.query.status) };
+        }
+        return { tasks };
+      }
+      return orchestrator.getTaskSummary();
+    }
+  );
+
+  /** Approve a brain task draft */
+  app.post<{ Params: { taskId: string } }>(
+    '/api/kitz/tasks/:taskId/approve',
+    async (req, reply) => {
+      const task = orchestrator.approveDraft(req.params.taskId);
+      if (!task) return reply.code(404).send({ error: 'No draft ready for approval' });
+      // Deliver the approved output
+      const delivery = await orchestrator.deliverApproved(task.id);
+      return { taskId: task.id, status: task.status, delivered: delivery.delivered, error: delivery.error };
+    }
+  );
+
+  /** Reject a brain task draft */
+  app.post<{ Params: { taskId: string } }>(
+    '/api/kitz/tasks/:taskId/reject',
+    async (req, reply) => {
+      const task = orchestrator.rejectDraft(req.params.taskId);
+      if (!task) return reply.code(404).send({ error: 'No draft ready for rejection' });
+      return { taskId: task.id, status: task.status };
+    }
+  );
+
+  /** Provide clarification for a pending task */
+  app.post<{ Params: { taskId: string }; Body: { clarification: string } }>(
+    '/api/kitz/tasks/:taskId/clarify',
+    async (req, reply) => {
+      const task = orchestrator.provideClarification(req.params.taskId, req.body?.clarification || '');
+      if (!task) return reply.code(404).send({ error: 'No pending clarification for this task' });
+
+      // Re-process with clarification
+      orchestrator.markProcessing(task.id);
+      const hasAI = !!(process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.AI_API_KEY);
+
+      if (hasAI) {
+        void (async () => {
+          try {
+            const result = await routeWithAI(task.userMessage, kernel.tools, task.traceId, undefined, task.userId, task.originChannel);
+            orchestrator.setDraftOutput(task.id, result.response, result.toolsUsed, result.creditsConsumed);
+          } catch (err) {
+            orchestrator.setDraftOutput(task.id, `Error: ${(err as Error).message}`, [], 0);
+          }
+        })();
+      }
+
+      return { taskId: task.id, status: task.status, message: 'Clarification received, re-processing...' };
+    }
+  );
+
+  /** Get tasks nearing SLA deadline */
+  app.get('/api/kitz/tasks/sla/alerts', async () => {
+    return { tasks: orchestrator.getTasksNearingSLA() };
+  });
+
+  // ── Approval Matrix (public — UI uses this to show risk levels) ──
+
+  app.get('/api/kitz/approvals/matrix', async () => {
+    return {
+      total: APPROVAL_MATRIX.length,
+      byRisk: getMatrixByRisk(),
+      byCategory: getMatrixByCategory(),
+    };
+  });
+
+  // ── Artifact Slug Route — kitz.services/Artifact-Name-abc123.html ──
+  app.get<{ Params: { slug: string } }>(
+    '/:slug',
+    {
+      schema: { params: { type: 'object', properties: { slug: { type: 'string', pattern: '^.+\\.html$' } }, required: ['slug'] } },
+    },
+    async (req, reply) => {
+      const { slug } = req.params;
+      const item = getContentBySlug(slug);
+      if (!item) {
+        const base = process.env.NODE_ENV === 'production'
+          ? 'https://kitz.services'
+          : `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers['x-forwarded-host'] || req.headers.host || `localhost:${PORT}`}`;
+        reply.code(410).type('text/html').send(buildExpiredArtifactHtml(base));
+        return;
+      }
+      reply.type('text/html').send(item.html);
+    }
+  );
+
   // ── SPA fallback — serve index.html for client-side routing ──
   if (existsSync(spaRoot)) {
     app.setNotFoundHandler(async (req, reply) => {
@@ -1385,5 +1643,11 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
 
   await app.listen({ port: PORT, host: '0.0.0.0' });
   log.info('KITZ OS listening', { port: PORT });
+
+  // Clean expired artifacts every hour to prevent memory leaks
+  setInterval(() => {
+    cleanExpiredContent();
+  }, 60 * 60 * 1000);
+
   return app;
 }

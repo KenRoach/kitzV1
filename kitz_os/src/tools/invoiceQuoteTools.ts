@@ -11,7 +11,7 @@
  */
 
 import type { ToolSchema } from './registry.js';
-import { getBrandKit, storeContent, getContent, generateContentId, renderTemplate, injectBrandCSS } from './contentEngine.js';
+import { getBrandKit, storeContent, getContent, generateContentId, generateSlug, renderTemplate, injectBrandCSS } from './contentEngine.js';
 import type { ContentItem } from './contentEngine.js';
 
 interface LineItem { description: string; quantity: number; unitPrice: number; }
@@ -125,7 +125,7 @@ function createInvoiceOrQuote(
 
   const html = injectBrandCSS(renderTemplate(tmpl, vars), brandKit);
   const contentId = generateContentId();
-  const contentItem: ContentItem = { contentId, type, html, data: data as unknown as Record<string, unknown>, status: 'draft', createdAt: now.toISOString(), updatedAt: now.toISOString() };
+  const contentItem: ContentItem = { contentId, slug: generateSlug(`${type === 'invoice' ? 'Factura' : 'Cotizacion'}-${number}`, contentId), type, html, data: data as unknown as Record<string, unknown>, status: 'draft', createdAt: now.toISOString(), updatedAt: now.toISOString() };
   storeContent(contentItem);
   return { data, html, contentId };
 }

@@ -33,7 +33,79 @@ INSERT INTO skills (slug, name, description, category, tier, credits_per_use) VA
   ('funnel-architect',          'Funnel Architect',          'Russell Brunson sales funnels, value ladder, and traffic',      'intelligence', 'sonnet', 1.0),
   ('strategic-planner',         'Strategic Planner',         'Rumelt + Sun Tzu + Musashi + Machiavelli strategic planning',   'intelligence', 'sonnet', 1.0),
   ('power-dynamics-advisor',    'Power Dynamics Advisor',    'Robert Greene 48 Laws, 33 Strategies, Human Nature, Mastery',  'intelligence', 'sonnet', 1.0),
-  ('relationship-builder',      'Relationship Builder',      'Dale Carnegie 30 principles for influence and relationships',  'intelligence', 'sonnet', 1.0)
+  ('relationship-builder',      'Relationship Builder',      'Dale Carnegie 30 principles for influence and relationships',  'intelligence', 'sonnet', 1.0),
+  -- Phase 1: Week 1 skills
+  ('bookkeeping-advisor',       'Bookkeeping Advisor',       'P&L snapshots, cash flow forecasts, expense tracking, tax readiness for LatAm SMBs', 'intelligence', 'haiku',  0.5),
+  ('pricing-strategist',        'Pricing Strategist',        'Value-based pricing, tiers, anchoring, competitive analysis for products and services', 'intelligence', 'haiku',  0.5),
+  ('copy-strategist',           'Copy Strategist',           'Conversion copy: headlines, CTAs, email subjects, ad copy, WhatsApp messages (Copyhackers)', 'content', 'sonnet', 1.0),
+  ('seo-content-planner',       'SEO Content Planner',       'Keywords, topic clusters, content calendar, local SEO, quick wins for Spanish-first SEO', 'content', 'sonnet', 1.0),
+  ('email-sequence-builder',    'Email Sequence Builder',    'Automated email sequences: welcome, nurture, sales, onboarding, re-engagement drips',  'content', 'sonnet', 1.0),
+  -- Phase 2: Week 2 skills
+  ('paid-ads-advisor',          'Paid Ads Advisor',          'Google/Meta/TikTok ad campaigns, budget allocation, ROAS targeting for LatAm',         'intelligence', 'haiku',  0.5),
+  ('social-media-planner',      'Social Media Planner',      'Platform-specific content strategy, weekly calendar, engagement tactics',                'content',      'haiku',  0.5),
+  ('cold-outreach-coach',       'Cold Outreach Coach',       'WhatsApp/email outreach sequences, personalization, response templates',                 'intelligence', 'haiku',  0.5),
+  ('sales-objection-handler',   'Sales Objection Handler',   'Chris Voss tactical empathy scripts for price/timing/trust objections',                  'intelligence', 'haiku',  0.5),
+  ('referral-program-builder',  'Referral Program Builder',  'Referral programs with tiers, rewards, WhatsApp flow, viral loops',                     'intelligence', 'haiku',  0.5),
+  -- Phase 3: Week 3 skills
+  ('inventory-optimizer',       'Inventory Optimizer',       'Demand forecasting, reorder points, dead stock detection, stock optimization',         'operations',   'haiku',  0.5),
+  ('supply-chain-advisor',      'Supply Chain Advisor',      'Supplier evaluation, negotiation scripts, logistics optimization',                     'operations',   'haiku',  0.5),
+  ('payment-method-advisor',    'Payment Method Advisor',    'Gateway selection by country (Yappy/PIX/OXXO/Nequi), fee comparison',                 'intelligence', 'haiku',  0.5),
+  ('customer-retention-advisor', 'Customer Retention Advisor', 'Churn prediction, win-back sequences, loyalty programs',                           'intelligence', 'haiku',  0.5),
+  ('sales-funnel-analyzer',     'Sales Funnel Analyzer',     'Conversion bottleneck diagnosis, revenue leakage, A/B test ideas',                    'intelligence', 'haiku',  0.5),
+  -- Phase 4: Week 4 skills
+  ('panama-business-advisor',   'Panama Business Advisor',   'Registro Público, DGI (ITBMS 7%), CSS, labor code, municipality permits',             'compliance',   'haiku',  0.5),
+  ('mexico-business-advisor',   'Mexico Business Advisor',   'SAT (RFC, CFDI), IMSS, INFONAVIT, ISR, IVA, RESICO regime, labor law',               'compliance',   'haiku',  0.5),
+  ('colombia-business-advisor', 'Colombia Business Advisor', 'DIAN (NIT, RUT), Cámara de Comercio, EPS, ARL, SAS, factura electrónica',            'compliance',   'haiku',  0.5),
+  ('brazil-business-advisor',   'Brazil Business Advisor',   'Receita Federal (CNPJ), Simples Nacional, MEI, PIX, NF-e, CLT labor',                'compliance',   'haiku',  0.5),
+  ('latam-compliance-navigator', 'LATAM Compliance Navigator', 'Cross-border data privacy (LGPD, LFPDPPP, Ley 1581), e-commerce, WhatsApp rules', 'compliance',   'haiku',  0.5),
+  -- Phase 5: Week 5 skills
+  ('business-model-designer',    'Business Model Designer',    'Business Model Canvas, revenue streams, unit economics, pivot analysis',            'intelligence', 'haiku',  0.5),
+  ('competitive-analyst',        'Competitive Analyst',        'SWOT, Porter 5 Forces, competitor mapping, differentiation strategies',             'intelligence', 'haiku',  0.5),
+  ('market-sizing-advisor',      'Market Sizing Advisor',      'TAM/SAM/SOM, bottom-up/top-down sizing, opportunity mapping for LatAm',            'intelligence', 'haiku',  0.5),
+  ('partnership-advisor',        'Partnership Advisor',        'Partnership structures, co-marketing, JVs, revenue share frameworks',               'intelligence', 'haiku',  0.5),
+  ('fundraising-advisor',        'Fundraising Advisor',        'Pitch deck structure, valuation, investor targeting, term sheet guidance',           'intelligence', 'sonnet', 1.0),
+  -- Phase 6: Week 6 skills
+  ('workflow-designer',          'Workflow Designer',          'n8n/Zapier workflow blueprints, automation triggers, API integrations',              'automation',   'haiku',  0.5),
+  ('analytics-advisor',          'Analytics Advisor',          'KPI dashboards, cohort analysis, funnel metrics, data storytelling',                 'intelligence', 'haiku',  0.5),
+  ('no-code-integrator',         'No-Code Integrator',         'No-code/low-code tool selection, Airtable/Notion/Typeform integration',            'automation',   'haiku',  0.5),
+  ('hubspot-advisor',            'HubSpot Advisor',            'HubSpot CRM setup, pipelines, sequences, automation workflows',                    'automation',   'haiku',  0.5),
+  ('google-business-advisor',    'Google Business Advisor',    'Google Business Profile optimization, reviews, local SEO, Google Ads',              'intelligence', 'haiku',  0.5),
+  -- Phase 7: Week 7 skills
+  ('tax-planner',                'Tax Planner',                'Tax optimization by country, deductions, quarterly estimates, compliance',           'compliance',   'haiku',  0.5),
+  ('budget-forecaster',          'Budget Forecaster',          'Monthly/quarterly budgets, scenario planning, cash runway projections',              'intelligence', 'haiku',  0.5),
+  ('expense-optimizer',          'Expense Optimizer',          'Cost reduction, vendor negotiation, subscription audit, ROI analysis',               'intelligence', 'haiku',  0.5),
+  ('unit-economics-advisor',     'Unit Economics Advisor',     'CAC, LTV, margins, payback period, contribution analysis',                          'intelligence', 'haiku',  0.5),
+  ('subscription-billing-advisor', 'Subscription Billing Advisor', 'Pricing tiers, billing cycles, churn reduction, upgrade paths',                 'intelligence', 'haiku',  0.5),
+  -- Phase 8: Week 8 skills
+  ('hiring-advisor',             'Hiring Advisor',             'Job postings, interview questions, evaluation rubrics, hiring process',              'operations',   'haiku',  0.5),
+  ('employee-onboarding-builder', 'Employee Onboarding Builder', 'Onboarding plans, first-day checklists, training schedules, 30/60/90',           'operations',   'haiku',  0.5),
+  ('team-culture-builder',       'Team Culture Builder',       'Team values, rituals, communication norms, recognition programs',                    'operations',   'haiku',  0.5),
+  ('compensation-advisor',       'Compensation Advisor',       'Salary bands, benefits packages, bonus structures, equity guidance',                 'operations',   'haiku',  0.5),
+  ('psychological-safety-advisor', 'Psychological Safety Advisor', 'Edmondson assessment, trust-building, feedback frameworks, inclusion',          'operations',   'haiku',  0.5),
+  -- Phase 9: Week 9 skills
+  ('shopify-optimizer',           'Shopify Optimizer',            'Shopify store setup, theme, apps, conversion optimization, SEO',                 'intelligence', 'haiku',  0.5),
+  ('mercadolibre-advisor',        'Mercado Libre Advisor',        'Listings, pricing, Product Ads, reputation building for LatAm sellers',          'intelligence', 'haiku',  0.5),
+  ('woocommerce-advisor',         'WooCommerce Advisor',          'Store optimization, plugins, performance, local payment gateways',               'intelligence', 'haiku',  0.5),
+  ('whatsapp-business-advisor',   'WhatsApp Business Advisor',    'Catalog, automation, broadcasts, WhatsApp Business API migration',               'intelligence', 'haiku',  0.5),
+  ('pix-integration-advisor',     'PIX Integration Advisor',      'Brazil PIX instant payments: QR codes, webhooks, BCB compliance',                'compliance',   'haiku',  0.5),
+  -- Phase 10: Week 10 skills
+  ('blog-post-advisor',           'Blog Post Advisor',            'SEO blog strategy, content structure, promotion, repurposing',                   'content',      'haiku',  0.5),
+  ('personal-brand-builder',      'Personal Brand Builder',       'Founder branding, positioning, thought leadership, content strategy',            'content',      'haiku',  0.5),
+  ('podcast-advisor',             'Podcast Advisor',              'Podcast launch, production workflow, growth, monetization',                       'content',      'haiku',  0.5),
+  ('pr-writer',                   'PR Writer',                    'Press releases, media outreach, crisis communications',                          'content',      'haiku',  0.5),
+  ('product-launch-advisor',      'Product Launch Advisor',       'Launch strategy, pre-launch buzz, go-to-market, post-launch iteration',          'intelligence', 'sonnet', 1.0),
+  -- Phase 11: Week 11 skills
+  ('drip-campaign-advisor',       'Drip Campaign Advisor',        'Email/WhatsApp automated sequences, triggers, segmentation, optimization',       'content',      'haiku',  0.5),
+  ('document-archive-advisor',    'Document Archive Advisor',     'Document management, organization, digitization, compliance',                     'operations',   'haiku',  0.5),
+  ('mail-merge-advisor',          'Mail Merge Advisor',           'Personalized bulk communications, templates, channels, compliance',               'content',      'haiku',  0.5),
+  ('scheduling-advisor',          'Scheduling Advisor',           'Appointment booking, calendar management, no-show reduction',                     'operations',   'haiku',  0.5),
+  ('invoicing-advisor',           'Invoicing Advisor',            'Invoice management, payment terms, collections, electronic invoicing',            'operations',   'haiku',  0.5),
+  -- Phase 12: Week 12 skills
+  ('chile-business-advisor',      'Chile Business Advisor',       'SII, IVA 19%, Renta, AFP, SpA, labor code, electronic invoicing',                'compliance',   'haiku',  0.5),
+  ('peru-business-advisor',       'Peru Business Advisor',        'SUNAT, RUC, IGV 18%, MYPE Tributario, EsSalud, CTS, gratificaciones',            'compliance',   'haiku',  0.5),
+  ('argentina-business-advisor',  'Argentina Business Advisor',   'AFIP, CUIT, Monotributo, IVA 21%, Ganancias, SAS, labor LCT',                   'compliance',   'haiku',  0.5),
+  ('costa-rica-business-advisor', 'Costa Rica Business Advisor',  'Hacienda, IVA 13%, CCSS, patentes, labor code, electronic invoicing',            'compliance',   'haiku',  0.5),
+  ('cross-border-trade-advisor',  'Cross-Border Trade Advisor',   'Import/export regulations, customs, trade agreements, LatAm logistics',          'compliance',   'haiku',  0.5)
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,

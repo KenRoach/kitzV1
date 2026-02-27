@@ -231,4 +231,31 @@ app.get('/drafts/:token', async (req: any, reply) => {
   return draft.draftHtml;
 });
 
+// ── Debug: test draft generation directly ──
+app.get('/debug/draft-test', async (req: any) => {
+  const { generateDraftResponse } = await import('./drafts.js');
+  try {
+    const result = await generateDraftResponse(
+      'Hi, what are your pricing plans?',
+      'Pricing question',
+      'TestUser',
+      'en',
+      'KITZ-TEST-0000',
+      'debug-trace',
+    );
+    return {
+      ok: true,
+      bodyLen: result.draftBody.length,
+      bodyPreview: result.draftBody.slice(0, 200),
+      subject: result.draftSubject,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: (err as Error).message,
+      stack: (err as Error).stack?.slice(0, 500),
+    };
+  }
+});
+
 app.listen({ port: Number(process.env.PORT || 3007), host: '0.0.0.0' });

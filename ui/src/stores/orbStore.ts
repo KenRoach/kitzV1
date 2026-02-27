@@ -41,6 +41,8 @@ interface OrbStore {
   teleportSeq: number
   /** Echo responses to WhatsApp when enabled */
   echoToWhatsApp: boolean
+  /** AI Battery remaining credits (fetched from backend) */
+  batteryRemaining: number
 
   state: OrbState
   messages: ChatMessage[]
@@ -72,6 +74,7 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
   speaking: false,
   teleportSeq: 0,
   echoToWhatsApp: false,
+  batteryRemaining: KITZ_MANIFEST.governance.aiBatteryDailyLimit,
   state: 'idle',
   messages: [],
 
@@ -131,6 +134,7 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
         messages: s.messages.map((m) =>
           m.id === welcomeMsg.id ? { ...m, content: updatedContent } : m,
         ),
+        batteryRemaining: batteryLimit - batteryUsed,
       }))
     }).catch(() => {
       // If backend is down, update status to reflect that

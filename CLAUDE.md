@@ -19,7 +19,7 @@ TypeScript monorepo with 13+ microservices on Fastify. GitHub: `KenRoach/kitzV1`
 | `kitz-notifications-queue` | 3008 | In-memory FIFO queue, retry (3x), DLQ, idempotency | Stub |
 | `kitz-services` | 3010 | Free marketing content hub + Panama compliance pipeline | Stub |
 | `admin-kitz-services` | 3011 | Admin dashboard, API keys, credits, WhatsApp QR proxy | Stub |
-| `kitz_os` | 3012 | Core AI engine — 68+ tools, semantic router, cadence, AI Battery | Functional |
+| `kitz_os` | 3012 | Core AI engine — 123 tool modules (90 brain skills), semantic router, cadence, AI Battery | Functional |
 | `kitz-brain` | cron | Scheduled AI agents (daily 8am, weekly Mon 9am) | Stub |
 | `workspace` | 3001 | workspace.kitz.services — Free manual workspace (CRM, orders, checkout links, tasks, AI direction) for users + AI agents | Functional |
 | `kitz-schemas` | lib | Shared TypeScript contracts + trace helpers | Functional |
@@ -32,7 +32,7 @@ TypeScript monorepo with 13+ microservices on Fastify. GitHub: `KenRoach/kitzV1`
 | `kitz-supabase` | — | Supabase edge functions + migrations (renamed from bizgenie-core) | Functional |
 | `zero-trust` | — | Security layer: auth, RBAC, encryption, audit, network policies | Stub |
 | `shared` | — | Cross-service shared types, utils, constants, contracts | Stub |
-| `brain` | — | AI agent skills: call transcription, email drafting, sentiment, smart reply | Stub |
+| `brain` | — | AI agent skills: 90 skills across 12 domains (advisory, compliance, content, operations, e-commerce) | Functional |
 
 **Maturity key:** Production = real API integrations, deployed. Functional = real logic, needs polish. Stub = endpoints exist, business logic is in-memory/placeholder.
 
@@ -62,7 +62,7 @@ Note: `kitz_os` calls `kitz-whatsapp-connector` directly at `WA_CONNECTOR_URL` (
 Entry: `src/index.ts` → `src/kernel.ts` (KitzKernel boot)
 
 ### Tool Registry
-`src/tools/registry.ts` — OsToolRegistry wires 14 tool modules (68+ tools total). Tools are invoked via try/catch returning `{ error: "Tool failed: ..." }` on failure.
+`src/tools/registry.ts` — OsToolRegistry wires 123 tool modules (90 brain skills + 33 core tools). Tools are invoked via try/catch returning `{ error: "Tool failed: ..." }` on failure.
 
 ### 5-Phase Semantic Router
 `src/interfaces/whatsapp/semanticRouter.ts`
@@ -160,7 +160,7 @@ cd <service> && npm test
 | Repo audit + delta plan | `Kitz-Repo-Audit.md` |
 | Shared contracts (all types) | `kitz-schemas/src/contracts.ts` |
 | Core kernel boot | `kitz_os/src/kernel.ts` |
-| Tool registry (68+ tools) | `kitz_os/src/tools/registry.ts` |
+| Tool registry (123 modules) | `kitz_os/src/tools/registry.ts` |
 | 5-phase semantic router | `kitz_os/src/interfaces/whatsapp/semanticRouter.ts` |
 | AI Battery tracking | `kitz_os/src/aiBattery.ts` |
 | Claude client (tiered routing) | `kitz_os/src/llm/claudeClient.ts` |
@@ -203,11 +203,25 @@ When modifying contracts in `kitz-schemas/src/contracts.ts`, check all consuming
 - `POST /spend` on kitz-payments always returns 403 — credits are deducted via webhooks only
 - Never burn AI Battery credits on vanity or exploration without explicit approval
 
+## Supporting Directories (not in service table)
+
+| Directory | Role |
+|-----------|------|
+| `database/` | PostgreSQL migrations (`migrations/`) and seed data (`seed/`) |
+| `docs/` | Internal docs, intelligence (121+ items), plans, presentations, OpenAPI spec |
+| `infra/` | CI, Docker, env templates, k8s, Terraform configs |
+| `scripts/` | `health-check.sh`, `migrate.sh`, `seed.sh`, `setup.sh`, `validate-build.sh` |
+| `tests/` | E2E, integration, load test scaffolds (empty) |
+| `bin/` | CLI entry point (`kitz` executable) |
+| `content/` | Changelog |
+
 ## Codebase State
-- **Tests**: All `src/index.test.ts` files are placeholder stubs (~157 bytes). No integration test suite.
+- **Tests**: 9 test files with ~82 test cases total. Real coverage exists in `kitz_os` (4 files, ~64 tests), `kitz-gateway` (JWT tests), `kitz-services`, `workspace`, and `aos`. 10 services have test runners configured but zero test files. CI only runs tests for 3 services.
+- **TypeScript**: All 12 services pass `tsc --noEmit` with zero errors. Strict mode everywhere.
 - **Database**: PostgreSQL wired in docker-compose but most services use in-memory Maps/arrays. Real DB persistence only in `kitz_os` (Supabase).
 - **LLM providers**: Provider files in `kitz-llm-hub` are stubs. Real API call logic lives in `kitz_os/src/llm/`.
 - **Payment webhooks**: Check header presence but don't cryptographically verify signatures yet.
+- **Docker**: All services have health checks (wget-based for Alpine), memory limits, and restart policies. n8n pinned to v1.76.1.
 
 ## Business Context
 - **Target user**: 25-45, LatAm, Spanish-first, sells on WhatsApp/Instagram

@@ -15,7 +15,7 @@
  */
 
 import type { ToolSchema } from './registry.js';
-import { getBrandKit, storeContent, getContent, generateContentId, injectBrandCSS } from './contentEngine.js';
+import { getBrandKit, storeContent, getContent, generateContentId, generateSlug, injectBrandCSS } from './contentEngine.js';
 import type { ContentItem } from './contentEngine.js';
 
 // ── Pre-seeded email templates ──
@@ -232,7 +232,7 @@ Return ONLY the filled HTML (no markdown, no explanation). Replace every {{place
       });
 
       storeContent({
-        contentId, type: 'email', html,
+        contentId, slug: generateSlug(subject || brief || 'Email', contentId), type: 'email', html,
         data: { templateKey, subject, brief } as unknown as Record<string, unknown>,
         status: 'draft', createdAt: now, updatedAt: now,
       });

@@ -200,22 +200,20 @@ export function getAutoReplyHtml(
   const t = TEMPLATES[language];
   const bodyHtml = t.body(caseNumber).replace(/\n/g, '<br>');
 
-  return `<div style="max-width:600px;margin:0 auto;font-family:'Inter',Arial,Helvetica,sans-serif;background:#f8f7ff">
-<div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:28px 24px">
+  return `<div style="max-width:600px;margin:0 auto;font-family:'Inter',-apple-system,Arial,sans-serif;background:#f8f7ff;border-radius:16px;overflow:hidden">
+<div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:20px 16px">
 <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-<td><span style="color:#ffffff;font-size:20px;font-weight:700;line-height:1.2">KITZ</span><br><span style="color:rgba(255,255,255,0.75);font-size:12px">Your business, handled.</span></td>
+<td><span style="color:#fff;font-size:20px;font-weight:700;letter-spacing:0.5px">KITZ</span><br><span style="color:rgba(255,255,255,0.7);font-size:11px">Your business, handled.</span></td>
 <td style="text-align:right"><span style="background:rgba(255,255,255,0.2);color:#fff;font-size:11px;padding:4px 12px;border-radius:20px;font-weight:600">${t.caseLabel} ${caseNumber}</span></td>
 </tr></table>
 </div>
-<div style="background:#ffffff;margin:0 16px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(124,58,237,0.08)">
-<div style="padding:32px 24px">
-<p style="color:#1a1a2e;margin:0 0 16px;font-size:17px;font-weight:600">${t.greeting(senderName)}</p>
-<p style="color:#555;font-size:15px;line-height:1.6;margin:0">${bodyHtml}</p>
+<div style="background:#fff;padding:24px 16px">
+<p style="color:#1a1a2e;margin:0 0 12px;font-size:15px;font-weight:600">${t.greeting(senderName)}</p>
+<p style="color:#444;font-size:14px;line-height:1.7;margin:0">${bodyHtml}</p>
 </div>
-</div>
-<div style="padding:20px 24px;text-align:center">
-<p style="color:#999;font-size:11px;line-height:1.5;margin:0 0 8px">${t.aiDisclaimer}</p>
-<p style="color:#bbb;font-size:11px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none">KITZ</a></p>
+<div style="padding:14px 16px 16px;text-align:center;background:#faf9ff">
+<p style="color:#aaa;font-size:11px;line-height:1.5;margin:0 0 6px">${t.aiDisclaimer}</p>
+<p style="color:#ccc;font-size:11px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none;font-weight:600">KITZ</a></p>
 </div>
 </div>`;
 }
@@ -314,8 +312,9 @@ export async function processInboundEmail(
 
   const emailBody = text || html?.replace(/<[^>]+>/g, '') || '';
 
-  // 1. Detect language
-  const language = await detectLanguage(emailBody);
+  // 1. Detect language (use subject + body for short/empty emails)
+  const langSample = emailBody.trim().length > 10 ? emailBody : `${subject} ${emailBody}`.trim();
+  const language = await detectLanguage(langSample);
 
   // 2. Generate case number
   const caseNumber = generateCaseNumber();
@@ -343,11 +342,17 @@ export async function processInboundEmail(
     sendResult: { ok: sendResult.ok, provider: sendResult.provider },
   });
 
-  // 5. Generate AI draft + send to admin for approval (fire-and-forget)
+  // 5. Generate AI draft + send to admin for approval (fire-and-forget, 5min delay)
   if (ADMIN_EMAIL) {
     (async () => {
       try {
-        const draft = await generateDraftResponse(emailBody, subject, sender.name, language, caseNumber);
+        // Wait 3 minutes so auto-reply lands first and brain has time to think
+        await new Promise((r) => setTimeout(r, 3 * 60 * 1000));
+        log.info({ event: 'inbound.draft_start', traceId, caseNumber, adminEmail: ADMIN_EMAIL });
+
+        const draft = await generateDraftResponse(emailBody, subject, sender.name, language, caseNumber, traceId);
+        log.info({ event: 'inbound.draft_generated', traceId, caseNumber, bodyLen: draft.draftBody.length });
+
         const pending = createPendingDraft({
           caseNumber,
           originalFrom: sender.email,
@@ -357,12 +362,13 @@ export async function processInboundEmail(
           language,
           ...draft,
         });
+        log.info({ event: 'inbound.draft_stored', traceId, caseNumber, token: pending.token.slice(0, 8) });
 
         const approveUrl = `${SERVICE_URL}/approve/${pending.token}`;
         const editUrl = `mailto:${sender.email}?subject=${encodeURIComponent(draft.draftSubject)}&body=${encodeURIComponent(draft.draftBody)}`;
         const approvalHtml = getApprovalEmailHtml(pending, approveUrl, editUrl);
 
-        await sendEmail({
+        const sendResult = await sendEmail({
           to: ADMIN_EMAIL,
           subject: `[Draft Review] ${caseNumber} — ${subject}`,
           body: `New case ${caseNumber} from ${sender.name}. Draft response ready for review.`,
@@ -370,7 +376,7 @@ export async function processInboundEmail(
           replyTo: sender.email,
         });
 
-        log.info({ event: 'inbound.draft_sent_to_admin', traceId, caseNumber, token: pending.token.slice(0, 8) });
+        log.info({ event: 'inbound.draft_sent_to_admin', traceId, caseNumber, token: pending.token.slice(0, 8), sendOk: sendResult.ok, sendError: sendResult.error });
 
         // Optional WhatsApp notification
         if (WA_CONNECTOR_URL && ADMIN_PHONE) {
@@ -386,7 +392,7 @@ export async function processInboundEmail(
           }).catch(() => {});
         }
       } catch (err) {
-        log.info({ event: 'inbound.draft_error', traceId, caseNumber, error: (err as Error).message });
+        log.info({ event: 'inbound.draft_error', traceId, caseNumber, error: (err as Error).message, stack: (err as Error).stack?.slice(0, 500) });
       }
     })();
   }

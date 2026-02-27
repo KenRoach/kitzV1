@@ -1,4 +1,4 @@
-export type LLMTaskType = 'drafting' | 'summarizing' | 'search';
+export type LLMTaskType = 'drafting' | 'summarizing' | 'search' | 'classification';
 
 const llmHubUrl = process.env.LLM_HUB_URL || 'http://localhost:4010';
 

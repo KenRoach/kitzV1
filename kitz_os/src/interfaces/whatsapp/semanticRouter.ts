@@ -25,6 +25,14 @@ import { searchSOPs } from '../../sops/store.js';
 import { getConversationHistory } from '../../memory/manager.js';
 import type { OutputChannel } from 'kitz-schemas';
 import { getIntelligenceContext } from '../../tools/ragPipelineTools.js';
+import { isBlocked, getToolRisk, getApprovalSummaryForPrompt } from '../../approvals/approvalMatrix.js';
+import { dispatchToAgent } from '../../../../aos/src/runtime/taskDispatcher.js';
+import { runSwarm, type SwarmConfig } from '../../../../aos/src/swarm/swarmRunner.js';
+import type { ExecutionResult } from '../../../../aos/src/runtime/AgentExecutor.js';
+import { getAgent } from '../../../../aos/src/runtime/taskDispatcher.js';
+import { ReviewerAgent } from '../../../../aos/src/agents/governance/Reviewer.js';
+
+const BRAIN_URL = process.env.KITZ_BRAIN_URL || 'http://localhost:3015';
 
 // ── Tool-to-MCP Mapping ──
 // Maps KITZ OS tool names to workspace MCP tool names for direct execution
@@ -107,6 +115,8 @@ const DIRECT_EXECUTE_TOOLS = new Set([
   'image_generate',
   // PDF/document generation
   'pdf_generate',
+  // Clarification + follow-up (brain orchestrator)
+  'ask_clarification', 'schedule_followup',
 ]);
 
 // ── Draft-First Classification ──
@@ -158,7 +168,7 @@ interface DraftAction {
   status: 'pending' | 'approved' | 'rejected';
 }
 const draftQueue = new Map<string, DraftAction[]>();
-const DRAFT_TTL_MS = 60 * 60 * 1000; // 1 hour
+const DRAFT_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 function cleanExpiredDrafts(): void {
   const now = Date.now();
@@ -333,7 +343,18 @@ EXECUTION RULES:
 20. For content performance: content_measure to track, content_suggestBoost to find winners, content_promote to boost.
 21. When user mentions a country or asks about tax/payments, search intelligence with rag_search first for deep context.
 22. For image generation (logos, product photos, graphics, flyers), use image_generate. Always include the image URL in your response so the user can see it.
-23. For document/report generation (proposals, reports, summaries, letters), use pdf_generate. Mention the document title in your response.${sopSection}${intelSection}`;
+23. For document/report generation (proposals, reports, summaries, letters), use pdf_generate. Mention the document title in your response.
+24. DRAFT-FIRST: All write actions (messages, CRM updates, orders, invoices) produce a DRAFT first. The user must approve before anything is sent or saved permanently.
+25. CLARIFICATION: If the request is ambiguous, missing critical details, or you need to confirm before acting — use the ask_clarification tool. Be specific about what you need. Include suggestions when possible.
+26. FOLLOW-UP: If you can provide a partial answer now but need time for a complete response, use schedule_followup to send the full answer later (within 24 hours).
+27. ALWAYS DELIVER: Even if your answer is imperfect, always provide a first draft. A partial answer is better than no answer. You can schedule a follow-up for the complete version.
+
+CHANNEL STRATEGY:
+- WhatsApp → Business operations: orders, payments, CRM, invoicing, customer service, quick lookups
+- Email → Reports, documents, campaigns, follow-up sequences, detailed analysis
+- Workspace (ChatPanel) → Full interactive workspace: advisory, content creation, analytics, strategy, deep work
+
+${getApprovalSummaryForPrompt()}${sopSection}${intelSection}`;
 }
 
 // ── Execute a tool ──
@@ -600,8 +621,20 @@ export async function routeWithAI(
         trace_id: traceId,
       }));
 
+      // Blocked: actions that should never be executed by AI
+      if (isBlocked(toolName)) {
+        messages.push({
+          role: 'tool',
+          content: JSON.stringify({ status: 'blocked', message: `Action "${toolName}" is blocked. This action cannot be performed by AI — it requires manual execution by the business owner.` }),
+          tool_call_id: tc.id,
+          name: toolName,
+        });
+        continue;
+      }
+
       // Draft-first: write tools are queued, not executed
       if (isWriteTool(toolName)) {
+        const riskLevel = getToolRisk(toolName);
         const draft: DraftAction = {
           toolName,
           args,
@@ -612,10 +645,12 @@ export async function routeWithAI(
         };
         pendingDrafts.push(draft);
 
+        const riskLabel = riskLevel === 'critical' ? ' ⚠️ CRITICAL — requires dual-channel approval' :
+                          riskLevel === 'high' ? ' ⚠️ HIGH RISK — requires explicit approval' : '';
         // Return a draft confirmation to the AI so it knows the action is pending
         messages.push({
           role: 'tool',
-          content: JSON.stringify({ status: 'drafted', message: `Action "${toolName}" queued as draft. Awaiting user approval.` }),
+          content: JSON.stringify({ status: 'drafted', riskLevel, message: `Action "${toolName}" queued as draft.${riskLabel} Awaiting user approval.` }),
           tool_call_id: tc.id,
           name: toolName,
         });
@@ -661,4 +696,271 @@ export async function routeWithAI(
 
   // If we hit max loops, return whatever we have
   return { response: 'Reached maximum processing steps. Please try a simpler request.', toolsUsed, creditsConsumed: totalCreditsConsumed, toolResults };
+}
+
+// ── Brain Decision type (mirrors kitz-brain classifier output) ──
+interface BrainDecision {
+  strategy: 'direct_tool' | 'single_agent' | 'multi_agent' | 'swarm' | 'clarify';
+  confidence: number;
+  agents?: string[];
+  teams?: string[];
+  reasoning: string;
+  toolHints?: string[];
+  clarificationQuestion?: string;
+  reviewRequired: boolean;
+  traceId: string;
+}
+
+type RouteResult = { response: string; toolsUsed: string[]; creditsConsumed: number; toolResults: Record<string, unknown>[] };
+
+/** Adapt an AOS ExecutionResult to the semantic router return shape */
+function adaptExecutionResult(result: ExecutionResult): RouteResult {
+  return {
+    response: result.response,
+    toolsUsed: result.toolResults.map(tr => tr.tool),
+    creditsConsumed: 0,
+    toolResults: result.toolResults.map(tr => ({
+      tool: tr.tool,
+      success: tr.success,
+      data: tr.data,
+      error: tr.error,
+    })),
+  };
+}
+
+/**
+ * Brain-First Routing — sends every AI request through kitz-brain first.
+ * Brain classifies, then dispatches to the appropriate execution strategy.
+ * Falls back to routeWithAI() if brain is unreachable.
+ *
+ * Drop-in replacement for routeWithAI() — same signature and return shape.
+ */
+export async function brainFirstRoute(
+  userMessage: string,
+  registry: OsToolRegistry,
+  traceId: string,
+  mediaContext?: { media_base64: string; mime_type: string },
+  userId?: string,
+  channel: OutputChannel = 'whatsapp',
+  chatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
+): Promise<RouteResult> {
+
+  // 1. Call kitz-brain POST /decide
+  let decision: BrainDecision | null = null;
+  try {
+    const brainRes = await fetch(`${BRAIN_URL}/decide`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-trace-id': traceId },
+      body: JSON.stringify({
+        message: userMessage,
+        channel,
+        userId: userId || 'unknown',
+        traceId,
+        chatHistory: chatHistory?.slice(-5),
+        mediaContext: mediaContext ? { mime_type: mediaContext.mime_type } : undefined,
+      }),
+      signal: AbortSignal.timeout(3000), // 3s timeout for classification
+    });
+
+    if (brainRes.ok) {
+      decision = await brainRes.json() as BrainDecision;
+      console.log(JSON.stringify({
+        ts: new Date().toISOString(),
+        module: 'brainFirstRoute',
+        action: 'brain_decision',
+        strategy: decision.strategy,
+        confidence: decision.confidence,
+        agents: decision.agents,
+        reviewRequired: decision.reviewRequired,
+        trace_id: traceId,
+      }));
+    }
+  } catch (err) {
+    console.log(JSON.stringify({
+      ts: new Date().toISOString(),
+      module: 'brainFirstRoute',
+      action: 'brain_unreachable',
+      error: (err as Error).message,
+      trace_id: traceId,
+    }));
+  }
+
+  // 2. If brain unreachable, fall through to existing routeWithAI
+  if (!decision) {
+    return routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+  }
+
+  // 3. Execute based on brain strategy
+  let result: RouteResult;
+
+  switch (decision.strategy) {
+    case 'direct_tool': {
+      // Use existing 5-phase pipeline — brain says it's a simple request
+      result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+      break;
+    }
+
+    case 'single_agent': {
+      const agentName = decision.agents?.[0];
+      if (!agentName) {
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+        break;
+      }
+
+      // Build message with media context if present
+      let agentMessage = userMessage;
+      if (mediaContext) {
+        agentMessage = `${userMessage}\n\n[Attached: ${mediaContext.mime_type} document/image]`;
+      }
+
+      const execResult = await dispatchToAgent(agentName, agentMessage, traceId);
+
+      // If agent not found or offline, fall back to routeWithAI
+      if (execResult.iterations === 0 && execResult.response.startsWith('Agent "')) {
+        console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'brainFirstRoute', action: 'agent_fallback', agent: agentName, trace_id: traceId }));
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+      } else {
+        result = adaptExecutionResult(execResult);
+      }
+      break;
+    }
+
+    case 'multi_agent': {
+      const agents = decision.agents || [];
+      if (agents.length === 0) {
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+        break;
+      }
+
+      // Sequential dispatch: each agent gets the prior agent's output as context
+      let context = userMessage;
+      if (mediaContext) {
+        context = `${userMessage}\n\n[Attached: ${mediaContext.mime_type} document/image]`;
+      }
+
+      const allToolsUsed: string[] = [];
+      const allToolResults: Record<string, unknown>[] = [];
+      let finalResponse = '';
+
+      for (const agentName of agents) {
+        const execResult = await dispatchToAgent(agentName, context, traceId);
+
+        // If agent not found, skip
+        if (execResult.iterations === 0 && execResult.response.startsWith('Agent "')) {
+          continue;
+        }
+
+        allToolsUsed.push(...execResult.toolResults.map(tr => tr.tool));
+        allToolResults.push(...execResult.toolResults.map(tr => ({
+          tool: tr.tool, success: tr.success, data: tr.data, error: tr.error,
+        })));
+
+        // Next agent gets prior output as context
+        context = `${userMessage}\n\nPrior agent (${agentName}) output:\n${execResult.response}`;
+        finalResponse = execResult.response;
+      }
+
+      if (!finalResponse) {
+        // All agents failed, fall back
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+      } else {
+        result = {
+          response: finalResponse,
+          toolsUsed: allToolsUsed,
+          creditsConsumed: 0,
+          toolResults: allToolResults,
+        };
+      }
+      break;
+    }
+
+    case 'swarm': {
+      const teams = decision.teams as SwarmConfig['teams'];
+      try {
+        const swarmResult = await runSwarm({
+          teams,
+          concurrency: 6,
+          timeoutMs: 60_000,
+        });
+
+        const summary = [
+          `Swarm analysis complete.`,
+          `Teams: ${swarmResult.teamsCompleted}/${swarmResult.teamsTotal}`,
+          `Agents: ${swarmResult.agentResults.length} participated`,
+          `Duration: ${swarmResult.durationMs}ms`,
+        ].join(' ');
+
+        result = {
+          response: summary,
+          toolsUsed: swarmResult.agentResults.map(ar => ar.tool || 'unknown'),
+          creditsConsumed: 0,
+          toolResults: swarmResult.teamResults.map(tr => ({
+            team: tr.team,
+            status: tr.status,
+            durationMs: tr.durationMs,
+          })),
+        };
+      } catch (err) {
+        console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'brainFirstRoute', action: 'swarm_error', error: (err as Error).message, trace_id: traceId }));
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+      }
+      break;
+    }
+
+    case 'clarify': {
+      result = {
+        response: decision.clarificationQuestion || 'Could you clarify what you need? I want to make sure I get this right, boss.',
+        toolsUsed: [],
+        creditsConsumed: 0,
+        toolResults: [],
+      };
+      break;
+    }
+
+    default: {
+      result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+    }
+  }
+
+  // 4. Review gate — Reviewer agent checks quality before response reaches user
+  if (decision.reviewRequired && result.response) {
+    try {
+      const reviewerAgent = getAgent('Reviewer');
+      if (reviewerAgent && reviewerAgent instanceof ReviewerAgent) {
+        const reviewResult = await reviewerAgent.reviewResponse(
+          decision.agents?.[0] || 'unknown',
+          userMessage,
+          result.response,
+          result.toolsUsed,
+          traceId,
+        );
+
+        console.log(JSON.stringify({
+          ts: new Date().toISOString(),
+          module: 'brainFirstRoute',
+          action: 'review_gate',
+          approved: reviewResult.approved,
+          confidence: reviewResult.confidence,
+          flags: reviewResult.flags,
+          trace_id: traceId,
+        }));
+
+        // If reviewer provides a revised response, use it
+        if (reviewResult.revised) {
+          result.response = reviewResult.revised;
+        }
+      }
+    } catch (err) {
+      // Review gate failure is non-blocking — pass original response through
+      console.log(JSON.stringify({
+        ts: new Date().toISOString(),
+        module: 'brainFirstRoute',
+        action: 'review_gate_error',
+        error: (err as Error).message,
+        trace_id: traceId,
+      }));
+    }
+  }
+
+  return result;
 }
