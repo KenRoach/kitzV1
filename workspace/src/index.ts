@@ -1478,10 +1478,18 @@ app.get('/api/ops/metrics', async () => {
 
 /* ── JSON REST API for UI (Bearer token auth) ── */
 
-/** Extract userId from Bearer JWT or cookie session */
+/** Extract userId from Bearer JWT, service header, or cookie session */
 function getApiUser(req: any): { userId: string; orgId: string } | null {
-  // Try Bearer token first (UI sends this)
+  // Try service-to-service auth (kitz_os → workspace): x-user-id header with JWT_SECRET as Bearer
+  const serviceUserId = req.headers?.['x-user-id'] as string | undefined;
   const authHeader = req.headers?.authorization as string | undefined;
+  if (serviceUserId && authHeader) {
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+    if (token === JWT_SECRET) {
+      return { userId: serviceUserId, orgId: '' };
+    }
+  }
+  // Try Bearer JWT token (UI sends this)
   if (authHeader) {
     const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
     try {
@@ -1591,6 +1599,19 @@ app.post('/api/workspace/orders', async (req: any, reply: any) => {
   return dbOrderToOrder(row);
 });
 
+app.patch('/api/workspace/orders/:id', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  const body = req.body || {};
+  const updates: Record<string, unknown> = {};
+  if (body.status !== undefined) updates.status = body.status;
+  if (body.description !== undefined) updates.description = body.description;
+  if (body.total !== undefined) updates.total = Number(body.total);
+  const row = await dbUpdateOrder(user.userId, req.params.id, updates);
+  if (!row) return reply.code(404).send({ error: 'NOT_FOUND' });
+  return dbOrderToOrder(row);
+});
+
 /* ── Tasks ── */
 
 app.get('/api/workspace/tasks', async (req: any, reply: any) => {
@@ -1606,6 +1627,18 @@ app.post('/api/workspace/tasks', async (req: any, reply: any) => {
   const body = req.body || {};
   const row = await dbCreateTask(user.userId, body.title || '');
   trackUsage('api.tasks.create');
+  return dbTaskToTask(row);
+});
+
+app.patch('/api/workspace/tasks/:id', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  const body = req.body || {};
+  const updates: Record<string, unknown> = {};
+  if (body.done !== undefined) updates.done = body.done;
+  if (body.title !== undefined) updates.title = body.title;
+  const row = await dbUpdateTask(user.userId, req.params.id, updates);
+  if (!row) return reply.code(404).send({ error: 'NOT_FOUND' });
   return dbTaskToTask(row);
 });
 
