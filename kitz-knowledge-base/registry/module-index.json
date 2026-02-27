@@ -638,5 +638,37 @@
     "ingested": 0,
     "enriched": 0,
     "file": "KB_WHATSAPP_REPOS.md"
+  },
+  "Voice Brain Dump": {
+    "count": 7,
+    "critical": 2,
+    "high": 4,
+    "ingested": 0,
+    "enriched": 0,
+    "file": "KB_VOICE_BRAIN_DUMP.md"
+  },
+  "Video Creation": {
+    "count": 6,
+    "critical": 2,
+    "high": 3,
+    "ingested": 0,
+    "enriched": 0,
+    "file": "KB_VIDEO_CREATION.md"
+  },
+  "Browser Agents": {
+    "count": 5,
+    "critical": 2,
+    "high": 3,
+    "ingested": 0,
+    "enriched": 0,
+    "file": "KB_BROWSER_AGENTS.md"
+  },
+  "Office Automation": {
+    "count": 6,
+    "critical": 1,
+    "high": 4,
+    "ingested": 0,
+    "enriched": 0,
+    "file": "KB_OFFICE_AUTOMATION.md"
   }
 }
