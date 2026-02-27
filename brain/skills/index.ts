@@ -145,4 +145,52 @@ export type { BrazilBusinessAdvice, BrazilBusinessOptions } from './brazilBusine
 export { navigateLatamCompliance } from './latamComplianceNavigator.js';
 export type { LatamComplianceAdvice, LatamComplianceOptions, CountryCompliance } from './latamComplianceNavigator.js';
 
+// Week 5
+export { designBusinessModel } from './businessModelDesigner.js';
+export type { BusinessModelResult, BusinessModelOptions, BusinessModelCanvas } from './businessModelDesigner.js';
+export { analyzeCompetition } from './competitiveAnalyst.js';
+export type { CompetitiveAnalysis, CompetitiveOptions, CompetitorProfile } from './competitiveAnalyst.js';
+export { sizeMarket } from './marketSizingAdvisor.js';
+export type { MarketSizing, MarketSizingOptions } from './marketSizingAdvisor.js';
+export { advisePartnership } from './partnershipAdvisor.js';
+export type { PartnershipStrategy, PartnershipOptions } from './partnershipAdvisor.js';
+export { adviseFundraising } from './fundraisingAdvisor.js';
+export type { FundraisingStrategy, FundraisingOptions } from './fundraisingAdvisor.js';
+
+// Week 6
+export { designWorkflow } from './workflowDesigner.js';
+export type { WorkflowDesign, WorkflowOptions } from './workflowDesigner.js';
+export { adviseAnalytics } from './analyticsAdvisor.js';
+export type { AnalyticsAdvice, AnalyticsOptions } from './analyticsAdvisor.js';
+export { planIntegrations } from './noCodeIntegrator.js';
+export type { IntegrationPlan, NoCodeOptions } from './noCodeIntegrator.js';
+export { adviseHubSpot } from './hubspotAdvisor.js';
+export type { HubSpotAdvice, HubSpotOptions } from './hubspotAdvisor.js';
+export { adviseGoogleBusiness } from './googleBusinessAdvisor.js';
+export type { GoogleBusinessAdvice, GoogleBusinessOptions } from './googleBusinessAdvisor.js';
+
+// Week 7
+export { planTaxes } from './taxPlanner.js';
+export type { TaxPlan, TaxPlannerOptions } from './taxPlanner.js';
+export { forecastBudget } from './budgetForecaster.js';
+export type { BudgetForecast, BudgetOptions } from './budgetForecaster.js';
+export { optimizeExpenses } from './expenseOptimizer.js';
+export type { ExpenseOptimization, ExpenseOptions } from './expenseOptimizer.js';
+export { analyzeUnitEconomics } from './unitEconomicsAdvisor.js';
+export type { UnitEconomicsAnalysis, UnitEconomicsOptions } from './unitEconomicsAdvisor.js';
+export { adviseSubscriptionBilling } from './subscriptionBillingAdvisor.js';
+export type { SubscriptionAdvice, SubscriptionOptions } from './subscriptionBillingAdvisor.js';
+
+// Week 8
+export { adviseHiring } from './hiringAdvisor.js';
+export type { HiringPlan, HiringOptions } from './hiringAdvisor.js';
+export { buildEmployeeOnboarding } from './employeeOnboardingBuilder.js';
+export type { OnboardingPlan as EmployeeOnboardingPlan, EmployeeOnboardingOptions } from './employeeOnboardingBuilder.js';
+export { buildTeamCulture } from './teamCultureBuilder.js';
+export type { CulturePlan, CultureOptions } from './teamCultureBuilder.js';
+export { adviseCompensation } from './compensationAdvisor.js';
+export type { CompensationPlan, CompensationOptions } from './compensationAdvisor.js';
+export { advisePsychologicalSafety } from './psychologicalSafetyAdvisor.js';
+export type { PsychSafetyPlan, PsychSafetyOptions } from './psychologicalSafetyAdvisor.js';
+
 export { PROMPTS } from '../prompts/templates.js';

@@ -57,7 +57,31 @@ INSERT INTO skills (slug, name, description, category, tier, credits_per_use) VA
   ('mexico-business-advisor',   'Mexico Business Advisor',   'SAT (RFC, CFDI), IMSS, INFONAVIT, ISR, IVA, RESICO regime, labor law',               'compliance',   'haiku',  0.5),
   ('colombia-business-advisor', 'Colombia Business Advisor', 'DIAN (NIT, RUT), Cámara de Comercio, EPS, ARL, SAS, factura electrónica',            'compliance',   'haiku',  0.5),
   ('brazil-business-advisor',   'Brazil Business Advisor',   'Receita Federal (CNPJ), Simples Nacional, MEI, PIX, NF-e, CLT labor',                'compliance',   'haiku',  0.5),
-  ('latam-compliance-navigator', 'LATAM Compliance Navigator', 'Cross-border data privacy (LGPD, LFPDPPP, Ley 1581), e-commerce, WhatsApp rules', 'compliance',   'haiku',  0.5)
+  ('latam-compliance-navigator', 'LATAM Compliance Navigator', 'Cross-border data privacy (LGPD, LFPDPPP, Ley 1581), e-commerce, WhatsApp rules', 'compliance',   'haiku',  0.5),
+  -- Phase 5: Week 5 skills
+  ('business-model-designer',    'Business Model Designer',    'Business Model Canvas, revenue streams, unit economics, pivot analysis',            'intelligence', 'haiku',  0.5),
+  ('competitive-analyst',        'Competitive Analyst',        'SWOT, Porter 5 Forces, competitor mapping, differentiation strategies',             'intelligence', 'haiku',  0.5),
+  ('market-sizing-advisor',      'Market Sizing Advisor',      'TAM/SAM/SOM, bottom-up/top-down sizing, opportunity mapping for LatAm',            'intelligence', 'haiku',  0.5),
+  ('partnership-advisor',        'Partnership Advisor',        'Partnership structures, co-marketing, JVs, revenue share frameworks',               'intelligence', 'haiku',  0.5),
+  ('fundraising-advisor',        'Fundraising Advisor',        'Pitch deck structure, valuation, investor targeting, term sheet guidance',           'intelligence', 'sonnet', 1.0),
+  -- Phase 6: Week 6 skills
+  ('workflow-designer',          'Workflow Designer',          'n8n/Zapier workflow blueprints, automation triggers, API integrations',              'automation',   'haiku',  0.5),
+  ('analytics-advisor',          'Analytics Advisor',          'KPI dashboards, cohort analysis, funnel metrics, data storytelling',                 'intelligence', 'haiku',  0.5),
+  ('no-code-integrator',         'No-Code Integrator',         'No-code/low-code tool selection, Airtable/Notion/Typeform integration',            'automation',   'haiku',  0.5),
+  ('hubspot-advisor',            'HubSpot Advisor',            'HubSpot CRM setup, pipelines, sequences, automation workflows',                    'automation',   'haiku',  0.5),
+  ('google-business-advisor',    'Google Business Advisor',    'Google Business Profile optimization, reviews, local SEO, Google Ads',              'intelligence', 'haiku',  0.5),
+  -- Phase 7: Week 7 skills
+  ('tax-planner',                'Tax Planner',                'Tax optimization by country, deductions, quarterly estimates, compliance',           'compliance',   'haiku',  0.5),
+  ('budget-forecaster',          'Budget Forecaster',          'Monthly/quarterly budgets, scenario planning, cash runway projections',              'intelligence', 'haiku',  0.5),
+  ('expense-optimizer',          'Expense Optimizer',          'Cost reduction, vendor negotiation, subscription audit, ROI analysis',               'intelligence', 'haiku',  0.5),
+  ('unit-economics-advisor',     'Unit Economics Advisor',     'CAC, LTV, margins, payback period, contribution analysis',                          'intelligence', 'haiku',  0.5),
+  ('subscription-billing-advisor', 'Subscription Billing Advisor', 'Pricing tiers, billing cycles, churn reduction, upgrade paths',                 'intelligence', 'haiku',  0.5),
+  -- Phase 8: Week 8 skills
+  ('hiring-advisor',             'Hiring Advisor',             'Job postings, interview questions, evaluation rubrics, hiring process',              'operations',   'haiku',  0.5),
+  ('employee-onboarding-builder', 'Employee Onboarding Builder', 'Onboarding plans, first-day checklists, training schedules, 30/60/90',           'operations',   'haiku',  0.5),
+  ('team-culture-builder',       'Team Culture Builder',       'Team values, rituals, communication norms, recognition programs',                    'operations',   'haiku',  0.5),
+  ('compensation-advisor',       'Compensation Advisor',       'Salary bands, benefits packages, bonus structures, equity guidance',                 'operations',   'haiku',  0.5),
+  ('psychological-safety-advisor', 'Psychological Safety Advisor', 'Edmondson assessment, trust-building, feedback frameworks, inclusion',          'operations',   'haiku',  0.5)
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,

@@ -143,6 +143,30 @@ export class OsToolRegistry {
       import('./colombiaBusinessAdvisorTools.js'),
       import('./brazilBusinessAdvisorTools.js'),
       import('./latamComplianceNavigatorTools.js'),
+      // Week 5: Content Creation Suite skills
+      import('./businessModelDesignerTools.js'),
+      import('./competitiveAnalystTools.js'),
+      import('./marketSizingAdvisorTools.js'),
+      import('./partnershipAdvisorTools.js'),
+      import('./fundraisingAdvisorTools.js'),
+      // Week 6: Automation & Workflows skills
+      import('./workflowDesignerTools.js'),
+      import('./analyticsAdvisorTools.js'),
+      import('./noCodeIntegratorTools.js'),
+      import('./hubspotAdvisorTools.js'),
+      import('./googleBusinessAdvisorTools.js'),
+      // Week 7: Payments Go Live skills
+      import('./taxPlannerTools.js'),
+      import('./budgetForecasterTools.js'),
+      import('./expenseOptimizerTools.js'),
+      import('./unitEconomicsAdvisorTools.js'),
+      import('./subscriptionBillingAdvisorTools.js'),
+      // Week 8: Team & HR skills
+      import('./hiringAdvisorTools.js'),
+      import('./employeeOnboardingBuilderTools.js'),
+      import('./teamCultureBuilderTools.js'),
+      import('./compensationAdvisorTools.js'),
+      import('./psychologicalSafetyAdvisorTools.js'),
     ]);
 
     const getterNames = [
@@ -229,6 +253,30 @@ export class OsToolRegistry {
       'getAllColombiaBusinessAdvisorTools',
       'getAllBrazilBusinessAdvisorTools',
       'getAllLatamComplianceNavigatorTools',
+      // Week 5
+      'getAllBusinessModelDesignerTools',
+      'getAllCompetitiveAnalystTools',
+      'getAllMarketSizingAdvisorTools',
+      'getAllPartnershipAdvisorTools',
+      'getAllFundraisingAdvisorTools',
+      // Week 6
+      'getAllWorkflowDesignerTools',
+      'getAllAnalyticsAdvisorTools',
+      'getAllNoCodeIntegratorTools',
+      'getAllHubspotAdvisorTools',
+      'getAllGoogleBusinessAdvisorTools',
+      // Week 7
+      'getAllTaxPlannerTools',
+      'getAllBudgetForecasterTools',
+      'getAllExpenseOptimizerTools',
+      'getAllUnitEconomicsAdvisorTools',
+      'getAllSubscriptionBillingAdvisorTools',
+      // Week 8
+      'getAllHiringAdvisorTools',
+      'getAllEmployeeOnboardingBuilderTools',
+      'getAllTeamCultureBuilderTools',
+      'getAllCompensationAdvisorTools',
+      'getAllPsychologicalSafetyAdvisorTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {
