@@ -13,7 +13,8 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { sendAutoReply } from './providers/resend.js';
+import { sendAutoReply, sendEmail } from './providers/resend.js';
+import { generateDraftResponse, createPendingDraft, getApprovalEmailHtml } from './drafts.js';
 
 // ── Types ──
 
@@ -259,6 +260,10 @@ function parseSender(from: string): SenderInfo {
 
 const WORKSPACE_MCP_URL = process.env.WORKSPACE_MCP_URL || '';
 const WORKSPACE_MCP_KEY = process.env.WORKSPACE_MCP_KEY || '';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
+const SERVICE_URL = process.env.SERVICE_URL || `http://localhost:${process.env.PORT || 3007}`;
+const WA_CONNECTOR_URL = process.env.WA_CONNECTOR_URL || '';
+const ADMIN_PHONE = process.env.ADMIN_PHONE || '';
 
 async function callWorkspaceMcp(
   toolName: string,
@@ -338,7 +343,55 @@ export async function processInboundEmail(
     sendResult: { ok: sendResult.ok, provider: sendResult.provider },
   });
 
-  // 5. Create CRM contact — scraped from sender email (fire-and-forget)
+  // 5. Generate AI draft + send to admin for approval (fire-and-forget)
+  if (ADMIN_EMAIL) {
+    (async () => {
+      try {
+        const draft = await generateDraftResponse(emailBody, subject, sender.name, language, caseNumber);
+        const pending = createPendingDraft({
+          caseNumber,
+          originalFrom: sender.email,
+          originalFromName: sender.name,
+          originalSubject: subject,
+          originalBody: emailBody.slice(0, 2000),
+          language,
+          ...draft,
+        });
+
+        const approveUrl = `${SERVICE_URL}/approve/${pending.token}`;
+        const editUrl = `mailto:${sender.email}?subject=${encodeURIComponent(draft.draftSubject)}&body=${encodeURIComponent(draft.draftBody)}`;
+        const approvalHtml = getApprovalEmailHtml(pending, approveUrl, editUrl);
+
+        await sendEmail({
+          to: ADMIN_EMAIL,
+          subject: `[Draft Review] ${caseNumber} — ${subject}`,
+          body: `New case ${caseNumber} from ${sender.name}. Draft response ready for review.`,
+          html: approvalHtml,
+          replyTo: sender.email,
+        });
+
+        log.info({ event: 'inbound.draft_sent_to_admin', traceId, caseNumber, token: pending.token.slice(0, 8) });
+
+        // Optional WhatsApp notification
+        if (WA_CONNECTOR_URL && ADMIN_PHONE) {
+          fetch(`${WA_CONNECTOR_URL}/outbound/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phone: ADMIN_PHONE,
+              message: `New case ${caseNumber} from ${sender.name}. Draft ready — check your email.`,
+              draftOnly: false,
+            }),
+            signal: AbortSignal.timeout(5_000),
+          }).catch(() => {});
+        }
+      } catch (err) {
+        log.info({ event: 'inbound.draft_error', traceId, caseNumber, error: (err as Error).message });
+      }
+    })();
+  }
+
+  // 6. Create CRM contact — scraped from sender email (fire-and-forget)
   callWorkspaceMcp('contacts_create', {
     name: sender.name,
     email: sender.email,
@@ -355,7 +408,7 @@ export async function processInboundEmail(
     ].join('\n'),
   }).catch(() => { /* non-fatal */ });
 
-  // 6. Create task in workspace — full email body + SLA (fire-and-forget)
+  // 7. Create task in workspace — full email body + SLA (fire-and-forget)
   const slaDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
   callWorkspaceMcp('tasks_create', {
     title: `[${caseNumber}] ${subject}`,

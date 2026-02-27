@@ -14,6 +14,7 @@ interface EventEnvelope {
 import { sendEmail } from './providers/resend.js';
 import { processInboundEmail } from './inbound.js';
 import type { InboundPayload } from './inbound.js';
+import { approveDraft, getPendingDraft, getConfirmationPageHtml, getErrorPageHtml } from './drafts.js';
 import {
   upsertTemplate, getTemplate, listTemplates,
   setConsent, hasConsent,
@@ -176,5 +177,50 @@ app.post('/unsubscribe/:email', async (req: any) => {
 app.get('/suppression', async () => ({
   entries: await listSuppression(),
 }));
+
+// ── Draft Approval ──
+app.get('/approve/:token', async (req: any, reply) => {
+  const token = String(req.params.token);
+  const traceId = randomUUID();
+
+  const draft = approveDraft(token);
+  if (!draft) {
+    // Check if it was already approved vs truly invalid
+    const existing = getPendingDraft(token);
+    const message = existing?.status === 'approved'
+      ? 'This draft has already been sent.'
+      : 'This approval link is invalid or has expired.';
+    reply.type('text/html');
+    return getErrorPageHtml(message);
+  }
+
+  // Send the approved draft to the original sender
+  const result = await sendEmail({
+    to: draft.originalFrom,
+    subject: draft.draftSubject,
+    body: draft.draftBody,
+    html: draft.draftHtml,
+    replyTo: 'hello@kitz.services',
+  });
+
+  app.log.info(audit('email.draft_approved', {
+    caseNumber: draft.caseNumber,
+    to: draft.originalFrom,
+    sendResult: { ok: result.ok, provider: result.provider },
+  }, traceId));
+
+  reply.type('text/html');
+  return getConfirmationPageHtml(draft.caseNumber, draft.originalFrom);
+});
+
+app.get('/drafts/:token', async (req: any, reply) => {
+  const draft = getPendingDraft(String(req.params.token));
+  if (!draft) {
+    reply.type('text/html');
+    return getErrorPageHtml('Draft not found or expired.');
+  }
+  reply.type('text/html');
+  return draft.draftHtml;
+});
 
 app.listen({ port: Number(process.env.PORT || 3007), host: '0.0.0.0' });
