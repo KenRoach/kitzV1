@@ -68,6 +68,8 @@ const userOrders = new Map<string, Order[]>();
 const userTasks = new Map<string, Task[]>();
 const userCheckoutLinks = new Map<string, CheckoutLink[]>();
 const userProducts = new Map<string, Product[]>();
+interface Payment { id: string; type: 'incoming' | 'outgoing'; description: string; amount: number; status: 'completed' | 'pending' | 'failed'; date: string; method: string; }
+const userPayments = new Map<string, Payment[]>();
 
 /* ── Analytics ── */
 type RouteStats = { count: number; errors: number; latencies: number[] };
@@ -1877,6 +1879,34 @@ app.delete('/api/workspace/products/:id', async (req: any, reply: any) => {
   product.updatedAt = new Date().toISOString();
   userProducts.set(user.userId, products);
   return { deleted: true };
+});
+
+/* ── Payments API ── */
+
+app.get('/api/workspace/payments', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  return userPayments.get(user.userId) || [];
+});
+
+app.post('/api/workspace/payments', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  const { type, description, amount, status, method } = req.body || {};
+  if (!description || !amount) return reply.code(400).send({ error: 'MISSING_FIELDS' });
+  const payment: Payment = {
+    id: `pay_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    type: type || 'incoming',
+    description,
+    amount: Number(amount),
+    status: status || 'pending',
+    date: new Date().toISOString(),
+    method: method || 'manual',
+  };
+  const payments = userPayments.get(user.userId) || [];
+  payments.push(payment);
+  userPayments.set(user.userId, payments);
+  return reply.code(201).send(payment);
 });
 
 app.get('/health', async () => health);

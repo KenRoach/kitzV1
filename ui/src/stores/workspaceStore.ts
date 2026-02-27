@@ -113,16 +113,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   fetchLeads: async () => {
     set({ isLoading: true })
     try {
-      const res = await apiFetch<{ contacts?: Lead[]; data?: Lead[] } | Lead[]>(`${API.KITZ_OS}`, {
-        method: 'POST',
-        body: JSON.stringify({ message: 'list contacts', channel: 'api', user_id: 'default' }),
-      })
-      // kitz_os may return contacts in different shapes
-      const leads = Array.isArray(res) ? res : (
-        (res as { contacts?: Lead[] }).contacts ??
-        (res as { data?: Lead[] }).data ??
-        []
-      )
+      const leads = await apiFetch<Lead[]>(`${API.WORKSPACE}/leads`)
       set({ leads, isLoading: false })
     } catch {
       set({ isLoading: false })
@@ -222,15 +213,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   fetchPayments: async () => {
     set({ isLoading: true })
     try {
-      const res = await apiFetch<{ transactions?: Payment[]; data?: Payment[] } | Payment[]>(`${API.KITZ_OS}`, {
-        method: 'POST',
-        body: JSON.stringify({ message: 'list transactions', channel: 'api', user_id: 'default' }),
-      })
-      const payments = Array.isArray(res) ? res : (
-        (res as { transactions?: Payment[] }).transactions ??
-        (res as { data?: Payment[] }).data ??
-        []
-      )
+      const payments = await apiFetch<Payment[]>(`${API.WORKSPACE}/payments`)
       set({ payments, isLoading: false })
     } catch {
       set({ isLoading: false })

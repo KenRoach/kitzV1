@@ -40,9 +40,9 @@ import { dirname, join } from 'path';
 import { existsSync } from 'fs';
 import type { KitzKernel } from './kernel.js';
 import { parseWhatsAppCommand } from './interfaces/whatsapp/commandParser.js';
-import { routeWithAI, getDraftQueue, approveDraft, rejectDraft } from './interfaces/whatsapp/semanticRouter.js';
+import { routeWithAI, brainFirstRoute, getDraftQueue, approveDraft, rejectDraft } from './interfaces/whatsapp/semanticRouter.js';
 import { textToSpeech, getKitzVoiceConfig, getWidgetSnippet, isElevenLabsConfigured } from './llm/elevenLabsClient.js';
-import { getBatteryStatus, recordRecharge, getLedger } from './aiBattery.js';
+import { getBatteryStatus, recordRecharge, getLedger, hasBudget } from './aiBattery.js';
 import { initMemory, storeMessage, buildContextWindow } from './memory/manager.js';
 import { verifyStripeSignature, verifyHmacSha256, verifyPayPalHeaders } from './webhookVerify.js';
 import { isGoogleOAuthConfigured, getAuthUrl, exchangeCode, hasStoredTokens, revokeTokens } from './auth/googleOAuth.js';
@@ -371,8 +371,17 @@ export async function createServer(kernel: KitzKernel) {
       );
 
       if (hasAI) {
+        // Pre-flight credit check — block AI if daily limit exceeded
+        if (!hasBudget(1)) {
+          const battery = getBatteryStatus();
+          return reply.send({
+            command: 'battery_depleted',
+            response: `⚡ Tu batería AI está agotada (${battery.todayCredits}/${battery.dailyLimit} créditos hoy). Recarga con "recharge 10" o espera hasta mañana.`,
+            credits_consumed: 0,
+          });
+        }
         try {
-          const result = await routeWithAI(message, kernel.tools, traceId, undefined, userId, channel, chat_history);
+          const result = await brainFirstRoute(message, kernel.tools, traceId, undefined, userId, channel, chat_history);
           // Store AI response in memory
           try {
             storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'assistant', content: result.response, traceId });

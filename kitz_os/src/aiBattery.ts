@@ -37,7 +37,8 @@ const LEDGER_FILE = join(DATA_DIR, 'battery-ledger.ndjson');
 const TOKENS_PER_CREDIT = 1000;       // ~1000 LLM tokens = 1 credit
 const TTS_CHARS_PER_CREDIT = 500;     // ~500 ElevenLabs chars = 1 credit
 
-// No daily credit limit — unlimited usage
+// Daily credit limit (configurable via env, default 5)
+const DAILY_LIMIT = Number(process.env.AI_BATTERY_DAILY_LIMIT) || 5;
 
 // Supabase config (optional — for persistent tracking)
 const SUPABASE_URL = process.env.SUPABASE_URL || '';
@@ -252,13 +253,14 @@ export function getBatteryStatus(): BatteryStatus {
     .reduce((sum, e) => sum + e.units, 0);
 
   const effectiveSpend = Math.max(0, todayCredits - todayRecharged);
+  const remaining = Math.max(0, DAILY_LIMIT - effectiveSpend);
 
   return {
     todayCredits: Math.round(effectiveSpend * 1000) / 1000,
     totalCredits: Math.round(totalCredits * 1000) / 1000,
-    dailyLimit: Infinity,
-    remaining: Infinity,
-    depleted: false,
+    dailyLimit: DAILY_LIMIT,
+    remaining: Math.round(remaining * 1000) / 1000,
+    depleted: remaining <= 0,
     byProvider,
     todayTokens,
     todayTtsChars,
@@ -267,11 +269,12 @@ export function getBatteryStatus(): BatteryStatus {
 }
 
 /**
- * Always returns true — no daily credit limit enforced.
- * Spend is still tracked for analytics but never blocks execution.
+ * Check if the user has enough credits for an AI operation.
+ * Returns false if daily limit would be exceeded.
  */
-export function hasBudget(_estimatedCredits = 1): boolean {
-  return true;
+export function hasBudget(estimatedCredits = 1): boolean {
+  const status = getBatteryStatus();
+  return status.remaining >= estimatedCredits;
 }
 
 /**
