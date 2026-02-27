@@ -3,6 +3,16 @@ import cookie from '@fastify/cookie';
 import formbody from '@fastify/formbody';
 import { randomUUID, createHash, createHmac } from 'node:crypto';
 import { callMcp, mcpConfigured } from './mcp.js';
+import {
+  listLeads as dbListLeads, createLead as dbCreateLead, updateLead as dbUpdateLead, deleteLead as dbDeleteLead,
+  listOrders as dbListOrders, createOrder as dbCreateOrder, updateOrder as dbUpdateOrder,
+  listTasks as dbListTasks, createTask as dbCreateTask, updateTask as dbUpdateTask,
+  listCheckoutLinks as dbListCheckoutLinks, createCheckoutLink as dbCreateCheckoutLink,
+  listProducts as dbListProducts, createProduct as dbCreateProduct, updateProduct as dbUpdateProduct, deleteProduct as dbDeleteProduct,
+  listPayments as dbListPayments, createPayment as dbCreatePayment,
+  hasDB,
+  type DbLead, type DbOrder, type DbTask, type DbCheckoutLink, type DbProduct, type DbPayment,
+} from './db.js';
 
 export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
@@ -63,13 +73,15 @@ interface Task { id: string; title: string; status: string; createdAt: string; }
 interface CheckoutLink { id: string; orderId: string; amount: number; url: string; createdAt: string; }
 interface Product { id: string; name: string; description: string; price: number; cost: number; sku: string; stock_qty: number; low_stock_threshold: number; category: string; image_url: string; is_active: boolean; createdAt: string; updatedAt: string; }
 
-const userLeads = new Map<string, Lead[]>();
-const userOrders = new Map<string, Order[]>();
-const userTasks = new Map<string, Task[]>();
-const userCheckoutLinks = new Map<string, CheckoutLink[]>();
-const userProducts = new Map<string, Product[]>();
 interface Payment { id: string; type: 'incoming' | 'outgoing'; description: string; amount: number; status: 'completed' | 'pending' | 'failed'; date: string; method: string; }
-const userPayments = new Map<string, Payment[]>();
+
+/* ── DB → UI Shape Mappers ── */
+function dbLeadToLead(d: DbLead): Lead { return { id: d.id, name: d.name, phone: d.phone, email: d.email, notes: d.notes?.join('\n') || '', createdAt: d.created_at }; }
+function dbOrderToOrder(d: DbOrder): Order { return { id: d.id, customer: d.description, amount: d.total, description: d.description, status: d.status, createdAt: d.created_at }; }
+function dbTaskToTask(d: DbTask): Task { return { id: d.id, title: d.title, status: d.done ? 'done' : 'todo', createdAt: d.created_at }; }
+function dbCheckoutToLink(d: DbCheckoutLink): CheckoutLink { return { id: d.id, orderId: d.label, amount: d.amount, url: `https://workspace.kitz.services/pay/${d.slug}`, createdAt: d.created_at }; }
+function dbProductToProduct(d: DbProduct): Product { return { id: d.id, name: d.name, description: d.description, price: d.price, cost: d.cost, sku: d.sku, stock_qty: d.stock_qty, low_stock_threshold: d.low_stock_threshold, category: d.category, image_url: d.image_url, is_active: d.is_active, createdAt: d.created_at, updatedAt: d.updated_at }; }
+function dbPaymentToPayment(d: DbPayment): Payment { return { id: d.id, type: d.type as Payment['type'], description: d.description, amount: d.amount, status: d.status as Payment['status'], date: d.date, method: d.method }; }
 
 /* ── Analytics ── */
 type RouteStats = { count: number; errors: number; latencies: number[] };
@@ -675,17 +687,9 @@ app.get('/leads', async (req: any, reply: any) => {
   if (!session) return;
   trackUsage('leads.view');
 
-  // Fetch from MCP (Supabase) with in-memory fallback
-  let leads: Lead[] = userLeads.get(session.userId) || [];
-  if (mcpConfigured) {
-    const result = await callMcp('list_contacts', { limit: 100 }, session.userId) as any;
-    if (result && !result.error && Array.isArray(result)) {
-      leads = result.map((c: any) => ({
-        id: c.id, name: c.name || '', phone: c.phone || '', email: c.email || '',
-        notes: c.notes || '', createdAt: c.created_at || new Date().toISOString(),
-      }));
-    }
-  }
+  // Fetch from Supabase (with in-memory fallback)
+  const dbLeads = await dbListLeads(session.userId);
+  let leads: Lead[] = dbLeads.map(dbLeadToLead);
 
   const thisWeek = leads.filter(l => Date.now() - new Date(l.createdAt).getTime() < 604800000).length;
   const active = leads.filter(l => !(l as any).status || (l as any).status !== 'inactive').length;
@@ -699,7 +703,7 @@ app.get('/leads', async (req: any, reply: any) => {
 
   return shell('Leads', `
     <h1 class="page-title">Leads & Contacts</h1>
-    <p class="page-desc">Track your leads and customers. Manual mode is always free.${mcpConfigured ? '' : ' <span style="color:#555">(offline mode)</span>'}</p>
+    <p class="page-desc">Track your leads and customers. Manual mode is always free.${hasDB ? '' : ' <span style="color:#555">(local mode)</span>'}</p>
     <div class="stats-row">
       <div class="stat"><div class="stat-value">${leads.length}</div><div class="stat-label">Total Leads</div></div>
       <div class="stat"><div class="stat-value">${active}</div><div class="stat-label">Active</div></div>
@@ -732,14 +736,7 @@ app.post('/leads/add', async (req: any, reply: any) => {
   const { name, phone, email, notes } = req.body || {};
   if (!name) return reply.redirect('/leads');
 
-  // Write to MCP (Supabase)
-  if (mcpConfigured) {
-    await callMcp('create_contact', { name, phone: phone || undefined, email: email || undefined, notes: notes || undefined, status: 'lead' }, session.userId);
-  }
-  // Also keep in-memory for instant reads
-  const leads = userLeads.get(session.userId) || [];
-  leads.push({ id: randomUUID(), name, phone: phone || '', email: email || '', notes: notes || '', createdAt: new Date().toISOString() });
-  userLeads.set(session.userId, leads);
+  await dbCreateLead(session.userId, { name, phone: phone || '', email: email || '', notes: notes ? [notes] : [] });
   funnel.firstAction += 1;
   return reply.redirect('/leads');
 });
@@ -748,12 +745,7 @@ app.post('/leads/delete', async (req: any, reply: any) => {
   const session = requireSession(req, reply);
   if (!session) return;
   const { id } = req.body || {};
-  // Mark inactive in MCP (no hard delete tool)
-  if (mcpConfigured && id) {
-    await callMcp('update_contact', { contact_id: id, status: 'inactive' }, session.userId);
-  }
-  const leads = userLeads.get(session.userId) || [];
-  userLeads.set(session.userId, leads.filter(l => l.id !== id));
+  if (id) await dbDeleteLead(session.userId, id);
   return reply.redirect('/leads');
 });
 
@@ -764,19 +756,9 @@ app.get('/orders', async (req: any, reply: any) => {
   if (!session) return;
   trackUsage('orders.view');
 
-  // Fetch from MCP (Supabase) with in-memory fallback
-  let orders: Order[] = userOrders.get(session.userId) || [];
-  if (mcpConfigured) {
-    const result = await callMcp('list_orders', { limit: 100 }, session.userId) as any;
-    if (result && !result.error && Array.isArray(result)) {
-      orders = result.map((o: any) => ({
-        id: o.id, customer: o.contact_name || o.notes || 'Customer',
-        amount: Number(o.total) || 0, description: o.notes || '',
-        status: o.payment_status === 'completed' ? 'completed' : 'open',
-        createdAt: o.created_at || new Date().toISOString(),
-      }));
-    }
-  }
+  // Fetch from Supabase (with in-memory fallback)
+  const dbOrds = await dbListOrders(session.userId);
+  let orders: Order[] = dbOrds.map(dbOrderToOrder);
 
   const openOrders = orders.filter(o => o.status === 'open');
   const totalRevenue = orders.filter(o => o.status === 'completed').reduce((sum, o) => sum + o.amount, 0);
@@ -827,25 +809,7 @@ app.post('/orders/add', async (req: any, reply: any) => {
   const { customer, amount, description } = req.body || {};
   if (!customer || !amount) return reply.redirect('/orders');
 
-  // Write to MCP: create contact first (orders require contact_id), then order
-  if (mcpConfigured) {
-    // Find or create contact
-    let contactId: string | null = null;
-    const existing = await callMcp('list_contacts', { search: customer, limit: 1 }, session.userId) as any;
-    if (existing && !existing.error && Array.isArray(existing) && existing.length > 0) {
-      contactId = existing[0].id;
-    } else {
-      const created = await callMcp('create_contact', { name: customer, status: 'active' }, session.userId) as any;
-      if (created && !created.error) contactId = created.id;
-    }
-    if (contactId) {
-      await callMcp('create_order', { contact_id: contactId, total: Number(amount), notes: description || customer }, session.userId);
-    }
-  }
-  // Also keep in-memory
-  const orders = userOrders.get(session.userId) || [];
-  orders.push({ id: randomUUID(), customer, amount: Number(amount), description: description || '', status: 'open', createdAt: new Date().toISOString() });
-  userOrders.set(session.userId, orders);
+  await dbCreateOrder(session.userId, { description: description || customer, total: Number(amount), status: 'pending' });
   funnel.firstAction += 1;
   return reply.redirect('/orders');
 });
@@ -854,13 +818,7 @@ app.post('/orders/complete', async (req: any, reply: any) => {
   const session = requireSession(req, reply);
   if (!session) return;
   const { id } = req.body || {};
-  // Update in MCP
-  if (mcpConfigured && id) {
-    await callMcp('update_order', { order_id: id, payment_status: 'completed', fulfillment_status: 'delivered' }, session.userId);
-  }
-  const orders = userOrders.get(session.userId) || [];
-  const order = orders.find(o => o.id === id);
-  if (order) order.status = 'completed';
+  if (id) await dbUpdateOrder(session.userId, id, { status: 'delivered' });
   return reply.redirect('/orders');
 });
 
@@ -871,19 +829,9 @@ app.get('/tasks', async (req: any, reply: any) => {
   if (!session) return;
   trackUsage('tasks.view');
 
-  // Fetch from MCP (Supabase) with in-memory fallback
-  let tasks: Task[] = userTasks.get(session.userId) || [];
-  if (mcpConfigured) {
-    const result = await callMcp('list_tasks', { limit: 100 }, session.userId) as any;
-    if (result && !result.error && Array.isArray(result)) {
-      tasks = result.map((t: any) => ({
-        id: t.id,
-        title: t.title || t.description || '',
-        status: t.status || 'todo',
-        createdAt: t.created_at || new Date().toISOString(),
-      }));
-    }
-  }
+  // Fetch from Supabase (with in-memory fallback)
+  const dbTks = await dbListTasks(session.userId);
+  let tasks: Task[] = dbTks.map(dbTaskToTask);
   const todo = tasks.filter(t => t.status === 'todo').length;
   const inProgress = tasks.filter(t => t.status === 'in_progress').length;
   const done = tasks.filter(t => t.status === 'done').length;
@@ -903,7 +851,7 @@ app.get('/tasks', async (req: any, reply: any) => {
 
   return shell('Tasks', `
     <h1 class="page-title">Tasks</h1>
-    <p class="page-desc">Create, assign, and close sales & ops tasks.${mcpConfigured ? '' : ' <span style="color:#555">(offline mode)</span>'}</p>
+    <p class="page-desc">Create, assign, and close sales & ops tasks.${hasDB ? '' : ' <span style="color:#555">(local mode)</span>'}</p>
     <div class="stats-row">
       <div class="stat"><div class="stat-value">${todo}</div><div class="stat-label">To Do</div></div>
       <div class="stat"><div class="stat-value">${inProgress}</div><div class="stat-label">In Progress</div></div>
@@ -932,14 +880,7 @@ app.post('/tasks/add', async (req: any, reply: any) => {
   const { title } = req.body || {};
   if (!title) return reply.redirect('/tasks');
 
-  // Write to MCP (Supabase)
-  if (mcpConfigured) {
-    await callMcp('create_task', { title, status: 'todo' }, session.userId);
-  }
-  // Also keep in-memory for instant reads
-  const tasks = userTasks.get(session.userId) || [];
-  tasks.push({ id: randomUUID(), title, status: 'todo', createdAt: new Date().toISOString() });
-  userTasks.set(session.userId, tasks);
+  await dbCreateTask(session.userId, title);
   funnel.firstAction += 1;
   return reply.redirect('/tasks');
 });
@@ -948,13 +889,7 @@ app.post('/tasks/done', async (req: any, reply: any) => {
   const session = requireSession(req, reply);
   if (!session) return;
   const { id } = req.body || {};
-  // Update in MCP
-  if (mcpConfigured && id) {
-    await callMcp('update_task', { task_id: id, status: 'done' }, session.userId);
-  }
-  const tasks = userTasks.get(session.userId) || [];
-  const task = tasks.find(t => t.id === id);
-  if (task) task.status = 'done';
+  if (id) await dbUpdateTask(session.userId, id, { done: true });
   return reply.redirect('/tasks');
 });
 
@@ -966,18 +901,9 @@ app.get('/checkout-links', async (req: any, reply: any) => {
   trackUsage('checkout-links.view');
 
   // Fetch from MCP (Supabase storefronts) with in-memory fallback
-  let links: CheckoutLink[] = userCheckoutLinks.get(session.userId) || [];
-  if (mcpConfigured) {
-    const result = await callMcp('list_storefronts', { limit: 100 }, session.userId) as any;
-    if (result && !result.error && Array.isArray(result)) {
-      links = result.map((s: any) => ({
-        id: s.id, orderId: s.title || 'Payment',
-        amount: Number(s.price || s.amount) || 0,
-        url: s.short_url || `https://workspace.kitz.services/pay/${(s.id || '').slice(0, 8)}`,
-        createdAt: s.created_at || new Date().toISOString(),
-      }));
-    }
-  }
+  // Fetch from Supabase (with in-memory fallback)
+  const dbLinks = await dbListCheckoutLinks(session.userId);
+  let links: CheckoutLink[] = dbLinks.map(dbCheckoutToLink);
 
   const totalValue = links.reduce((sum, l) => sum + l.amount, 0);
 
@@ -1025,19 +951,7 @@ app.post('/checkout-links/create', async (req: any, reply: any) => {
   trackUsage('checkout-links.create');
   funnel.firstAction += 1;
 
-  let checkoutUrl = `https://workspace.kitz.services/pay/${randomUUID().slice(0, 8)}`;
-
-  // Write to MCP (Supabase storefronts)
-  if (mcpConfigured) {
-    const result = await callMcp('create_storefront', { title: orderId, price: Number(amount) }, session.userId) as any;
-    if (result && !result.error && result.short_url) checkoutUrl = result.short_url;
-    else if (result && !result.error && result.id) checkoutUrl = `https://workspace.kitz.services/pay/${result.id.slice(0, 8)}`;
-  }
-
-  // Also keep in-memory
-  const links = userCheckoutLinks.get(session.userId) || [];
-  links.push({ id: randomUUID(), orderId, amount: Number(amount), url: checkoutUrl, createdAt: new Date().toISOString() });
-  userCheckoutLinks.set(session.userId, links);
+  await dbCreateCheckoutLink(session.userId, { label: orderId, amount: Number(amount) });
 
   return reply.redirect('/checkout-links');
 });
@@ -1049,23 +963,9 @@ app.get('/products', async (req: any, reply: any) => {
   if (!session) return;
   trackUsage('products.view');
 
-  // Fetch from MCP (Supabase) with in-memory fallback
-  let products: Product[] = userProducts.get(session.userId) || [];
-  if (mcpConfigured) {
-    const result = await callMcp('list_products', { limit: 100 }, session.userId) as any;
-    if (result && !result.error && Array.isArray(result)) {
-      products = result.map((p: any) => ({
-        id: p.id, name: p.name || '', description: p.description || '',
-        price: Number(p.price) || 0, cost: Number(p.cost) || 0,
-        sku: p.sku || '', stock_qty: Number(p.stock_qty) || 0,
-        low_stock_threshold: Number(p.low_stock_threshold) || 5,
-        category: p.category || '', image_url: p.image_url || '',
-        is_active: p.is_active !== false,
-        createdAt: p.created_at || new Date().toISOString(),
-        updatedAt: p.updated_at || new Date().toISOString(),
-      }));
-    }
-  }
+  // Fetch from Supabase (with in-memory fallback)
+  const dbProds = await dbListProducts(session.userId);
+  let products: Product[] = dbProds.map(dbProductToProduct);
 
   const activeProducts = products.filter(p => p.is_active).length;
   const lowStock = products.filter(p => p.is_active && p.stock_qty <= p.low_stock_threshold && p.stock_qty > 0).length;
@@ -1086,7 +986,7 @@ app.get('/products', async (req: any, reply: any) => {
 
   return shell('Products', `
     <h1 class="page-title">Products</h1>
-    <p class="page-desc">Manage your product catalog and inventory.${mcpConfigured ? '' : ' <span style="color:#555">(offline mode)</span>'}</p>
+    <p class="page-desc">Manage your product catalog and inventory.${hasDB ? '' : ' <span style="color:#555">(local mode)</span>'}</p>
     <div class="stats-row">
       <div class="stat"><div class="stat-value">${activeProducts}</div><div class="stat-label">Active Products</div></div>
       <div class="stat"><div class="stat-value" style="color:${lowStock > 0 ? '#ffb347' : '#00d4aa'}">${lowStock}</div><div class="stat-label">Low Stock</div></div>
@@ -1124,24 +1024,11 @@ app.post('/products/add', async (req: any, reply: any) => {
   const { name, sku, price, cost, category, stock_qty, low_stock_threshold } = req.body || {};
   if (!name || !price) return reply.redirect('/products');
 
-  // Write to MCP (Supabase)
-  if (mcpConfigured) {
-    await callMcp('create_product', {
-      name, sku: sku || undefined, price: Number(price),
-      cost: Number(cost) || undefined, category: category || undefined,
-      stock_qty: Number(stock_qty) || 0, low_stock_threshold: Number(low_stock_threshold) || 5,
-    }, session.userId);
-  }
-  // Also keep in-memory for instant reads
-  const products = userProducts.get(session.userId) || [];
-  const now = new Date().toISOString();
-  products.push({
-    id: randomUUID(), name, description: '', price: Number(price),
-    cost: Number(cost) || 0, sku: sku || '', stock_qty: Number(stock_qty) || 0,
-    low_stock_threshold: Number(low_stock_threshold) || 5, category: category || '',
-    image_url: '', is_active: true, createdAt: now, updatedAt: now,
+  await dbCreateProduct(session.userId, {
+    name, sku: sku || '', price: Number(price), cost: Number(cost) || 0,
+    category: category || '', stock_qty: Number(stock_qty) || 0,
+    low_stock_threshold: Number(low_stock_threshold) || 5,
   });
-  userProducts.set(session.userId, products);
   funnel.firstAction += 1;
   return reply.redirect('/products');
 });
@@ -1152,33 +1039,16 @@ app.post('/products/update', async (req: any, reply: any) => {
   const { id, ...fields } = req.body || {};
   if (!id) return reply.redirect('/products');
 
-  // Write to MCP (Supabase)
-  if (mcpConfigured) {
-    const mcpFields: Record<string, any> = { product_id: id };
-    if (fields.name) mcpFields.name = fields.name;
-    if (fields.sku) mcpFields.sku = fields.sku;
-    if (fields.price) mcpFields.price = Number(fields.price);
-    if (fields.cost) mcpFields.cost = Number(fields.cost);
-    if (fields.category) mcpFields.category = fields.category;
-    if (fields.stock_qty !== undefined) mcpFields.stock_qty = Number(fields.stock_qty);
-    if (fields.low_stock_threshold !== undefined) mcpFields.low_stock_threshold = Number(fields.low_stock_threshold);
-    if (fields.is_active !== undefined) mcpFields.is_active = fields.is_active === 'true';
-    await callMcp('update_product', mcpFields, session.userId);
-  }
-  // Update in-memory
-  const products = userProducts.get(session.userId) || [];
-  const product = products.find(p => p.id === id);
-  if (product) {
-    if (fields.name) product.name = fields.name;
-    if (fields.sku) product.sku = fields.sku;
-    if (fields.price) product.price = Number(fields.price);
-    if (fields.cost) product.cost = Number(fields.cost);
-    if (fields.category) product.category = fields.category;
-    if (fields.stock_qty !== undefined) product.stock_qty = Number(fields.stock_qty);
-    if (fields.low_stock_threshold !== undefined) product.low_stock_threshold = Number(fields.low_stock_threshold);
-    if (fields.is_active !== undefined) product.is_active = fields.is_active === 'true';
-    product.updatedAt = new Date().toISOString();
-  }
+  const updates: Record<string, unknown> = {};
+  if (fields.name) updates.name = fields.name;
+  if (fields.sku) updates.sku = fields.sku;
+  if (fields.price) updates.price = Number(fields.price);
+  if (fields.cost) updates.cost = Number(fields.cost);
+  if (fields.category) updates.category = fields.category;
+  if (fields.stock_qty !== undefined) updates.stock_qty = Number(fields.stock_qty);
+  if (fields.low_stock_threshold !== undefined) updates.low_stock_threshold = Number(fields.low_stock_threshold);
+  if (fields.is_active !== undefined) updates.is_active = fields.is_active === 'true';
+  await dbUpdateProduct(session.userId, id, updates);
   return reply.redirect('/products');
 });
 
@@ -1186,17 +1056,7 @@ app.post('/products/delete', async (req: any, reply: any) => {
   const session = requireSession(req, reply);
   if (!session) return;
   const { id } = req.body || {};
-  // Soft delete: set is_active: false in MCP
-  if (mcpConfigured && id) {
-    await callMcp('update_product', { product_id: id, is_active: false }, session.userId);
-  }
-  // Update in-memory
-  const products = userProducts.get(session.userId) || [];
-  const product = products.find(p => p.id === id);
-  if (product) {
-    product.is_active = false;
-    product.updatedAt = new Date().toISOString();
-  }
+  if (id) await dbDeleteProduct(session.userId, id);
   return reply.redirect('/products');
 });
 
@@ -1659,72 +1519,53 @@ function requireApiAuth(req: any, reply: any): { userId: string; orgId: string }
 app.get('/api/workspace/leads', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
-  const leads = userLeads.get(user.userId) || [];
-  return leads;
+  const rows = await dbListLeads(user.userId);
+  return rows.map(dbLeadToLead);
 });
 
 app.post('/api/workspace/leads', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
   const body = req.body || {};
-  const lead: Lead = {
-    id: `lead_${randomUUID().slice(0, 8)}`,
-    name: body.name || '',
-    phone: body.phone || '',
-    email: body.email || '',
-    notes: body.notes || '',
-    createdAt: new Date().toISOString(),
-  };
-  const leads = userLeads.get(user.userId) || [];
-  leads.push(lead);
-  userLeads.set(user.userId, leads);
-  // Persist via MCP if configured
-  if (mcpConfigured) {
-    callMcp('create_contact', { name: lead.name, phone: lead.phone, email: lead.email }, user.userId).catch(() => {});
-  }
+  const row = await dbCreateLead(user.userId, {
+    name: body.name || '', phone: body.phone || '', email: body.email || '',
+    notes: body.notes ? [body.notes] : [],
+  });
   trackUsage('api.leads.create');
-  return lead;
+  return dbLeadToLead(row);
 });
 
 app.patch('/api/workspace/leads/:id', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
-  const leads = userLeads.get(user.userId) || [];
-  const lead = leads.find(l => l.id === req.params.id);
-  if (!lead) return reply.code(404).send({ error: 'NOT_FOUND' });
   const body = req.body || {};
-  if (body.name !== undefined) lead.name = body.name;
-  if (body.phone !== undefined) lead.phone = body.phone;
-  if (body.email !== undefined) lead.email = body.email;
-  if (body.stage !== undefined) (lead as any).stage = body.stage;
-  if (body.addTag) {
-    if (!(lead as any).tags) (lead as any).tags = [];
-    if (!(lead as any).tags.includes(body.addTag)) (lead as any).tags.push(body.addTag);
-  }
-  if (body.removeTag && (lead as any).tags) {
-    (lead as any).tags = (lead as any).tags.filter((t: string) => t !== body.removeTag);
-  }
-  userLeads.set(user.userId, leads);
-  return lead;
+  const updates: Record<string, unknown> = {};
+  if (body.name !== undefined) updates.name = body.name;
+  if (body.phone !== undefined) updates.phone = body.phone;
+  if (body.email !== undefined) updates.email = body.email;
+  if (body.stage !== undefined) updates.stage = body.stage;
+  const row = await dbUpdateLead(user.userId, req.params.id, updates);
+  if (!row) return reply.code(404).send({ error: 'NOT_FOUND' });
+  return dbLeadToLead(row);
 });
 
 app.delete('/api/workspace/leads/:id', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
-  const leads = userLeads.get(user.userId) || [];
-  userLeads.set(user.userId, leads.filter(l => l.id !== req.params.id));
+  await dbDeleteLead(user.userId, req.params.id);
   return { deleted: true };
 });
 
 app.post('/api/workspace/leads/:id/notes', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
-  const leads = userLeads.get(user.userId) || [];
-  const lead = leads.find(l => l.id === req.params.id);
-  if (!lead) return reply.code(404).send({ error: 'NOT_FOUND' });
   const note = (req.body || {}).note || '';
-  lead.notes = lead.notes ? `${lead.notes}\n${note}` : note;
-  userLeads.set(user.userId, leads);
+  // Append note to existing notes array
+  const rows = await dbListLeads(user.userId);
+  const existing = rows.find(l => l.id === req.params.id);
+  if (!existing) return reply.code(404).send({ error: 'NOT_FOUND' });
+  const updatedNotes = [...(existing.notes || []), note];
+  await dbUpdateLead(user.userId, req.params.id, { notes: updatedNotes });
   return { ok: true };
 });
 
@@ -1733,29 +1574,21 @@ app.post('/api/workspace/leads/:id/notes', async (req: any, reply: any) => {
 app.get('/api/workspace/orders', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
-  return userOrders.get(user.userId) || [];
+  const rows = await dbListOrders(user.userId);
+  return rows.map(dbOrderToOrder);
 });
 
 app.post('/api/workspace/orders', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
   const body = req.body || {};
-  const order: Order = {
-    id: `ord_${randomUUID().slice(0, 8)}`,
-    customer: body.customer || body.description || '',
-    amount: Number(body.total || body.amount || 0),
-    description: body.description || '',
+  const row = await dbCreateOrder(user.userId, {
+    description: body.description || body.customer || '',
+    total: Number(body.total || body.amount || 0),
     status: body.status || 'pending',
-    createdAt: new Date().toISOString(),
-  };
-  const orders = userOrders.get(user.userId) || [];
-  orders.push(order);
-  userOrders.set(user.userId, orders);
-  if (mcpConfigured) {
-    callMcp('create_order', { customer: order.customer, amount: order.amount, description: order.description }, user.userId).catch(() => {});
-  }
+  });
   trackUsage('api.orders.create');
-  return order;
+  return dbOrderToOrder(row);
 });
 
 /* ── Tasks ── */
@@ -1763,27 +1596,17 @@ app.post('/api/workspace/orders', async (req: any, reply: any) => {
 app.get('/api/workspace/tasks', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
-  return userTasks.get(user.userId) || [];
+  const rows = await dbListTasks(user.userId);
+  return rows.map(dbTaskToTask);
 });
 
 app.post('/api/workspace/tasks', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
   const body = req.body || {};
-  const task: Task = {
-    id: `task_${randomUUID().slice(0, 8)}`,
-    title: body.title || '',
-    status: body.status || 'todo',
-    createdAt: new Date().toISOString(),
-  };
-  const tasks = userTasks.get(user.userId) || [];
-  tasks.push(task);
-  userTasks.set(user.userId, tasks);
-  if (mcpConfigured) {
-    callMcp('create_task', { title: task.title }, user.userId).catch(() => {});
-  }
+  const row = await dbCreateTask(user.userId, body.title || '');
   trackUsage('api.tasks.create');
-  return task;
+  return dbTaskToTask(row);
 });
 
 /* ── Checkout Links ── */
@@ -1791,25 +1614,19 @@ app.post('/api/workspace/tasks', async (req: any, reply: any) => {
 app.get('/api/workspace/checkout-links', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
-  return userCheckoutLinks.get(user.userId) || [];
+  const rows = await dbListCheckoutLinks(user.userId);
+  return rows.map(dbCheckoutToLink);
 });
 
 app.post('/api/workspace/checkout-links', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
   const body = req.body || {};
-  const link: CheckoutLink = {
-    id: `chk_${randomUUID().slice(0, 8)}`,
-    orderId: body.orderId || '',
-    amount: Number(body.amount || 0),
-    url: `https://workspace.kitz.services/pay/${randomUUID().slice(0, 8)}`,
-    createdAt: new Date().toISOString(),
-  };
-  const links = userCheckoutLinks.get(user.userId) || [];
-  links.push(link);
-  userCheckoutLinks.set(user.userId, links);
+  const row = await dbCreateCheckoutLink(user.userId, {
+    label: body.orderId || body.label || '', amount: Number(body.amount || 0),
+  });
   trackUsage('api.checkout.create');
-  return link;
+  return dbCheckoutToLink(row);
 });
 
 /* ── Products / Inventory ── */
@@ -1817,67 +1634,49 @@ app.post('/api/workspace/checkout-links', async (req: any, reply: any) => {
 app.get('/api/workspace/products', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
-  return (userProducts.get(user.userId) || []).filter(p => p.is_active !== false);
+  const rows = await dbListProducts(user.userId);
+  return rows.map(dbProductToProduct);
 });
 
 app.post('/api/workspace/products', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
   const body = req.body || {};
-  const now = new Date().toISOString();
-  const product: Product = {
-    id: `prod_${randomUUID().slice(0, 8)}`,
-    name: body.name || '',
-    description: body.description || '',
-    price: Number(body.price || 0),
-    cost: Number(body.cost || 0),
-    sku: body.sku || '',
-    stock_qty: Number(body.stock_qty || 0),
+  const row = await dbCreateProduct(user.userId, {
+    name: body.name || '', description: body.description || '',
+    price: Number(body.price || 0), cost: Number(body.cost || 0),
+    sku: body.sku || '', stock_qty: Number(body.stock_qty || 0),
     low_stock_threshold: Number(body.low_stock_threshold || 5),
-    category: body.category || '',
-    image_url: body.image_url || '',
-    is_active: body.is_active !== false,
-    createdAt: now,
-    updatedAt: now,
-  };
-  const products = userProducts.get(user.userId) || [];
-  products.push(product);
-  userProducts.set(user.userId, products);
+    category: body.category || '', image_url: body.image_url || '',
+  });
   trackUsage('api.products.create');
-  return product;
+  return dbProductToProduct(row);
 });
 
 app.patch('/api/workspace/products/:id', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
-  const products = userProducts.get(user.userId) || [];
-  const product = products.find(p => p.id === req.params.id);
-  if (!product) return reply.code(404).send({ error: 'NOT_FOUND' });
   const body = req.body || {};
-  if (body.name !== undefined) product.name = body.name;
-  if (body.description !== undefined) product.description = body.description;
-  if (body.price !== undefined) product.price = Number(body.price);
-  if (body.cost !== undefined) product.cost = Number(body.cost);
-  if (body.sku !== undefined) product.sku = body.sku;
-  if (body.stock_qty !== undefined) product.stock_qty = Number(body.stock_qty);
-  if (body.low_stock_threshold !== undefined) product.low_stock_threshold = Number(body.low_stock_threshold);
-  if (body.category !== undefined) product.category = body.category;
-  if (body.image_url !== undefined) product.image_url = body.image_url;
-  if (body.is_active !== undefined) product.is_active = body.is_active;
-  product.updatedAt = new Date().toISOString();
-  userProducts.set(user.userId, products);
-  return product;
+  const updates: Record<string, unknown> = {};
+  if (body.name !== undefined) updates.name = body.name;
+  if (body.description !== undefined) updates.description = body.description;
+  if (body.price !== undefined) updates.price = Number(body.price);
+  if (body.cost !== undefined) updates.cost = Number(body.cost);
+  if (body.sku !== undefined) updates.sku = body.sku;
+  if (body.stock_qty !== undefined) updates.stock_qty = Number(body.stock_qty);
+  if (body.low_stock_threshold !== undefined) updates.low_stock_threshold = Number(body.low_stock_threshold);
+  if (body.category !== undefined) updates.category = body.category;
+  if (body.image_url !== undefined) updates.image_url = body.image_url;
+  if (body.is_active !== undefined) updates.is_active = body.is_active;
+  const row = await dbUpdateProduct(user.userId, req.params.id, updates);
+  if (!row) return reply.code(404).send({ error: 'NOT_FOUND' });
+  return dbProductToProduct(row);
 });
 
 app.delete('/api/workspace/products/:id', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
-  const products = userProducts.get(user.userId) || [];
-  const product = products.find(p => p.id === req.params.id);
-  if (!product) return reply.code(404).send({ error: 'NOT_FOUND' });
-  product.is_active = false;
-  product.updatedAt = new Date().toISOString();
-  userProducts.set(user.userId, products);
+  await dbDeleteProduct(user.userId, req.params.id);
   return { deleted: true };
 });
 
@@ -1886,7 +1685,8 @@ app.delete('/api/workspace/products/:id', async (req: any, reply: any) => {
 app.get('/api/workspace/payments', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
-  return userPayments.get(user.userId) || [];
+  const rows = await dbListPayments(user.userId);
+  return rows.map(dbPaymentToPayment);
 });
 
 app.post('/api/workspace/payments', async (req: any, reply: any) => {
@@ -1894,19 +1694,11 @@ app.post('/api/workspace/payments', async (req: any, reply: any) => {
   if (!user) return;
   const { type, description, amount, status, method } = req.body || {};
   if (!description || !amount) return reply.code(400).send({ error: 'MISSING_FIELDS' });
-  const payment: Payment = {
-    id: `pay_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-    type: type || 'incoming',
-    description,
-    amount: Number(amount),
-    status: status || 'pending',
-    date: new Date().toISOString(),
-    method: method || 'manual',
-  };
-  const payments = userPayments.get(user.userId) || [];
-  payments.push(payment);
-  userPayments.set(user.userId, payments);
-  return reply.code(201).send(payment);
+  const row = await dbCreatePayment(user.userId, {
+    type: type || 'incoming', description, amount: Number(amount),
+    status: status || 'pending', method: method || 'manual',
+  });
+  return reply.code(201).send(dbPaymentToPayment(row));
 });
 
 app.get('/health', async () => health);
