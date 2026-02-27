@@ -9,7 +9,11 @@ const app = Fastify({ logger: true });
 const gatewayUrl = process.env.GATEWAY_URL || 'http://localhost:4000';
 const waConnectorUrl = process.env.WA_CONNECTOR_URL || 'http://localhost:3006';
 const COOKIE_NAME = 'kitz_session';
-const JWT_SECRET = process.env.JWT_SECRET || process.env.DEV_TOKEN_SECRET || 'kitz-dev-secret';
+const JWT_SECRET = process.env.JWT_SECRET || process.env.DEV_TOKEN_SECRET || '';
+if (!JWT_SECRET) {
+  console.error('[workspace] FATAL: JWT_SECRET or DEV_TOKEN_SECRET must be set. Refusing to start with no secret.');
+  process.exit(1);
+}
 
 /* ── Inline Auth (no gateway round-trip) ── */
 
@@ -1384,25 +1388,30 @@ app.get('/whatsapp/proxy-connect', async (req: any, reply: any) => {
   const session = getSession(req);
   if (!session) return reply.code(401).send({ error: 'Not authenticated' });
 
+  const upstreamUrl = `${waConnectorUrl}/whatsapp/connect?userId=${session.userId}`;
+  console.log(`[workspace] SSE proxy connecting to: ${upstreamUrl}`);
+
   reply.raw.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*',
   });
 
   try {
-    const upstream = await fetch(`${waConnectorUrl}/whatsapp/connect?userId=${session.userId}`, {
+    const upstream = await fetch(upstreamUrl, {
       headers: { Accept: 'text/event-stream' },
       signal: AbortSignal.timeout(120_000),
     });
 
     if (!upstream.ok || !upstream.body) {
-      reply.raw.write(`event: error\ndata: ${JSON.stringify({ error: 'WhatsApp connector unavailable' })}\n\n`);
+      console.error(`[workspace] SSE proxy upstream failed: ${upstream.status} ${upstream.statusText}`);
+      reply.raw.write(`event: error\ndata: ${JSON.stringify({ error: 'WhatsApp connector unavailable (' + upstream.status + ')' })}\n\n`);
       reply.raw.end();
       return;
     }
 
-    const reader = upstream.body.getReader();
+    const reader = (upstream.body as any).getReader();
     const decoder = new TextDecoder();
 
     const pump = async () => {
@@ -1421,9 +1430,72 @@ app.get('/whatsapp/proxy-connect', async (req: any, reply: any) => {
     req.raw.on('close', () => {
       try { reader.cancel(); } catch {}
     });
-  } catch {
-    reply.raw.write(`event: error\ndata: ${JSON.stringify({ error: 'Cannot reach WhatsApp connector' })}\n\n`);
+  } catch (err) {
+    console.error(`[workspace] SSE proxy error: ${(err as Error).message}. WA_CONNECTOR_URL=${waConnectorUrl}`);
+    reply.raw.write(`event: error\ndata: ${JSON.stringify({ error: 'Cannot reach WhatsApp connector at ' + waConnectorUrl })}\n\n`);
     reply.raw.end();
+  }
+});
+
+// ── SSE proxy for React SPA (/api/whatsapp/* routes) ──
+// The React SPA uses /api/whatsapp/whatsapp/connect — proxy to the connector
+app.get('/api/whatsapp/whatsapp/connect', async (req: any, reply: any) => {
+  const userId = (req.query as any).userId || randomUUID();
+  const upstreamUrl = `${waConnectorUrl}/whatsapp/connect?userId=${encodeURIComponent(userId)}`;
+  console.log(`[workspace] React SPA SSE proxy connecting to: ${upstreamUrl}`);
+
+  reply.raw.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*',
+  });
+
+  try {
+    const upstream = await fetch(upstreamUrl, {
+      signal: AbortSignal.timeout(120_000),
+    });
+
+    if (!upstream.ok || !upstream.body) {
+      reply.raw.write('event: error\ndata: {"error":"WhatsApp connector unavailable"}\n\n');
+      reply.raw.end();
+      return;
+    }
+
+    const reader = (upstream.body as any).getReader();
+    const decoder = new TextDecoder();
+
+    const pump = async () => {
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          reply.raw.write(decoder.decode(value, { stream: true }));
+        }
+      } catch {}
+      reply.raw.end();
+    };
+
+    req.raw.on('close', () => {
+      try { reader.cancel(); } catch {}
+    });
+
+    pump().catch(() => reply.raw.end());
+  } catch {
+    reply.raw.write('event: error\ndata: {"error":"Could not reach WhatsApp connector"}\n\n');
+    reply.raw.end();
+  }
+});
+
+app.delete('/api/whatsapp/whatsapp/sessions/:userId', async (req: any) => {
+  try {
+    const res = await fetch(`${waConnectorUrl}/whatsapp/sessions/${encodeURIComponent(req.params.userId)}`, {
+      method: 'DELETE',
+      signal: AbortSignal.timeout(10_000),
+    });
+    return await res.json();
+  } catch {
+    return { error: 'WhatsApp connector unavailable' };
   }
 });
 

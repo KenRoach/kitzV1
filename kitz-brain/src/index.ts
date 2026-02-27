@@ -129,7 +129,7 @@ async function triggerSwarmRun(): Promise<void> {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-dev-secret': process.env.DEV_TOKEN_SECRET || 'dev-secret-change-me',
+        'x-dev-secret': process.env.DEV_TOKEN_SECRET || '',
         'x-trace-id': traceId,
       },
       body: JSON.stringify({ concurrency: 6, timeoutMs: 60_000 }),

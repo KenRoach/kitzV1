@@ -163,11 +163,27 @@ async function openaiChatFallback(
   }
 }
 
+// ── Retry helper ──
+
+/** Parse Retry-After header (seconds or HTTP date). Returns ms to wait. */
+function parseRetryAfter(header: string | null): number {
+  if (!header) return 0;
+  const secs = Number(header);
+  if (!isNaN(secs) && secs > 0) return secs * 1000;
+  const date = Date.parse(header);
+  if (!isNaN(date)) return Math.max(0, date - Date.now());
+  return 0;
+}
+
+const MAX_RETRIES = 3;
+const BASE_BACKOFF_MS = 1000;
+
 // ── Core Chat Function ──
 
 /**
  * Send messages to Claude and get a response.
- * Auto-falls back to OpenAI if Claude fails.
+ * Retries on 429/529 with exponential backoff.
+ * Auto-falls back to OpenAI if retries are exhausted or on other errors.
  *
  * @param messages - Array of user/assistant messages
  * @param tier - Model tier: 'opus' | 'sonnet' | 'haiku'
@@ -202,29 +218,76 @@ export async function claudeChat(
     body.system = systemPrompt;
   }
 
-  console.log(JSON.stringify({
-    ts: new Date().toISOString(),
-    module: 'claudeClient',
-    action: 'request',
-    tier,
-    model,
-    message_count: messages.length,
-    trace_id: traceId,
-  }));
+  const bodyStr = JSON.stringify(body);
 
-  try {
-    const res = await fetch(CLAUDE_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': CLAUDE_API_KEY,
-        'anthropic-version': CLAUDE_API_VERSION,
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(tier === 'opus' ? 120_000 : 60_000),
-    });
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    console.log(JSON.stringify({
+      ts: new Date().toISOString(),
+      module: 'claudeClient',
+      action: 'request',
+      tier,
+      model,
+      attempt,
+      message_count: messages.length,
+      trace_id: traceId,
+    }));
 
-    if (!res.ok) {
+    try {
+      const res = await fetch(CLAUDE_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': CLAUDE_API_KEY,
+          'anthropic-version': CLAUDE_API_VERSION,
+        },
+        body: bodyStr,
+        signal: AbortSignal.timeout(tier === 'opus' ? 120_000 : 60_000),
+      });
+
+      if (res.ok) {
+        const data = await res.json() as ClaudeResponse;
+
+        console.log(JSON.stringify({
+          ts: new Date().toISOString(),
+          module: 'claudeClient',
+          action: 'response',
+          tier,
+          model: data.model,
+          attempt,
+          input_tokens: data.usage?.input_tokens,
+          output_tokens: data.usage?.output_tokens,
+          stop_reason: data.stop_reason,
+          trace_id: traceId,
+        }));
+
+        // Extract text from content blocks
+        const text = data.content
+          ?.filter(c => c.type === 'text' && c.text)
+          .map(c => c.text)
+          .join('\n') || '';
+
+        return text;
+      }
+
+      // Rate limited (429) or overloaded (529) — retry with backoff
+      if ((res.status === 429 || res.status === 529) && attempt < MAX_RETRIES) {
+        const retryAfterMs = parseRetryAfter(res.headers.get('retry-after'));
+        const backoffMs = retryAfterMs || BASE_BACKOFF_MS * Math.pow(2, attempt);
+        console.warn(JSON.stringify({
+          ts: new Date().toISOString(),
+          module: 'claudeClient',
+          action: 'retry_backoff',
+          status: res.status,
+          attempt,
+          backoff_ms: backoffMs,
+          tier,
+          trace_id: traceId,
+        }));
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        continue;
+      }
+
+      // Non-retryable error or retries exhausted — fall back to OpenAI
       const errText = await res.text().catch(() => 'unknown');
       console.error(JSON.stringify({
         ts: new Date().toISOString(),
@@ -233,49 +296,48 @@ export async function claudeChat(
         detail: errText.slice(0, 500),
         tier,
         model,
+        attempt,
         trace_id: traceId,
       }));
 
-      // Fallback to OpenAI on Claude failure (rate limit, 500, etc.)
-      console.warn(`[claudeClient] Claude ${tier} failed (${res.status}) — falling back to OpenAI`);
+      console.warn(`[claudeClient] Claude ${tier} failed (${res.status}) after ${attempt + 1} attempts — falling back to OpenAI`);
+      return openaiChatFallback(messages, tier, traceId, systemPrompt);
+
+    } catch (err) {
+      // Network error, timeout — if retryable, try again
+      if (attempt < MAX_RETRIES && (err as Error).name !== 'AbortError') {
+        const backoffMs = BASE_BACKOFF_MS * Math.pow(2, attempt);
+        console.warn(JSON.stringify({
+          ts: new Date().toISOString(),
+          module: 'claudeClient',
+          action: 'retry_after_error',
+          error: (err as Error).message,
+          attempt,
+          backoff_ms: backoffMs,
+          tier,
+          trace_id: traceId,
+        }));
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        continue;
+      }
+
+      console.error(JSON.stringify({
+        ts: new Date().toISOString(),
+        module: 'claudeClient',
+        error: 'fetch_failed',
+        detail: (err as Error).message,
+        tier,
+        model,
+        attempt,
+        trace_id: traceId,
+      }));
+      console.warn(`[claudeClient] Claude ${tier} unreachable after ${attempt + 1} attempts — falling back to OpenAI`);
       return openaiChatFallback(messages, tier, traceId, systemPrompt);
     }
-
-    const data = await res.json() as ClaudeResponse;
-
-    console.log(JSON.stringify({
-      ts: new Date().toISOString(),
-      module: 'claudeClient',
-      action: 'response',
-      tier,
-      model: data.model,
-      input_tokens: data.usage?.input_tokens,
-      output_tokens: data.usage?.output_tokens,
-      stop_reason: data.stop_reason,
-      trace_id: traceId,
-    }));
-
-    // Extract text from content blocks
-    const text = data.content
-      ?.filter(c => c.type === 'text' && c.text)
-      .map(c => c.text)
-      .join('\n') || '';
-
-    return text;
-  } catch (err) {
-    // Network error, timeout, etc. — fallback to OpenAI
-    console.error(JSON.stringify({
-      ts: new Date().toISOString(),
-      module: 'claudeClient',
-      error: 'fetch_failed',
-      detail: (err as Error).message,
-      tier,
-      model,
-      trace_id: traceId,
-    }));
-    console.warn(`[claudeClient] Claude ${tier} unreachable — falling back to OpenAI`);
-    return openaiChatFallback(messages, tier, traceId, systemPrompt);
   }
+
+  // Should not reach here, but safety fallback
+  return openaiChatFallback(messages, tier, traceId, systemPrompt);
 }
 
 // ── Strategic Think Function ──

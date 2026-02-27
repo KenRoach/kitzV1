@@ -22,7 +22,11 @@ import { randomUUID } from 'node:crypto';
 const GATEWAY  = process.env.GATEWAY_URL  || 'http://localhost:4000';
 const KITZ_OS  = process.env.KITZ_OS_URL  || 'http://localhost:3012';
 const WORKSPACE = process.env.WORKSPACE_URL || 'http://localhost:3001';
-const DEV_SECRET = process.env.DEV_TOKEN_SECRET || 'kitz-dev-secret-2025';
+const DEV_SECRET = process.env.DEV_TOKEN_SECRET || '';
+if (!DEV_SECRET) {
+  console.error('Set DEV_TOKEN_SECRET env var before running simulation.');
+  process.exit(1);
+}
 
 // ── 10 User Personas ──
 const PERSONAS = [

@@ -72,7 +72,7 @@ export class KnowledgeBridge {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-service-secret': process.env['SERVICE_SECRET'] ?? 'dev-secret-change-me',
+          'x-service-secret': process.env['SERVICE_SECRET'] ?? '',
         },
         body: JSON.stringify({
           message: `[SWARM:${entry.team}:${entry.agent}] ${entry.content}`,

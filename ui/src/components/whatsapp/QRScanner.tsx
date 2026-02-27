@@ -102,6 +102,13 @@ export function QRScanner({ onConnected }: QRScannerProps) {
   const { close } = useSSE({
     url: sseUrl,
     onMessage: handleMessage,
+    onError: () => {
+      // SSE connection failed (404, network error, etc.) — show retry button
+      if (state !== 'connected') {
+        setState('error')
+        setError('Could not connect to WhatsApp service. Check that the connector is running.')
+      }
+    },
     enabled: state !== 'connected',
     reconnectKey,
   })

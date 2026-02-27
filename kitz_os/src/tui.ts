@@ -31,7 +31,7 @@ import { execSync } from 'node:child_process'
 const VERSION = '0.1.0'
 const KITZ_OS_URL = process.env.KITZ_OS_URL || 'http://localhost:3012'
 const WA_URL = process.env.WA_CONNECTOR_URL || 'http://localhost:3006'
-const DEV_SECRET = process.env.DEV_TOKEN_SECRET || 'dev-secret-change-me'
+const DEV_SECRET = process.env.DEV_TOKEN_SECRET || ''
 const PREVIEW_PORT = Number(process.env.KITZ_PREVIEW_PORT) || 3333
 const ARTIFACT_DIR = path.join(os.tmpdir(), 'kitz-artifacts')
 

@@ -12,7 +12,11 @@ const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:4000';
 const KITZ_OS_URL = process.env.KITZ_OS_URL || 'http://localhost:3012';
 const PAYMENTS_URL = process.env.PAYMENTS_URL || 'http://localhost:3005';
 const NOTIFICATIONS_URL = process.env.NOTIFICATIONS_URL || 'http://localhost:3008';
-const DEV_TOKEN_SECRET = process.env.DEV_TOKEN_SECRET || 'dev-secret-change-me';
+const DEV_TOKEN_SECRET = process.env.DEV_TOKEN_SECRET || '';
+if (!DEV_TOKEN_SECRET) {
+  console.error('[admin] FATAL: DEV_TOKEN_SECRET must be set. Refusing to start with no secret.');
+  process.exit(1);
+}
 const ADMIN_COOKIE = 'kitz_admin';
 
 await app.register(cookie);

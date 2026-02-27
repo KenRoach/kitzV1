@@ -547,9 +547,16 @@ export async function routeWithAI(
       totalCreditsConsumed += entry.credits;
     }
 
-    // If error, return the error message
+    // If error, return a friendly message (hide internal error codes from user)
     if (result.finishReason === 'error') {
-      return { response: result.message.content || 'Something went wrong — try again in a sec, boss.', toolsUsed, creditsConsumed: totalCreditsConsumed };
+      const rawError = result.message.content || '';
+      console.error(JSON.stringify({ ts: new Date().toISOString(), module: 'semanticRouter', error: rawError, loop, trace_id: traceId }));
+      const friendlyMsg = rawError.includes('rate limit') || rawError.includes('429') || rawError.includes('529')
+        ? 'AI is temporarily busy — give me a sec and try again, boss.'
+        : rawError.includes('unreachable') || rawError.includes('timeout')
+          ? 'AI service is taking too long — try again in a moment, boss.'
+          : 'Something went wrong on my end — try again in a sec, boss.';
+      return { response: friendlyMsg, toolsUsed, creditsConsumed: totalCreditsConsumed };
     }
 
     // If no tool calls, we have the final response

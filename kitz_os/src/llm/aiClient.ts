@@ -145,63 +145,103 @@ async function openaiCompletion(
     headers['x-trace-id'] = traceId;
   }
 
-  const res = await fetch(OPENAI_API_URL, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(60_000),
-  });
+  const bodyStr = JSON.stringify(body);
 
-  if (!res.ok) {
-    const errorText = await res.text().catch(() => 'unknown error');
-    console.error(JSON.stringify({
-      ts: new Date().toISOString(),
-      module: 'aiClient',
-      provider: 'openai',
-      error: `HTTP ${res.status}`,
-      detail: errorText.slice(0, 500),
-      trace_id: traceId,
-    }));
-    return {
-      message: { role: 'assistant', content: `[OpenAI error: ${res.status}]` },
-      finishReason: 'error',
-    };
-  }
+  for (let attempt = 0; attempt <= AI_MAX_RETRIES; attempt++) {
+    try {
+      const res = await fetch(OPENAI_API_URL, {
+        method: 'POST',
+        headers,
+        body: bodyStr,
+        signal: AbortSignal.timeout(60_000),
+      });
 
-  const data = await res.json() as Record<string, unknown>;
-  const choices = data.choices as Array<Record<string, unknown>> | undefined;
+      // Rate limited — retry with backoff
+      if (res.status === 429 && attempt < AI_MAX_RETRIES) {
+        const retryAfterMs = parseRetryAfter(res.headers.get('retry-after'));
+        const backoffMs = retryAfterMs || AI_BASE_BACKOFF_MS * Math.pow(2, attempt);
+        console.warn(JSON.stringify({
+          ts: new Date().toISOString(),
+          module: 'aiClient',
+          provider: 'openai',
+          action: 'retry_backoff',
+          status: 429,
+          attempt,
+          backoff_ms: backoffMs,
+          trace_id: traceId,
+        }));
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        continue;
+      }
 
-  if (!choices || choices.length === 0) {
-    return {
-      message: { role: 'assistant', content: '[AI returned no response]' },
-      finishReason: 'error',
-    };
-  }
+      if (!res.ok) {
+        const errorText = await res.text().catch(() => 'unknown error');
+        console.error(JSON.stringify({
+          ts: new Date().toISOString(),
+          module: 'aiClient',
+          provider: 'openai',
+          error: `HTTP ${res.status}`,
+          detail: errorText.slice(0, 500),
+          attempt,
+          trace_id: traceId,
+        }));
+        return {
+          message: { role: 'assistant', content: `[OpenAI error: ${res.status}]` },
+          finishReason: 'error',
+        };
+      }
 
-  const choice = choices[0];
-  const msg = choice.message as Record<string, unknown>;
-  const finishReason = String(choice.finish_reason || 'stop');
+      const data = await res.json() as Record<string, unknown>;
+      const choices = data.choices as Array<Record<string, unknown>> | undefined;
 
-  const assistantMessage: ChatMessage = {
-    role: 'assistant',
-    content: (msg.content as string) || null,
-  };
+      if (!choices || choices.length === 0) {
+        return {
+          message: { role: 'assistant', content: '[AI returned no response]' },
+          finishReason: 'error',
+        };
+      }
 
-  if (msg.tool_calls && Array.isArray(msg.tool_calls)) {
-    assistantMessage.tool_calls = (msg.tool_calls as Array<Record<string, unknown>>).map(tc => ({
-      id: String(tc.id || `call_${Date.now()}`),
-      type: 'function' as const,
-      function: {
-        name: String((tc.function as Record<string, unknown>)?.name || ''),
-        arguments: String((tc.function as Record<string, unknown>)?.arguments || '{}'),
-      },
-    }));
+      const choice = choices[0];
+      const msg = choice.message as Record<string, unknown>;
+      const finishReason = String(choice.finish_reason || 'stop');
+
+      const assistantMessage: ChatMessage = {
+        role: 'assistant',
+        content: (msg.content as string) || null,
+      };
+
+      if (msg.tool_calls && Array.isArray(msg.tool_calls)) {
+        assistantMessage.tool_calls = (msg.tool_calls as Array<Record<string, unknown>>).map(tc => ({
+          id: String(tc.id || `call_${Date.now()}`),
+          type: 'function' as const,
+          function: {
+            name: String((tc.function as Record<string, unknown>)?.name || ''),
+            arguments: String((tc.function as Record<string, unknown>)?.arguments || '{}'),
+          },
+        }));
+      }
+
+      return {
+        message: assistantMessage,
+        finishReason,
+        usage: data.usage as ChatCompletionResult['usage'],
+      };
+    } catch (err) {
+      if (attempt < AI_MAX_RETRIES && (err as Error).name !== 'AbortError') {
+        const backoffMs = AI_BASE_BACKOFF_MS * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        continue;
+      }
+      return {
+        message: { role: 'assistant', content: `[OpenAI unreachable after ${attempt + 1} attempts]` },
+        finishReason: 'error',
+      };
+    }
   }
 
   return {
-    message: assistantMessage,
-    finishReason,
-    usage: data.usage as ChatCompletionResult['usage'],
+    message: { role: 'assistant', content: '[OpenAI retries exhausted]' },
+    finishReason: 'error',
   };
 }
 
@@ -295,6 +335,19 @@ function convertAnthropicResponse(response: AnthropicResponse): ChatMessage {
   return msg;
 }
 
+/** Parse Retry-After header (seconds or HTTP date). Returns ms to wait. */
+function parseRetryAfter(header: string | null): number {
+  if (!header) return 0;
+  const secs = Number(header);
+  if (!isNaN(secs) && secs > 0) return secs * 1000;
+  const date = Date.parse(header);
+  if (!isNaN(date)) return Math.max(0, date - Date.now());
+  return 0;
+}
+
+const AI_MAX_RETRIES = 3;
+const AI_BASE_BACKOFF_MS = 1000;
+
 async function claudeCompletion(
   messages: ChatMessage[],
   tools?: ToolDef[],
@@ -319,54 +372,105 @@ async function claudeCompletion(
   };
   if (traceId) headers['x-trace-id'] = traceId;
 
-  const res = await fetch(CLAUDE_API_URL, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(60_000),
-  });
+  const bodyStr = JSON.stringify(body);
 
-  if (!res.ok) {
-    const errorText = await res.text().catch(() => 'unknown error');
-    console.error(JSON.stringify({
-      ts: new Date().toISOString(),
-      module: 'aiClient',
-      provider: 'claude',
-      error: `HTTP ${res.status}`,
-      detail: errorText.slice(0, 500),
-      trace_id: traceId,
-    }));
-    return {
-      message: { role: 'assistant', content: `[Claude error: ${res.status}]` },
-      finishReason: 'error',
-    };
-  }
+  for (let attempt = 0; attempt <= AI_MAX_RETRIES; attempt++) {
+    try {
+      const res = await fetch(CLAUDE_API_URL, {
+        method: 'POST',
+        headers,
+        body: bodyStr,
+        signal: AbortSignal.timeout(60_000),
+      });
 
-  const data = await res.json() as AnthropicResponse;
-  if (!data.content || data.content.length === 0) {
-    return {
-      message: { role: 'assistant', content: '[AI returned no response]' },
-      finishReason: 'error',
-    };
-  }
+      // Rate limited (429) or overloaded (529) — retry with backoff
+      if ((res.status === 429 || res.status === 529) && attempt < AI_MAX_RETRIES) {
+        const retryAfterMs = parseRetryAfter(res.headers.get('retry-after'));
+        const backoffMs = retryAfterMs || AI_BASE_BACKOFF_MS * Math.pow(2, attempt);
+        console.warn(JSON.stringify({
+          ts: new Date().toISOString(),
+          module: 'aiClient',
+          provider: 'claude',
+          action: 'retry_backoff',
+          status: res.status,
+          attempt,
+          backoff_ms: backoffMs,
+          trace_id: traceId,
+        }));
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        continue;
+      }
 
-  const assistantMessage = convertAnthropicResponse(data);
-  let finishReason: string;
-  switch (data.stop_reason) {
-    case 'tool_use': finishReason = 'tool_calls'; break;
-    case 'end_turn': finishReason = 'stop'; break;
-    case 'max_tokens': finishReason = 'length'; break;
-    default: finishReason = data.stop_reason || 'stop';
+      if (!res.ok) {
+        const errorText = await res.text().catch(() => 'unknown error');
+        console.error(JSON.stringify({
+          ts: new Date().toISOString(),
+          module: 'aiClient',
+          provider: 'claude',
+          error: `HTTP ${res.status}`,
+          detail: errorText.slice(0, 500),
+          attempt,
+          trace_id: traceId,
+        }));
+        return {
+          message: { role: 'assistant', content: `[Claude error: ${res.status} — retried ${attempt + 1}x]` },
+          finishReason: 'error',
+        };
+      }
+
+      const data = await res.json() as AnthropicResponse;
+      if (!data.content || data.content.length === 0) {
+        return {
+          message: { role: 'assistant', content: '[AI returned no response]' },
+          finishReason: 'error',
+        };
+      }
+
+      const assistantMessage = convertAnthropicResponse(data);
+      let finishReason: string;
+      switch (data.stop_reason) {
+        case 'tool_use': finishReason = 'tool_calls'; break;
+        case 'end_turn': finishReason = 'stop'; break;
+        case 'max_tokens': finishReason = 'length'; break;
+        default: finishReason = data.stop_reason || 'stop';
+      }
+
+      return {
+        message: assistantMessage,
+        finishReason,
+        usage: {
+          prompt_tokens: data.usage?.input_tokens,
+          completion_tokens: data.usage?.output_tokens,
+          total_tokens: (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0),
+        },
+      };
+    } catch (err) {
+      // Network error — retry if possible
+      if (attempt < AI_MAX_RETRIES && (err as Error).name !== 'AbortError') {
+        const backoffMs = AI_BASE_BACKOFF_MS * Math.pow(2, attempt);
+        console.warn(JSON.stringify({
+          ts: new Date().toISOString(),
+          module: 'aiClient',
+          provider: 'claude',
+          action: 'retry_after_error',
+          error: (err as Error).message,
+          attempt,
+          backoff_ms: backoffMs,
+          trace_id: traceId,
+        }));
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        continue;
+      }
+      return {
+        message: { role: 'assistant', content: `[Claude unreachable after ${attempt + 1} attempts]` },
+        finishReason: 'error',
+      };
+    }
   }
 
   return {
-    message: assistantMessage,
-    finishReason,
-    usage: {
-      prompt_tokens: data.usage?.input_tokens,
-      completion_tokens: data.usage?.output_tokens,
-      total_tokens: (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0),
-    },
+    message: { role: 'assistant', content: '[Claude retries exhausted]' },
+    finishReason: 'error',
   };
 }
 

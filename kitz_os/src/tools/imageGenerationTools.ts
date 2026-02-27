@@ -13,6 +13,38 @@ function getApiKey(): string {
   return process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
 }
 
+/** Parse OpenAI error JSON for a human-readable message. */
+function parseOpenAIError(status: number, body: string): string {
+  try {
+    const parsed = JSON.parse(body) as { error?: { message?: string; code?: string; type?: string } };
+    const err = parsed.error;
+    if (err?.message) {
+      return `DALL-E error (${status}): ${err.message}`;
+    }
+  } catch {
+    // not JSON
+  }
+
+  // Provide actionable guidance for common HTTP status codes
+  switch (status) {
+    case 401:
+      return 'DALL-E auth failed (401): Your AI_API_KEY / OPENAI_API_KEY is invalid or expired. ' +
+        'Verify the key in your Railway environment variables starts with "sk-" and is active in your OpenAI dashboard.';
+    case 403:
+      return 'DALL-E forbidden (403): Your API key does not have permission for the Images API. ' +
+        'Check that your OpenAI project/key has DALL-E access enabled.';
+    case 429:
+      return 'DALL-E rate limited (429): You have exceeded your OpenAI usage quota or rate limit. ' +
+        'Check your OpenAI billing at https://platform.openai.com/account/billing';
+    case 500:
+    case 502:
+    case 503:
+      return `DALL-E server error (${status}): OpenAI is temporarily unavailable. Try again in a moment.`;
+    default:
+      return `DALL-E API error (${status}): ${body.slice(0, 300)}`;
+  }
+}
+
 export function getAllImageGenerationTools(): ToolSchema[] {
   return [
     {
@@ -44,7 +76,20 @@ export function getAllImageGenerationTools(): ToolSchema[] {
       execute: async (args, _traceId) => {
         const apiKey = getApiKey();
         if (!apiKey) {
-          return { error: 'No AI_API_KEY or OPENAI_API_KEY configured for image generation.' };
+          return {
+            error: 'No OpenAI API key configured for image generation.',
+            fix: 'Set AI_API_KEY or OPENAI_API_KEY in your Railway environment variables. ' +
+              'The key should start with "sk-" and come from https://platform.openai.com/api-keys',
+          };
+        }
+
+        // Validate key format before making the request
+        if (!apiKey.startsWith('sk-')) {
+          return {
+            error: 'Invalid OpenAI API key format.',
+            fix: `Your key starts with "${apiKey.slice(0, 4)}..." but OpenAI keys should start with "sk-". ` +
+              'Check your AI_API_KEY / OPENAI_API_KEY in Railway environment variables.',
+          };
         }
 
         const prompt = String(args.prompt || '').trim();
@@ -53,6 +98,17 @@ export function getAllImageGenerationTools(): ToolSchema[] {
 
         const size = (args.size as string) || '1024x1024';
         const quality = (args.quality as string) || 'standard';
+
+        console.log(JSON.stringify({
+          ts: new Date().toISOString(),
+          module: 'imageGeneration',
+          action: 'request',
+          size,
+          quality,
+          prompt_length: prompt.length,
+          key_prefix: apiKey.slice(0, 7) + '...',
+          trace_id: _traceId,
+        }));
 
         try {
           const res = await fetch(OPENAI_IMAGES_URL, {
@@ -69,12 +125,20 @@ export function getAllImageGenerationTools(): ToolSchema[] {
               quality,
               response_format: 'url',
             }),
-            signal: AbortSignal.timeout(60_000),
+            signal: AbortSignal.timeout(90_000),
           });
 
           if (!res.ok) {
             const errText = await res.text().catch(() => 'unknown error');
-            return { error: `DALL-E API error: HTTP ${res.status}`, detail: errText.slice(0, 300) };
+            const errorMessage = parseOpenAIError(res.status, errText);
+            console.error(JSON.stringify({
+              ts: new Date().toISOString(),
+              module: 'imageGeneration',
+              error: errorMessage,
+              status: res.status,
+              trace_id: _traceId,
+            }));
+            return { error: errorMessage };
           }
 
           const data = (await res.json()) as {
@@ -86,14 +150,21 @@ export function getAllImageGenerationTools(): ToolSchema[] {
             return { error: 'No image URL in DALL-E response' };
           }
 
+          console.log(JSON.stringify({
+            ts: new Date().toISOString(),
+            module: 'imageGeneration',
+            action: 'success',
+            trace_id: _traceId,
+          }));
+
           return {
             success: true,
             imageUrl: imageData.url,
             revisedPrompt: imageData.revised_prompt || prompt,
           };
         } catch (err) {
-          if ((err as Error).name === 'AbortError') {
-            return { error: 'Image generation timed out (60s). Try a simpler prompt.' };
+          if ((err as Error).name === 'AbortError' || (err as Error).name === 'TimeoutError') {
+            return { error: 'Image generation timed out (90s). Try a simpler prompt.' };
           }
           return { error: `Image generation failed: ${(err as Error).message}` };
         }

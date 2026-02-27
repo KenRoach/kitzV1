@@ -38,7 +38,7 @@ const VERSION = '0.1.0'
 const CODENAME = 'Lumen'
 const KITZ_OS_URL = process.env.KITZ_OS_URL || 'http://localhost:3012'
 const WA_URL = process.env.WA_CONNECTOR_URL || 'http://localhost:3006'
-const DEV_SECRET = process.env.DEV_TOKEN_SECRET || 'dev-secret-change-me'
+const DEV_SECRET = process.env.DEV_TOKEN_SECRET || ''
 const REPO_ROOT = findRepoRoot()
 const KITZ_OS_DIR = path.join(REPO_ROOT, 'kitz_os')
 

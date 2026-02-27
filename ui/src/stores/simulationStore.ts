@@ -41,7 +41,7 @@ interface SimulationStore {
 }
 
 const API_BASE = import.meta.env.VITE_KITZ_OS_URL || 'http://localhost:3012'
-const DEV_SECRET = import.meta.env.VITE_DEV_TOKEN_SECRET || 'dev-secret-change-me'
+const DEV_SECRET = import.meta.env.VITE_DEV_TOKEN_SECRET || ''
 
 export const useSimulationStore = create<SimulationStore>((set) => ({
   running: false,

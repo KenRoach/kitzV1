@@ -1,5 +1,13 @@
 # KITZ OS — Docker Compose
 # Usage: docker compose up --build
+#
+# REQUIRED: Create a .env file with at least:
+#   POSTGRES_PASSWORD=<strong-random-password>
+#   JWT_SECRET=<random-64-char-hex>
+#   DEV_TOKEN_SECRET=<random-64-char-hex>
+#
+# Generate secrets: openssl rand -hex 32
+#
 # All services connect via Docker network hostnames.
 
 x-service-defaults: &service-defaults
@@ -12,7 +20,7 @@ x-service-defaults: &service-defaults
 
 x-env-common: &env-common
   NODE_ENV: development
-  DATABASE_URL: postgres://kitz:kitz@postgres:5432/kitz
+  DATABASE_URL: postgres://kitz:${POSTGRES_PASSWORD}@postgres:5432/kitz
 
 services:
   # ── Database ──
@@ -20,7 +28,7 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: kitz
-      POSTGRES_PASSWORD: kitz
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: kitz
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -61,8 +69,8 @@ services:
     environment:
       <<: *env-common
       PORT: 4000
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
-      DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET:-dev-secret-change-me}
+      JWT_SECRET: ${JWT_SECRET}
+      DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GOOGLE_LOGIN_REDIRECT_URI: ${GOOGLE_LOGIN_REDIRECT_URI:-http://localhost:5173/login}
@@ -90,6 +98,7 @@ services:
       CLAUDE_API_KEY: ${CLAUDE_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       AI_API_KEY: ${AI_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY:-}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
@@ -216,8 +225,8 @@ services:
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
       WORKSPACE_SUPABASE_URL: ${WORKSPACE_SUPABASE_URL:-}
       WORKSPACE_SUPABASE_SERVICE_KEY: ${WORKSPACE_SUPABASE_SERVICE_KEY:-}
-      GOD_MODE_USER_ID: ${GOD_MODE_USER_ID:-8787fee9-d06a-442f-91ba-fd082b134ccf}
-      DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET:-dev-secret-change-me}
+      GOD_MODE_USER_ID: ${GOD_MODE_USER_ID:-}
+      DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET}
       ELEVENLABS_AGENT_ID: ${ELEVENLABS_AGENT_ID:-}
     depends_on:
       - kitz-gateway
@@ -242,18 +251,19 @@ services:
       CLAUDE_API_KEY: ${CLAUDE_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       AI_API_KEY: ${AI_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       AI_MODEL: ${AI_MODEL:-gpt-4o-mini}
       SUPABASE_URL: ${SUPABASE_URL:-}
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
       WORKSPACE_MCP_URL: ${WORKSPACE_MCP_URL:-}
       WORKSPACE_MCP_KEY: ${WORKSPACE_MCP_KEY:-}
-      GOD_MODE_USER_ID: ${GOD_MODE_USER_ID:-8787fee9-d06a-442f-91ba-fd082b134ccf}
-      BUSINESS_ID: ${BUSINESS_ID:-134f52d0-90a3-4806-a1bd-c37ef31d4f6f}
+      GOD_MODE_USER_ID: ${GOD_MODE_USER_ID:-}
+      BUSINESS_ID: ${BUSINESS_ID:-}
       WA_CONNECTOR_URL: http://kitz-whatsapp-connector:3006
       EMAIL_CONNECTOR_URL: http://kitz-email-connector:3007
       COMMS_API_URL: http://comms-api:3013
       KILL_SWITCH: ${KILL_SWITCH:-false}
-      DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET:-dev-secret-change-me}
+      DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       PAYPAL_WEBHOOK_ID: ${PAYPAL_WEBHOOK_ID:-}
       YAPPY_WEBHOOK_SECRET: ${YAPPY_WEBHOOK_SECRET:-}
@@ -288,7 +298,9 @@ services:
       <<: *env-common
       PORT: 3001
       GATEWAY_URL: http://kitz-gateway:4000
-      WA_CONNECTOR_URL: http://kitz-whatsapp-connector:3006
+      WA_CONNECTOR_URL: ${WA_CONNECTOR_URL:-http://kitz-whatsapp-connector:3006}
+      JWT_SECRET: ${JWT_SECRET}
+      DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET}
       WORKSPACE_MCP_URL: ${WORKSPACE_MCP_URL:-}
       WORKSPACE_MCP_KEY: ${WORKSPACE_MCP_KEY:-}
       ELEVENLABS_AGENT_ID: ${ELEVENLABS_AGENT_ID:-}
@@ -338,7 +350,7 @@ services:
       DB_POSTGRESDB_PORT: 5432
       DB_POSTGRESDB_DATABASE: kitz
       DB_POSTGRESDB_USER: kitz
-      DB_POSTGRESDB_PASSWORD: kitz
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
       DB_POSTGRESDB_SCHEMA: n8n
       N8N_HOST: localhost
       N8N_PORT: 5678
@@ -347,9 +359,9 @@ services:
       GENERIC_TIMEZONE: America/Panama
       N8N_BASIC_AUTH_ACTIVE: "true"
       N8N_BASIC_AUTH_USER: ${N8N_AUTH_USER:-kitz}
-      N8N_BASIC_AUTH_PASSWORD: ${N8N_AUTH_PASSWORD:-kitz-n8n-2026}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_AUTH_PASSWORD}
       KITZ_OS_URL: http://kitz-os:3012
-      KITZ_DEV_SECRET: ${DEV_TOKEN_SECRET:-dev-secret-change-me}
+      KITZ_DEV_SECRET: ${DEV_TOKEN_SECRET}
       WORKSPACE_URL: http://workspace:3001
       GATEWAY_URL: http://kitz-gateway:4000
     volumes:
@@ -373,7 +385,7 @@ services:
       GATEWAY_URL: http://kitz-gateway:4000
       LLM_HUB_URL: http://kitz-llm-hub:4010
       KITZ_OS_URL: http://kitz-os:3012
-      DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET:-dev-secret-change-me}
+      DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET}
       MCP_URL: ${MCP_URL:-}
       MCP_API_KEY: ${MCP_API_KEY:-}
       BUSINESS_ID: ${BUSINESS_ID:-134f52d0-90a3-4806-a1bd-c37ef31d4f6f}

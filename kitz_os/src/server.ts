@@ -100,7 +100,8 @@ export async function createServer(kernel: KitzKernel) {
       path === '/health' ||
       path === '/api/kitz/status' ||
       path.startsWith('/api/payments/webhook/') ||
-      path.startsWith('/api/kitz/oauth/google/callback');
+      path.startsWith('/api/kitz/oauth/google/callback') ||
+      path.startsWith('/api/whatsapp/');
     if (skipAuth) return;
 
     const secret = req.headers['x-service-secret'] as string | undefined;
@@ -401,7 +402,8 @@ export async function createServer(kernel: KitzKernel) {
 
           // If image_generate was used, extract the DALL-E URL for inline rendering
           if (result.toolsUsed?.includes('image_generate')) {
-            const urlMatch = result.response.match(/https:\/\/oaidalleapiprodscus\.blob\.core\.windows\.net\/[^\s)]+/);
+            // Match OpenAI DALL-E URLs (Azure blob CDN — pattern may vary by region)
+            const urlMatch = result.response.match(/https:\/\/oaidalleapi[a-z]*\.blob\.core\.windows\.net\/[^\s)"]+/);
             if (urlMatch) responsePayload.image_url = urlMatch[0];
           }
 
@@ -1198,6 +1200,77 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
       return setUserPreferences(req.params.userId, { echoChannels, phone, email });
     }
   );
+
+  // ── WhatsApp SSE proxy — forwards /api/whatsapp/* to the WhatsApp connector ──
+  const WA_CONNECTOR_URL = process.env.WA_CONNECTOR_URL || 'http://localhost:3006';
+
+  app.get('/api/whatsapp/whatsapp/connect', async (req: any, reply) => {
+    const userId = (req.query as any).userId || crypto.randomUUID();
+    const upstreamUrl = `${WA_CONNECTOR_URL}/whatsapp/connect?userId=${encodeURIComponent(userId)}`;
+
+    reply.raw.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+    });
+
+    try {
+      const upstream = await fetch(upstreamUrl, {
+        signal: AbortSignal.timeout(120_000),
+      });
+
+      if (!upstream.ok || !upstream.body) {
+        reply.raw.write('event: error\ndata: {"error":"WhatsApp connector unavailable"}\n\n');
+        reply.raw.end();
+        return;
+      }
+
+      const reader = (upstream.body as any).getReader();
+      const decoder = new TextDecoder();
+
+      const pump = async () => {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          reply.raw.write(decoder.decode(value, { stream: true }));
+        }
+        reply.raw.end();
+      };
+
+      req.raw.on('close', () => {
+        reader.cancel();
+      });
+
+      pump().catch(() => reply.raw.end());
+    } catch {
+      reply.raw.write('event: error\ndata: {"error":"Could not reach WhatsApp connector"}\n\n');
+      reply.raw.end();
+    }
+  });
+
+  app.delete('/api/whatsapp/whatsapp/sessions/:userId', async (req: any) => {
+    try {
+      const res = await fetch(`${WA_CONNECTOR_URL}/whatsapp/sessions/${encodeURIComponent(req.params.userId)}`, {
+        method: 'DELETE',
+        signal: AbortSignal.timeout(10_000),
+      });
+      return await res.json();
+    } catch {
+      return { error: 'WhatsApp connector unavailable' };
+    }
+  });
+
+  app.get('/api/whatsapp/whatsapp/sessions', async () => {
+    try {
+      const res = await fetch(`${WA_CONNECTOR_URL}/whatsapp/sessions`, {
+        signal: AbortSignal.timeout(10_000),
+      });
+      return await res.json();
+    } catch {
+      return { error: 'WhatsApp connector unavailable' };
+    }
+  });
 
   // ── SPA fallback — serve index.html for client-side routing ──
   if (existsSync(spaRoot)) {
