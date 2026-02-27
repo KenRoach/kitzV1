@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import Fastify from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { EventEnvelope } from 'kitz-schemas';
