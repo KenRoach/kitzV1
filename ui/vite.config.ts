@@ -19,7 +19,6 @@ export default defineConfig({
       },
       '/api/workspace': {
         target: 'http://localhost:3001',
-        rewrite: (p) => p.replace(/^\/api\/workspace/, ''),
       },
       '/api/whatsapp': {
         target: 'http://localhost:3006',

@@ -16,6 +16,7 @@ interface AuthState {
   token: string | null
   isLoading: boolean
   error: string | null
+  signup: (email: string, password: string, name: string) => Promise<void>
   login: (email: string, password: string) => Promise<void>
   loginWithGoogle: (code: string) => Promise<void>
   getGoogleAuthUrl: () => Promise<string>
@@ -28,6 +29,29 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: null,
   isLoading: false,
   error: null,
+
+  signup: async (email, password, name) => {
+    set({ isLoading: true, error: null })
+    try {
+      const data = await apiFetch<{ token: string; userId: string; orgId?: string; name?: string }>(
+        `${API.GATEWAY}/auth/signup`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ email, password, name }),
+        },
+      )
+      const user: User = { id: data.userId, email, orgId: data.orgId, name: data.name || name, authProvider: 'email' }
+      localStorage.setItem(AUTH_TOKEN_KEY, data.token)
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user))
+      set({ user, token: data.token, isLoading: false })
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : 'Signup failed',
+        isLoading: false,
+      })
+      throw err
+    }
+  },
 
   login: async (email, password) => {
     set({ isLoading: true, error: null })

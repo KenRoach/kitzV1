@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/authStore'
 export function LoginPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { user, login, loginWithGoogle, getGoogleAuthUrl, isLoading, error } = useAuthStore()
+  const { user, signup, login, loginWithGoogle, getGoogleAuthUrl, isLoading, error } = useAuthStore()
 
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
@@ -36,7 +36,11 @@ export function LoginPage() {
     e.preventDefault()
     setLocalError(null)
     try {
-      await login(email, password)
+      if (mode === 'signup') {
+        await signup(email, password, name)
+      } else {
+        await login(email, password)
+      }
       navigate('/', { replace: true })
     } catch {
       // Error is set in store
