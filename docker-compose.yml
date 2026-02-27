@@ -26,6 +26,7 @@ services:
   # ── Database ──
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: kitz
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -41,6 +42,10 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   # ── Migrations ──
   migrate:
@@ -57,6 +62,10 @@ services:
       postgres:
         condition: service_healthy
     restart: "no"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
   # ── Gateway (port 4000) ──
   kitz-gateway:
@@ -71,14 +80,20 @@ services:
       PORT: 4000
       JWT_SECRET: ${JWT_SECRET}
       DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GOOGLE_LOGIN_REDIRECT_URI: ${GOOGLE_LOGIN_REDIRECT_URI:-http://localhost:5173/login}
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:4000/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:4000/health"]
       interval: 10s
       timeout: 5s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -102,6 +117,15 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY:-}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:4010/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   # ── Payments (port 3005) ──
   kitz-payments:
@@ -119,10 +143,14 @@ services:
       YAPPY_WEBHOOK_SECRET: ${YAPPY_WEBHOOK_SECRET:-}
       BAC_WEBHOOK_SECRET: ${BAC_WEBHOOK_SECRET:-}
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3005/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3005/health"]
       interval: 10s
       timeout: 5s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -139,11 +167,17 @@ services:
       <<: *env-common
       PORT: 3006
       KITZ_OS_URL: http://kitz-os:3012
+      DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET}
+      SERVICE_SECRET: ${DEV_TOKEN_SECRET}
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3006/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3006/health"]
       interval: 10s
       timeout: 5s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -162,6 +196,18 @@ services:
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
       FROM_EMAIL: ${FROM_EMAIL:-kitz@kitz.services}
+      DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET}
+      SERVICE_SECRET: ${DEV_TOKEN_SECRET}
+      KITZ_OS_URL: http://kitz-os:3012
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3007/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -181,10 +227,14 @@ services:
       EMAIL_CONNECTOR_URL: http://kitz-email-connector:3007
       COMMS_API_URL: http://comms-api:3013
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3008/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3008/health"]
       interval: 10s
       timeout: 5s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -202,6 +252,15 @@ services:
       PORT: 3010
       LLM_HUB_URL: http://kitz-llm-hub:4010
       ELEVENLABS_AGENT_ID: ${ELEVENLABS_AGENT_ID:-}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3010/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
   # ── Admin Services (port 3011) ──
   admin-kitz-services:
@@ -211,6 +270,15 @@ services:
         SERVICE_DIR: admin-kitz-services
     ports:
       - "3011:3011"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3011/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     environment:
       <<: *env-common
       PORT: 3011
@@ -241,10 +309,14 @@ services:
     ports:
       - "3012:3012"
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3012/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3012/health"]
       interval: 10s
       timeout: 5s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     environment:
       <<: *env-common
       PORT: 3012
@@ -264,6 +336,9 @@ services:
       COMMS_API_URL: http://comms-api:3013
       KILL_SWITCH: ${KILL_SWITCH:-false}
       DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET}
+      SERVICE_SECRET: ${DEV_TOKEN_SECRET}
+      CADENCE_PHONE: ${CADENCE_PHONE:-}
+      CADENCE_EMAIL: ${CADENCE_EMAIL:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       PAYPAL_WEBHOOK_ID: ${PAYPAL_WEBHOOK_ID:-}
       YAPPY_WEBHOOK_SECRET: ${YAPPY_WEBHOOK_SECRET:-}
@@ -290,10 +365,14 @@ services:
     ports:
       - "3001:3001"
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3001/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3001/health"]
       interval: 10s
       timeout: 5s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     environment:
       <<: *env-common
       PORT: 3001
@@ -323,6 +402,15 @@ services:
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
       TWILIO_PHONE_FROM: ${TWILIO_PHONE_FROM:-}
       EMAIL_CONNECTOR_URL: http://kitz-email-connector:3007
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3013/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
   # ── Logs API (port 3014) ──
   logs-api:
@@ -335,15 +423,33 @@ services:
     environment:
       <<: *env-common
       PORT: 3014
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3014/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
   # ── n8n Workflow Automation (port 5678) ──
   n8n:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:1.76.1
     restart: unless-stopped
     networks:
       - kitz-net
     ports:
       - "5678:5678"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:5678/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     environment:
       DB_TYPE: postgresdb
       DB_POSTGRESDB_HOST: postgres
@@ -380,6 +486,10 @@ services:
     restart: unless-stopped
     networks:
       - kitz-net
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     environment:
       <<: *env-common
       GATEWAY_URL: http://kitz-gateway:4000
@@ -389,6 +499,9 @@ services:
       MCP_URL: ${MCP_URL:-}
       MCP_API_KEY: ${MCP_API_KEY:-}
       BUSINESS_ID: ${BUSINESS_ID:-134f52d0-90a3-4806-a1bd-c37ef31d4f6f}
+      CADENCE_PHONE: ${CADENCE_PHONE:-}
+      CADENCE_EMAIL: ${CADENCE_EMAIL:-}
+      DEFAULT_ORG_ID: ${DEFAULT_ORG_ID:-}
     depends_on:
       - kitz-gateway
       - kitz-llm-hub
