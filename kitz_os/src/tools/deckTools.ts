@@ -11,7 +11,7 @@
  */
 
 import type { ToolSchema } from './registry.js';
-import { getBrandKit, storeContent, getContent, generateContentId, injectBrandCSS } from './contentEngine.js';
+import { getBrandKit, storeContent, getContent, generateContentId, generateSlug, injectBrandCSS } from './contentEngine.js';
 
 // ── Interfaces ──
 
@@ -213,7 +213,7 @@ Return ONLY a valid JSON array of slides matching the same structure. Keep type 
       };
       decks.set(contentId, deckData);
       storeContent({
-        contentId, type: 'deck', html,
+        contentId, slug: generateSlug(brief || 'Deck', contentId), type: 'deck', html,
         data: deckData as unknown as Record<string, unknown>,
         status: 'draft',
         createdAt: deckData.createdAt,

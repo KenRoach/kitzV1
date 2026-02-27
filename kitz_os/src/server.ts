@@ -51,11 +51,92 @@ import { getUserPreferences, setUserPreferences } from './channels/preferences.j
 import * as orchestrator from './orchestrator/channelOrchestrator.js';
 import { APPROVAL_MATRIX, getMatrixByRisk, getMatrixByCategory } from './approvals/approvalMatrix.js';
 import { createArtifactFromToolResult } from './tools/artifactPreview.js';
-import { getContent, getContentBySlug, approveContent, extendContent, cleanExpiredContent } from './tools/contentEngine.js';
+import { getContent, getContentBySlug, getBrandKit, approveContent, extendContent, cleanExpiredContent } from './tools/contentEngine.js';
 import type { OutputChannel } from 'kitz-schemas';
 import { createLogger } from './logger.js';
 
 const log = createLogger('server');
+
+function buildExpiredArtifactHtml(baseUrl: string): string {
+  const bk = getBrandKit();
+  return `<!DOCTYPE html>
+<html lang="${bk.language}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Expired — ${bk.businessName} | KITZ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8f7ff;color:#1a1a2e;min-height:100vh}
+
+    .kitz-artifact-header{background:linear-gradient(135deg,${bk.colors.primary},${bk.colors.secondary});padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+    .kitz-artifact-header .brand{display:flex;align-items:center;gap:12px}
+    .kitz-artifact-header .logo{width:36px;height:36px;border-radius:8px;object-fit:contain}
+    .kitz-artifact-header .title-group h1{font-size:18px;font-weight:700;color:#fff;line-height:1.2}
+    .kitz-artifact-header .title-group .subtitle{font-size:12px;color:rgba(255,255,255,0.75);margin-top:2px}
+    .kitz-artifact-header .badge{background:rgba(255,255,255,0.2);color:#fff;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600}
+
+    .kitz-artifact-content{max-width:900px;margin:24px auto;padding:0 16px}
+    .kitz-artifact-card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(124,58,237,0.08);overflow:hidden}
+
+    .kitz-expired-body{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:64px 32px;text-align:center}
+    .kitz-expired-icon{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,${bk.colors.primary}22,${bk.colors.secondary}22);display:flex;align-items:center;justify-content:center;margin-bottom:24px}
+    .kitz-expired-icon svg{width:40px;height:40px;color:${bk.colors.primary}}
+    .kitz-expired-body h2{font-size:24px;font-weight:800;color:${bk.colors.primary};margin-bottom:12px}
+    .kitz-expired-body p{font-size:15px;line-height:1.6;color:#666;max-width:400px}
+    .kitz-expired-body .hint{margin-top:24px;display:inline-block;padding:10px 24px;border-radius:8px;background:${bk.colors.primary};color:#fff;font-weight:600;font-size:14px;text-decoration:none;transition:opacity 0.2s}
+    .kitz-expired-body .hint:hover{opacity:0.85}
+    .kitz-expired-body .timer{margin-top:16px;font-size:12px;color:#999}
+
+    .kitz-artifact-footer{text-align:center;padding:20px 16px 32px;color:#999;font-size:12px;line-height:1.5}
+    .kitz-artifact-footer a{color:${bk.colors.primary};text-decoration:none}
+
+    @media(max-width:600px){
+      .kitz-artifact-header{padding:16px}
+      .kitz-artifact-header .title-group h1{font-size:16px}
+      .kitz-artifact-content{margin:16px auto;padding:0 12px}
+      .kitz-expired-body{padding:48px 20px}
+      .kitz-expired-body h2{font-size:20px}
+    }
+  </style>
+</head>
+<body>
+  <header class="kitz-artifact-header">
+    <div class="brand">
+      <img class="logo" src="${baseUrl}/kitz-logo.png" alt="KITZ" onerror="this.style.display='none'">
+      <div class="title-group">
+        <h1>Artifact Expired</h1>
+        <div class="subtitle">${bk.businessName}${bk.tagline ? ` \u2014 ${bk.tagline}` : ''}</div>
+      </div>
+    </div>
+    <span class="badge">Expired</span>
+  </header>
+
+  <main class="kitz-artifact-content">
+    <div class="kitz-artifact-card">
+      <div class="kitz-expired-body">
+        <div class="kitz-expired-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <h2>${bk.language === 'es' ? 'Este artefacto ha expirado' : 'This artifact has expired'}</h2>
+        <p>${bk.language === 'es'
+          ? 'Los borradores expiran despues de 24 horas si no son aprobados. Pide a KITZ que lo regenere.'
+          : 'Draft artifacts expire after 24 hours if not approved. Ask KITZ to regenerate it.'}</p>
+        <a class="hint" href="${baseUrl}">${bk.language === 'es' ? 'Volver a KITZ' : 'Back to KITZ'}</a>
+        <div class="timer">24h TTL &middot; Draft-first policy</div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="kitz-artifact-footer">
+    ${bk.language === 'es' ? 'Este contenido fue creado por IA.' : 'This content was created by AI.'}<br>
+    <a href="${baseUrl}">Powered by KITZ</a> &mdash; ${bk.language === 'es' ? 'Tu negocio merece infraestructura.' : 'Your business deserves infrastructure.'}
+  </footer>
+</body>
+</html>`;
+}
 
 export async function createServer(kernel: KitzKernel) {
   const app = Fastify({ logger: false, bodyLimit: 20_000_000, requestTimeout: 120_000 });  // 20MB for media, 2min for AI calls
@@ -483,14 +564,10 @@ export async function createServer(kernel: KitzKernel) {
       const { contentId } = req.params;
       const item = getContent(contentId);  // returns undefined if expired
       if (!item) {
-        reply.code(410).type('text/html').send(`<!DOCTYPE html>
-<html><head><title>Expired — KITZ</title></head>
-<body style="font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f8f7ff;margin:0">
-<div style="text-align:center;max-width:400px;padding:32px">
-  <div style="font-size:48px;margin-bottom:16px">⏰</div>
-  <h1 style="color:#7C3AED;font-size:24px;margin:0 0 12px">This artifact has expired</h1>
-  <p style="color:#666;line-height:1.6">Draft artifacts expire after 24 hours if not approved. Ask KITZ to regenerate it.</p>
-</div></body></html>`);
+        const base = process.env.NODE_ENV === 'production'
+          ? 'https://kitz.services'
+          : `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers['x-forwarded-host'] || req.headers.host || `localhost:${PORT}`}`;
+        reply.code(410).type('text/html').send(buildExpiredArtifactHtml(base));
         return;
       }
       reply.type('text/html').send(item.html);
@@ -1543,14 +1620,10 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
       const { slug } = req.params;
       const item = getContentBySlug(slug);
       if (!item) {
-        reply.code(410).type('text/html').send(`<!DOCTYPE html>
-<html><head><title>Expired — KITZ</title></head>
-<body style="font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f8f7ff;margin:0">
-<div style="text-align:center;max-width:400px;padding:32px">
-  <div style="font-size:48px;margin-bottom:16px">⏰</div>
-  <h1 style="color:#7C3AED;font-size:24px;margin:0 0 12px">This artifact has expired</h1>
-  <p style="color:#666;line-height:1.6">Draft artifacts expire after 24 hours if not approved. Ask KITZ to regenerate it.</p>
-</div></body></html>`);
+        const base = process.env.NODE_ENV === 'production'
+          ? 'https://kitz.services'
+          : `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers['x-forwarded-host'] || req.headers.host || `localhost:${PORT}`}`;
+        reply.code(410).type('text/html').send(buildExpiredArtifactHtml(base));
         return;
       }
       reply.type('text/html').send(item.html);

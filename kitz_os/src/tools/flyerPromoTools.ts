@@ -12,7 +12,7 @@
  */
 
 import type { ToolSchema } from './registry.js';
-import { getBrandKit, storeContent, getContent, generateContentId, injectBrandCSS } from './contentEngine.js';
+import { getBrandKit, storeContent, getContent, generateContentId, generateSlug, injectBrandCSS } from './contentEngine.js';
 
 // ── Pre-seeded flyer templates ──
 
@@ -179,7 +179,7 @@ Return ONLY the filled HTML (no markdown). Replace every {{placeholder}}. For {{
       const now = new Date().toISOString();
 
       storeContent({
-        contentId, type: 'flyer', html,
+        contentId, slug: generateSlug(headline || 'Flyer', contentId), type: 'flyer', html,
         data: { headline, body, template: templateKey, ctaText } as unknown as Record<string, unknown>,
         status: 'draft', createdAt: now, updatedAt: now,
       });
@@ -264,7 +264,7 @@ Return valid JSON:
       const now = new Date().toISOString();
 
       storeContent({
-        contentId, type: 'promo', html,
+        contentId, slug: generateSlug(product || 'Promo', contentId), type: 'promo', html,
         data: { platform, product, caption, hashtags } as unknown as Record<string, unknown>,
         status: 'draft', createdAt: now, updatedAt: now,
       });

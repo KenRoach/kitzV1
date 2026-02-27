@@ -13,7 +13,7 @@
  */
 
 import type { ToolSchema } from './registry.js';
-import { getBrandKit, storeContent, getContent, generateContentId, injectBrandCSS } from './contentEngine.js';
+import { getBrandKit, storeContent, getContent, generateContentId, generateSlug, injectBrandCSS } from './contentEngine.js';
 
 // ── Pre-seeded templates ──
 
@@ -141,7 +141,7 @@ ${LANDING_SECTIONS.footer(brand)}
       const now = new Date().toISOString();
 
       storeContent({
-        contentId, type: 'landing', html,
+        contentId, slug: generateSlug(pageData.heading || 'Landing-Page', contentId), type: 'landing', html,
         data: { brief, heading: pageData.heading } as unknown as Record<string, unknown>,
         status: 'draft', createdAt: now, updatedAt: now,
       });
@@ -230,7 +230,7 @@ ${LANDING_SECTIONS.footer(brand)}
       const now = new Date().toISOString();
 
       storeContent({
-        contentId, type: 'catalog', html,
+        contentId, slug: generateSlug('Product-Catalog', contentId), type: 'catalog', html,
         data: { productCount: products.length, whatsappNumber: cleanNumber } as unknown as Record<string, unknown>,
         status: 'draft', createdAt: now, updatedAt: now,
       });
@@ -293,7 +293,7 @@ ${socialButtons ? `<div style="text-align:center;margin-top:24px">${socialButton
       const now = new Date().toISOString();
 
       storeContent({
-        contentId, type: 'biolink', html,
+        contentId, slug: generateSlug('Bio-Link', contentId), type: 'biolink', html,
         data: { linkCount: links.length, bio } as unknown as Record<string, unknown>,
         status: 'draft', createdAt: now, updatedAt: now,
       });
