@@ -348,8 +348,8 @@ export async function processInboundEmail(
   if (ADMIN_EMAIL) {
     (async () => {
       try {
-        // Wait 5 minutes so auto-reply lands first and brain has time to think
-        await new Promise((r) => setTimeout(r, 5 * 60 * 1000));
+        // Wait 3 minutes so auto-reply lands first and brain has time to think
+        await new Promise((r) => setTimeout(r, 3 * 60 * 1000));
         log.info({ event: 'inbound.draft_start', traceId, caseNumber, adminEmail: ADMIN_EMAIL });
 
         const draft = await generateDraftResponse(emailBody, subject, sender.name, language, caseNumber, traceId);
