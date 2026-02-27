@@ -144,25 +144,25 @@ function buildBrainPrompt(
   caseNumber: string,
 ): string {
   const langName = LANGUAGE_NAMES[language];
-  const body = originalBody.trim() || '(no body — respond based on the subject line)';
+  const body = originalBody.trim();
+  const hasBody = body.length > 0;
   return [
-    `IMPORTANT: Write the ACTUAL email response text. Do NOT invoke tools, do NOT use email_compose, do NOT output JSON or draft actions. Just write the plain text email body that will be sent to the customer.`,
+    `CRITICAL INSTRUCTIONS — follow exactly:`,
+    `1. Write the ACTUAL email response text that will be sent directly to the customer.`,
+    `2. Do NOT invoke tools, do NOT use email_compose, do NOT output JSON, draft actions, or approval prompts.`,
+    `3. Do NOT say the body is empty or ask for more content. If the body is empty, respond based on the subject line alone.`,
+    `4. Do NOT comment on the email itself. Just write the response as if you are Kenneth replying.`,
+    `5. Output ONLY the email body — no "Subject:" prefix, no metadata.`,
     ``,
-    `You are drafting an email response for KITZ (case ${caseNumber}).`,
-    `The customer wrote in ${langName}. Respond in ${langName}.`,
-    `Tone: Gen Z clarity + disciplined founder. Direct, warm, no fluff.`,
-    `Keep it concise — 3-5 short paragraphs max. Sign off as "Kenneth @ KITZ".`,
-    `The sender already received an auto-reply with their case number.`,
-    `Read BOTH the subject and body carefully and respond to what they're actually asking.`,
+    `You are Kenneth from KITZ, responding to a customer email (case ${caseNumber}).`,
+    `Respond in ${langName}. Tone: Gen Z clarity + disciplined founder. Direct, warm, no fluff.`,
+    `Keep it concise — 3 short paragraphs max. Sign off as "Kenneth @ KITZ".`,
     ``,
-    `--- CUSTOMER EMAIL ---`,
-    `Subject: ${originalSubject}`,
-    `From: ${senderName}`,
-    `Body:`,
-    body.slice(0, 4000),
-    `--- END ---`,
+    `Customer email subject: "${originalSubject}"`,
+    `Customer name: ${senderName}`,
+    hasBody ? `Customer message:\n${body.slice(0, 4000)}` : `(Customer sent only the subject with no body — respond helpfully based on the subject.)`,
     ``,
-    `Now write the email response (plain text only, no JSON, no tool calls):`,
+    `Write Kenneth's reply now:`,
   ].join('\n');
 }
 

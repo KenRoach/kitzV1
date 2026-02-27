@@ -314,8 +314,9 @@ export async function processInboundEmail(
 
   const emailBody = text || html?.replace(/<[^>]+>/g, '') || '';
 
-  // 1. Detect language
-  const language = await detectLanguage(emailBody);
+  // 1. Detect language (use subject + body for short/empty emails)
+  const langSample = emailBody.trim().length > 10 ? emailBody : `${subject} ${emailBody}`.trim();
+  const language = await detectLanguage(langSample);
 
   // 2. Generate case number
   const caseNumber = generateCaseNumber();
