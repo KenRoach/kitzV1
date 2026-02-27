@@ -178,6 +178,7 @@ export async function generateDraftResponse(
   // 1. Route through kitz_os brain (semantic router → skills → agents)
   if (KITZ_OS_URL) {
     try {
+      console.log(`[drafts] Brain call: ${KITZ_OS_URL}/api/kitz, hasAuth: ${!!DEV_TOKEN_SECRET}, case: ${caseNumber}`);
       const res = await fetch(`${KITZ_OS_URL}/api/kitz`, {
         method: 'POST',
         headers: {
@@ -193,9 +194,11 @@ export async function generateDraftResponse(
         signal: AbortSignal.timeout(30_000),
       });
 
+      console.log(`[drafts] Brain response status: ${res.status}`);
       if (res.ok) {
         const data = (await res.json()) as { response?: string; command?: string };
         const draftBody = data.response?.trim() || '';
+        console.log(`[drafts] Brain body length: ${draftBody.length}`);
         if (draftBody.length > 20) {
           return {
             draftBody,
@@ -203,8 +206,15 @@ export async function generateDraftResponse(
             draftSubject,
           };
         }
+      } else {
+        const errText = await res.text().catch(() => 'unknown');
+        console.log(`[drafts] Brain error: ${res.status} ${errText.slice(0, 200)}`);
       }
-    } catch { /* fallback to direct Claude */ }
+    } catch (e) {
+      console.log(`[drafts] Brain exception: ${(e as Error).message}`);
+    }
+  } else {
+    console.log('[drafts] No KITZ_OS_URL, skipping brain');
   }
 
   // 2. Fallback: direct Claude Sonnet (when kitz_os unavailable)

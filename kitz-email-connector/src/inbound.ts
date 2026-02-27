@@ -347,7 +347,11 @@ export async function processInboundEmail(
   if (ADMIN_EMAIL) {
     (async () => {
       try {
+        log.info({ event: 'inbound.draft_start', traceId, caseNumber, adminEmail: ADMIN_EMAIL });
+
         const draft = await generateDraftResponse(emailBody, subject, sender.name, language, caseNumber, traceId);
+        log.info({ event: 'inbound.draft_generated', traceId, caseNumber, bodyLen: draft.draftBody.length });
+
         const pending = createPendingDraft({
           caseNumber,
           originalFrom: sender.email,
@@ -357,12 +361,13 @@ export async function processInboundEmail(
           language,
           ...draft,
         });
+        log.info({ event: 'inbound.draft_stored', traceId, caseNumber, token: pending.token.slice(0, 8) });
 
         const approveUrl = `${SERVICE_URL}/approve/${pending.token}`;
         const editUrl = `mailto:${sender.email}?subject=${encodeURIComponent(draft.draftSubject)}&body=${encodeURIComponent(draft.draftBody)}`;
         const approvalHtml = getApprovalEmailHtml(pending, approveUrl, editUrl);
 
-        await sendEmail({
+        const sendResult = await sendEmail({
           to: ADMIN_EMAIL,
           subject: `[Draft Review] ${caseNumber} — ${subject}`,
           body: `New case ${caseNumber} from ${sender.name}. Draft response ready for review.`,
@@ -370,7 +375,7 @@ export async function processInboundEmail(
           replyTo: sender.email,
         });
 
-        log.info({ event: 'inbound.draft_sent_to_admin', traceId, caseNumber, token: pending.token.slice(0, 8) });
+        log.info({ event: 'inbound.draft_sent_to_admin', traceId, caseNumber, token: pending.token.slice(0, 8), sendOk: sendResult.ok, sendError: sendResult.error });
 
         // Optional WhatsApp notification
         if (WA_CONNECTOR_URL && ADMIN_PHONE) {
@@ -386,7 +391,7 @@ export async function processInboundEmail(
           }).catch(() => {});
         }
       } catch (err) {
-        log.info({ event: 'inbound.draft_error', traceId, caseNumber, error: (err as Error).message });
+        log.info({ event: 'inbound.draft_error', traceId, caseNumber, error: (err as Error).message, stack: (err as Error).stack?.slice(0, 500) });
       }
     })();
   }
