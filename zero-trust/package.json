@@ -1,0 +1,22 @@
+{
+  "name": "zero-trust",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./index.ts",
+  "types": "./index.ts",
+  "main": "./index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "kitz-schemas": "file:../kitz-schemas"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "fastify": "^4.26.2",
+    "typescript": "^5.4.5",
+    "vitest": "^1.5.0"
+  }
+}

@@ -84,6 +84,12 @@ services:
       <<: *env-common
       PORT: 4010
       LOVABLE_API_KEY: ${LOVABLE_API_KEY:-}
+      CLAUDE_API_KEY: ${CLAUDE_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
 
   # ── Payments (port 3005) ──
   kitz-payments:
@@ -141,6 +147,9 @@ services:
     environment:
       <<: *env-common
       PORT: 3007
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      FROM_EMAIL: ${FROM_EMAIL:-kitz@kitz.services}
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -178,6 +187,7 @@ services:
     environment:
       <<: *env-common
       PORT: 3010
+      LLM_HUB_URL: http://kitz-llm-hub:4010
       ELEVENLABS_AGENT_ID: ${ELEVENLABS_AGENT_ID:-}
 
   # ── Admin Services (port 3011) ──
@@ -288,6 +298,10 @@ services:
     environment:
       <<: *env-common
       PORT: 3013
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_PHONE_FROM: ${TWILIO_PHONE_FROM:-}
+      EMAIL_CONNECTOR_URL: http://kitz-email-connector:3007
 
   # ── Logs API (port 3014) ──
   logs-api:
