@@ -128,6 +128,11 @@ export class OsToolRegistry {
       import('./copyStrategistTools.js'),
       import('./seoContentPlannerTools.js'),
       import('./emailSequenceBuilderTools.js'),
+      import('./paidAdsAdvisorTools.js'),
+      import('./socialMediaPlannerTools.js'),
+      import('./coldOutreachCoachTools.js'),
+      import('./salesObjectionHandlerTools.js'),
+      import('./referralProgramBuilderTools.js'),
     ]);
 
     const getterNames = [
@@ -199,6 +204,11 @@ export class OsToolRegistry {
       'getAllCopyStrategistTools',
       'getAllSeoContentPlannerTools',
       'getAllEmailSequenceBuilderTools',
+      'getAllPaidAdsAdvisorTools',
+      'getAllSocialMediaPlannerTools',
+      'getAllColdOutreachCoachTools',
+      'getAllSalesObjectionHandlerTools',
+      'getAllReferralProgramBuilderTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {

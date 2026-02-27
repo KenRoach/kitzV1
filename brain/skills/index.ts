@@ -100,4 +100,19 @@ export type { SEOContentPlan, SEOOptions, KeywordCluster, ContentPillar } from '
 export { buildEmailSequence } from './emailSequenceBuilder.js';
 export type { EmailSequencePlan, EmailSequenceOptions, SequenceEmail, SegmentRule } from './emailSequenceBuilder.js';
 
+export { advisePaidAds } from './paidAdsAdvisor.js';
+export type { PaidAdsStrategy, PaidAdsOptions, AdCampaign } from './paidAdsAdvisor.js';
+
+export { planSocialMedia } from './socialMediaPlanner.js';
+export type { SocialMediaPlan, SocialMediaOptions, PlatformPlan } from './socialMediaPlanner.js';
+
+export { coachColdOutreach } from './coldOutreachCoach.js';
+export type { OutreachSequence, OutreachOptions, OutreachMessage } from './coldOutreachCoach.js';
+
+export { handleObjection } from './salesObjectionHandler.js';
+export type { ObjectionHandlerResult, ObjectionOptions, ObjectionScript } from './salesObjectionHandler.js';
+
+export { buildReferralProgram } from './referralProgramBuilder.js';
+export type { ReferralProgram, ReferralOptions, ReferralTier } from './referralProgramBuilder.js';
+
 export { PROMPTS } from '../prompts/templates.js';

@@ -39,7 +39,13 @@ INSERT INTO skills (slug, name, description, category, tier, credits_per_use) VA
   ('pricing-strategist',        'Pricing Strategist',        'Value-based pricing, tiers, anchoring, competitive analysis for products and services', 'intelligence', 'haiku',  0.5),
   ('copy-strategist',           'Copy Strategist',           'Conversion copy: headlines, CTAs, email subjects, ad copy, WhatsApp messages (Copyhackers)', 'content', 'sonnet', 1.0),
   ('seo-content-planner',       'SEO Content Planner',       'Keywords, topic clusters, content calendar, local SEO, quick wins for Spanish-first SEO', 'content', 'sonnet', 1.0),
-  ('email-sequence-builder',    'Email Sequence Builder',    'Automated email sequences: welcome, nurture, sales, onboarding, re-engagement drips',  'content', 'sonnet', 1.0)
+  ('email-sequence-builder',    'Email Sequence Builder',    'Automated email sequences: welcome, nurture, sales, onboarding, re-engagement drips',  'content', 'sonnet', 1.0),
+  -- Phase 2: Week 2 skills
+  ('paid-ads-advisor',          'Paid Ads Advisor',          'Google/Meta/TikTok ad campaigns, budget allocation, ROAS targeting for LatAm',         'intelligence', 'haiku',  0.5),
+  ('social-media-planner',      'Social Media Planner',      'Platform-specific content strategy, weekly calendar, engagement tactics',                'content',      'haiku',  0.5),
+  ('cold-outreach-coach',       'Cold Outreach Coach',       'WhatsApp/email outreach sequences, personalization, response templates',                 'intelligence', 'haiku',  0.5),
+  ('sales-objection-handler',   'Sales Objection Handler',   'Chris Voss tactical empathy scripts for price/timing/trust objections',                  'intelligence', 'haiku',  0.5),
+  ('referral-program-builder',  'Referral Program Builder',  'Referral programs with tiers, rewards, WhatsApp flow, viral loops',                     'intelligence', 'haiku',  0.5)
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
