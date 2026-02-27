@@ -51,7 +51,7 @@ import { getUserPreferences, setUserPreferences } from './channels/preferences.j
 import * as orchestrator from './orchestrator/channelOrchestrator.js';
 import { APPROVAL_MATRIX, getMatrixByRisk, getMatrixByCategory } from './approvals/approvalMatrix.js';
 import { createArtifactFromToolResult } from './tools/artifactPreview.js';
-import { getContent } from './tools/contentEngine.js';
+import { getContent, getContentBySlug, approveContent, extendContent, cleanExpiredContent } from './tools/contentEngine.js';
 import type { OutputChannel } from 'kitz-schemas';
 import { createLogger } from './logger.js';
 
@@ -481,9 +481,17 @@ export async function createServer(kernel: KitzKernel) {
     '/api/kitz/artifact/:contentId',
     async (req, reply) => {
       const { contentId } = req.params;
-      const item = getContent(contentId);
+      const item = getContent(contentId);  // returns undefined if expired
       if (!item) {
-        return reply.code(404).send({ error: 'Artifact not found' });
+        reply.code(410).type('text/html').send(`<!DOCTYPE html>
+<html><head><title>Expired — KITZ</title></head>
+<body style="font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f8f7ff;margin:0">
+<div style="text-align:center;max-width:400px;padding:32px">
+  <div style="font-size:48px;margin-bottom:16px">⏰</div>
+  <h1 style="color:#7C3AED;font-size:24px;margin:0 0 12px">This artifact has expired</h1>
+  <p style="color:#666;line-height:1.6">Draft artifacts expire after 24 hours if not approved. Ask KITZ to regenerate it.</p>
+</div></body></html>`);
+        return;
       }
       reply.type('text/html').send(item.html);
     }
@@ -506,18 +514,22 @@ export async function createServer(kernel: KitzKernel) {
           return { message: 'Use your browser\'s print dialog (Ctrl+P / Cmd+P) to save as PDF.', contentId };
 
         case 'send_email':
+          approveContent(contentId);
           return { message: `Email draft created for "${item.data.title || contentId}". Awaiting approval.`, contentId, draftOnly: true };
 
         case 'send_whatsapp':
+          approveContent(contentId);
           return { message: `WhatsApp draft created for "${item.data.title || contentId}". Awaiting approval.`, contentId, draftOnly: true };
 
         case 'create_image':
           return { message: `Image generation queued for "${item.data.title || contentId}".`, contentId };
 
         case 'edit':
+          extendContent(contentId);
           return { message: 'Edit mode — send your edit instruction via chat.', contentId, status: 'editing' };
 
         case 'approve_plan':
+          approveContent(contentId);
           return { message: 'Plan approved! Actions will be executed.', contentId, status: 'approved' };
 
         case 'reject_plan':
@@ -576,6 +588,9 @@ export async function createServer(kernel: KitzKernel) {
         if (action === 'approve') {
           const draft = approveDraft(trace_id, i);
           if (draft) {
+            // If this draft has an associated artifact, make it permanent
+            const cid = draft.args?.content_id as string;
+            if (cid) approveContent(cid);
             // Execute the approved tool
             const { routeWithAI: _, ...rest } = { routeWithAI: null }; // avoid unused
             try {
@@ -1518,6 +1533,30 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
     };
   });
 
+  // ── Artifact Slug Route — kitz.services/Artifact-Name-abc123.html ──
+  app.get<{ Params: { slug: string } }>(
+    '/:slug',
+    {
+      schema: { params: { type: 'object', properties: { slug: { type: 'string', pattern: '^.+\\.html$' } }, required: ['slug'] } },
+    },
+    async (req, reply) => {
+      const { slug } = req.params;
+      const item = getContentBySlug(slug);
+      if (!item) {
+        reply.code(410).type('text/html').send(`<!DOCTYPE html>
+<html><head><title>Expired — KITZ</title></head>
+<body style="font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f8f7ff;margin:0">
+<div style="text-align:center;max-width:400px;padding:32px">
+  <div style="font-size:48px;margin-bottom:16px">⏰</div>
+  <h1 style="color:#7C3AED;font-size:24px;margin:0 0 12px">This artifact has expired</h1>
+  <p style="color:#666;line-height:1.6">Draft artifacts expire after 24 hours if not approved. Ask KITZ to regenerate it.</p>
+</div></body></html>`);
+        return;
+      }
+      reply.type('text/html').send(item.html);
+    }
+  );
+
   // ── SPA fallback — serve index.html for client-side routing ──
   if (existsSync(spaRoot)) {
     app.setNotFoundHandler(async (req, reply) => {
@@ -1531,5 +1570,11 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
 
   await app.listen({ port: PORT, host: '0.0.0.0' });
   log.info('KITZ OS listening', { port: PORT });
+
+  // Clean expired artifacts every hour to prevent memory leaks
+  setInterval(() => {
+    cleanExpiredContent();
+  }, 60 * 60 * 1000);
+
   return app;
 }

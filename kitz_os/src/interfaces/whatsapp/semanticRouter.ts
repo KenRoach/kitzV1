@@ -168,7 +168,7 @@ interface DraftAction {
   status: 'pending' | 'approved' | 'rejected';
 }
 const draftQueue = new Map<string, DraftAction[]>();
-const DRAFT_TTL_MS = 60 * 60 * 1000; // 1 hour
+const DRAFT_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 function cleanExpiredDrafts(): void {
   const now = Date.now();

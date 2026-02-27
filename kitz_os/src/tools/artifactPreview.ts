@@ -17,7 +17,7 @@
  *   - extractPlanSteps()              — Parses numbered steps from text
  */
 
-import { getBrandKit, storeContent, generateContentId, type BrandKit, type ContentItem } from './contentEngine.js';
+import { getBrandKit, storeContent, generateContentId, generateSlug, ARTIFACT_TTL_MS, type BrandKit, type ContentItem } from './contentEngine.js';
 
 // ── Types ──
 
@@ -333,7 +333,6 @@ export function createArtifactFromToolResult(
   const category = classifyOutputCategory(toolsUsed, responseText);
   const brandKit = getBrandKit();
   const contentId = generateContentId();
-  const previewUrl = `${baseUrl}/api/kitz/artifact/${contentId}`;
 
   // Extract or generate inner HTML
   let innerHtml = '';
@@ -363,6 +362,10 @@ export function createArtifactFromToolResult(
     innerHtml = wrapTextAsHtml(responseText, brandKit);
   }
 
+  // Build slug and public URL (kitz.services/Artifact-Name-xyz.html)
+  const slug = generateSlug(title, contentId);
+  const previewUrl = `${baseUrl}/${slug}`;
+
   // Build actions
   const actions = getActionsForCategory(category, contentId, baseUrl);
 
@@ -372,12 +375,14 @@ export function createArtifactFromToolResult(
   // Store in content engine
   const contentItem: ContentItem = {
     contentId,
+    slug,
     type: mapCategoryToContentType(category),
     html,
     data: { toolsUsed, traceId, category, title },
     status: 'previewing',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + ARTIFACT_TTL_MS).toISOString(),
   };
   storeContent(contentItem);
 

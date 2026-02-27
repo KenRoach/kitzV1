@@ -40,18 +40,23 @@ export interface BrandKit {
 
 export interface ContentItem {
   contentId: string;
+  slug: string;          // URL-friendly name: "Invoice-Draft-abc123.html"
   type: 'invoice' | 'quote' | 'deck' | 'email' | 'flyer' | 'promo' | 'landing' | 'catalog' | 'biolink' | 'document';
   html: string;
   data: Record<string, unknown>;
   status: 'draft' | 'previewing' | 'editing' | 'approved' | 'shipped' | 'archived';
   createdAt: string;
   updatedAt: string;
+  expiresAt?: string;  // ISO timestamp — undefined means never expires
 }
+
+export const ARTIFACT_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 // ── In-memory stores ──
 
 const brandKits: Map<string, BrandKit> = new Map();
 const contentItems: Map<string, ContentItem> = new Map();
+const slugToContentId: Map<string, string> = new Map();  // slug → contentId
 
 // ── Seed default brand kit ──
 
@@ -72,10 +77,63 @@ export function getBrandKit(orgId = 'default'): BrandKit {
 
 export function storeContent(item: ContentItem): void {
   contentItems.set(item.contentId, item);
+  slugToContentId.set(item.slug, item.contentId);
+}
+
+export function generateSlug(title: string, contentId: string): string {
+  const base = title
+    .replace(/[^a-zA-Z0-9\s-]/g, '')  // strip non-alphanumeric (except spaces/hyphens)
+    .trim()
+    .replace(/\s+/g, '-')             // spaces → hyphens
+    .replace(/-+/g, '-')              // collapse multiple hyphens
+    .slice(0, 60);                    // cap length
+  // Append short unique suffix from contentId (last segment)
+  const suffix = contentId.split('-').pop() || contentId.slice(-6);
+  return `${base || 'artifact'}-${suffix}.html`;
+}
+
+export function getContentBySlug(slug: string): ContentItem | undefined {
+  const contentId = slugToContentId.get(slug);
+  if (!contentId) return undefined;
+  return getContent(contentId);  // handles expiration check
 }
 
 export function getContent(contentId: string): ContentItem | undefined {
-  return contentItems.get(contentId);
+  const item = contentItems.get(contentId);
+  if (!item) return undefined;
+  if (item.expiresAt && Date.now() > new Date(item.expiresAt).getTime()) {
+    contentItems.delete(contentId);
+    slugToContentId.delete(item.slug);
+    return undefined;
+  }
+  return item;
+}
+
+export function cleanExpiredContent(): void {
+  const now = Date.now();
+  for (const [id, item] of contentItems) {
+    if (item.expiresAt && now > new Date(item.expiresAt).getTime()) {
+      contentItems.delete(id);
+      slugToContentId.delete(item.slug);
+    }
+  }
+}
+
+export function extendContent(contentId: string, ttlMs = ARTIFACT_TTL_MS): boolean {
+  const item = contentItems.get(contentId);
+  if (!item) return false;
+  item.expiresAt = new Date(Date.now() + ttlMs).toISOString();
+  item.updatedAt = new Date().toISOString();
+  return true;
+}
+
+export function approveContent(contentId: string): boolean {
+  const item = contentItems.get(contentId);
+  if (!item) return false;
+  item.status = 'approved';
+  item.expiresAt = undefined;  // approved = permanent
+  item.updatedAt = new Date().toISOString();
+  return true;
 }
 
 export function generateContentId(): string {
