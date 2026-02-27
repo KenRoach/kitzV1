@@ -1,10 +1,12 @@
 import cron from 'node-cron';
+import Fastify from 'fastify';
 import { randomUUID } from 'node:crypto';
 import { salesAgent } from './agents/sales.js';
 import { opsAgent } from './agents/ops.js';
 import { cfoAgent } from './agents/cfo.js';
 import { approvalRequiredActions, toolRegistry } from './tools/registry.js';
 import { llmHubClient } from './llm/hubClient.js';
+import { classify, type ClassifyRequest, type BrainDecision } from './classifier.js';
 import {
   assertReceiveOnlyAction,
   buildRoiPlan,
@@ -218,3 +220,43 @@ cron.schedule('0 */4 * * *', fetchCtoDigest);     // CTO digest: every 4 hours
 cron.schedule('0 6 * * *', triggerSwarmRun);      // Swarm run: 6am daily
 
 console.log('kitz-brain scheduler started', { financePolicy, growthExecutionPolicy, aosIntegration: true, swarmEnabled: true });
+
+// ── HTTP Server (real-time classification service) ──
+const PORT = Number(process.env.PORT) || 3015;
+const server = Fastify({ logger: false });
+
+server.get('/health', async () => ({ status: 'ok', service: 'kitz-brain' }));
+
+server.post<{ Body: ClassifyRequest }>('/decide', async (req, reply) => {
+  const { message, channel, userId, traceId, chatHistory, mediaContext } = req.body || {};
+  if (!message) return reply.code(400).send({ error: 'message required' });
+
+  const tid = traceId || randomUUID();
+  const start = Date.now();
+
+  const decision = await classify({
+    message,
+    channel: channel || 'whatsapp',
+    userId: userId || 'unknown',
+    traceId: tid,
+    chatHistory,
+    mediaContext,
+  });
+
+  logRun('classify.complete', tid, {
+    strategy: decision.strategy,
+    confidence: decision.confidence,
+    agents: decision.agents,
+    reviewRequired: decision.reviewRequired,
+    durationMs: Date.now() - start,
+  });
+
+  return decision;
+});
+
+server.listen({ port: PORT, host: '0.0.0.0' }).then(() => {
+  console.log(`kitz-brain HTTP server listening on port ${PORT}`);
+}).catch((err) => {
+  console.error('kitz-brain HTTP server failed to start:', err);
+  process.exit(1);
+});

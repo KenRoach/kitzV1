@@ -156,6 +156,47 @@ import { WorkflowGeneratorAgent } from '../agents/teams/meta-tooling/WorkflowGen
 import { ComputeBuilderAgent } from '../agents/teams/meta-tooling/ComputeBuilder.js';
 import { ToolCuratorAgent } from '../agents/teams/meta-tooling/ToolCurator.js';
 
+// ── C-Suite (12) ──
+import { CEOAgent } from '../agents/core/CEO.js';
+import { CFOAgent } from '../agents/core/CFO.js';
+import { CMOAgent } from '../agents/core/CMO.js';
+import { COOAgent } from '../agents/core/COO.js';
+import { CPOAgent } from '../agents/core/CPO.js';
+import { CROAgent } from '../agents/core/CRO.js';
+import { CTOAgent } from '../agents/core/CTO.js';
+import { HeadCustomerAgent } from '../agents/core/HeadCustomer.js';
+import { HeadEducationAgent } from '../agents/core/HeadEducation.js';
+import { HeadEngineeringAgent } from '../agents/core/HeadEngineering.js';
+import { HeadGrowthAgent } from '../agents/core/HeadGrowth.js';
+import { HeadIntelligenceRiskAgent } from '../agents/core/HeadIntelligenceRisk.js';
+
+// ── Board (9) ──
+import { chairAgent } from '../agents/board/chair.js';
+import { conservativeRiskAgent } from '../agents/board/conservativeRisk.js';
+import { customerVoiceAgent } from '../agents/board/customerVoice.js';
+import { efficiencyStrategistCNAgent } from '../agents/board/efficiencyStrategistCN.js';
+import { ethicsTrustGuardianAgent } from '../agents/board/ethicsTrustGuardian.js';
+import { founderAdvocateAgent } from '../agents/board/founderAdvocate.js';
+import { growthVisionaryAgent } from '../agents/board/growthVisionary.js';
+import { operationalRealistAgent } from '../agents/board/operationalRealist.js';
+import { techFuturistAgent } from '../agents/board/techFuturist.js';
+
+// ── Governance (9) ──
+import { CapitalAllocationAgent } from '../agents/governance/CapitalAllocation.js';
+import { FeedbackCoachAgent } from '../agents/governance/FeedbackCoach.js';
+import { FocusCapacityAgent } from '../agents/governance/FocusCapacity.js';
+import { ImpactStrategyAgent } from '../agents/governance/ImpactStrategy.js';
+import { IncentiveAlignmentAgent } from '../agents/governance/IncentiveAlignment.js';
+import { InstitutionalMemoryAgent } from '../agents/governance/InstitutionalMemory.js';
+import { NetworkingBotAgent } from '../agents/governance/NetworkingBot.js';
+import { ParallelSolutionsAgent } from '../agents/governance/ParallelSolutions.js';
+import { ReviewerAgent } from '../agents/governance/Reviewer.js';
+
+// ── External (3) ──
+import { councilCNAgent } from '../agents/external/councilCN.js';
+import { councilUS_AAgent } from '../agents/external/councilUS_A.js';
+import { councilUS_BAgent } from '../agents/external/councilUS_B.js';
+
 /** Agent constructor type */
 type AgentCtor = new (bus: EventBus, memory: MemoryStore) => BaseAgent;
 
@@ -336,10 +377,69 @@ export function createAllAgents(
 
 /** Get the list of all registered agent names */
 export function getRegisteredAgentNames(): string[] {
-  return Object.keys(AGENT_CTORS);
+  return [...Object.keys(AGENT_CTORS), ...Object.keys(CORE_AGENT_CTORS)];
 }
 
 /** Get agent count */
 export function getAgentCount(): number {
-  return Object.keys(AGENT_CTORS).length;
+  return Object.keys(AGENT_CTORS).length + Object.keys(CORE_AGENT_CTORS).length;
+}
+
+/** Agent constructor type for core agents — takes (name, bus, memory) */
+type CoreAgentCtor = new (name: string, bus: EventBus, memory: MemoryStore) => BaseAgent;
+
+/** Registry for C-Suite, Board, Governance, and External agents */
+const CORE_AGENT_CTORS: Record<string, CoreAgentCtor> = {
+  // C-Suite (12)
+  CEO: CEOAgent,
+  CFO: CFOAgent,
+  CMO: CMOAgent,
+  COO: COOAgent,
+  CPO: CPOAgent,
+  CRO: CROAgent,
+  CTO: CTOAgent,
+  HeadCustomer: HeadCustomerAgent,
+  HeadEducation: HeadEducationAgent,
+  HeadEngineering: HeadEngineeringAgent,
+  HeadGrowth: HeadGrowthAgent,
+  HeadIntelligenceRisk: HeadIntelligenceRiskAgent,
+  // Board (9)
+  Chair: chairAgent,
+  ConservativeRisk: conservativeRiskAgent,
+  CustomerVoice: customerVoiceAgent,
+  EfficiencyStrategistCN: efficiencyStrategistCNAgent,
+  EthicsTrustGuardian: ethicsTrustGuardianAgent,
+  FounderAdvocate: founderAdvocateAgent,
+  GrowthVisionary: growthVisionaryAgent,
+  OperationalRealist: operationalRealistAgent,
+  TechFuturist: techFuturistAgent,
+  // Governance (9)
+  CapitalAllocation: CapitalAllocationAgent,
+  FeedbackCoach: FeedbackCoachAgent,
+  FocusCapacity: FocusCapacityAgent,
+  ImpactStrategy: ImpactStrategyAgent,
+  IncentiveAlignment: IncentiveAlignmentAgent,
+  InstitutionalMemory: InstitutionalMemoryAgent,
+  NetworkingBot: NetworkingBotAgent,
+  ParallelSolutions: ParallelSolutionsAgent,
+  Reviewer: ReviewerAgent,
+  // External (3)
+  CouncilCN: councilCNAgent,
+  CouncilUS_A: councilUS_AAgent,
+  CouncilUS_B: councilUS_BAgent,
+};
+
+/** Instantiate C-Suite, Board, Governance, and External agents (33 agents) */
+export function createCoreAgents(
+  bus: EventBus,
+  memory: MemoryStore,
+  toolBridge?: AgentToolBridge,
+): Map<string, BaseAgent> {
+  const agents = new Map<string, BaseAgent>();
+  for (const [name, Ctor] of Object.entries(CORE_AGENT_CTORS)) {
+    const agent = new Ctor(name, bus, memory);
+    if (toolBridge) agent.setToolBridge(toolBridge);
+    agents.set(name, agent);
+  }
+  return agents;
 }

@@ -15,8 +15,8 @@ import { getBatteryStatus, initBattery, type BatteryStatus } from './aiBattery.j
 import { initSOPStore } from './sops/store.js';
 import { loadStarterSOPs } from './sops/loader.js';
 import { CadenceEngine } from './cadence/engine.js';
-import { routeWithAI } from './interfaces/whatsapp/semanticRouter.js';
-import { createAOS, type AOSRuntime } from '../../aos/src/index.js';
+import { routeWithAI, brainFirstRoute } from './interfaces/whatsapp/semanticRouter.js';
+import { createAOS, type AOSRuntime, createAllAgents, createCoreAgents, registerAgent } from '../../aos/src/index.js';
 import type { LaunchContext } from '../../aos/src/types.js';
 import { createLogger } from './logger.js';
 import { loadCustomTools } from './tools/customToolLoader.js';
@@ -104,6 +104,14 @@ export class KitzKernel {
     this.aos = createAOS(undefined, this.tools);
     log.info('AOS tool bridge wired (agents can invoke tools)');
 
+    // 3.6. Register all agents for real-time dispatch
+    const teamAgents = createAllAgents(this.aos.bus, this.aos.memory, this.aos.toolBridge);
+    const coreAgents = createCoreAgents(this.aos.bus, this.aos.memory, this.aos.toolBridge);
+    let agentCount = 0;
+    for (const agent of teamAgents.values()) { registerAgent(agent); agentCount++; }
+    for (const agent of coreAgents.values()) { registerAgent(agent); agentCount++; }
+    log.info(`${agentCount} agents registered for real-time dispatch`);
+
     // 4. Check AI availability
     const hasAI = !!(
       process.env.CLAUDE_API_KEY ||
@@ -134,11 +142,11 @@ export class KitzKernel {
 
     const runId = crypto.randomUUID();
 
-    // Route through the 5-phase semantic router (same pipeline as WhatsApp webhook)
+    // Route through brain-first pipeline (classifies, then dispatches to agents or routeWithAI)
     // If an agent is specified, prefix the goal so the router knows the context
     const message = opts.agent ? `[agent:${opts.agent}] ${opts.goal}` : opts.goal;
     try {
-      const result = await routeWithAI(
+      const result = await brainFirstRoute(
         message,
         this.tools,
         runId,        // use runId as traceId

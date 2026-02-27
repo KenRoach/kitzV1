@@ -26,6 +26,13 @@ import { getConversationHistory } from '../../memory/manager.js';
 import type { OutputChannel } from 'kitz-schemas';
 import { getIntelligenceContext } from '../../tools/ragPipelineTools.js';
 import { isBlocked, getToolRisk, getApprovalSummaryForPrompt } from '../../approvals/approvalMatrix.js';
+import { dispatchToAgent } from '../../../../aos/src/runtime/taskDispatcher.js';
+import { runSwarm, type SwarmConfig } from '../../../../aos/src/swarm/swarmRunner.js';
+import type { ExecutionResult } from '../../../../aos/src/runtime/AgentExecutor.js';
+import { getAgent } from '../../../../aos/src/runtime/taskDispatcher.js';
+import { ReviewerAgent } from '../../../../aos/src/agents/governance/Reviewer.js';
+
+const BRAIN_URL = process.env.KITZ_BRAIN_URL || 'http://localhost:3015';
 
 // ── Tool-to-MCP Mapping ──
 // Maps KITZ OS tool names to workspace MCP tool names for direct execution
@@ -689,4 +696,271 @@ export async function routeWithAI(
 
   // If we hit max loops, return whatever we have
   return { response: 'Reached maximum processing steps. Please try a simpler request.', toolsUsed, creditsConsumed: totalCreditsConsumed, toolResults };
+}
+
+// ── Brain Decision type (mirrors kitz-brain classifier output) ──
+interface BrainDecision {
+  strategy: 'direct_tool' | 'single_agent' | 'multi_agent' | 'swarm' | 'clarify';
+  confidence: number;
+  agents?: string[];
+  teams?: string[];
+  reasoning: string;
+  toolHints?: string[];
+  clarificationQuestion?: string;
+  reviewRequired: boolean;
+  traceId: string;
+}
+
+type RouteResult = { response: string; toolsUsed: string[]; creditsConsumed: number; toolResults: Record<string, unknown>[] };
+
+/** Adapt an AOS ExecutionResult to the semantic router return shape */
+function adaptExecutionResult(result: ExecutionResult): RouteResult {
+  return {
+    response: result.response,
+    toolsUsed: result.toolResults.map(tr => tr.tool),
+    creditsConsumed: 0,
+    toolResults: result.toolResults.map(tr => ({
+      tool: tr.tool,
+      success: tr.success,
+      data: tr.data,
+      error: tr.error,
+    })),
+  };
+}
+
+/**
+ * Brain-First Routing — sends every AI request through kitz-brain first.
+ * Brain classifies, then dispatches to the appropriate execution strategy.
+ * Falls back to routeWithAI() if brain is unreachable.
+ *
+ * Drop-in replacement for routeWithAI() — same signature and return shape.
+ */
+export async function brainFirstRoute(
+  userMessage: string,
+  registry: OsToolRegistry,
+  traceId: string,
+  mediaContext?: { media_base64: string; mime_type: string },
+  userId?: string,
+  channel: OutputChannel = 'whatsapp',
+  chatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
+): Promise<RouteResult> {
+
+  // 1. Call kitz-brain POST /decide
+  let decision: BrainDecision | null = null;
+  try {
+    const brainRes = await fetch(`${BRAIN_URL}/decide`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-trace-id': traceId },
+      body: JSON.stringify({
+        message: userMessage,
+        channel,
+        userId: userId || 'unknown',
+        traceId,
+        chatHistory: chatHistory?.slice(-5),
+        mediaContext: mediaContext ? { mime_type: mediaContext.mime_type } : undefined,
+      }),
+      signal: AbortSignal.timeout(3000), // 3s timeout for classification
+    });
+
+    if (brainRes.ok) {
+      decision = await brainRes.json() as BrainDecision;
+      console.log(JSON.stringify({
+        ts: new Date().toISOString(),
+        module: 'brainFirstRoute',
+        action: 'brain_decision',
+        strategy: decision.strategy,
+        confidence: decision.confidence,
+        agents: decision.agents,
+        reviewRequired: decision.reviewRequired,
+        trace_id: traceId,
+      }));
+    }
+  } catch (err) {
+    console.log(JSON.stringify({
+      ts: new Date().toISOString(),
+      module: 'brainFirstRoute',
+      action: 'brain_unreachable',
+      error: (err as Error).message,
+      trace_id: traceId,
+    }));
+  }
+
+  // 2. If brain unreachable, fall through to existing routeWithAI
+  if (!decision) {
+    return routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+  }
+
+  // 3. Execute based on brain strategy
+  let result: RouteResult;
+
+  switch (decision.strategy) {
+    case 'direct_tool': {
+      // Use existing 5-phase pipeline — brain says it's a simple request
+      result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+      break;
+    }
+
+    case 'single_agent': {
+      const agentName = decision.agents?.[0];
+      if (!agentName) {
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+        break;
+      }
+
+      // Build message with media context if present
+      let agentMessage = userMessage;
+      if (mediaContext) {
+        agentMessage = `${userMessage}\n\n[Attached: ${mediaContext.mime_type} document/image]`;
+      }
+
+      const execResult = await dispatchToAgent(agentName, agentMessage, traceId);
+
+      // If agent not found or offline, fall back to routeWithAI
+      if (execResult.iterations === 0 && execResult.response.startsWith('Agent "')) {
+        console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'brainFirstRoute', action: 'agent_fallback', agent: agentName, trace_id: traceId }));
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+      } else {
+        result = adaptExecutionResult(execResult);
+      }
+      break;
+    }
+
+    case 'multi_agent': {
+      const agents = decision.agents || [];
+      if (agents.length === 0) {
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+        break;
+      }
+
+      // Sequential dispatch: each agent gets the prior agent's output as context
+      let context = userMessage;
+      if (mediaContext) {
+        context = `${userMessage}\n\n[Attached: ${mediaContext.mime_type} document/image]`;
+      }
+
+      const allToolsUsed: string[] = [];
+      const allToolResults: Record<string, unknown>[] = [];
+      let finalResponse = '';
+
+      for (const agentName of agents) {
+        const execResult = await dispatchToAgent(agentName, context, traceId);
+
+        // If agent not found, skip
+        if (execResult.iterations === 0 && execResult.response.startsWith('Agent "')) {
+          continue;
+        }
+
+        allToolsUsed.push(...execResult.toolResults.map(tr => tr.tool));
+        allToolResults.push(...execResult.toolResults.map(tr => ({
+          tool: tr.tool, success: tr.success, data: tr.data, error: tr.error,
+        })));
+
+        // Next agent gets prior output as context
+        context = `${userMessage}\n\nPrior agent (${agentName}) output:\n${execResult.response}`;
+        finalResponse = execResult.response;
+      }
+
+      if (!finalResponse) {
+        // All agents failed, fall back
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+      } else {
+        result = {
+          response: finalResponse,
+          toolsUsed: allToolsUsed,
+          creditsConsumed: 0,
+          toolResults: allToolResults,
+        };
+      }
+      break;
+    }
+
+    case 'swarm': {
+      const teams = decision.teams as SwarmConfig['teams'];
+      try {
+        const swarmResult = await runSwarm({
+          teams,
+          concurrency: 6,
+          timeoutMs: 60_000,
+        });
+
+        const summary = [
+          `Swarm analysis complete.`,
+          `Teams: ${swarmResult.teamsCompleted}/${swarmResult.teamsTotal}`,
+          `Agents: ${swarmResult.agentResults.length} participated`,
+          `Duration: ${swarmResult.durationMs}ms`,
+        ].join(' ');
+
+        result = {
+          response: summary,
+          toolsUsed: swarmResult.agentResults.map(ar => ar.tool || 'unknown'),
+          creditsConsumed: 0,
+          toolResults: swarmResult.teamResults.map(tr => ({
+            team: tr.team,
+            status: tr.status,
+            durationMs: tr.durationMs,
+          })),
+        };
+      } catch (err) {
+        console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'brainFirstRoute', action: 'swarm_error', error: (err as Error).message, trace_id: traceId }));
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+      }
+      break;
+    }
+
+    case 'clarify': {
+      result = {
+        response: decision.clarificationQuestion || 'Could you clarify what you need? I want to make sure I get this right, boss.',
+        toolsUsed: [],
+        creditsConsumed: 0,
+        toolResults: [],
+      };
+      break;
+    }
+
+    default: {
+      result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+    }
+  }
+
+  // 4. Review gate — Reviewer agent checks quality before response reaches user
+  if (decision.reviewRequired && result.response) {
+    try {
+      const reviewerAgent = getAgent('Reviewer');
+      if (reviewerAgent && reviewerAgent instanceof ReviewerAgent) {
+        const reviewResult = await reviewerAgent.reviewResponse(
+          decision.agents?.[0] || 'unknown',
+          userMessage,
+          result.response,
+          result.toolsUsed,
+          traceId,
+        );
+
+        console.log(JSON.stringify({
+          ts: new Date().toISOString(),
+          module: 'brainFirstRoute',
+          action: 'review_gate',
+          approved: reviewResult.approved,
+          confidence: reviewResult.confidence,
+          flags: reviewResult.flags,
+          trace_id: traceId,
+        }));
+
+        // If reviewer provides a revised response, use it
+        if (reviewResult.revised) {
+          result.response = reviewResult.revised;
+        }
+      }
+    } catch (err) {
+      // Review gate failure is non-blocking — pass original response through
+      console.log(JSON.stringify({
+        ts: new Date().toISOString(),
+        module: 'brainFirstRoute',
+        action: 'review_gate_error',
+        error: (err as Error).message,
+        trace_id: traceId,
+      }));
+    }
+  }
+
+  return result;
 }

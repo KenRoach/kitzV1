@@ -1,6 +1,8 @@
-# Dockerfile.brain — kitz-brain (cron scheduler, no HTTP port)
+# Dockerfile.brain — kitz-brain (cron scheduler + HTTP classification service)
 FROM node:20-alpine
 WORKDIR /app
+
+EXPOSE 3015
 
 COPY kitz-brain/package.json kitz-brain/
 RUN cd kitz-brain && npm install --production

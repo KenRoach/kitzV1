@@ -335,6 +335,7 @@ services:
       EMAIL_CONNECTOR_URL: http://kitz-email-connector:3007
       COMMS_API_URL: http://comms-api:3013
       KILL_SWITCH: ${KILL_SWITCH:-false}
+      KITZ_BRAIN_URL: http://kitz-brain:3015
       DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET}
       SERVICE_SECRET: ${DEV_TOKEN_SECRET}
       CADENCE_PHONE: ${CADENCE_PHONE:-}
@@ -478,7 +479,7 @@ services:
       kitz-os:
         condition: service_healthy
 
-  # ── Brain (cron — no port) ──
+  # ── Brain (cron + HTTP classification service, port 3015) ──
   kitz-brain:
     build:
       context: .
@@ -486,12 +487,20 @@ services:
     restart: unless-stopped
     networks:
       - kitz-net
+    ports:
+      - "3015:3015"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3015/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     deploy:
       resources:
         limits:
           memory: 256M
     environment:
       <<: *env-common
+      PORT: 3015
       GATEWAY_URL: http://kitz-gateway:4000
       LLM_HUB_URL: http://kitz-llm-hub:4010
       KITZ_OS_URL: http://kitz-os:3012
