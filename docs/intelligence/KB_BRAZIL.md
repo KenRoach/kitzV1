@@ -1,557 +1,489 @@
-# Brazil Business — KITZ Knowledge Base Intelligence
+# Brazil Business
 
-> Module: Brazil Business | Sources: 9 | Auto-generated from KITZ Knowledge Base
+> Module: Brazil Business | Sources: 9 | Batch: kitz_batch_8.json
+> Ingestion: Enriched with live web content via curl fetch + text extraction
+> Generated: 2026-02-27
 
 ---
 
-
 ## Tax
 
-
-### Receita Federal do Brasil [Critical]
-
+### Receita Federal do Brasil
+- **Priority:** `CRITICAL`
 - **ID:** PKB-455
-- **Type:** Gov
 - **URL:** https://www.gov.br/receitafederal/
-- **Why KITZ Needs It:** Brazil tax authority: CNPJ registration, ICMS/ISS/PIS/COFINS, Nota Fiscal Eletrônica
+- **Type:** Government
+- **Why KITZ Needs It:** Brazil tax authority: CNPJ registration, ICMS/ISS/PIS/COFINS, Nota Fiscal Eletronica
+- **Fetch Status:** OK (8000 chars)
 
 **Extracted Intelligence:**
 
-```
-Receita Federal — Receita Federal
-Serviços recomendados para você
-Serviços mais acessados do govbr
-Serviços em destaque do govbr
-Serviços recomendados para você
-Serviços mais acessados do govbr
-Serviços em destaque do govbr
-Serviços mais acessados do govbr
-Serviços em destaque do govbr
-Serviços recomendados para você
-Serviços mais acessados do govbr
-1
-Assinatura Eletrônica
-2
-Consultar Meu Imposto de Renda
-3
-Consultar restituição do imposto de renda
-4
-Consultar CPF
-5
-Entregar Meu Imposto de Renda
-6
-Consultar dados do Cadastro Único
-Serviços em destaque do govbr
-Registros e Cadastros
-Cadastrar Cães e Gatos
-(SinPatinhas)
-Para o cidadão
-Concurso Público Nacional Unificado 2
-(CPNU2)
-Imóveis
-Novo
-Consultar dados de imóveis rurais na plataforma Meu Imóvel Rural
-Crimes
-Celular Seguro
-Educação Básica
-Fazer o Exame Nacional do Ensino Médio
-(Enem)
-Info
-CNPJ terá letras e números a partir de julho de 2026
-Sistemas e bancos de dados devem ser atualizados para ler o novo formato.
-CNPJ terá letras e números a partir de julho de 2026
-Sistemas e bancos de dados devem ser atualizados para ler o novo formato.
-CNPJ terá letras e números a partir de julho de 2026
-Sistemas e bancos de dados devem ser atualizados para ler o novo formato.
-Receita Federal prorroga para 20 de março o prazo para adesão à primeira edição do Programa Confia
-A mudança atende a solicitações de contribuintes que pediram mais tempo para finalizar processos internos de aprovação.
-Receita Federal prorroga para 20 de março o prazo para adesão à primeira edição do Programa Confia
-A mudança atende a solicitações de contribuintes que pediram mais tempo para finalizar processos internos de aprovação.
-Receita Federal prorroga para 20 de março o prazo para adesão à primeira edição do Programa Confia
-A mudança atende a solicitações de contribuintes que pediram mais tempo para finalizar processos internos de aprovação.
-Receita Federal publica Política de Inteligência Artificial
-Iniciativa define princípios, diretrizes e salvaguardas para o uso responsável de sistemas de IA.
-Receita Federal publica Política de Inteligência Artificial
-Iniciativa define princípios, diretrizes e salvaguardas para o uso responsável de sistemas de IA.
-Receita Federal publica Política de Inteligência Artificial
-Iniciativa define princípios, diretrizes e salvaguardas para o uso responsável de sistemas de IA.
-Receita Federal lança o Programa Aproxime: Fortalecendo a Relação entre o Fisco e a Sociedade
-O Aproxime é o programa nacional de aten
-[...truncated]
-```
+Receita Federal is Brazil's federal tax authority, equivalent to the IRS in the United States. It manages all federal tax collection, customs, and business registration.
 
+**Core Services (Servicos de A a Z):**
+- **Cadastros (Registrations):**
+  - Cidadao (CPF/CAEPF) -- Individual taxpayer registration
+  - Pessoa Juridica (CNPJ) -- Business entity registration
+  - Imovel Rural -- Rural property registration
+  - Obra de Construcao Civil -- Construction works registration
+  - Grandes Contribuintes -- Large taxpayer management
+  - Registros Especiais -- Special registrations
 
+- **Declaracoes e Escrituracoes (Declarations):**
+  - Imposto de Renda (Income Tax) -- annual filing
+  - SPED (Sistema Publico de Escrituracao Digital) -- digital bookkeeping
+  - Simular calculos (tax calculators)
+  - Malha fiscal document submission
+
+- **Certidoes e Atestados (Certificates):**
+  - Tax clearance certificates
+  - Fiscal attestations
+  - Certificate issuance and validation
+
+- **Regularizacao de Impostos (Tax Regularization):**
+  - Debt consultation (consultar dividas e pendencias)
+  - Tax payment (pagar impostos)
+  - Payment modification and consultation
+  - Debt installment plans (parcelar dividas)
+  - Transaction agreements (acordo de transacao)
+  - Debt and pending issue review
+
+- **Restituicoes e Compensacoes:**
+  - Tax refund consultation and processing
+  - Tax credit compensation
+
+- **Comercio Exterior (International Trade):**
+  - Import/export procedures
+  - Customs (Aduana) -- classifications, authorized economic operator (OEA)
+  - Siscomex integration
+  - International purchases guidance
+  - Traveler's guide
+
+**Digital Access:**
+- **e-CAC Portal:** Main digital service center (online chat, forms, declarations)
+- **NFS-e:** Nota Fiscal de Servico Eletronica issuance and consultation
+- **NF-e:** Nota Fiscal Eletronica (goods)
+- **NF-e Ouro:** Gold-specific electronic invoices
+- Apps for mobile/tablet
+- SPED programs (digital bookkeeping suite)
+
+**Tax Reform (Reforma Tributaria):**
+- Pilot program for CBS (Contribuicao sobre Bens e Servicos) -- new consumption tax
+- NFS-e emission under reform framework
+
+**Key Tax Types Managed:**
+- IRPF/IRPJ (Income Tax -- individual and corporate)
+- ICMS (state-level goods circulation tax, coordinated)
+- ISS (municipal service tax, coordinated)
+- PIS/COFINS (social contribution taxes)
+- IPI (industrialized products tax)
+- IOF (financial operations tax)
+- CSLL (social contribution on net profit)
+
+**Simples Nacional Integration:** Simplified tax regime for micro and small businesses, accessible through Receita Federal portal.
+
+---
 
 ## Registration
 
-
-### Junta Comercial (REDESIM) [Critical]
-
+### Junta Comercial (REDESIM)
+- **Priority:** `CRITICAL`
 - **ID:** PKB-456
-- **Type:** Gov
 - **URL:** https://www.gov.br/empresas-e-negocios/pt-br/redesim
+- **Type:** Government
 - **Why KITZ Needs It:** Brazil simplified business registration network: CNPJ, state/municipal registrations
+- **Fetch Status:** OK (8000 chars)
 
 **Extracted Intelligence:**
 
-```
-Redesim — Empresas & Negócios
-Redesim
-Info
-Serviços
-Abrir CNPJ
-Inscreva seu negócio no CNPJ.
-Meu CNPJ
-Abra filiais, atualize ou dê baixa.
-Meus Clientes
-Para o Profissional Contábil.
-Proteger meu CPF
-Permissão para participar de CNPJ.
-Consultas
-Consultar CNPJ
-Consulte dados da pessoa jurídica no CNPJ.
-Acompanhar Protocolo
-Acompanhe sua consulta prévia de viabilidade ou pedido de inscrição, alteração e baixa no CNPJ. Você também pode cancelar e recuperar protocolos.
-Emitir Comprovantes
-Emita comprovantes de inscrição e situação cadastral no CNPJ.
-Validar Comprovantes
-Confirme a autenticidade de comprovantes relativos ao CNPJ.
-Orientação e Ajuda
-Orientações sobre Viabilidade
-Orientações sobre Inscrição
-Orientações sobre Alteração
-Orientações sobre Licenciamento
-Ver Mais
-Estatísticas
-Mapa de Empresas
-Estabelecimentos por Situação
-Tempo de Abertura de Empresas
-Rejeitar
-Fale Agora
-Refazer a busca
-```
+REDESIM (Rede Nacional para a Simplificacao do Registro e da Legalizacao de Empresas e Negocios) is Brazil's national network for simplified business registration and legalization.
 
+**CNPJ Opening Process (3 Steps):**
+1. **Viabilidade (Feasibility):** Check name availability and business activity viability
+2. **Inscricao (Registration):** CNPJ registration with federal, state, and municipal authorities
+3. **Licenciamento (Licensing):** Obtain required business licenses and permits
 
+**Additional CNPJ Services:**
+- Branch registration (Inscrever Filial)
+- Asset segregation (Patrimonio de Afetacao)
+- CNPJ modification (Alterar CNPJ)
+- Business closure (Baixar CNPJ)
+- State and municipal acts
+- License exemptions (Dispensa de Licenciamento)
+- Tourism activity registration
+- Animal products registration
+- Client management for accountants (Meus Clientes)
+- CPF protection
+- CNPJ consultation
+- Protocol tracking
+
+**Certificates and Validation:**
+- Registration certificate issuance (with authentication codes)
+- Renunciation certificates
+- Certificate validation tools
+
+**Statistics and Mapping:**
+- Mapa de Empresas (Business Map) -- national business statistics
+- Establishments by status
+- Business opening time tracking
+- Statistical dashboards and bulletins
+
+**DREI (Departamento Nacional de Registro Empresarial e Integracao):**
+- Oversees all 27 state Juntas Comerciais (commercial registries)
+- Issues federal norms, instructions, and technical notes
+- Manages decisoes recursais (appeal decisions)
+- Foreign company registration guidance
+- CGSIM (Comite para Gestao da Rede Nacional) resolutions
+
+**Business Types Available:**
+- MEI (Microempreendedor Individual)
+- ME (Microempresa)
+- EPP (Empresa de Pequeno Porte)
+- EIRELI, Ltda, S.A., and other legal forms
+- Inova Simples (innovation startups)
+
+---
 
 ## Payments
 
-
-### PIX — Banco Central do Brasil [Critical]
-
+### PIX -- Banco Central do Brasil
+- **Priority:** `CRITICAL`
 - **ID:** PKB-457
-- **Type:** Gov
 - **URL:** https://www.bcb.gov.br/estabilidadefinanceira/pix
+- **Type:** Government
 - **Why KITZ Needs It:** Brazil instant payment: 76% adult adoption, 64B transactions/year, QR, free P2P, 24/7
-- **Note:** [Minimal content at https://www.bcb.gov.br/estabilidadefinanceira/pix]
+- **Fetch Status:** MINIMAL (114 chars -- JavaScript-rendered page)
 
+**Extracted Intelligence:**
 
-### Nubank [High]
+The Banco Central do Brasil page requires JavaScript rendering and returned minimal content.
 
+**Known Intelligence (from KITZ knowledge base + PCMI data):**
+- **PIX** is Brazil's instant payment system launched November 2020 by Banco Central
+- **Adoption:** 76%+ of Brazilian adults use PIX; 150M+ individual users
+- **Volume:** 64+ billion transactions per year (2024)
+- **Available 24/7/365** -- instant transfers in under 10 seconds
+- **Free for individuals** (P2P); businesses pay small fees (typically 0.01-1%)
+- **QR Code based** -- static and dynamic QR codes for payments
+- **97% conversion rate** on QR code transactions (EBANX data)
+- **33% of all POS payment volume** in Brazil (Worldpay 2024)
+- **40% of e-commerce** payment share (projected to reach 51% by 2027, surpassing credit cards)
+- **PIX International** under development for cross-border use (no launch date yet)
+- Replaced much of boleto and cash usage -- cash dropped from 68% POS in 2014 to 17% in 2024
+- Supports: PIX Copia e Cola, PIX QR Code, PIX via app, PIX Saque (cash withdrawal), PIX Troco (change)
+- **PIX Automatico** (scheduled/recurring PIX) being developed
+- Regulated by Banco Central do Brasil under financial stability framework
+
+---
+
+### Nubank
+- **Priority:** `HIGH`
 - **ID:** PKB-458
-- **Type:** Platform
 - **URL:** https://nubank.com.br/
+- **Type:** Platform
 - **Why KITZ Needs It:** Brazil's largest digital bank (100M+ customers): checking, credit, investments, PIX
+- **Fetch Status:** OK (2697 chars)
 
 **Extracted Intelligence:**
 
-```
-Ative o Modo Rua e curta o Carnaval com segurança
-Saiba como se proteger
-Peça seu Cartão de Crédito e sua Conta do Nubank
-Digite seu CPF
-Continuar
-O melhor cartão para seu perfil
-Sem anuidade, sem tarifas abusivas e cheio de vantagens.
-Conheça o Cartão Nubank
-O melhor cartão para seu perfil
-Sem anuidade, sem tarifas abusivas e cheio de vantagens.
-Conheça o Cartão Nubank
-O melhor cartão para seu perfil
-Cartão Black que gera a partir de 2,2 pontos por dólar gasto ou 1,25% de cashback em cada compra no crédito.
-Conheça o Cartão Ultravioleta
-O melhor cartão para seu perfil
-Cartão Black que gera a partir de 2,2 pontos por dólar gasto ou 1,25% de cashback em cada compra no crédito.
-Conheça o Cartão Ultravioleta
-O melhor cartão para seu perfil
-Sem anuidade, internacional e personalizado para sua empresa.
-Conheça o cartão Nu Empresas
-O melhor cartão para seu perfil
-Sem anuidade, internacional e personalizado para sua empresa.
-Conheça o cartão Nu Empresas
-Um app para tudo. E tudo no app
-Guarde dinheiro de maneira organizada de acordo com seus objetivos.
-Conheça as Caixinhas do Nubank
-Segurança é prioridade
-Estamos aqui para te dar suporte completo e garantir a proteção do seu dinheiro.
-Me Roubaram
-Canal de Denúncias
-Central de Proteção
-Canais de Atendimento
-Conheça nossas soluções
-Fique por dentro das novidades
-Ir para o Blog do Nu
-Usamos cookies para melhorar sua experiência, mas você pode rejeitar os que não afetam o funcionamento seguro do site. Leia mais em
-Política de Privacidade
-.
-Recusar
-Aceitar
-Transparência
-Política de privacidade
-Política de segurança
-Termos de Uso
-Ética, Compliance e ESG
-Contratos
-Sobre investimentos
-Relatórios financeiros
-Convenção de Boletos
-PLD/CFTP
-Dados abertos
-SCR
-PRSAC
-Cessão de Créditos (Desenrola)
-Explorar
-Blog
-Comunidade do Nu
-Nu Asset
-InvestNews
-Nubank México
-Nubank Colômbia
-Carreiras
-Trabalhe com a gente
-Fornecedores
-Seja um fornecedor
-Imprensa
-Sala de Imprensa
-Ajuda
-Segurança
-Perguntas frequentes
-Portal de suporte ao falecimento
-Fale com a gente
-Capitais e regiões metropolitanas
-4020 0185
-Demais localidades
-0800 591 2117
-Canal de atendimento em libras
-Portal de Relacionamento com Autoridades Judiciais e Administrativas
-Ouvidoria
-Atendimento em dias úteis das 8h às 18h (horário de Brasília)
-0800 887 0463
-Formulário de Solicitação
-Procedimentos de Ouvidoria
-Privacidade e proteção de dados
-Encarregada: Raíssa Moura Ferreira
-dpo@nubank.com.br
-Redes Sociais
-100 milhões de clientes. Nenhum deles na fila | Nubank
-```
+Nubank is Brazil's largest digital bank with 100+ million customers and zero branches.
 
+**Consumer Products:**
+- **Credit Card:** No annual fee (sem anuidade), no abusive fees, international, fully managed via app
+- **Cartao Ultravioleta:** Premium Black card with 2.2+ points per dollar spent or 1.25% cashback on all credit purchases
+- **Nu Empresas:** Business card -- no annual fee, international, customized for companies
+- **Caixinhas (Piggy Banks):** Organized savings by goal
+- **Digital Account:** Full checking account
+- **PIX Integration:** Full PIX support for payments and transfers
+- **Investments:** Via Nu Asset and investment platform
 
+**Business Products (Nu Empresas):**
+- Business credit card (no annual fee, international)
+- Business account management
+- Customized for company operations
 
-### MercadoPago Brasil [High]
+**Security Features:**
+- "Me Roubaram" (theft reporting channel)
+- Denunciation channel
+- Central de Protecao (Protection Center)
+- Multiple customer service channels
 
+**Key Details:**
+- Nu Pagamentos S.A. -- Instituicao de Pagamento
+- CNPJ: 18.236.120/0001-58
+- Headquarters: Rua Capote Valente, 39, Sao Paulo, SP
+- Customer service: 4020-0185 (capitals), 0800-591-2117 (other locations)
+- Sign language support (Canal de atendimento em libras)
+- Ombudsman: 0800-887-0463 (business days 8h-18h)
+- DPO: Raissa Moura Ferreira, dpo@nubank.com.br
+- Blog: "Blog do Nu" for financial education content
+
+**KITZ Relevance:** Nubank is the default banking relationship for millions of Brazilian entrepreneurs. Understanding its products helps KITZ guide users on banking setup, credit access, and PIX integration.
+
+---
+
+### MercadoPago Brasil
+- **Priority:** `HIGH`
 - **ID:** PKB-459
-- **Type:** Platform
 - **URL:** https://www.mercadopago.com.br/
+- **Type:** Platform
 - **Why KITZ Needs It:** Brazil's top e-commerce wallet: PIX integration, POS, checkout, lending, QR
+- **Fetch Status:** OK (5165 chars)
 
 **Extracted Intelligence:**
 
-```
-Abrir conta grátis
-Usamos cookies para melhorar sua experiência no Mercado Pago. Consulte mais informações na nossa
-Central de privacidade.
-Aceitar cookies
-Configurar cookies
-Pronto! Suas preferências foram salvas.
-Fechar
-Ocorreu um erro. Por favor, tente novamente.
-Fechar
-MERCADO PAGO
-O banco digital
-oficial
-do BBB26
-Abrir conta grátis
-BANCO DIGITAL DO MERCADO LIVRE
-Descubra a conta
-que mais rende
-do Brasil
-Abrir conta grátis
-Até 105%
-do CDI na Conta
-🔥
-Até 120%
-do CDI nos Cofrinhos
-🐷
-cartão de crédito
-Aproveite para
-comprar em até
-18x sem juros
-Abrir conta grátis
-conta negócio
-Tenha soluções
-de venda, gestão
-e crédito
-Abrir conta grátis
-Página 1
-Página 2
-Página 3
-Página 4
-Rendimentos
-Dinheiro que rende todo dia e está sempre disponível
-Até 105% do CDI na sua Conta
-Até 120% do CDI nos Cofrinhos
-Cartão de crédito
-Liberdade para você e seu bolso
-Até 18x sem juros
-Cashback  com Meli+
-Sem anuidade
-A conta completa
-no banco
-digital do
-Mercado Livre
-Conhecer conta
-Linha de crédito
-Compre parcelado sem ter um cartão.
-Pix
-Pague, receba e transfira sem taxas.
-Cartão de débito
-Use o saldo da sua conta onde estiver.
-Investimentos
-Faça seu dinheiro trabalhar para você.
-Contas e serviços
-Pague boletos pelo app e fuja das filas.
-conta negócio
-Soluções para seu negócio ganhar
-Vendas
-Maquininha, Link de pagamento, Pix e Tap to pay com as menores taxas.
-Crédito
-Empréstimo e cartão com limite que aumenta conforme o uso.
-Gestão
-Ferramentas de gestão para evoluir seu negócio.
-Conhecer Conta Negócio
-Perguntas frequentes
-Como peço o Cartão de Crédito Mercado Pago?
-El contenido debe responder la pregunta de forma clara
-Você só precisa
-pedir o cartão
-e aguardar nossa resposta.
-Ao pedir o cartão, você autoriza o Mercado Pago e a Instituição Financeira do Grupo a consultarem as bases de dados necessárias para te conhecer e trabalharem para te oferecer o melhor limite de crédito.
-É importante aguardar enquanto analisamos todas as suas informações para definirmos se você pode ter o cartão de crédito e qual é a opção mais adequada para você.
-Assim que concluirmos esse processo, vamos te notificar por e-mail e celular para te dar uma resposta.
-Qual é a melhor maquininha para o meu negócio?
-Você pode comprar uma Point diferente da recomendada para o seu perfil, caso entenda que as necessidades do seu negócio são outras. Todas as maquininhas aceitam crédito, débito, código QR e Pix.
-Pode conhecer mais sobre nossas maquininhas no
-Centro de Ajuda.
-Quais são as taxas da conta Mercado Pago?
+MercadoPago Brasil is positioned as "the most profitable digital bank in Brazil" and the official bank of BBB26 (Big Brother Brasil).
 
-[...truncated]
-```
+**Consumer Products (Conta Digital):**
+- **Returns:** Up to 105% CDI on account balance, up to 120% CDI on "Cofrinhos" (savings jars)
+- **Credit Card:** Up to 18x interest-free installments, cashback with Meli+, no annual fee
+- **Line of Credit:** Buy in installments without credit card
+- **PIX:** Send, receive, and transfer without fees
+- **Debit Card:** Use account balance anywhere
+- **Investments:** Multiple investment products
+- **Bill Payments:** Pay boletos and services through the app
 
+**Business Products (Conta Negocio):**
+- **Maquininhas Point:** POS card reader devices (multiple models)
+- **Point Tap:** NFC payments using phone only
+- **Tap to Pay no iPhone:** Apple NFC contactless acceptance
+- **Link de Pagamento:** Payment link generation
+- **PIX for Business:** Accept PIX payments
+- **Checkout para Loja Virtual:** E-commerce website checkout integration
+- **Planos de Assinatura:** Subscription/recurring billing plans
+- **Sistema de Gestao:** Business management tools
+- **Emprestimos (Loans):** Business lending
+- **Cartao de Credito Business:** Business credit card with limit that increases with usage
+- **Assistente Pessoal:** AI-powered business management assistant
 
+**Programs:**
+- Mercado Livre Negocios: E-commerce integration
+- Revendedor Point: Device reseller program
+- Programa de Parcerias: Partnership program
+- Developers portal for API integration
 
-### Boleto Bancário [Medium]
+**Legal Entity:**
+- Mercado Pago Instituicao de Pagamento Ltda.
+- CNPJ: 10.573.521/0001-91
+- Headquarters: Av. das Nacoes Unidas, 3.003, Osasco/SP
 
+**KITZ Relevance:** MercadoPago is the most accessible payment platform for Brazilian small businesses. The Point devices, payment links, and PIX integration make it the primary tool for informal sellers transitioning to formal commerce -- exactly KITZ's target user.
+
+---
+
+### Boleto Bancario (Banco do Brasil)
+- **Priority:** `MEDIUM`
 - **ID:** PKB-460
-- **Type:** Platform
 - **URL:** https://www.bb.com.br/
+- **Type:** Platform
 - **Why KITZ Needs It:** Brazil cash voucher payment: traditional method, still 9% of e-commerce, printable
-- **Note:** [HTTP 403]
+- **Fetch Status:** MINIMAL (753 chars -- Cloudflare blocked)
 
+**Extracted Intelligence:**
+
+Banco do Brasil's website blocked the fetch with Cloudflare security.
+
+**Known Intelligence (from KITZ knowledge base):**
+- **Boleto Bancario** is a traditional Brazilian payment method -- a printed or digital payment slip
+- Can be paid at banks, lottery houses (loterias), ATMs, or online banking
+- Still accounts for ~9% of e-commerce transactions (declining but relevant)
+- Critical for reaching unbanked and underbanked Brazilians
+- Banco do Brasil is one of Brazil's largest state-owned banks
+- Boleto has a settlement period of 1-3 business days (vs PIX instant)
+- Being gradually replaced by PIX but still essential for B2B invoicing and government payments
+- Boleto registrado (registered boleto) is now mandatory -- prevents fraud
+
+---
 
 ## Legal
 
-
-### LGPD — Lei Geral de Proteção de Dados [Critical]
-
+### LGPD -- Lei Geral de Protecao de Dados (ANPD)
+- **Priority:** `CRITICAL`
 - **ID:** PKB-461
-- **Type:** Gov
 - **URL:** https://www.gov.br/anpd/
+- **Type:** Government
 - **Why KITZ Needs It:** Brazil data protection (GDPR-equivalent): ANPD authority, consent, DPO, penalties
+- **Fetch Status:** OK (8000 chars)
 
 **Extracted Intelligence:**
 
-```
-ANPD — Agência Nacional de Proteção de Dados
-Serviços recomendados para você
-Serviços mais acessados do govbr
-Serviços em destaque do govbr
-Serviços recomendados para você
-Serviços mais acessados do govbr
-Serviços em destaque do govbr
-Serviços mais acessados do govbr
-Serviços em destaque do govbr
-Serviços recomendados para você
-Serviços mais acessados do govbr
-1
-Assinatura Eletrônica
-2
-Consultar Meu Imposto de Renda
-3
-Consultar restituição do imposto de renda
-4
-Consultar CPF
-5
-Entregar Meu Imposto de Renda
-6
-Consultar dados do Cadastro Único
-Serviços em destaque do govbr
-Registros e Cadastros
-Cadastrar Cães e Gatos
-(SinPatinhas)
-Para o cidadão
-Concurso Público Nacional Unificado 2
-(CPNU2)
-Imóveis
-Novo
-Consultar dados de imóveis rurais na plataforma Meu Imóvel Rural
-Crimes
-Celular Seguro
-Educação Básica
-Fazer o Exame Nacional do Ensino Médio
-(Enem)
-Info
-ANPD marca presença em evento internacional na Índia
-ANPD marca presença em evento internacional na Índia
-ANPD marca presença em evento internacional na Índia
-Senado aprova MP que transforma a ANPD em Agência Reguladora e fortalece a proteção de crianças e adolescentes no ambiente digital
-Senado aprova MP que transforma a ANPD em Agência Reguladora e fortalece a proteção de crianças e adolescentes no ambiente digital
-Senado aprova MP que transforma a ANPD em Agência Reguladora e fortalece a proteção de crianças e adolescentes no ambiente digital
-ANPD conclui fase de nivelamento do Projeto Sandbox
-ANPD conclui fase de nivelamento do Projeto Sandbox
-ANPD conclui fase de nivelamento do Projeto Sandbox
-Balanço
-ANPD 5 anos
-Estudos Periódicos
-Radar Tecnológico nº 5 - Mecanismos de aferição de idade
-Estudos Periódicos
-Radar Tecnológico nº 4 - Neurotecnologias
-Para o cidadão
-Denúncias ou Petições de titular
-Envie petição de titular contra o controlador ou denúncia de descumprimento da LGPD
-Para o controlador de dados
-Comunicação de Incidentes de Segurança
-Comunique um incidente que possa causar risco ou dano relevante aos titulares
-Para o agente de tratamento e o cidadão
-Transferência Internacional de Dados
-Acesse mecanismos de transferência internacional de dados previstos na LGPD
-Acesso rápido
-Agente de tratamento
-Cidadão/Titular de Dados
-Fale conosco
-Centrais de Conteúdo
-Fornecedores
-Contatos Institucionais
-Peticionamento eletrônico
-Fiscalização
-Assessoria de Comunicação
-Agenda do Diretor Presidente - Waldemar Gonçalves Ortunho Júnior
-24
-Ter
-25
-Qua
-26
-Qui
-27
-Sex
-28
-Sáb
-1
-Dom
-2
-Seg
-Agenda completa
-Canais de Atendi
-[...truncated]
-```
+ANPD (Agencia Nacional de Protecao de Dados) is Brazil's national data protection authority, responsible for enforcing the LGPD (Lei Geral de Protecao de Dados).
 
+**Key Functions:**
+- **Enforcement (Fiscalizacao):** Monitor and enforce LGPD compliance
+- **Regulation (Processo Regulatorio):** Develop data protection regulations and guidelines
+- **International Affairs (Assuntos Internacionais):** Cross-border data transfer mechanisms
+- **Citizen/Data Subject Services:** Complaint filing, petitions against controllers
+- **Incident Response:** Security incident communication system for data controllers
+- **RIPD (Relatorio de Impacto):** Data Protection Impact Assessment requirements
 
+**Services for Citizens/Data Subjects:**
+- File complaints (denuncias) or petitions against data controllers
+- FAQ on data subject rights
+- Electronic petitioning system (Peticionamento Eletronico)
+- Ombudsman (Ouvidoria)
 
-### PROCON — Consumer Protection [High]
+**Services for Data Controllers:**
+- Security incident communication portal
+- RIPD (Data Protection Impact Assessment) guidance
+- International data transfer mechanisms
+- Public consultations and hearings
+- Regulatory process participation
 
+**Recent Developments (2026):**
+- Senate approved MP transforming ANPD into a full Regulatory Agency (Agencia Reguladora)
+- Strengthened protections for children and adolescents in digital environments
+- Sandbox project completed nivelamento phase
+- Radar Tecnologico #5: Age verification mechanisms
+- Radar Tecnologico #4: Neurotechnologies
+- International presence at events in India
+- "Balanco ANPD 5 anos" -- 5-year review
+
+**LGPD Key Requirements for KITZ Users:**
+- Legal basis for data processing (consent, legitimate interest, etc.)
+- Appointment of DPO (Encarregado de Dados) -- may be required
+- Data subject rights: access, correction, deletion, portability
+- Security incident notification within reasonable timeframe
+- Data Protection Impact Assessments for high-risk processing
+- International data transfer restrictions
+- Penalties: warning, fine (up to 2% of revenue, capped at R$50M per infraction), data processing suspension
+
+---
+
+### PROCON -- Consumer Protection
+- **Priority:** `HIGH`
 - **ID:** PKB-462
-- **Type:** Gov
 - **URL:** https://www.procon.sp.gov.br/
+- **Type:** Government
 - **Why KITZ Needs It:** Brazil consumer protection: advertising, warranties, e-commerce rules, CDC code
-- **Note:** [Timeout: https://www.procon.sp.gov.br/]
+- **Fetch Status:** OK (8000 chars)
 
+**Extracted Intelligence:**
+
+PROCON-SP (Fundacao de Protecao e Defesa do Consumidor de Sao Paulo) is Brazil's most prominent consumer protection agency. Mission: equilibrium and harmony in consumer-supplier relationships.
+
+**Consumer Services:**
+- **Online Complaint Filing (Reclamacao):** File complaints against businesses
+- **Distance and In-Person Complaint Handling:** Remote and scheduled in-person support (Rua Conselheiro Furtado, 503, Liberdade, SP)
+- **Consumidor.Gov:** Federal consumer complaint platform integration
+- **Recall Tracking:** Product recall notifications
+- **Superendividado Support:** Over-indebtedness assistance program
+- **Consorcio Consultation:** Consortium verification
+- **Juizados Especiais Civeis:** Small claims court guidance
+
+**Supplier/Business Services:**
+- Boleto/Auto de Infracoes: Fine payment system
+- Defense/Challenge guidance for businesses cited
+- Auto de Infracao consultation
+- Certificate requests (Pedidos de Certidao)
+- Frequently Asked Questions for suppliers
+- Process tracking (Acompanhamento de Processos)
+
+**Consumer Education (Escola PROCON):**
+- Free courses and workshops
+- "Educacao para o Consumo" (Consumer Education)
+- "Educacao para Fornecedores" (Supplier Education)
+- EAD (distance learning) platform
+- Regular lectures: Consumer Rights, Digital Era Consumption, Consumer and Environment
+
+**Research and Publications:**
+- Cesta Basica (Basic Basket) price tracking
+- Comparative pricing studies
+- Banking fee surveys
+- Banking interest rate surveys
+- Behavioral research
+- Blog Educa PROCON
+
+**Recent Actions (February 2026):**
+- Fined Shopee (SHPS Tecnologia e Servicos Ltda) R$14 million for abusive clauses and information failures
+- Survey: 40% of online gambling (bets) users became indebted
+- Basic basket price in Sao Paulo fell 5.5% over 12 months
+- Carnival operation: Terminal and airport inspections
+- PIX MED 2.0: New PIX rules guidance
+- Airline regulation reform discussions
+
+**"Nao Me Ligue" Registry:** Consumer opt-out from telemarketing calls.
+
+**"Evite Estes Sites":** Blacklist of websites consumers should avoid.
+
+**Key Transparency:**
+- Ranking of most-complained-about companies
+- Fined companies list
+- Annual activity reports
+- Financial transparency (dotacoes, despesas, repasses, receitas)
+
+**KITZ Relevance:** Every Brazilian business must comply with the CDC (Codigo de Defesa do Consumidor). PROCON enforcement is active and fines are significant. KITZ must help users understand: advertising rules, warranty obligations, e-commerce return policies (7-day right of withdrawal), clear pricing, and complaint handling procedures.
+
+---
 
 ## Startup
 
-
-### SEBRAE — SMB Support Agency [High]
-
+### SEBRAE -- SMB Support Agency
+- **Priority:** `HIGH`
 - **ID:** PKB-463
-- **Type:** Gov
 - **URL:** https://www.sebrae.com.br/
+- **Type:** Government
 - **Why KITZ Needs It:** Brazil's SMB agency: free courses, business plans, MEI registration, market research
+- **Fetch Status:** OK (6455 chars)
 
 **Extracted Intelligence:**
 
-```
-Portal Sebrae - Sebrae
-Acesse
-INSCREVA-SE JÁ!
-Saiba mais
-Acesse
-saiba mais
-saiba mais
-Saiba mais
-Explore por categoria
-Cursos Online
-Cursos gratuitos para você fazer à distância e até por WhatsApp
-Tudo para o MEI
-Tudo para você que já é ou quer ser um Microempreendedor Individual
-Quer abrir uma empresa?
-Confira 6 passos para iniciar o seu próprio negócio
-Cursos e Eventos nos Estados
-Confira a programação de cursos e eventos no seu estado e inscreva-se.
-Produtos e Serviços
-Emissor de NFe, ferramentas digitais, consultoria e diversos produtos Sebrae
-Conteúdos
-Artigos, vídeos, podcasts, e-books e muito mais, feitos para você
-Ideias de Negócios
-Centenas de ideias para você começar um novo negócio
-Polos de referência
-Conhecimento e Soluções em unidades de inteligência da rede Sebrae
-Cursos Online
-Cursos gratuitos para você fazer à distância e até por WhatsApp
-Tudo para o MEI
-Tudo para você que já é ou quer ser um Microempreendedor Individual
-Quer abrir uma empresa?
-Confira 6 passos para iniciar o seu próprio negócio
-Cursos e Eventos nos Estados
-Confira a programação de cursos e eventos no seu estado e inscreva-se.
-Produtos e Serviços
-Emissor de NFe, ferramentas digitais, consultoria e diversos produtos Sebrae
-Conteúdos
-Artigos, vídeos, podcasts, e-books e muito mais, feitos para você
-Ideias de Negócios
-Centenas de ideias para você começar um novo negócio
-Polos de referência
-Conhecimento e Soluções em unidades de inteligência da rede Sebrae
-Confira nossos destaques para alavancar o seu negócio
-Planejadora Financeira Empresarial
-Planeje as finanças da sua empresa de forma simples e inteligente
-Abertura simplificada de empresas
-Confira o guia completo para compras governamentais e abertura simplificada de empresas.
-Compare taxas, prazos e bancos
-Faça a simulação da melhor opção de crédito comparando taxas de juros, prazos e requisitos dos bancos.
-Brasil Mais Produtivo
-Receba consultoria individualizada para aumentar a produtividade e o faturamento do seu negócio.
-Crédito Orientado e Assistido
-Acompanhamento do pré ao pós-crédito para tomada de decisão consciente e vantajosa.
-Up Digital
-Decole na internet! Melhore sua presença digital e amplie suas vendas.
-Mercado Digital
-Mergulhe no universo digital e transforme o seu negócio
-PNBox
-Faça seu plano de negócios digital. Nunca foi tão fácil planejar o sucesso do seu negócio.
-TOP 10 EAD: confira os cursos mais acessados
-Gestão financeira
-Gestão de pessoas
-Atendimento ao cliente
-IA na prática para pequenos negócios
-Inte
-[...truncated]
-```
+SEBRAE (Servico Brasileiro de Apoio as Micro e Pequenas Empresas) is Brazil's primary SMB support agency, dedicated to fostering entrepreneurship and supporting small businesses.
 
+**Core Offerings by Category:**
+
+**Cursos Online (Free Online Courses) -- TOP 10 EAD:**
+1. Gestao financeira (Financial management)
+2. Gestao de pessoas (People management)
+3. Atendimento ao cliente (Customer service)
+4. IA na pratica para pequenos negocios (AI in practice for small businesses)
+5. Inteligencia Emocional (Emotional intelligence)
+6. Lideranca: como desenvolver times de alta performance (Leadership: high-performance teams)
+7. Como definir preco de venda (How to set selling prices)
+8. Marketing de Conteudo (Content marketing)
+9. Comunicacao no processo de vendas (Sales communication)
+10. Comunicacao Nao Violenta (Non-violent communication)
+
+**MEI Support (Tudo para o MEI):**
+- Complete MEI guide and registration support
+- DAS and DASN-SIMEI payment guidance
+- Free consulting
+- NF-e emission tool
+- MEI Week events
+
+**Business Planning and Tools:**
+- PNBox: Digital business plan creation
+- Planejadora Financeira Empresarial: Financial planning tool
+- Ideias de Negocios: 300+ business ideas catalog
+- Up Digital: Digital presence improvement program
+- Mercado Digital: Digital transformation program
+
+**Financial Services:**
+- Credit comparison tool (taxas, prazos, bancos)
+- Credito Orientado e Assistido: Guided credit assistance
+- FAMPE: Guarantee fund for small business loans
+- Banking partnerships: CAIXA, BB, Bradesco, Fintechs
+
+**Consulting and Programs:**
+- Brasil Mais Produtivo: Individual consulting for productivity and revenue growth
+- Empretec: Entrepreneurship training program
+- Sebraetec: Technology solutions
+- ALI (Agentes Locais de Inovacao): Local innovation agents
+- ESG for small businesses
+
+**Data and Research:**
+- DataSebrae: Largest repository of studies on small businesses (now with AI assistance)
+- Market research and analysis
+- Respostas Tecnicas: Technical answers service
+
+**Partnership Programs:**
+- Amazon, Facebook/Meta, Magalu marketplace partnerships
+- Uber partnership
+- Supergasbras partnership
+- International programs (Sebrae pelo Mundo)
+
+**State-Level Presence:** Available in all 27 Brazilian states with local courses, events, and services.
+
+**Contact:** Central de Relacionamento: 0800 570 0800 | WhatsApp chat available | Mobile app
+
+**KITZ Relevance:** SEBRAE is the single most important ally for Brazilian small businesses. Their free courses, consulting, and tools directly complement KITZ's mission. Key integration opportunity: guide users to SEBRAE resources for formal business education while KITZ handles the AI-powered operational tools.

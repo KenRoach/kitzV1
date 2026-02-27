@@ -2,6 +2,8 @@
 
 > Module: USA Business | Sources: 8 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -100,59 +102,60 @@ Get the latest updates
 - **URL:** https://www.sba.gov/
 - **Why KITZ Needs It:** US business registration guide: LLC/Corp formation, licenses, loans, federal contracts
 
-**Extracted Intelligence:**
+**Deep Enrichment (Knowledge Base):**
 
 ```
-Small Business Administration
-Skip to main content
-Official websites use .gov
-A
-.gov
-website belongs to an official government
-organization in the United States.
-Secure .gov websites use HTTPS
-A
-lock
-(
-Lock
-Locked padlock
-) or
-https://
-means you’ve safely connected to
-the .gov website. Share sensitive information only on official,
-secure websites.
-Options to fast-track disaster recovery
-See how SBA can help
-Learn how to make a payment on your SBA loan or check your account balance and due date.
-Make a payment
-Check your account status, update your information, and get access to other portals.
-Access your SBA login
-SBA and our partners host virtual and in-person educational trainings to help start and grow your business.
-Find upcoming events
-Make Onshoring Great Again
-SBA's onshoring portal helps connect businesses with verified U.S. manufacturers, producers, and suppliers.
-Find onshoring resources
-Browse business topics
-Plan your business
-You've got a great idea. Now, make a plan to turn it into a great business.
-Launch your business
-Turn your business into a reality. Register, file, and start doing business.
-Manage your business
-Run your business like a boss. Master day-to-day operations and prepare for success.
-Grow your business
-When business is good, it's time to expand. Find new funding, locations and customers.
-How we help small businesses
-Get business advice from our partnering organizations and experts.
-Find counselors
-Find an SBA lender near you to help fund your business.
-Use Lender Match
-Apply for a low-interest disaster loan to help recover from declared disasters.
-Apply for assistance
-Learn how to find and win small business government contracts.
-Find contracts
-Start and grow your business
-Want to be an entrepreneur? Learn how to get started on your business in 10 steps.
-Start a business
+SBA (SMALL BUSINESS ADMINISTRATION) -- US BUSINESS FORMATION GUIDE:
+
+OVERVIEW:
+The SBA is the US government agency dedicated to supporting small businesses.
+It provides free guidance on starting, managing, and growing a business in the US.
+Essential resource for LATAM entrepreneurs establishing US operations.
+
+KEY RESOURCES FOR BUSINESSES:
+
+1. Business Formation:
+   - Choose your business structure: Sole Proprietorship, LLC, Corporation,
+     Partnership, S-Corp, C-Corp, Nonprofit
+   - State-by-state registration requirements
+   - EIN (Employer Identification Number) application via IRS
+   - Licensing and permits guide by state and industry
+
+2. SBA Loans & Financing:
+   - 7(a) Loans: Up to $5 million for general business purposes
+   - 504 Loans: Long-term fixed-rate financing for real estate/equipment
+   - Microloans: Up to $50,000 for startups and small businesses
+   - SBA Express: Faster approval for loans up to $500,000
+   - Disaster loans: Emergency funding for qualifying events
+   - SBA guarantees the loan (reduces lender risk, not a direct lender)
+
+3. SCORE Mentorship:
+   - Free mentoring from experienced business professionals
+   - In-person and online mentoring sessions
+   - 10,000+ volunteer mentors nationwide
+   - Business plan workshops and templates
+
+4. Small Business Development Centers (SBDCs):
+   - Free consulting and training
+   - 1,000+ locations nationwide
+   - Market research, financial planning, export assistance
+   - Industry-specific guidance
+
+5. Government Contracting:
+   - Set-aside programs for small businesses
+   - 8(a) Business Development Program (minority-owned businesses)
+   - HUBZone certification
+   - Women-Owned Small Business (WOSB) certification
+   - Service-Disabled Veteran-Owned certification
+
+KITZ RELEVANCE FOR LATAM SMBs:
+- Essential for LATAM entrepreneurs establishing US presence
+- LLC formation is the most common path for foreign entrepreneurs
+- SBA loan programs can fund US expansion
+- SCORE mentors can provide US market guidance
+- Many KITZ users are US-based LATAM entrepreneurs (diaspora market)
+- Delaware and Wyoming are popular states for LATAM founders forming US entities
+- EIN is required before any US business activity
 ```
 
 
@@ -262,7 +265,18 @@ Professional services.
 Get tailored guidance from Stripe on implementation, complex integrations, or major migrations.
 View services
 Stripe-certified experts.
-Work with a Stripe consulting partner th
+Work with a Stripe consulting partner that can integrate and deploy Stripe solutions on your behalf.
+View partners
+Support plans.
+Receive ongoing assistance and day-to-day support for technical questions with tiered plans based on your needs.
+View plans
+Lovable grows into a vibe-coding juggernaut with Stripe.
+Read Lovable’s story
+Runway protects developer time with no-code solutions from Stripe.
+Read Runway’s story
+Supabase delivers its backend-as-a-service to 150 countries with Stripe.
+Read Supabase’s story
+Linear partners with Strip
 [...truncated]
 ```
 
@@ -367,7 +381,29 @@ $39 billion+
 generated by retailers using Square annually
 Learn
 more
-Beau
+Beauty
+15 million+
+appointments booked through Square every month
+Learn
+more
+Services
+$93 billion+
+paid with invoices globally
+Learn
+more
+Square AI
+Make smart decisions, fast
+Ask Square AI anything about your business to get immediate insights.
+Learn
+more
+Pricing
+Run your entire business with one plan
+No hidden fees or locked-in contracts. Cancel or switch plans anytime.
+Get started
+Best value
+Try free for {{sub2_api.num_free_trial_days}} days
+Try free for {{sub2_api.num_free_trial_days}} days
+Get t
 [...truncated]
 ```
 
@@ -506,7 +542,23 @@ Buy now
 Order for
 $125.00
 Sell and ship everywhere
-Shopify takes the complexity out of international selling, from delivering
+Shopify takes the complexity out of international selling, from delivering products faster and more affordably with
+Shopify Shipping
+to localizing your experience with
+Shopify Markets
+.
+Desktop and mobile
+Take care of business
+Manage everything in one place
+From back office to front of store, you’re always in control with the fully centralized
+Shopify Admin
+.
+Run your store from anywhere
+Do it all right from your pocket with the full-featured
+Shopify mobile app
+.
+Apps for anything else
+Shopify offers all the essentials out of the box, but if your business calls for so
 [...truncated]
 ```
 
@@ -608,7 +660,26 @@ Service of Process
 Related Websites
 Adoption of Transparency and Sustainability Standards
 Why Incorporate in Delaware?
-More than one million business entities take advantage of Delaware
+More than one million business entities take advantage of Delaware's complete package of incorporation services, including modern and flexible
+corporate laws
+, our highly-respected
+Judiciary
+and legal community, a business-friendly
+government
+, and the customer-service-oriented
+staff
+of the Division of Corporations. You can also stay current on
+Delaware Corporate Law
+and explore more reasons why you should incorporate in Delaware.
+More
+About
+Frequently Asked Questions
+Contact Information
+Delaware Laws
+Newsroom
+Agency Regulations
+Pay Taxes/File Annual Report
+Fi
 [...truncated]
 ```
 
@@ -752,7 +823,9 @@ Frequently Asked Questions (FAQs)
 These FAQs provide general consumer information about the CCPA and how you can exercise your rights under the CCPA. They are not legal advice, regulatory guidance, or an opinion of the Attorney General. We will update this information periodically.
 A. GENERAL INFORMATION ABOUT THE CCPA
 1. What rights do I have under the CCPA?
-If you are a California resident, 
+If you are a California resident, you may ask businesses to disclose what personal information they have about you and what they do with that information, to delete your personal information, to direct businesses not to sell or share your personal information, to correct inaccurate information that they have about you, and to limit businesses’ use and disclosure of your sensitive personal information:
+Right to know
+: You can request that a business disclose to you: (1) the categories and/or specific pieces of personal informatio
 [...truncated]
 ```
 

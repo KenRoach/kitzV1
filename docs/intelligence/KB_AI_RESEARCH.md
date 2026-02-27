@@ -2,6 +2,8 @@
 
 > Module: AI Research | Sources: 3 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -87,7 +89,43 @@ loading...
 Data provided by:
 Bookmark
 Bibliographic Tools
-Bibliographic and C
+Bibliographic and Citation Tools
+Bibliographic Explorer Toggle
+Bibliographic Explorer
+(
+What is the Explorer?
+)
+Connected Papers Toggle
+Connected Papers
+(
+What is Connected Papers?
+)
+Litmaps Toggle
+Litmaps
+(
+What is Litmaps?
+)
+scite.ai Toggle
+scite Smart Citations
+(
+What are Smart Citations?
+)
+Code, Data, Media
+Code, Data and Media Associated with this Article
+alphaXiv Toggle
+alphaXiv
+(
+What is alphaXiv?
+)
+Links to Code Toggle
+CatalyzeX Code Finder for Papers
+(
+What is CatalyzeX?
+)
+DagsHub Toggle
+DagsHub
+(
+What is
 [...truncated]
 ```
 
@@ -161,7 +199,36 @@ Mon, 21 Apr 2025 15:44:01 UTC (2,716 KB)
 Tue, 22 Jul 2025 19:27:15 UTC (4,000 KB)
 Full-text links:
 Access Paper:
-View
+View a PDF of the paper titled Mapping Industry Practices to the EU AI Act's GPAI Code of Practice Safety and Security Measures, by Lily Stelling and 7 other authors
+View PDF
+view license
+Current browse context:
+cs.CY
+< prev
+|
+next >
+new
+|
+recent
+|
+2025-04
+Change to browse by:
+cs
+cs.AI
+References & Citations
+NASA ADS
+Google Scholar
+Semantic Scholar
+export BibTeX citation
+Loading...
+BibTeX formatted citation
+×
+loading...
+Data provided by:
+Bookmark
+Bibliographic Tools
+Bibliographic and Citation Tools
+
 [...truncated]
 ```
 
@@ -221,7 +288,46 @@ Full-text links:
 Access Paper:
 View a PDF of the paper titled AI Transparency Atlas: Framework, Scoring, and Real-Time Model Card Evaluation Pipeline, by Akhmadillo Mamirov and 2 other authors
 View PDF
-HTML (experime
+HTML (experimental)
+TeX Source
+view license
+Current browse context:
+cs.AI
+< prev
+|
+next >
+new
+|
+recent
+|
+2025-12
+Change to browse by:
+cs
+cs.SE
+References & Citations
+NASA ADS
+Google Scholar
+Semantic Scholar
+export BibTeX citation
+Loading...
+BibTeX formatted citation
+×
+loading...
+Data provided by:
+Bookmark
+Bibliographic Tools
+Bibliographic and Citation Tools
+Bibliographic Explorer Toggle
+Bibliographic Explorer
+(
+What is the Explorer?
+)
+Connected Papers Toggle
+Connected Papers
+(
+What is Connected Papers?
+)
+Litm
 [...truncated]
 ```
 

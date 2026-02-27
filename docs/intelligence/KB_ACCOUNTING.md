@@ -2,6 +2,8 @@
 
 > Module: Accounting | Sources: 16 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -70,7 +72,19 @@ Tatiyanna W.
 TruCreates.com
 "Wave makes your life a whole lot
 easier and takes that worry off you.
-I've tried Quickbooks—it's a bit more complicated and technical, and takes mor
+I've tried Quickbooks—it's a bit more complicated and technical, and takes more time to set up."
+Eric Silverberg & Eli Gladstone
+Speaker Labs
+“Wave’s invoicing is unbeatable.
+In eight years, we haven’t had a single unpaid invoice
+, thanks to how easy it is to create, send, and follow up. Our invoicing process would be lost without it!”
+Robbie Katherine Anthony
+Euphoria LGBT Inc.
+App Development
+"It’s not just a cool piece of software, it is giving peace of mind to people.
+You deserve to know your taxes aren't something you have to sweat over
+the entire calendar year."
+Get
 [...truncated]
 ```
 
@@ -170,8 +184,20 @@ Try Xero for free
 Access Xero features for 30 days, then decide which plan best suits your business.
 Try Xero for free
 Explore all features
-30-day 
-[...truncated]
+30-day free trial
+$
+0
+USD
+Included
+Access Xero features
+Included
+Set up with your data or a demo
+Included
+No credit card required
+Included
+24/7 online support
+Included
+Cancel any time
 ```
 
 
@@ -243,7 +269,15 @@ Publish your App on the Xero App Store
 Publish your app on the Xero App Store for access to over 4 million small business customers and 200,000+ accountants and bookkeepers.
 Create an Xero App Store listing
 Resources for Accountant and Bookkeepers
-Whether you're automating workflows or building a bespoke integration for your practice, our platform remains free for internal innovation. Our toolkit of resources helps you build your own, or hire a developer to build an integr
+Whether you're automating workflows or building a bespoke integration for your practice, our platform remains free for internal innovation. Our toolkit of resources helps you build your own, or hire a developer to build an integration for you. Find all the resources you need here.
+Find a Custom Integrator
+Whether you’re connecting applications to Xero or building your own, these developers are here to help.
+Check out Xero's custom integrators
+Automation Resources for your Business or Practice
+Not a developer, no problem! Explore tools and resources for Accountants and Bookkeepers.
+Resources for Accountants and Bookkeepers
+Understanding how new pricing affects Accountants and Bookkeepers
+On 4-December we announced new pr
 [...truncated]
 ```
 
@@ -325,7 +359,12 @@ Global Impact.
 Over 75% of CFI learners secure promotions or new roles within months of completing their certification.
 Click the dots to read learner stories
 The FMVA® program stood out for its practical, hands-on approach and emphasis on real-world best practices.
-A few years ago, I earned my FMVA® certifi
+A few years ago, I earned my FMVA® certification, and it has been incredibly valuable in my career. As a CPA who spent many years working as an auditor and consultant, I now work in strategic corporate finance, leading complex, multi-million-dollar valuations, financial modeling, and challenging forecasting.
+Alessandro Rovere,
+FMVA®
+United States
+The courses are not only practical but also engaging and very well-structured.
+I also really appreciate how up-to-date and job-relevant the material is. The mix of Excel-based modeling, real-wo
 [...truncated]
 ```
 
@@ -417,7 +456,19 @@ IFRS Digital
 Subscribe to IFRS Digital to enjoy instant access to comprehensive versions of IFRS Standards and thousands of supporting documents. Only IFRS Digital subscribers can access the complete IFRS Standards, annotated versions and supplementary material. Individual and group subscriptions are available.
 Learn about the IFRS Digital subscription
 Forthcoming events
-Sustainability Standards Conferen
+Sustainability Standards Conference 2026
+18 May 2026
+IFRS Foundation Conference 2026
+29 - 30 June 2026
+View the IFRS Foundation calendar
+Open for comment
+Exposure Draft and comment letters: Amendments to the Fair Value Option for Investments in Associates and Joint Ventures
+Comments due by 20 April 2026
+Exposure Draft and comment letters: Risk Mitigation Accounting—Proposed amendments to IFRS 9 and IFRS 7
+Comments due by 31 July 2026
+Your privacy
+IFRS Foundation cookies
+We use cookies on ifrs.org to ensure the best user experie
 [...truncated]
 ```
 
@@ -494,7 +545,22 @@ Resources
 Back
 Resources
 Resources
-Get free guides, articles, tools and calculators to help you 
+Get free guides, articles, tools and calculators to help you navigate the financial side of your business with ease. Empower yourself with knowledge and practical tips.
+Bench Blog
+Tips for understanding business finances
+Accounting
+·
+Bookkeeping
+‍
+Operations
+·
+Tax Tips
+Webinars
+Live and on-demand recordings of webinars covering everything from bookkeeping to taxes
+Guides and Templates
+Free downloadable bookkeeping and tax guides, checklists, and expert-tested accounting templates
+Tools
+Tools and calculators to help you stay on top of your small business t
 [...truncated]
 ```
 
@@ -597,8 +663,8 @@ Sign up for the FreshBooks newsletter
 Email
 Country
 Sign Up
-Yes, I would like Fr
-[...truncated]
+Yes, I would like FreshBooks to send me helpful tips on how to grow my business and let me know about offers and promotions
+United States
 ```
 
 
@@ -736,7 +802,12 @@ is a measure of revenue components that are recurring in nature. It should exclu
 ARR per customer:
 Is this flat or growing? If you are upselling or cross-selling your customers, then it should be growing, which is a positive indicator for a healthy business.
 MRR (monthly recurring revenue):
-Often, people wil
+Often, people will multiply one month’s all-in bookings by 12 to get to ARR. Common mistakes with this method include: (1) counting non-recurring fees such as hardware, setup, installation, professional services/ consulting agreements; (2) counting bookings (see #1).
+3. Gross profit
+While top-line bookings growth is super important, investors want to understand
+how profitable
+that revenue stream is. Gross profit provides that measure.
+What’s included in gross profit may vary by company, but in general all costs 
 [...truncated]
 ```
 

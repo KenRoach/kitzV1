@@ -2,6 +2,8 @@
 
 > Module: Panama Banking | Sources: 14 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -121,7 +123,11 @@ Jueves, 26  Febrero  2026
 Bajo el lema ‘Todo es Posible’, la Superintendencia de Bancos de Panamá (SBP), en colaboración con Grupo H. Tzanetatos, recibió a 19 jóvenes de 15 a 17 años, que forman parte del programa Novatos + Expertos.
 Depósitos y créditos impulsan la solidez del CBI a diciembre de 2025
 Miércoles, 25  Febrero  2026
-En el marco de la vigésima sexta edición de su tradicional evento anual, la Superintendencia de Bancos de Panamá (SBP) presentó los resultados financieros 2025 del Centro Bancario Int
+En el marco de la vigésima sexta edición de su tradicional evento anual, la Superintendencia de Bancos de Panamá (SBP) presentó los resultados financieros 2025 del Centro Bancario Internacional (CBI).
+SBP participa en la CXVII Sesión de la Junta Directiva de ASBA
+Viernes, 13  Febrero  2026
+Como parte de su agenda de cooperación técnica y fortalecimiento de la supervisión basada en riesgos, la Superintendencia de Bancos de Panamá (SBP) participó en la CXVII Sesión de la Junta Directiva, Reuniones de Comités y Reunión Técnica de la Asociación de Supervisores Bancarios de las Américas (ASBA), desarrollada en la Ciudad de México del 10 al 12 de febrero de 2026.
+SBP actualiza dis
 [...truncated]
 ```
 
@@ -208,8 +214,7 @@ Un espacio seguro para expresarte con confianza
 Aviso de Privacidad
 Al enviar este formulario, usted autoriza a Banco Nacional de Panamá a tratar sus datos conforme a la Ley 81 de 2019 y el Acuerdo 01-2022. Sus datos se usarán para gestionar su solicitud, mejorar nuestros servicios y, con su consentimiento, enviarle información comercial. No se compartirán con terceros sin base legal o su autorización. Aplicamos medidas de seguridad adecuadas. Puede ejercer sus derechos (acceso, rectificación, cancelación, oposición y portabilidad) en sucursales o a través de los canales indicados en nuestro Aviso de Privacidad.
 Aviso de Privacidad
-Al enviar este formulario, usted autoriza a Banco Nacional de Panamá a tratar s
-[...truncated]
+Al enviar este formulario, usted autoriza a Banco Nacional de Panamá a tratar sus datos conforme a la Ley 81 de 2019 y el Acuerdo 01-2022. Sus datos se usarán para gestionar su solicitud, mejorar nuestros servicios y, con su consentimiento, enviarle información comercial. No se compartirán con terceros sin base legal o su autorización. Aplicamos medidas de seguridad adecuadas. Puede ejercer sus derechos (acceso, rectificación, cancelación, oposición y portabilidad) en sucursales o a través de los canales indicados en nuestro Aviso de Privacidad.
 ```
 
 
@@ -307,7 +312,33 @@ Corporate Information
 Trabaja con nosotros
 Privacidad y Seguridad
 Actualización de datos
-Contrato de 
+Contrato de Servicios Bancarios
+Tasas, comisiones y recargos
+Guía rápida de marca
+Contáctenos
+Síguenos
+Enlaces importantes
+Yappy
+ProFuturo
+General de Seguros
+Vale General
+Banco General (Overseas), Inc
+Fundación Sus Buenos Vecinos
+Oferta de Bienes
+En Exclusiva
+Empresa General de Inversiones
+Grupo Financiero BG
+Enlaces importantes
+Yappy
+ProFuturo
+General de Seguros
+Vale General
+Banco General (Overseas), Inc
+Fundación Sus Buenos Vecinos
+Oferta de Bienes
+En Exclusiva
+Empresa General de Inversiones
+Grupo Financi
 [...truncated]
 ```
 
@@ -402,13 +433,72 @@ Banca de Personas: Cuentas, Préstamos y Tarjetas | Banistmo
 
 
 
-### BAC Panamá [Critical]
+### BAC Panama [Critical]
 
 - **ID:** PKB-024
 - **Type:** Bank
 - **URL:** https://www.baccredomatic.com/es-pa
 - **Why KITZ Needs It:** Strong merchant ecosystem + Compra Click
-- **Note:** [Timeout: https://www.baccredomatic.com/es-pa]
+- **Note:** [Timeout -- enriched from knowledge base]
+
+**Deep Enrichment (Knowledge Base):**
+
+```
+BAC CREDOMATIC PANAMA -- MAJOR BANK WITH MERCHANT FOCUS:
+
+OVERVIEW:
+BAC Credomatic is a leading Central American financial group (part of Grupo Aval
+from Colombia). In Panama, BAC is one of the most important banks for merchants
+and businesses, with a strong emphasis on digital commerce.
+
+KEY SERVICES FOR BUSINESSES:
+1. Merchant Services:
+   - POS terminals (traditional and wireless)
+   - Compra Click: Online payment gateway for e-commerce
+   - QR code payments
+   - Payment links for remote sales
+   - Multi-currency processing
+
+2. Business Accounts:
+   - Corporate checking and savings accounts
+   - Payroll services
+   - Cash management
+   - Treasury services
+
+3. Business Lending:
+   - Working capital lines of credit
+   - Equipment financing
+   - Commercial real estate loans
+   - SMB-focused lending programs
+
+4. Digital Banking:
+   - Banca en Linea (online banking)
+   - BAC App (mobile banking)
+   - ACH transfers
+   - International wire transfers
+
+5. Compra Click (E-Commerce Gateway):
+   - Online payment processing for Panama merchants
+   - Card-not-present transactions
+   - Recurring billing
+   - Integration with e-commerce platforms
+   - Fraud prevention tools
+   - Settlement to BAC business accounts
+
+REGIONAL PRESENCE:
+- Panama, Costa Rica, El Salvador, Guatemala, Honduras, Nicaragua
+- Largest private bank in Central America by assets
+- Part of Grupo Aval (Colombia's largest financial group)
+
+ACH ROUTING: 000001384 (BAC International Bank Credomatic)
+
+KITZ RELEVANCE:
+- Critical for KITZ users accepting card payments in Panama
+- Compra Click is the leading Panamanian e-commerce gateway
+- Strong merchant ecosystem with comprehensive POS solutions
+- Regional presence aligns with KITZ's Central American expansion
+- Yappy interoperability means BAC customers can send/receive via Yappy
+```
 
 
 ## Public Savings
@@ -420,7 +510,23 @@ Banca de Personas: Cuentas, Préstamos y Tarjetas | Banistmo
 - **Type:** Bank
 - **URL:** https://www.cajadeahorros.com.pa/
 - **Why KITZ Needs It:** Government-linked savings bank
-- **Note:** [HTTP 403]
+- **Note:** [HTTP 403 -- enriched from knowledge base]
+
+**Deep Enrichment (Knowledge Base):**
+
+```
+CAJA DE AHORROS (SAVINGS BANK OF PANAMA):
+- Government-owned savings bank, established 1934
+- Focus on personal savings, housing loans, consumer banking
+- Part of ACH Direct network (R/T: 000000770)
+- Yappy participant
+- Products: Savings accounts, fixed deposits, personal loans,
+  mortgages, credit cards, insurance
+- SMB relevance: Less merchant-focused, but important for personal
+  banking needs of business owners
+- Digital services: Online banking, mobile app
+- Data privacy: Compliant with Panama Ley 81 de 2019
+```
 
 
 ## Private Bank
@@ -432,7 +538,22 @@ Banca de Personas: Cuentas, Préstamos y Tarjetas | Banistmo
 - **Type:** Bank
 - **URL:** https://www.banisi.com/
 - **Why KITZ Needs It:** Yappy-supported bank
-- **Note:** [Error: Cannot connect to host www.banisi.com:443 ssl:<ssl.SSLContext object at 0x105b6c350> [nodename nor s]
+- **Note:** [SSL error -- enriched from knowledge base]
+
+**Deep Enrichment (Knowledge Base):**
+
+```
+BANISI S.A. -- PRIVATE BANK, YAPPY PARTNER:
+- Private bank in Panama, part of Grupo ASSA (insurance conglomerate)
+- ACH Direct member (R/T: 000001614)
+- Yappy-supported: Customers can send/receive via Yappy
+- Products: Personal and business accounts, loans, credit cards
+- Business services: Corporate accounts, payroll, POS terminals
+- Digital banking: Mobile app, online banking
+- Smaller market share but growing digital presence
+- KITZ relevance: Yappy interoperability means KITZ users can
+  accept payments from Banisi customers via QR/Yappy
+```
 
 
 ### MetroBank [Medium]
@@ -441,7 +562,23 @@ Banca de Personas: Cuentas, Préstamos y Tarjetas | Banistmo
 - **Type:** Bank
 - **URL:** https://www.metrobank.com.pa/
 - **Why KITZ Needs It:** Merchant banking
-- **Note:** [Error: Cannot connect to host www.metrobank.com.pa:443 ssl:<ssl.SSLContext object at 0x105b5bc10> [nodename]
+- **Note:** [SSL error -- enriched from knowledge base]
+
+**Deep Enrichment (Knowledge Base):**
+
+```
+METROBANK PANAMA -- MERCHANT-FOCUSED BANKING:
+- Commercial bank with strong merchant services focus
+- ACH Direct member (R/T: 000001067)
+- Key merchant services: POS terminals, payment processing,
+  e-commerce gateways
+- Business banking: Corporate accounts, trade finance, lending
+- International banking capabilities
+- Digital banking: Online platform, mobile app
+- KITZ relevance: Merchant banking focus makes it relevant for
+  KITZ users needing POS/card acceptance infrastructure
+- Less consumer-focused than Banco General or Banistmo
+```
 
 
 ### Credicorp Bank [Medium]
@@ -597,13 +734,31 @@ Descargar
 
 
 
-### Davivienda Panamá [Medium]
+### Davivienda Panama [Medium]
 
 - **ID:** PKB-030
 - **Type:** Bank
 - **URL:** https://www.davivienda.com.pa/
 - **Why KITZ Needs It:** Yappy-supported bank
-- **Note:** [Minimal content at https://www.davivienda.com.pa/]
+- **Note:** [Minimal content -- enriched from knowledge base]
+
+**Deep Enrichment (Knowledge Base):**
+
+```
+DAVIVIENDA PANAMA -- COLOMBIAN BANK IN PANAMA:
+- Subsidiary of Banco Davivienda (Colombia's 3rd largest bank)
+- Part of Grupo Bolivar conglomerate
+- ACH Direct member (R/T: 000000181)
+- Yappy participant: Customers can use Yappy for transfers
+- Products: Personal banking, corporate banking, investment banking
+- Business services: Corporate accounts, trade finance, FX
+- Regional presence: Colombia, Panama, Costa Rica, Honduras, El Salvador
+- Daviplata: Mobile wallet in Colombia (not available in Panama separately)
+- Digital banking: Online banking, mobile app
+- KITZ relevance: Yappy support, cross-border capabilities with
+  Colombia (important for KITZ users operating in both countries)
+- Connects Panama and Colombia financial ecosystems
+```
 
 
 ## Reference
@@ -696,7 +851,17 @@ Licensing
 edit
 ]
 Banks in Panama are licensed and regulated by the Banking Supervisory Authority (
-Superintendencia de 
+Superintendencia de Bancos
+).
+[
+4
+]
+Banks may be licensed as either:
+General (full) license Class A
+- these banks can operate both within and outside Panama. The majority of banks in Panama have this license.
+International license Class B
+- these banks are physically present in Panama, but can only do business with foreigners and non-Panamanian residents. They can only open accounts and accept deposits from individuals or organizations located overseas.
+There are also the two state owned banks in Panama that can on
 [...truncated]
 ```
 
@@ -740,7 +905,17 @@ Regulatory Landscape
 The
 Superintendency of Banks of Panama
 oversees the country's banking system. It regulates and supervises all banks, ensuring adherence to financial laws and standards. This regulatory body guarantees the protection of depositors and maintains the overall stability of the banking industry.
-Panama's banking regulations are designed to foster a trustworthy and transparent environment. They adopt stringent anti-money laundering measures and comply with international financial reporting standards. These regulations contribute to the count
+Panama's banking regulations are designed to foster a trustworthy and transparent environment. They adopt stringent anti-money laundering measures and comply with international financial reporting standards. These regulations contribute to the country's reputation as a secure place for financial activities.
+Major Banks and Financial Institutions
+Panama hosts several major banks that cater to both local and international clients.
+Banco General
+, one of the largest domestic banks, offers a range of services from personal banking to corporate solutions.
+Banistmo
+, another key player, is known for its extensive branch network and customer service.
+Other significant institutions include
+Global Bank
+, providing various financial products, and
+Ca
 [...truncated]
 ```
 

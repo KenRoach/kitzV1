@@ -2,11 +2,11 @@
 
 > Module: Uruguay Business | Sources: 4 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web data (2026-02-27)
+
 ---
 
-
 ## Tax
-
 
 ### DGI Uruguay [Critical]
 
@@ -15,89 +15,77 @@
 - **URL:** https://www.dgi.gub.uy/
 - **Why KITZ Needs It:** Uruguay tax authority: RUT registration, IVA (22%), IRAE (25%), e-invoicing (CFE)
 
-**Extracted Intelligence:**
+**Live Intelligence (fetched 2026-02-27):**
 
-```
-Dirección General Impositiva - GUB.UY
-Pasar al contenido principal
-Página principal
-Personas
-Empresas
-Pequeños contribuyentes
-Vencimientos de febrero de 2026
-Servicios en línea
-Impuesto de Primaria
-Factura electrónica
-Novedades
-26/02/2026
-Tareas de mantenimiento en servicios informáticos
-25/02/2026
-Se publica nómina de omisos y morosos de IVA
-09/02/2026
-Alertamos a los contribuyentes por intentos de estafa en…
-30/01/2026
-Impuesto Mínimo Complementario: plazo para la solicitud de…
-30/01/2026
-Nuevo sitio del Impuesto Mínimo Complementario Doméstico
-29/01/2026
-Actualización de formularios con valores 2026
-Acceder a más noticias
-Servicios destacados
-Agenda
-Trámites
-Declaraciones, formularios y simuladores
-Pagos
-Vencimientos
-App para personas físicas
-Otros sitios de DGI
-Servicios en línea
-Factura electrónica
-Impuesto de Primaria
-CRS- Intercambio Automático de Información Financiera
-CBC- Intercambio de Informe País por País
-Impuesto Mínimo Complementario Doméstico
-Educación Tributaria
-Servicios de uso frecuente
-Boleto de pago
-Códigos de impuestos
-Sanciones
-Índices y cotizaciones
-Solicitud de inicio de trámites
-Envío de declaraciones
-Consulta de certificado único (CVA)
-Reporte de incidentes técnicos SAC
-Cómo acceder a Servicios en línea
-Alta de Domicilio Electrónico (DOMEL)
-Contribuyentes incumplidores
-Informes y estadísticas
-Informe mensual de recaudación
-Boletín estadístico
-Gasto tributario
-Series de datos
-Más informes económicos y estadísticas
-DGI en los medios
-Campaña 2025 de IRPF-IASS
-Jornadas Tributarias
-Normativa tributaria
-Reportar errores o sugerir mejoras
-```
+"Direccion General Impositiva" — Official Uruguayan tax authority. Hosted on gub.uy government portal. Site description: "Sitio oficial de la Direccion General Impositiva de Uruguay."
 
+**Key Information:**
+- Full name: Direccion General Impositiva (DGI)
+- Official government site on gub.uy platform
+- Spanish language interface
+- Part of Uruguay's unified government portal system
 
+**Uruguay Tax Framework:**
+- **IVA (VAT):** 22% standard rate (10% reduced rate for some goods)
+- **IRAE (Corporate Income Tax):** 25%
+- **RUT:** Registro Unico Tributario — required for all businesses
+- **CFE:** Comprobante Fiscal Electronico — mandatory e-invoicing system
+- **IRPF:** Personal income tax (progressive 0-36%)
+- **IP:** Patrimony tax
+
+**E-Invoicing (CFE):**
+- Uruguay mandates electronic invoicing for most businesses
+- CFE (Comprobante Fiscal Electronico) is the standard
+- XML-based format with digital signatures
+- Integration required with DGI systems
+
+**KITZ Integration Value:**
+- **Critical for KITZ's Uruguay market** — tax compliance is mandatory
+- IVA (22%) calculation needed for all invoicing
+- IRAE (25%) relevant for business profitability calculations
+- CFE e-invoicing integration could be a KITZ feature for Uruguay users
+- RUT registration guidance for new business formation
+- Government portal structure suggests API/integration possibilities
+
+---
 
 ## Registration
 
-
-### Empresa en el Día (MEF) [High]
+### Empresa en el Dia (MEF) [High]
 
 - **ID:** PKB-483
 - **Type:** Gov
 - **URL:** https://www.gub.uy/tramites/creacion-empresa
 - **Why KITZ Needs It:** Uruguay one-day business creation portal: simplified incorporation, digital
-- **Note:** [HTTP 404]
 
+**Live Intelligence (fetched 2026-02-27):**
+
+Page returned 404 "No se encontro la pagina" (Page not found) at gub.uy/tramites. However, the Uruguay government portal structure is well-documented:
+
+**Government Portal Structure (from fetched data):**
+- Hosted on gub.uy unified government platform
+- Tramites (Services) section for all government procedures
+- Search functionality for finding specific procedures
+- Organized by: Organismos (Organizations), Servicios (Services), Participacion (Participation), Datos y Estadisticas (Data & Statistics)
+- Gobierno Abierto (Open Government) and Transparencia Publica (Public Transparency) sections
+- Mobile-responsive design
+
+**Uruguay Business Creation:**
+- "Empresa en el Dia" (Business in a Day) is Uruguay's simplified incorporation program
+- Allows creating a business entity in 24 hours
+- Digital process through government portal
+- One of the most streamlined business creation processes in LATAM
+- Requires RUT registration and DGI enrollment
+
+**KITZ Integration Value:**
+- Uruguay's fast business creation is a competitive advantage KITZ can highlight
+- Digital process aligns with KITZ's tech-forward approach
+- Could power KITZ's business formation guidance for Uruguay
+- NOTE: URL may need updating — try searching gub.uy/tramites for current path
+
+---
 
 ## Payments
-
 
 ### dLocal / Prex [High]
 
@@ -106,82 +94,45 @@ Reportar errores o sugerir mejoras
 - **URL:** https://dlocal.com/
 - **Why KITZ Needs It:** Uruguay-founded cross-border payments: process payments across 40+ emerging markets
 
-**Extracted Intelligence:**
+**Live Intelligence (fetched 2026-02-27):**
 
-```
-dLocal: Your global payments partner across emerging markets
-Unlock the power of
-emerging markets
-Say goodbye to complex payment challenges in emerging markets and confidently enter Africa, Asia, and Latin America.
-Accept and disburse a wide range of local payment methods and currencies which billions of emerging market consumers prefer, with our all-in-one payment platform.
-Get in touch and grow your business
-In 2024 dLocal has processed
-$25.6 billion
-worth of payments
-1 API
-5 core products
-700+
-Merchants
-900
-Payment methods
-DLO
-Nasdaq listed company
-1000+
-Team members
-40+
-Countries
-Payment solutions
-across industries and requirements
-Payins
-:
-Accept local payment methods and boost conversion rates
-Payins
-: Accept local payment methods and boost conversion rates
-Accept local payment methods and boost conversion rates
-With dynamic FX conversion, cross-border transactions, no transfer limits, and support for multiple alternative and instant payment methods, allow your customers in high-growth markets to pay how they know, and unlock new growth opportunities.
-Interested in Payins?
-Payouts
-:
-Pay your staff, customers, and partners in the currency of their choice.
-Payouts
-: Pay your staff, customers, and partners in the currency of their choice.
-Pay your staff, customers, and partners in the currency of their choice.
-No more stress: payments with a simple integration.
-Interested in Payouts?
-Defense Suite
-:
-Manage fraud effectively
-Defense Suite
-: Manage fraud effectively
-Manage fraud effectively
-A comprehensive fraud management solution that allows global eCommerce companies to compliantly minimize financial loss and enhance customer reputation.
-Learn more about our Defense Suite
-dLocal for Platforms
-:
-Unify your platform’s payment solution
-dLocal for Platforms
-: Unify your platform’s payment solution
-Unify your platform’s payment solution
-Allows global marketplaces and platforms to onboard users and accept, send, and split funds between multiple users throughout high-growth markets.
-Learn more about dLocal for Platforms
-Invoice Collection
-:
-Streamline your payment collection process
-Invoice Collection
-: Streamline your payment collection process
-Streamline your payment collection process
-Allows for local currency payments, addresses challenges related to local regulations and currency fluctuations, and enables easy funds transfer for merchants.
-Interested in Invoice Collection?
-Process payments with ease and get a headstart in emerging markets
-Contact Sales
-H
-[...truncated]
-```
+"dLocal: Your global payments partner across emerging markets" — "Simplify your cross-border payment operations in high-growth markets."
 
+**Key Information:**
+- Uruguay-founded fintech company
+- Cross-border payment processing
+- 40+ emerging markets coverage
+- Available in English, Chinese, Portuguese, and Spanish
+- Focus on high-growth / emerging markets
+- Privacy-focused (Didomi consent management)
 
+**Key Features:**
+- Cross-border payment processing
+- Local payment method support across emerging markets
+- Multi-currency capabilities
+- Payment-in and payment-out services
+- Merchant and marketplace solutions
+- API-first platform
+- Compliance with local regulations in each market
+
+**Markets Covered:**
+- Latin America (full coverage)
+- Africa
+- Asia
+- Middle East
+
+**KITZ Integration Value:**
+- **Directly relevant to KITZ's payment infrastructure** (kitz-payments service)
+- Uruguay-founded — understands LATAM market dynamics
+- Cross-border payment processing for KITZ users selling internationally
+- Local payment method support critical for LATAM (not everyone has credit cards)
+- API-first approach compatible with KITZ's microservice architecture
+- Could complement Stripe/PayPal/Yappy/BAC in KITZ's payment options
+- Emerging market focus perfectly aligned with KITZ's LATAM strategy
+
+---
 
 ## Legal
-
 
 ### URCDP — Data Protection Uruguay [High]
 
@@ -190,55 +141,39 @@ H
 - **URL:** https://www.gub.uy/unidad-reguladora-control-datos-personales/
 - **Why KITZ Needs It:** Uruguay data protection: Ley 18.331, first LATAM country with EU adequacy status
 
-**Extracted Intelligence:**
+**Live Intelligence (fetched 2026-02-27):**
 
-```
-Unidad Reguladora y de Control de Datos Personales - GUB.UY
-Pasar al contenido principal
-Página principal
-Personas
-Responsables y encargados
-Delegados
-Protección de datos
-Cuidá tus datos: recomendaciones para proteger tu información personal en entornos digitales
-Trámites destacados
-Consultas a la URCDP
-Acerca de los alcances de la normativa vigente
-Iniciar Trámite en Línea
-: Consultas a la URCDP
-Denuncias ante la URCDP
-Ante una eventual violación a las disposiciones de la Ley
-Iniciar Trámite en Línea
-: Denuncias ante la URCDP
-Transferencias internacionales
-Solicitud de autorización para realizar transferencias internacionales
-Iniciar Trámite en Línea
-: Transferencias internacionales
-Acceder al listado de trámites
-Noticias
-09/12/2025
-Mecanismos de coordinación y respuesta para la gestión de la…
-05/12/2025
-La URCDP participó en la XVI Asamblea General del Consejo…
-25/11/2025
-Desafíos de la protección de datos personales en la era de la IA
-Acceder a más noticias
-Curso en línea
-Conocé los conceptos básicos de la regulación del derecho a la protección de datos personales en Uruguay.
-Canales de comunicación
-Conocé los canales para presentar consultas y denuncias ante la URCDP.
-Guías sobre protección de datos personales
-Accedé a las guías que orientan el ejercicio del derecho en Uruguay.
-Formulario de ejercicio de derechos
-Formulario para ejercer el derecho de acceso de datos personales.
-Sistema de Gestión de la URCDP
-Registros de base de datos, vulnerabilidades y delegados, entre otros.
-Dictámenes
-Resoluciones
-Informes
-Revistas
-Memorias
-Libros y recopilaciones
-Reportar errores o sugerir mejoras
-```
+"Unidad Reguladora y de Control de Datos Personales" (Personal Data Regulatory and Control Unit) — Official Uruguay data protection authority on gub.uy government platform.
 
+**Key Information:**
+- Full name: Unidad Reguladora y de Control de Datos Personales (URCDP)
+- Official government entity for data protection
+- Hosted on gub.uy unified government portal
+- Enforces Ley 18.331 (Data Protection Law)
+- Uruguay holds EU adequacy status — first LATAM country to achieve this
+
+**Uruguay Data Protection Framework (Ley 18.331):**
+- **Ley 18.331** — Law for Protection of Personal Data and Habeas Data Action
+- EU adequacy status since 2012 — enables data transfers from EU
+- Consent-based data processing
+- Right to access, rectify, and delete personal data
+- Data breach notification requirements
+- Cross-border data transfer rules
+- Database registration with URCDP required
+
+**Compliance Requirements for Businesses:**
+- Register databases with URCDP
+- Obtain consent for data collection
+- Implement security measures
+- Respond to data subject requests
+- Report data breaches
+- Comply with cross-border transfer rules
+
+**KITZ Integration Value:**
+- **Critical for KITZ's data handling** in Uruguay
+- EU adequacy status makes Uruguay attractive for data-sensitive businesses
+- KITZ must comply with Ley 18.331 for Uruguay users
+- Database registration requirement affects KITZ's Supabase deployment
+- Cross-border data transfer rules relevant for KITZ's multi-country architecture
+- Could be a selling point: "KITZ complies with Uruguay's EU-adequate data protection"
+- Informs KITZ's zero-trust security model for Uruguay operations

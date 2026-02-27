@@ -2,6 +2,8 @@
 
 > Module: Peru Business | Sources: 6 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -145,7 +147,25 @@ Desde celulares y teléfonos fijos:
 Desde teléfonos fijos a nivel nacional:
 0 801 12 100
 Ver más
-Chat SUNA
+Chat SUNAT
+¿Necesitas ayuda…?
+Ver más
+Chatea con nosotros
+Chatea con nosotros
+Redes sociales
+SUNAT
+Noticias
+Buscar Noticias
+Información institucional
+Conoce más sobre nuestra organización, agenda y directorio de funcionarios.
+Información general
+Qué es la SUNAT, misión, visión, organigrama, instrumentos de gestión, sistema tributario nacional, entre otros.
+Leer más
+SUNAT rinde cuentas
+Información sobre el manejo institucional y presupuestal de la SUNAT.
+Leer más
+Normas legales
+Legislación general, aduane
 [...truncated]
 ```
 

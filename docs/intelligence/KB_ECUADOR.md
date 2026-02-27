@@ -2,6 +2,8 @@
 
 > Module: Ecuador Business | Sources: 3 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -153,7 +155,17 @@ Boost conversion by 3× and deliver a seamless, high-performance payment experie
 Unify
 global payment connections, operations, and data
 One Integration
-Connect to 400+ global payment and fraud providers through a single API. Cut integration costs and future-proof your stack to scale and ad
+Connect to 400+ global payment and fraud providers through a single API. Cut integration costs and future-proof your stack to scale and adapt fast.
+No-code orchestration
+Orchestrate providers, payment methods, and routing logic across markets in just a few clicks — boost acceptance, optimize costs and cut complexity.
+Your shortcut to building a
+world-class payment stack
+Automated reconciliations
+Reconcile payments across PSPs, acquirers, networks, fraud tools, and channels with zero manual effort.
+Advanced subscriptions
+Optimize recurring revenue and reduce churn through dynamic subscription flows.
+Dynamic checkout
+Personalize the
 [...truncated]
 ```
 

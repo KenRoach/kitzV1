@@ -2,6 +2,8 @@
 
 > Module: Project Management | Sources: 3 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -62,7 +64,13 @@ Get to know Automation
 Card mirroring
 View all your to-dos from multiple boards in one place. Mirror a card to keep track of work wherever you need it!
 Compare plans
-[Trello i
+[Trello is] great for simplifying complex processes. As a manager, I can chunk [processes] down into bite-sized pieces for my team and then delegate that out, but still keep a bird's-eye view.
+Joey Rosenberg
+Global Leadership Director at Women Who Code
+Read the story
+75% of organizations report that Trello delivers value to their business within 30 days.
+Trello TechValidate Survey
+Whether someone is in the office, working from home, or working on-site with a client, everyone can share context and informa
 [...truncated]
 ```
 
@@ -197,7 +205,47 @@ Add buffering for autonomy event streams
 ENG-2092
 Reduce startup delay caused by vehicle sync
 ENG-2200
-Fix delayed route updates during rerout
+Fix delayed route updates during rerouting
+Todo
+71
+ENG-926
+Remove UI inconsistencies
+Bug
+Design
+ENG-2088
+TypeError: Cannot read properties
+Bug
+ENG-924
+Upgrade to Claude Opus 4.5
+AI
+ENG-1882
+Optimize load times
+Performance
+In Progress
+3
+ENG-1487
+Remove contentData from GraphQL API
+61039
+MKT-1028
+Launch page assets
+Design
+ENG-2187
+Prevent duplicate ride requests on poor...
+Bug
+62048
+Done
+53
+ENG-2074
+Clean up deprecated APIs...
+API
+61002
+ENG-1912
+Reduce latency in autonomy st...
+61005
+ENG-1951
+Reduce ETA fluctuations durin...
+61202
+ENG-
 [...truncated]
 ```
 

@@ -1,111 +1,71 @@
-# Guatemala Business — KITZ Knowledge Base Intelligence
+# Guatemala Business
 
-> Module: Guatemala Business | Sources: 3 | Auto-generated from KITZ Knowledge Base
+> Module: Guatemala Business | Sources: 3 | Auto-generated from KITZ Knowledge Base (Batch 4)
 
 ---
 
-
 ## Tax
 
-
-### SAT Guatemala [Critical]
-
-- **ID:** PKB-419
-- **Type:** Gov
+### SAT Guatemala
+- **Priority:** `Critical`
 - **URL:** https://portal.sat.gob.gt/
-- **Why KITZ Needs It:** Guatemala tax authority: NIT registration, IVA (12%), ISR, electronic invoicing (FEL)
-- **Note:** [HTTP 403]
+- **Type:** Gov
+- **Why KITZ needs it:** Guatemala tax authority: NIT registration, IVA (12%), ISR, electronic invoicing (FEL)
 
+**Extracted Intelligence:**
+
+Blocked by JS challenge (Cloudflare). Known: SAT (Superintendencia de Administracion Tributaria). NIT (Numero de Identificacion Tributaria) required for all businesses. IVA 12% (one of lowest in LATAM). ISR progressive income tax rates. FEL (Factura Electronica en Linea) mandatory since 2022. Monthly/annual declarations. Agencia Virtual online portal.
+
+---
 
 ## Registration
 
-
-### Registro Mercantil Guatemala [High]
-
-- **ID:** PKB-420
-- **Type:** Gov
+### Registro Mercantil Guatemala
+- **Priority:** `High`
 - **URL:** https://www.registromercantil.gob.gt/
-- **Why KITZ Needs It:** Guatemala commercial registry: company incorporation, trade name, annual filings
+- **Type:** Gov
+- **Why KITZ needs it:** Guatemala commercial registry: company incorporation, trade name, annual filings
 
 **Extracted Intelligence:**
 
-```
-Registro Mercantil -
-¿Quiénes Somos?
-El Registro Mercantil General de la República de Guatemala es la entidad estatal
-encargada de llevar a cabo el registro, certificación y  brindar seguridad
-jurídica a todos los actos mercantiles que realicen las personas individuales o
-jurídicas dentro del país, está adscrito al Ministerio de Economía.
-Autoridades
-Principales Autoridades del Registro Mercantil General de la República de Guatemala.
-Organigrama
-Estructura jerárquica y funcional del Registro Mercantil.
-Objetivos​
-El balance entre la certeza jurídica y la agilidad en el servicio a nuestros usuarios, es sin duda la mejor mezcla que nuestra organización presta a todos los ciudadanos que los solicitan. Con la disponibilidad de nuevas herramientas tecnológicas, el Registro Mercantil arranca una nueva era, acercando los servicios registrales a los requerimientos de los usuarios.
-Funciones​
-Desde el año de 1,971, el Registro Mercantil General de la República tiene la misión de Registrar, Certificar, dar Seguridad a todos los actos mercantiles que realicen personas individuales o jurídicas. En nuestra institución se inscriben todas las sociedades nacionales y extranjeras, los respectivos representantes legales, las empresas mercantiles, los comerciantes individuales y todas las modificaciones que de estas entidades se quieran inscribir
-Misión​
-Somos una institución que da certeza y seguridad jurídica, a través de registrar y certificar los actos mercantiles, de las sociedades nacionales y extranjeras, empresas mercantiles, comerciantes individuales, auxiliares de comercio y todas las modificaciones que ocurran en cualquier hecho que los afecte en Guatemala.
-Visión
-Ser un Registro Mercantil vanguardista, competitivo, brindando atención al usuario de manera ágil y transparente, a través de la innovación tecnológica, facilitando las inscripciones mercantiles.
-Marco Legal
-Mejorar el clima de negocios y desarrollar condiciones que impulsen la competitividad del país a efecto de posicionar a Guatemala como uno de los mejores destinos para la inversión nacional y extranjera.
-Políticas de Calidad​
-Brindar al usuario una atención eficiente y eficaz, facilitando las inscripciones mercantiles, integrándose a las demás instituciones de gobierno para incentivar las inversiones nacionales y extranjeras.
-Spanish
-Chinese (Simplified)
-Dutch
-English
-French
-German
-Italian
-Spanish
-Organigrama
-×
-Atencion
-×
-```
+Registro Mercantil General de la Republica de Guatemala -- state entity for registering and certifying all commercial acts. Attached to Ministry of Economy. Operating since 1971.
 
+**Registers:** All national and foreign companies, legal representatives, mercantile enterprises, individual merchants, and modifications.
 
+**Services:** Sede Virtual (online filings), guided services, statistical data. Moving toward new technological tools for improved user access.
+
+**Mission:** Register and certify commercial acts with legal certainty.
+**Vision:** Cutting-edge, competitive registry with agile, transparent service through technological innovation.
+
+---
 
 ## Payments
 
-
-### Pagos Ninjacard / VisaNet Guatemala [Medium]
-
-- **ID:** PKB-421
-- **Type:** Platform
+### Pagos Ninjacard / VisaNet Guatemala (now NeoNet)
+- **Priority:** `Medium`
 - **URL:** https://www.visanet.com.gt/
-- **Why KITZ Needs It:** Guatemala card processing + digital payments for merchants
+- **Type:** Platform
+- **Why KITZ needs it:** Guatemala card processing + digital payments for merchants
 
 **Extracted Intelligence:**
 
-```
-NeoNet
-Te brindamos soluciones innovadoras y simples para que puedas
-multiplicar tus ventas.
-AfÍliate
-Soluciones para tu comercio
-Tu mejor aliado estratégico
-Seguridad
-Te brindamos el más alto estándar de seguridad de datos de la industria de pagos electrónicos, otorgada por PCI, para que tú solo pienses en vender.
-Innovación
-Nuestra prioridad es innovar con soluciones de última tendencia para simplificar la experiencia de cobro de tu negocio.
-Respaldo
-Trabajamos de la mano con nuestros bancos socios para que puedas contar con tu liquidación inmediata en el banco de tu preferencia.
-Respaldo
-Trabajamos de la mano con nuestros bancos socios para que puedas contar con tu liquidación inmediata en el banco de tu preferencia.
-Compromiso
-El éxito de tu negocio es nuestra prioridad, ofreciendo soluciones simples y ágiles para facilitar tu día a día.
-Compromiso
-El éxito de tu negocio es nuestra prioridad, ofreciendo soluciones simples y ágiles para facilitar tu día a día.
-Innovación
-Nuestra prioridad es innovar con soluciones de última tendencia para simplificar la experiencia de cobro de tu negocio.
-Innovación
-Nuestra prioridad es innovar con soluciones de última tendencia para simplificar la experiencia de cobro de tu negocio.
-Tecnología
-Trabajamos con tecnologías innovadoras que fomentan un ecosistema que impulsa el desarrollo de los comercios.
-Tecnología
-Trabajamos con tecnologías innovadoras que fomentan un ecosistema que impulsa el desarrollo de los comercios.
-```
+VisaNet Guatemala rebranded to **NeoNet**.
 
+**Products:**
+- **NeoCuotas:** Installment payments 2-18 months, no interest (Visa/MasterCard)
+- **NeoPuntos:** Points redemption for credit/debit cards
+- **CUIK:** QR code and contactless payments
+- **NeoPos:** POS terminal with multiple payment forms
+
+**E-Commerce:**
+- **NeoPay:** Website payment acceptance
+- **NeoPagos:** Automated monthly recurring billing
+- **CyberSource:** Visa's global secure online payment platform
+- **Delivery:** Payment for delivery orders
+- **Mall Virtual:** Remote sales without website
+
+**Merchant Affiliation:** Simple process, Visa/MasterCard, PCI-certified security, bank partnerships for immediate settlement.
+
+**Contact:** servicios@neonet.com.gt, 2424-2828, Via 5 Zona 4, Centro Financiero Torre III, Guatemala.
+
+**KITZ Relevance:** Key payment infrastructure for Guatemala covering POS, QR, online, delivery channels.

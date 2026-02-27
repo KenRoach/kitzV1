@@ -2,6 +2,8 @@
 
 > Module: Colombia Business | Sources: 7 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -92,7 +94,23 @@ Servicios tributarios
 Consulta Estado RUT
 Recuperación Contraseña
 Consulta de Inconsistencias
-Radicación electrónica de recursos 
+Radicación electrónica de recursos de reconsideración
+Solicitud devolución y/o compensación
+Actividad Económica
+Usuarios no registrados diligenciar formularios
+Verificación de correos DIAN
+Planeación
+RUT- Definir tipo de inscripción
+Prevalidadores aduaneros
+Certificado al proveedor
+Certificado de Producción PROFIA V2 – 2023
+Certificado de Producción PROFIA - 2023
+Certificado de Producción PROFIA
+Contingencia Carga (Versión optimizada)
+Cuadro Insumo Producto PROFIA
+Cuadro Insumo Producto
+Declaración de Exportación
+Hojas 2 formular
 [...truncated]
 ```
 
@@ -183,7 +201,20 @@ Consulta nuestras convocatorias
 Realiza tus trámites de forma ágil y sencilla
 Te asesoramos en cada una de las etapas de tu empresa, para que esta haga parte del entorno competitivo de la Región.
 Saber más
-Inscríbete al newsl
+Inscríbete al newsletter y obtén contenido exclusivo
+Nombres
+Apellidos
+Número de identificación
+CC
+Cédula de ciudadanía
+Cédula de extranjería
+Pasaporte
+Permiso especial de permanencia
+Correo electrónico
+Autorizas a la Cámara de Comercio de Bogotá para realizar el tratamiento de tus datos con el fin de atender tu solicitud, contactar y enviar información de nuestros eventos y servicios; de acuerdo con la Política de Protección de Datos que encuentras
+aquí.
+Suscribirme
+¡Listo! Revisa tu correo y disfruta del conteni
 [...truncated]
 ```
 
@@ -270,7 +301,19 @@ Aprende de otras personas que también tienen Nequi
 ¡Preguntando lo puedes todo! Deja tus preguntas y comparte con la Comunidad Nequi lo que sabes, también podrás enterarte de novedades de la app, préstamos y más.
 ¿Cuánto demora en llegar un envío de Nequi a otro banco?
 ¿Cómo recargar mi Nequi?
-¿Cómo paso la titularidad de mi Nequi actual (persona natural) a mi
+¿Cómo paso la titularidad de mi Nequi actual (persona natural) a mi Empresa ?
+Visita nuestra comunidad
+¿Cuánto demora en llegar un envío de Nequi a otro banco?
+¿Cómo recargar mi Nequi?
+¿Cómo paso la titularidad de mi Nequi actual (persona natural) a mi Empresa ?
+Ven a trabajar en Nequi, ¡seamos equipo!
+Únete al #TalentoNequi y mejoremos juntos la vida de millones de personas.
+Trabaja en Nequi
+¿Necesitas ayuda?
+Si tienes dudas sobre alguna funcionalidad o servicio Nequi, aquí encontrarás tus respuestas:
+Comunidad Nequi
+Centro de Ayuda
+Si lo que necesitas es habl
 [...truncated]
 ```
 
@@ -340,7 +383,16 @@ Podrás usar el botón de PSE, las 24 horas al día, 7 días a la semana, todos 
 INFORMACIÓN EN LÍNEA DE RECAUDOS.
 Cada recaudo notifica al negocio de manera en tiempo real.
 SEGURIDAD EN EL MANEJO DE LA INFORMACIÓN Y EL DINERO
-PSE cumple con estándares de manejo de información y de infraestructura tecnológica de alta 
+PSE cumple con estándares de manejo de información y de infraestructura tecnológica de alta disponibilidad.
+SEGURIDAD EN EL MADESARROLLADO SOBRE LA RED DE ACH COLOMBIA
+Las transferencias de información se ejecutan sobre la red de transferencias de ACH Colombia, la red sobre la que trabajan los bancos de mayor reputación de Colombia.
+EFICIENCIA EN PROCESOS OPERATIVOS
+La operación administrativa solo tiene efectos en cuentas de ahorro o corriente.
+Preguntas frecuentes Contenido web / Persona
+Preguntas Frecuentes
+Si tienes más preguntas, por favor accede a nuestro
+Centro de ayuda.
+¿Qué es
 [...truncated]
 ```
 
@@ -429,7 +481,23 @@ Te prestamos para lo que necesites tú o tu negocio
 Nanocrédito
 Puedes adquirir un crédito sin papeleo y desde tu celular
 Adelanto de Sueldo
-Si recibes tu nómina en DaviPlata este crédito es pa
+Si recibes tu nómina en DaviPlata este crédito es para ti
+Resoluciones recomendadas:
+Imagen de fondo desktop: 1224px x 620px
+Imagen de fondo mobile: 360px x 738px
+¡Métele poderes a tu negocio!
+Con
+Mi Negocio de DaviPlata
+puedes generar diferentes opciones de pago, llevar el control de tus ventas ¡y más!
+Saber más
+BIENESTAR FINANCIERO
+Mejora tus finanzas personales y familiares con estos consejos
+Consultar
+Consejos
+de seguridad
+¡Aprende cómo NO dar papaya y cuidémonos juntos!
+¡Identifica nuestros mensajes!
+Nuestros mensajes de texto solo te llegar
 [...truncated]
 ```
 
@@ -530,7 +598,27 @@ Noticias
 Superintendente de Industria y Comercio, Cielo Rusinque, toma posesión ante el presidente...
 Bogotá, D. C., 2 de febrero de 2024.
 Ante el presidente Gustavo Petro tomó posesión como nueva superintendente...
-Más notici
+Más noticias
+evento sic nueva
+Eventos
+04 de octubre, 2023
+Congreso Internacional: reindustrialización energética, seguridad en el transporte y combustibles líquidos.
+...
+Más eventos
+Social
+<Ninguno>
+SICTeVe: La SIC del Cambio culminó con éxito el Plan de Descongestión Judicial
+Más SicTeVe
+<Ninguno>
+ABC MARCAS (2025)
+Descargar el PDF aquí
+Más publicaciones
+<Ninguno>
+Galerías
+Protección al consumidor en Colombia - una aproximación desde de la competencia de la SIC.
+Ver Galerías
+<Ninguno>
+https://sicfacilita
 [...truncated]
 ```
 
@@ -652,7 +740,13 @@ Reindustrialización
 Es la política liderada por el Ministerio de Comercio, Industria y Turismo enfocada en transitar de una economía extractivista a una economía del conocimiento, productiva y sostenible.
 Centros de Reindustrialización ZASCA
 Iniciativa que hace parte de la
-polític
-[...truncated]
+política nacional de reindustrialización y economía popular,
+que contribuye a cerrar brechas tecnológicas y económicas a través
+de
+la integración regional y encadenamientos
+productivos en todo el país.
+Previous
+Next
+Descarga nuestro brochure
 ```
 

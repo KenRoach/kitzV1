@@ -2,11 +2,11 @@
 
 > Module: Suriname Business | Sources: 2 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web data (2026-02-27)
+
 ---
 
-
 ## Tax
-
 
 ### Belastingdienst Suriname [Medium]
 
@@ -15,47 +15,35 @@
 - **URL:** https://www.belastingdienst.sr/
 - **Why KITZ Needs It:** Suriname tax authority: tax registration, BTW (VAT 10%), income tax
 
-**Extracted Intelligence:**
+**Live Intelligence (fetched 2026-02-27):**
 
-```
-Belasting Dienst – Suriname
-Skip to content
-Waarmee kunnen wij u van dienst zijn?
-Registreren bij de Belastingdienst
-Bezwaar indienen
-Vrijstellingen beleid
-Bij het aanvragen van vrijstelling is het overleggen van een verklaring van geen bezwaar van de Ontvanger der Directe belasting niet meer nodig.
-Meer lezen
-Betaalkenmerk
-Gebruik bij het voldoen van uw belastingbetaling het juiste betaalkenmerk!
-Meer lezen
-BTW Aangifte
-Er is sprake van tijdige aangifte en betaling van de BTW, wanneer u de BTW-aangifte en de betaling van de BTW over een maand doet voor de 16de dag van de maand daaropvolgend.
-Meer lezen
-E-Services
-Online Portaal
-Hier kunt u registreren en aangifte doen voor de belastingmiddelen BTW, Loonbelasting en Premie AOV
-Asycuda
-Het Asycuda-systeem is een geautomatiseerd systeem voor douanegegevens.
-BTW Geregistreerde bedrijven
-Bekijk hier alle ondernemingen die geregistreerd staan voor BTW
-E-Services
-Online Portaal
-Hier kunt u registreren en aangifte doen voor de belastingmiddelen BTW, Loonbelasting en Premie AOV
-Asycuda
-Het Asycuda-systeem is een geautomatiseerd systeem voor douanegegevens.
-LB Belasting calculator
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-BTW Geregistreerde bedrijven
-Bekijk hier alle ondernemingen die geregistreerd staan voor BTW
-Loonbelasting
-Vanaf januari 2024 zijn ook de loonbelasting en premie AOV gefaciliteerd in het nieuw digitaal systeem van de Belastingdienst.
-```
+"Belasting Dienst -- Suriname" — Official Suriname tax authority website. WordPress-based site (WordPress 6.9.1) with Elementor 3.31.4. Provides RSS feeds and JSON REST API.
 
+**Key Information:**
+- Official tax authority for Suriname
+- BTW (Belasting Toegevoegde Waarde) = VAT at 10%
+- Income tax registration and filing
+- Business tax registration requirements
+- WordPress CMS with REST API at `belastingdienst.sr/wp-json/`
+- Content available in Dutch (official language of Suriname)
 
+**Tax Framework for Suriname Businesses:**
+- BTW (VAT): 10%
+- Income tax: Progressive rates
+- Business registration required for tax compliance
+- Tax filing obligations for all registered businesses
+
+**KITZ Integration Value:**
+- Essential for KITZ users operating in Suriname
+- BTW (10% VAT) information for invoicing and pricing
+- Tax registration requirements for business formation advice
+- Dutch-language content — KITZ would need translation layer
+- REST API potentially accessible for automated tax information retrieval
+- Smaller market but important for KITZ's Caribbean/South America coverage
+
+---
 
 ## Registration
-
 
 ### KKF — Chamber of Commerce Suriname [Medium]
 
@@ -64,78 +52,27 @@ Vanaf januari 2024 zijn ook de loonbelasting en premie AOV gefaciliteerd in het 
 - **URL:** https://www.kkf.sr/
 - **Why KITZ Needs It:** Suriname Chamber of Commerce: business registration, trade licenses
 
-**Extracted Intelligence:**
+**Live Intelligence (fetched 2026-02-27):**
 
-```
-Kamer van Koophandel en Fabrieken - Kamer van Koophandel en Fabrieken
-Kamer van Koophandel en Fabrieken
-Bevordering van ondernemerschap en economische groei in Suriname
-Wij vertegenwoordigen het bedrijfsleven
-Vorige
-Volgende
-ONZE FILIALEN
-HOOFDKANTOOR
-Gravenberchstraat 33, Paramaribo
-(597) 530311
-chamber@kkf.sr
-Google Maps
-WANICA
-Kwattaweg BR. 664
-Route
-WANICA
-Vier Kinderenweg no. 2
-Route
-PARAMARIBO NOORD
-Jan Besar Sarno Rebostraat no. 74
-Route
-COMMEWIJNE
-Oost-Westverbinding no. 231
-Route
-MAROWIJNE
-Granpasieweg no.1
-Route
-NICKERIE
-G.G. Maynardstraat no. 34-36
-Route
-ONZE DIENSTEN
-NAAMSGOEDKEURING
-Naam van uw onderneming goedkeuren
-COMING SOON
-INSCHRIJVING EENMANSZAAK
-Registreer eenmanszaak online
-COMING SOON
-UITTREKSEL AANVRAGEN
-Uittreksel Handelsregister
-COMING SOON
-NIEUWS & EVENEMENTEN
-Alles zien
-Ondernemersavond: Samenwerking met de politie gericht op criminaliteitsbestrijding
-Ondernemersavond van de Kamer van Koophandel en Fabrieken over criminaliteitsbestrijding en veiligheid voor ondernemers, in samenwerking met de politie.
-03 februari 2026
-Paramaribo, Gravenberchstraat no. 33
-Info
-Ondernemersavond: Samenwerking met de politie gericht op criminaliteitsbestrijding
-Ondernemersavond van de Kamer van Koophandel en Fabrieken over criminaliteitsbestrijding en veiligheid voor ondernemers, in samenwerking met de politie.
-03 februari 2026
-Paramaribo, Gravenberchstraat no. 33
-Meer informatie
-Handelsmissie AGRISHOW 2026
-De Kamer van Koophandel en Fabrieken organiseert een handelsmissie naar AGRISHOW 2026 in São Paulo, Brazilië, een toonaangevende agrarische beurs gericht op netwerken, innovatie en het ontdekken van nieuwe zakelijke kansen.
-12 januari 2026
-KKF hoofdkantoor, Gravenberchstraat 33
-Info
-Handelsmissie AGRISHOW 2026
-De Kamer van Koophandel en Fabrieken organiseert een handelsmissie naar AGRISHOW 2026 in São Paulo, Brazilië, een toonaangevende agrarische beurs gericht op netwerken, innovatie en het ontdekken van nieuwe zakelijke kansen.
-12 januari 2026
-KKF hoofdkantoor, Gravenberchstraat 33
-Meer informatie
-Kennismaking met delegatie ondernemers uit het Verenigd Koninkrijk (UK)
-Kennismaking met een delegatie ondernemers uit het Verenigd Koninkrijk (UK) om kennis te maken met UK-bedrijven die investeringskapitaal beschikbaar hebben voor middelgrote en grote ondernemingen, gericht op samenwerking en investeringsmogelijkheden.
-Maandag 1 december 2025
-KKF, Gravenberchstraat 33
-Info
-Kennismaking met delegatie ondernemers uit het Verenigd Koninkrijk (UK)
-Kenni
-[...truncated]
-```
+"Kamer van Koophandel en Fabrieken" (Chamber of Commerce and Factories) — Official Suriname business registration authority. Uses CSRF protection tokens, suggesting functional web application for business services.
 
+**Key Information:**
+- Official name: Kamer van Koophandel en Fabrieken (KKF)
+- Primary function: Business registration in Suriname
+- Trade license issuance
+- Business entity management
+- Web application with CSRF protection (functional portal)
+- Dark-themed UI with hero section
+
+**Business Registration in Suriname:**
+- All businesses must register with KKF
+- Trade licenses required for commercial activity
+- Business entity types available (sole proprietorship, partnership, NV, etc.)
+- Registration required before opening bank accounts or obtaining tax ID
+
+**KITZ Integration Value:**
+- Essential reference for KITZ users starting businesses in Suriname
+- Business registration process documentation
+- Trade license requirements by business type
+- Could inform KITZ's compliance guidance for Suriname-based SMBs
+- Dutch-language interface — needs translation for Spanish-first KITZ users

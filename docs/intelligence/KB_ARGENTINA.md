@@ -2,19 +2,57 @@
 
 > Module: Argentina Business | Sources: 6 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
 ## Tax
 
 
-### AFIP — Administración Federal de Ingresos [Critical]
+### AFIP -- Administracion Federal de Ingresos [Critical]
 
 - **ID:** PKB-476
 - **Type:** Gov
 - **URL:** https://www.afip.gob.ar/
 - **Why KITZ Needs It:** Argentina tax authority: CUIT/CUIL registration, IVA (21%), ganancias, monotributo
-- **Note:** [Minimal content at https://www.afip.gob.ar/]
+- **Note:** [Minimal content -- enriched from knowledge base]
+
+**Deep Enrichment (Knowledge Base):**
+
+```
+AFIP -- ARGENTINA FEDERAL TAX AUTHORITY:
+
+OVERVIEW: Administers national taxes, customs duties, social security contributions.
+The single most important government entity for any business in Argentina.
+
+KEY FUNCTIONS:
+1. CUIT/CUIL Registration: Tax ID required for ALL business operations
+2. Clave Fiscal: Multi-level digital key for online tax services (Level 3+ for business)
+3. Tax Regimes:
+   a) Monotributo (Simplified): Unified tax for small taxpayers
+      - Categories A-K based on gross income
+      - Fixed monthly payment (tax + social security + healthcare)
+      - IDEAL for KITZ's target users (small entrepreneurs)
+      - Can issue "Factura C"
+   b) Responsable Inscripto: For larger businesses
+      - Must charge/remit IVA (21%), file Ganancias
+      - Issues Factura A (B2B) and Factura B (B2C)
+4. IVA: 21% standard, 10.5% reduced, 0% exports
+5. Ganancias (Income Tax): 25-35% corporate, progressive for individuals
+6. Electronic Invoicing: MANDATORY since 2019 via WSFE API
+7. Employer obligations: SUSS, ART, SICOSS payroll system
+
+API: WSFE (electronic invoicing SOAP API), WSAA (authentication)
+Digital certificates required. SDKs in Python, PHP, Java.
+
+KITZ RELEVANCE:
+- Essential for ALL Argentine KITZ users
+- Monotributo is most common for small entrepreneurs
+- Electronic invoicing API could be a KITZ tool
+- Tax calendar reminders are high-value features
+- Complex, frequently changing landscape requires constant updates
+```
 
 
 ## Registration
@@ -71,7 +109,23 @@ La Inspección General de Justicia y el Ministerio de Justicia respondieron las 
 El Gobierno Nacional completó el programa de transformación de Sociedades del Estado (SE) en Sociedades Anónimas (SA)
 22 de diciembre de 2025
 El Inspector General de Justicia visitó las obras para el emplazamiento del nuevo archivo general de IGJ
-
+Ver todo
+Dr. Daniel Roque Vítolo
+Inspector General de Justicia
+Institucional
+Acerca del organismo
+La Inspección
+Funciones del Inspector General de Justicia
+Marco normativo
+Resoluciones particulares
+Resoluciones particulares Control Federal de Ahorro
+Subinspectora General de Justicia
+Dra. Marta Gladys Pardini
+Direcciones
+Delegado Administrativo - Dr. Luis E. Pirato Mazza
+Director de Entidades Civiles - Dr. Juan Carlos Pratesi
+Directora de Sociedades Comerciales - Dra. Adriana Elizabeth Vicente
+Co
 [...truncated]
 ```
 
@@ -167,19 +221,50 @@ Información usuario financiero
 Información sobre seguros
 ayuda@mercadopago.com.ar
 Mercado Pago ofrece servicios de pago y no está autorizado por el Banco Central a operar como entidad financiera. Los fondos acreditados en cuentas de pago no constituyen depósitos en una entidad financiera ni están garantizados conforme legislación aplicable a depósitos en entidades financieras.
-No se asegura ni garantiza el resultado de la inversión en Mercado Fondo. Mercado Pago Asset Management S.A. actuará como Sociedad Gerente y Banco Industrial S.A. actuará como Sociedad Depositaria. El valor de la cuotaparte será neto de gastos ordinarios de gestión y de 
+No se asegura ni garantiza el resultado de la inversión en Mercado Fondo. Mercado Pago Asset Management S.A. actuará como Sociedad Gerente y Banco Industrial S.A. actuará como Sociedad Depositaria. El valor de la cuotaparte será neto de gastos ordinarios de gestión y de los honorarios de la sociedad gerente y la sociedad depositaria. Los honorarios, gastos y demás información se encuentran disponibles en
+https://inversiones.mercadopago.com.ar
+. No existen honorarios de éxito. Las inversiones en cuotapartes del fondo no constituyen depósito en el Banco Industrial S.A. a los fines de la Ley de Entidades Financieras ni cuenta con ninguna de las garantías que tales depósitos a la vista o a plazo pueden gozar de acuerdo a la legislación y reglamentación aplicables e
 [...truncated]
 ```
 
 
 
-### MODO — Argentina Interoperable QR [High]
+### MODO -- Argentina Interoperable QR [High]
 
 - **ID:** PKB-479
 - **Type:** Platform
 - **URL:** https://www.modo.com.ar/
 - **Why KITZ Needs It:** Argentina bank consortium wallet: interoperable QR, all banks in one app
-- **Note:** [Minimal content at https://www.modo.com.ar/]
+- **Note:** [Minimal content -- enriched from knowledge base]
+
+**Deep Enrichment (Knowledge Base):**
+
+```
+MODO -- ARGENTINA BANK CONSORTIUM DIGITAL WALLET:
+
+OVERVIEW: Bank-backed digital payment platform created by 35+ Argentine banks.
+Unified payment experience connecting all bank accounts through one app.
+
+KEY FEATURES:
+1. Unified Banking App: Connect multiple bank accounts, view balances,
+   pay from any account with one tap
+2. QR Payments (Transferencias 3.0): Interoperable with MercadoPago,
+   Uala, and all CVU/CBU wallets
+3. P2P Transfers: Send money to any CBU/CVU/Alias
+
+PARTICIPATING BANKS (35+):
+Banco Galicia, Santander, BBVA, Macro, HSBC, Banco Nacion,
+Banco Provincia, ICBC, Itau, Patagonia, Supervielle, Comafi + more
+
+PRICING: Free for consumers; merchant fees ~0.6-1.5%
+
+KITZ RELEVANCE:
+- Complements MercadoPago in Argentine payment ecosystem
+- Interoperability means any QR acceptance covers MODO users
+- Bank-backed = higher trust among traditional consumers
+- No separate integration needed if accepting QR payments
+- Growing but less dominant than MercadoPago
+```
 
 
 ### Ualá [High]
@@ -299,7 +384,15 @@ Dirección Nacional de Lealtad Comercial
 Dirección Nacional de Políticas para el Desarrollo del Mercado Interno
 Contacto
 Dirección:
-Av. Julio A. Roca 651- Piso 4° - 
-[...truncated]
+Av. Julio A. Roca 651- Piso 4° - C.A.B.A
+Código postal:
+C1067AAB
+Correo electrónico:
+[email protected]
+Seguinos
+Facebook
+X (ex Twitter)
+Instagram
+Scroll hacia arriba
 ```
 

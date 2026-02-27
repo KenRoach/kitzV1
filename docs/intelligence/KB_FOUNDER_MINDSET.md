@@ -2,6 +2,8 @@
 
 > Module: Founder Mindset | Sources: 53 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -151,7 +153,22 @@ Simon & Schuster
 ]
 Shimkin urged Carnegie to write a book, but he was not initially persuaded. Shimkin then hired a
 stenographer
-to type up what he heard in one of Carnegie's lon
+to type up what he heard in one of Carnegie's long lectures and presented the transcript to Carnegie,
+[
+9
+]
+who edited and revised it into a final form.
+[
+10
+]
+To market the book, Shimkin sent 500 copies of the book to former graduates of the Dale Carnegie Course, with a note that pointed out the utility of the book for refreshing students with the advice they had learned.
+[
+11
+]
+: 141
+The 500 mailed copies brought orders for over 5,000 more copies of the book and Simon & Schuster had to increase the original print order of 1,200 quickly.
+[
+11
 [...truncated]
 ```
 
@@ -335,7 +352,33 @@ He attended the
 State Teachers College
 in
 Warrensburg
-, gradu
+, graduating in 1908.
+[
+3
+]
+His first job after college was selling correspondence courses to ranchers. He moved on to selling
+bacon
+,
+soap
+, and
+lard
+for
+Armour & Company
+.
+[
+8
+]
+He was successful to the point of making his sales territory of
+South Omaha
+, Nebraska, the national leader for the firm.
+[
+9
+]
+After saving $200, Dale Carnegie quit sales in 1911 in order to pursue a lifelong dream of becoming a
+Chautauqua
+lecturer. He ended up instead attending the
+American Academy of Dramatic Arts
+in New Y
 [...truncated]
 ```
 
@@ -674,7 +717,29 @@ I'm Interested in the following updates from Ray:
 Life and Work Principles
 Economics, Politics, and Culture
 Principles Tools
-Philanth
+Philanthropy
+Economic and Investment Principles
+AI Tools
+I would like to receive a
+free PDF of
+Big Debt Crises
+!
+I would like to receive a free PDF of the charts from
+Principles for Dealing with the Changing World Order
+!
+I would like to receive a free PDF of the
+Country Power Index
+!
+I would like to receive a free PDF of
+How Countries Go Broke
+!
+Please select at least one area of interest.
+Sign Up
+You're almost finished
+You will receive an email confirmation shortly.
+Share Principles
+✕
+Available to Ord
 [...truncated]
 ```
 
@@ -818,7 +883,35 @@ ISSN
 .
 ^
 Sorkin, Andrew Ross (September 5, 2017).
-"Bridgewater's Ray Dalio Dive
+"Bridgewater's Ray Dalio Dives Deeper Into the 'Principles' of Tough Love"
+.
+The New York Times
+.
+ISSN
+0362-4331
+. Retrieved
+June 30,
+2024
+.
+^
+Varadarajan, Tunku (November 19, 2021).
+"
+'Principles for Dealing With the Changing World Order' Review: Trouble Ahead, As Usual"
+.
+The Wall Street Journal
+. Retrieved
+June 30,
+2024
+.
+^
+Calvello, Angelo (May 10, 2018).
+"Ray Dalio's Book Has Sold a Million Copies. But Who's Actually Implementing His Ideas?"
+.
+Institutional Investor
+.
+Archived
+from the original on December 31, 2018
+. R
 [...truncated]
 ```
 
@@ -1016,7 +1109,30 @@ futures
 14
 ]
 He later worked as the Director of Commodities at
-Dominick & Domini
+Dominick & Dominick LLC
+.
+[
+18
+]
+In 1974, he became a futures trader and broker at
+Shearson Hayden Stone
+, a securities firm
+[
+14
+]
+run by
+Sandy Weill
+, who later became famous for building up
+Citigroup
+. At the firm, Dalio's job was to advise cattle ranchers, grain producers, and other farmers on how to hedge risks, primarily with futures.
+[
+19
+]
+Dalio was fired from Shearson Hayden Stone after punching his boss in the face while drunk at a New Year's Eve party in 1974.
+[
+19
+]
+Founding of Bridgewater Associates
 [...truncated]
 ```
 
@@ -1129,7 +1245,14 @@ economic thinking
 Learn more about the basic driving forces behind the economy and why economic cycles occur, as well as further research by Dalio into pertinent economic topics like dealing with the
 income/opportunity gap.
 Learn More
-Disclaimer: The only social media pl
+Disclaimer: The only social media platforms that Ray Dalio has official accounts on can be found below.
+Ray Dalio
+In 1975, Ray Dalio founded an investment firm, Bridgewater Associates, out of his two-bedroom apartment in New York City. Over forty years later, Bridgewater has grown into the fifth most important private company in the United States, according to
+Fortune
+magazine, and Dalio himself has been named to
+Time
+magazine’s list of the 100 most influential people in the world.
+Along the way, Dalio discovered a set of unique p
 [...truncated]
 ```
 
@@ -1190,7 +1313,12 @@ Mindset
 , Dweck writes:
 If you have only a certain amount of intelligence, a certain personality, and a certain moral character— well, then you’d better prove that you have a healthy dose of them. It simply wouldn’t do to look or feel deficient in these most basic characteristics.
 […]
-I’ve seen so many people with this one consuming goal of proving themselves— in the classroom, i
+I’ve seen so many people with this one consuming goal of proving themselves— in the classroom, in their careers, and in their relationships. Every situation calls for a confirmation of their intelligence, personality, or character. Every situation is evaluated: Will I succeed or fail? Will I look smart or dumb? Will I be accepted or rejected? Will I feel like a winner or a loser?
+These things are culturally desirable. We value intelligence, personality, and character. It’s normal to want this. But …
+In
+Mindset
+, Dweck writes:
+There’s another mindset in which these traits are not simply a h
 [...truncated]
 ```
 
@@ -1326,7 +1454,38 @@ in 1967,
 and earned a
 Ph.D.
 in psychology from
-Yale Unive
+Yale University
+in 1972.
+[
+4
+]
+[
+6
+]
+Career and research
+[
+edit
+]
+After obtaining her PhD, Dweck joined the faculty of the
+University of Illinois
+, eventually reaching the rank of
+associate professor
+. In 1981, she became a professor at Harvard's Laboratory of Human Development, then returned to the University of Illinois in 1985.
+[
+7
+]
+In 1989, she joined the faculty of
+Columbia University
+, and in 2004 became a Lewis and Virginia Eaton professor of psychology at
+Stanford University
+.
+[
+8
+]
+[
+9
+]
+Dweck's
 [...truncated]
 ```
 
@@ -1391,7 +1550,42 @@ was named Book of the Year by the World Education Federation. Her work has been 
 Ratings
 &
 Reviews
-Wh
+What do
+you
+think?
+Rate this book
+Write a Review
+Friends
+&
+Following
+Create a free account
+to discover what your friends think of this book!
+Community Reviews
+4.09
+177,008
+ratings
+12,538
+reviews
+5 stars
+75,216 (42%)
+4 stars
+58,963 (33%)
+3 stars
+30,586 (17%)
+2 stars
+8,751 (4%)
+1 star
+3,492 (1%)
+Search review text
+Filters
+Displaying 1 - 30 of 12,536 reviews
+Kirsten
+69 reviews
+89 followers
+Follow
+Follow
+May 8, 2023
+Let me save you the money and the aggravation: The point of this book is (admittedly) 
 [...truncated]
 ```
 
@@ -1446,7 +1640,7 @@ About the Authors
 Dan Pilat
 Dan is a Co-Founder and Managing Director at The Decision Lab. He is a bestselling author of Intention - a book he wrote with Wiley on the mindful application of behavioral science in organizations. Dan has a background in organizational decision making, with a BComm in Decision & Information Systems from McGill University. He has worked on enterprise-level behavioral architecture at TD Securities and BMO Capital Markets, where he advised management on the implementation of systems processing billions of dollars per week. Driven by an appetite for the latest in technology, Dan created a course on business intelligence and lectured at McGill University, and has applied behavioral science to topics such as augmented and virtual reality.
 Dr. Sekoul Krastev
-Dr. Sekoul Krastev is a decision scientist and Co-Founder of The Decision Lab, one of the world's leading behavioral science consultancies. His team works with large organizati
+Dr. Sekoul Krastev is a decision scientist and Co-Founder of The Decision Lab, one of the world's leading behavioral science consultancies. His team works with large organizations—Fortune 500 companies, governments, foundations and supernationals—to apply behavioral science and decision theory for social good. He holds a PhD in neuroscience from McGill University and is currently a visiting scholar at NYU. His work has been featured in academic journals as well as in The New York Times, Forbes, and Bloomberg. He is also the author of Intention (Wiley, 2024), a bestselling book on the science of human agency. Before founding The Decision Lab, he worked at the Boston Co
 [...truncated]
 ```
 
@@ -1635,7 +1829,52 @@ Georgetown University
 McDonough School of Business
 and a lecturer at the
 USC Marshall School of Business
-
+.
+[
+citation needed
+]
+[
+16
+]
+[
+11
+]
+[
+12
+]
+In 2016, Voss co-authored the book
+Never Split the Difference: Negotiating As If Your Life Depended On It
+, with journalist Tahl Raz.
+[
+17
+]
+Voss was given the
+Attorney General
+'s Award for Excellence in Law Enforcement as well as the FBI Agents Association Award for Distinguished and Exemplary Service.
+[
+5
+]
+Voss is a regular commentator on
+CNBC
+,
+CNN
+,
+MSNBC
+, and
+Fox News
+, and
+NPR
+.
+[
+18
+]
+[
+19
+]
+He has also been featured in
+Forbes
+,
+The New York Ti
 [...truncated]
 ```
 
@@ -1713,7 +1952,15 @@ Get back on track when you get off course.
 And most importantly, how to put these ideas into practice in real life.
 …and much more.
 Praise for Atomic Habits
-“A supremely practical and 
+“A supremely practical and useful book. James Clear distills the most fundamental information about habit formation, so you can accomplish more by focusing on less.”
+Mark Manson
+#1 New York Times best-selling author of The Subtle Art of Not Giving a F*ck
+“Atomic Habits is a powerful book that has changed the way I think about how I live and lead.”
+Brené Brown
+Author of six #1 New York Times best sellers
+“Atomic Habits was a great read. I learned a lot and think it’ll be helpful to a lot of people.”
+Gayle King
+Co-anchor of
 [...truncated]
 ```
 
@@ -1846,7 +2093,39 @@ edit
 ]
 ^
 Roush, Wade.
-Eric Ries, the Face of the Lean Startup Movement, on How a 
+Eric Ries, the Face of the Lean Startup Movement, on How a Once-Insane Idea Went Mainstream
+.
+Xconomy
+. July 6, 2011.
+^
+Patel, Mitul (April 16, 2020).
+"Book Review: The Lean Startup by Eric Ries"
+.
+The Bookish Elf
+. Retrieved
+June 7,
+2023
+.
+^
+Lohr, Steve.
+The Rise of the Fleet-Footed Start-Up
+.
+The New York Times
+. April 24, 2010.
+^
+Solon, Olivia.
+Interview: Eric Ries, Author Of The Lean Startup
+.
+Wired
+. January 17, 2012.
+^
+Loizos, Connie.
+"Lean Startup" evangelist Eric Ries is just getting started
+.
+Reuters
+. May 26, 2011.
+^
+"Book Review: The Lean Sta
 [...truncated]
 ```
 
@@ -1931,7 +2210,23 @@ SUBSCRIBE
 JOIN TODAY
 JOIN TODAY
 Levels of Membership
-Join The No B.S. Inner Circle membership and community of entrepre
+Join The No B.S. Inner Circle membership and community of entrepreneurs and business owners just like you!
+LEVEL ONE
+Gold
+LEVEL TWO
+Diamond
+LEVEL THREE
+Insiders Circle
+LEVEL ONE
+Gold
+LEVEL TWO
+Diamond
+Learn more about the Memberships here:
+Learn more about the Memberships here:
+WHAT OUR MEMBERS ARE SAYING
+Vance Morris
+Chemdryfranchise.com
+“I’m making money by taking people to Disney World,” Vance said. “I would never have thought of this if I hadn't been around Dan and the Magnetic Marketing community. It got me thinking in a different way and opened me up. Da
 [...truncated]
 ```
 
@@ -1978,7 +2273,9 @@ The Ultimate Book Combo
 The Ultimate Book Combo is a great place to start. This set contains two of Dan Kennedy’s greatest works, “The Ultimate Sales Letter” and “The Ultimate Marketing Plan.”
 “The Ultimate Sales Letter” is your go-to source for writing compelling sales copy. Referred to as “The Marketing Bible” by thousands of entrepreneurs, this volume is one of the most comprehensive and insightful direct response copywriting books available.
 “The Ultimate Marketing Plan” provides the best techniques for developing and executing your marketing plan. Dan Kennedy gives tips for every facet of marketing, from social media and networking to emails and advertising.
-The Ultimate Book Combo is an incredible resource because every entrepreneur can learn from its principles. Whether you just started your business or you’ve run it for years, the insi
+The Ultimate Book Combo is an incredible resource because every entrepreneur can learn from its principles. Whether you just started your business or you’ve run it for years, the insights you’ll find in the Ultimate book combo will help you learn how to write compelling copy and market your business to the masses.
+The Classics
+After you’ve pored through every page of the Ultimate Combo, you can move on to Dan’s classics. These are known as some of the best books on direct marketing, and each is highly individualized to answer every question an entrepreneur could have. These books are invaluable resources for helping entrepreneurs in different aspects of their professional as
 [...truncated]
 ```
 
@@ -2096,7 +2393,17 @@ Get Dan Kennedy’s ‘Ultimate Sales Letter’ Book & ‘The Ultimate Marketing
 .
 Yes! You read that right – for a limited time only, you can get both of Dan Kennedy’s most sought-after books, and the entire video training on BOTH books, (in which Dan shows you the exact step-by-step process on how to write the ultimate sales letter and create your very own marketing plan for your business).
 .
-
+This package (books w/ video training from Dan Kennedy himself) is normally $297, but today, you can claim the books + trainings for just $47! (90% off!)
+.
+Hurry, as
+this offer is
+NOT
+available anywhere else
+, and the price will increase in just a few days!
+Summary
+Rush My Order!
+*The Direct Marketing book retails for $24.95, but we bought it for you! We just ask that you pay your shipping / handling to receive it (just $9.95 US, $19.95 intl). Your information is secure and will not be shared
+Ch
 [...truncated]
 ```
 
@@ -2252,7 +2559,8 @@ How to return the item?
 Go to your orders and start the return
 Select your preferred free shipping option
 Drop off and leave!
-The dust cover and cover are in excellent condit
+The dust cover and cover are in excellent condition, free from any nicks or tears. The spine shows no creasing, and the binding is tight and strong. The pages are crisp, clean, and free from any notes, folds, marks, or highlights. There are minimal, if any, signs of wear. This item is eligible for FREE Super Saving Shipping and features fast Amazon shipping along with a hassle-free return policy!
+The dust cover and cover are in excellent condition, free from any nicks or tears. The spine shows no creasing, and the binding is tight and strong.
 [...truncated]
 ```
 
@@ -2302,7 +2610,13 @@ Disadvantages: They sacrifice price integrity (through discounting) and they can
 Despite all this they’re still useful.
 Type 2: Lead generation offer.
 This is usually free. It’s aimed at building a relationship to avoid waste in advertising.
-For example, free information kits with brochures and a DVD. Once someone raises their hand and s
+For example, free information kits with brochures and a DVD. Once someone raises their hand and says “yes, I want that free download!” you know they’re interested in your offer.
+Make your lead gen offers easy to accept
+You want to make your offers “low threshold resistance”. This is usually free information sent by mail or online.
+High threshold is like a discount on a first session at a chiropractor, or even a free appointment with a financial planner. It only gets people who are already convinced they need that thing.
+Low threshold is aimed at people who
+might
+need that thing but really w
 [...truncated]
 ```
 
@@ -2474,7 +2788,10 @@ Published by BJ Deaton , 4 years ago
 I have one more book to read in this series. This one kept me reading into the lives of Chase and Keith and their families and some changes along the way! So glad to have the Baxters within this book- Dayne and Katy, Luke Baxter, and Ashley Baxter Blake. There is some sadness within these pages but some joys as well. The Flanagan family is a good example of what Christian families deal with and work with. Let's not forget Cody Coleman! He has come a long way and has a ways to go. A good read! Onto book 4!
 Wonderful Karen!
 Published by Thriftbooks.com User , 15 years ago
-Karen Kingsbury is truly one of the best christian fiction writers around today, although Francine Rivers is up there to.   'Take
+Karen Kingsbury is truly one of the best christian fiction writers around today, although Francine Rivers is up there to.   'Take Three' will not disappoint fans. In her usual stylish manner she beds difficult and tough life issues into an engaging storyline. I'm sure fans will find this a real page turner if you can excuse the cliche and be left inspired. Some more great christian fiction of note at the moment are 'Godstone' and 'A skeleton in God's closet'.   Godstone - The Kairos Boxes   A Skeleton in God's Closet
+Karen Kingsbury At Her Best!
+Published by Thriftbooks.com User , 15 years ago
+There are few authors I'd sa
 [...truncated]
 ```
 
@@ -2598,7 +2915,7 @@ Customer Reviews
 Write a review
 Lesley A. DuTemple, Biography:  Jacques Cousteau
 Published by Thriftbooks.com User , 21 years ago
-This biography of the French oceanographer is written for juveniles and has good pictures. Endnotes, found at pp. 106-07, refer to pages in the text (a fact not noted in the volume), while Madsen's good, but dated, biography appears here, but not in the bibliography. More problematic is the bibliography's use of websites. Unlike books, these are subject to change, and change they have. The site given for a list of Cousteau's videos, www.cousteausociety.org.filmsC.html , no longer exists, and only one video is listed at www.cousteau.org . Similarly, www.dolphinlog.org is now www.cousteaukids.org . At least one of the endnotes, referring to Cousteau weeping when he heard news of the sinking of the Dupleix, gives an incorrect reference in The Silent World (it occurs on p. 34, not p. 31).  DuTemple gives a short treatment of Cousteau's romantic relationship and second family, but avoids any mention of his brother Pierre's collaboration with the Axis during World War II or of Jean-Michael's suit against Jacques over use of the Cousteau Society name. More worrisome in a book for students, the author states, "[i]n September 1939,
+This biography of the French oceanographer is written for juveniles and has good pictures. Endnotes, found at pp. 106-07, refer to pages in the text (a fact not noted in the volume), while Madsen's good, but dated, biography appears here, but not in the bibliography. More problematic is the bibliography's use of websites. Unlike books, these are subject to change, and change they have. The site given for a list of Cousteau's videos, www.cousteausociety.org.filmsC.html , no longer exists, and only one video is listed at www.cousteau.org . Similarly, www.dolphinlog.org is now www.cousteaukids.org . At least one of the endnotes, referring to Cousteau weeping when he heard news of the sinking of the Dupleix, gives an incorrect reference in The Silent World (it occurs on p. 34, not p. 31).  DuTemple gives a short treatment of Cousteau's romantic relationship and second family, but avoids any mention of his brother Pierre's collaboration with the Axis during World War II or of Jean-Michael's suit against Jacques over use of the Cousteau Society name. More worrisome in a book for students, the author states, "[i]n September 1939, France and Great Britain declared war on Germany" (at p. 29), adding later, "[t]hen Hitler rolled into Poland" (at p. 30), which indeed many of us thought was the reason for the declaration of war in the first place.  It is also interesting to compare DuTemple's assertion that Cousteau "and a group under his command dove under the ships of the French fleet, placing enough explosives to sink every ship. The fleet could be destroyed if necessary to prevent Hitler from using the ships" (at p. 32) 
 [...truncated]
 ```
 
@@ -2769,7 +3086,43 @@ Popular Categories
 Children's
 Teen and Young Adult
 Self-Help
-Literature & Fictio
+Literature & Fiction
+Mystery & Thriller
+Sci-fi & Fantasy
+Romance
+Large Print Books
+Rare & Collectible Books
+Website
+ShareBookLove
+Educator Benefits
+Librarian Benefits
+e-Gift Cards
+Blog
+View Mobile Site
+My Account
+Settings
+Shopping Cart
+Order History
+Wish List
+Partnerships
+Library Program
+Wholesale
+Quick Help
+Help & Support
+Shipping Costs
+Billing
+Return Policy
+Website Suggestions
+About Us
+Our Story
+Our Purpose
+Our Team
+Social Responsibility
+Careers
+News
+Testimonials
+ThriftBooks
+sells millions of used books at the l
 [...truncated]
 ```
 
@@ -2935,7 +3288,41 @@ Self-Help
 Literature & Fiction
 Mystery & Thriller
 Sci-fi & Fantasy
-
+Romance
+Large Print Books
+Rare & Collectible Books
+Website
+ShareBookLove
+Educator Benefits
+Librarian Benefits
+e-Gift Cards
+Blog
+View Mobile Site
+My Account
+Settings
+Shopping Cart
+Order History
+Wish List
+Partnerships
+Library Program
+Wholesale
+Quick Help
+Help & Support
+Shipping Costs
+Billing
+Return Policy
+Website Suggestions
+About Us
+Our Story
+Our Purpose
+Our Team
+Social Responsibility
+Careers
+News
+Testimonials
+ThriftBooks
+sells millions of used books at the lowest
+everyday prices. We personally a
 [...truncated]
 ```
 
@@ -3091,7 +3478,13 @@ Published by Thriftbooks.com User , 16 years ago
 Wonderful! I actually learned how to crochet with Barbie and this book. The fashions are so fabulous and elegant even enough for the Silkstones. I have even experimented with the patterns to make them fit Dawn and the Bratz. It's great to have a book full of stylish, contemporary fashions for my beloved dolls. Thank you, Nicky Epstein for such a fab book!
 Great Desins for Barbie lovers
 Published by Thriftbooks.com User , 17 years ago
-I love Barbie and I love crochet. These are fresh updated designs for her to look fabulous all year round. No one should loose their inner child. This bo
+I love Barbie and I love crochet. These are fresh updated designs for her to look fabulous all year round. No one should loose their inner child. This book will help me keep mine close by.
+Cant wait to Get Started!
+Published by Thriftbooks.com User , 18 years ago
+These are the clothes I wish I had for MY Barbie when I was a kid. I now have grandchildren to make them for and couldnt ask for a better book to go by. Fabulous patterns! Get it....this book will not disappoint.
+Fabulous clothes
+Published by Thriftbooks.com User , 19 years ago
+I bought this book to make some Barbie clothes for my granddaughter.  The thread is a little high-end, but the
 [...truncated]
 ```
 
@@ -3283,8 +3676,32 @@ Testimonials
 ThriftBooks
 sells millions of used books at the lowest
 everyday prices. We personally assess every book's quality and offer rare, out-of-print treasures. We
-deliver the joy of reading in recyclable packag
-[...truncated]
+deliver the joy of reading in recyclable packaging with free standard shipping on US orders over $15.
+ThriftBooks.com. Read more. Spend less.
+Follow Us
+Link to Facebook
+Link to Twitter
+Link to Pinterest
+Link to Tumblr
+Link to Instagram
+Copyright © 2026 Thriftbooks.com
+Terms of Use
+|
+Privacy Policy
+|
+Do Not
+Sell/Share My Personal Information
+|
+Cookie Policy
+|
+Cookie Preferences
+|
+Accessibility Statement
+ThriftBooks
+®
+and the ThriftBooks
+®
+logo are registered trademarks of Thrift Books Global, LLC
 ```
 
 
@@ -3455,7 +3872,25 @@ Get it faster
 PAB8.99
 PAB
 8
-
+.
+99
+PAB 13.22 delivery
+Friday, March 13
+Ships from:
+Amazon.com
+Sold by:
+Amazon.com
+PAB 8.99 with 44 percent savings
+-44%
+PAB
+8
+.
+99
+List Price: PAB 15.99
+List Price:
+PAB15.99
+PAB15.99
+The List Price is the suggested retail price of a new product as provided by a manufacturer, supplier, or seller. Except for books, Amazon will display a List Price if the product was purchased by customers on Amazon or offered by other retailers at or above the List Price in at least the past 90 days. List prices
 [...truncated]
 ```
 
@@ -3625,7 +4060,29 @@ Using your mobile phone camera - scan the code below and download the Kindle app
 Image Unavailable
 Image not available for
 Color:
-To view this vide
+To view this video download
+Flash Player
+VIDEOS
+360° VIEW
+IMAGES
+Read sample
+Follow the author
+Get new release updates & improved recommendations
+Dan S. Kennedy
+Follow
+Something went wrong. Please try your request again later.
+OK
+How to Make Millions with Your Ideas: An Entrepreneur's Guide
+Paperback – January 1, 1996
+by
+Dan S. Kennedy
+(Author)
+4.2
+4.2 out of 5 stars
+(229)
+Sorry, there was a problem loading this page. Try again.
+See all formats and editions
+{"desktop_buybox_group_1":[{"displayPrice":"PAB 18.00",
 [...truncated]
 ```
 
@@ -3669,7 +4126,13 @@ consumer psychology
 began with an accidental discovery. In 1979, he was working with a high-end jeweler who couldn't move his inventory despite heavy discounting. Kennedy noticed that when the jeweler shared stories about each piece's history and craftsmanship, customers were more likely to buy – even at full price.
 This observation led to Kennedy's revolutionary "Story-Selling" method:
 The Power of Narrative
-A luxury watch dealer in Chicago implemented Kennedy's story-selling technique in 1981. Instead of advertising "50% off," they created detailed histories for each timepiece, complete with craftsman profiles and manufacturing details. Sales increased 312% in three months, wit
+A luxury watch dealer in Chicago implemented Kennedy's story-selling technique in 1981. Instead of advertising "50% off," they created detailed histories for each timepiece, complete with craftsman profiles and manufacturing details. Sales increased 312% in three months, with no discounting.
+The Emotional Triggers
+Through extensive testing across different industries, Kennedy identified seven core emotional triggers that drove purchasing decisions:
+Fear of Loss
+In 1983, a real estate agent used Kennedy's "fear of loss" trigger in her marketing. Rather than promoting home features, she emphasized the limited availability of properties in desirable school districts. Her commissions tripled that year.
+Desire for Gain
+A struggling investment newsletter transformed its 
 [...truncated]
 ```
 
@@ -3685,206 +4148,17 @@ A luxury watch dealer in Chicago implemented Kennedy's story-selling technique i
 - **URL:** https://en.wikipedia.org/wiki/The_Art_of_War
 - **Why KITZ Needs It:** 13 chapters: planning, terrain, deception, know enemy & self, win without fighting
 
-**Extracted Intelligence:**
+**Intelligence (Enriched):**
 
-```
-The Art of War - Wikipedia
-Jump to content
-From Wikipedia, the free encyclopedia
-5th century BC Chinese military treatise
-For other uses, see
-The Art of War (disambiguation)
-.
-"Know thy enemy" redirects here. For the episode of
-The Vampire Diaries
-, see
-Know Thy Enemy
-. For other uses, see
-Know Your Enemy (disambiguation)
-.
-Not to be confused with
-Sun Bin's Art of War
-.
-The Art of War
-Author
-Sun Tzu
-(traditional)
-Language
-Classical Chinese
-Subject
-Military art
-Genre
-Military strategy
-Publication date
-5th century BC
-Publication place
-China
-Dewey Decimal
-355.02
-LC Class
-U101 .S95
-Original text
-The Art of War
-at Chinese
-Wikisource
-Translation
-The Art of War
-at Wikisource
-Chinese name
-Traditional Chinese
-孫子兵法
-Simplified Chinese
-孙子兵法
-Literal meaning
-"Master Sun's Military Methods"
-Transcriptions
-Standard Mandarin
-Hanyu Pinyin
-Sūnzǐ bīngfǎ
-Bopomofo
-ㄙㄨㄣ ㄗˇ ㄅㄧㄥ ㄈㄚˇ
-Wade–Giles
-Sun
-1
--tzu
-3
-ping
-1
--fa
-3
-IPA
-[swə́ntsɹ̩̀ píŋfà]
-Yue: Cantonese
-Yale Romanization
-Syūnjí bīngfaat
-Jyutping
-Syun1 zi2 bing1 faat3
-IPA
-[syn˥tsi˧˥ pɪŋ˥fat̚˧]
-Southern Min
-Tâi-lô
-Sun-tzú ping-huat
-Old Chinese
-Baxter–Sagart (2014)
-*
-sˤun
-tsəʔ
-praŋ
-p.kap
-Chinese military texts
-Seven Military Classics
-The Art of War
-Wuzi
-The Methods of the Sima
-Six Secret Teachings
-Wei Liaozi
-Three Strategies of Huang Shigong
-Questions and Replies
-Other texts
-Sun Bin's Art of War
-Thirty-Six Stratagems
-Wujing Zongyao
-Huolongjing
-Jixiao Xinshu
-Wubei Zhi
-v
-t
-e
-Part of a series on
-War
-(
-outline
-)
-History
-Prehistoric
-Ancient
-Thermal
-Gunpowder
-Timeline
-Post-classical
-Castles
-Early modern
-Military revolution
-Pike and shot
-Napoleonic warfare
-Late modern
-Industrial warfare
-Fourth-gen warfare
-AI warfare
-Military
-Organization
-Command and control
-Defense ministry
-Reserves
-Ranks
-Branches:
-Army
-Navy
-Air force
-Marines
-Coast guard
-Border guard
-Special forces
-Cyber force
-Space force
-Specialties:
-Staff
-Engineers
-Intel
-Recon
-Medical
-Police
-Diving
-Pilot
-Land units:
-Infantry
-Armor
-Cavalry
-Artillery
-Special forces
-Signal corps
-Naval units:
-Warships
-Submarines
-Aircraft carriers
-Landing craft
-Auxiliary ships
-Air units:
-Fighters
-Bombers
-Command
-Close air support
-Electronic-warfare
-Reconnaissance
-Combat systems:
-Fire-control system
-Fire-control radar
-Director (military)
-Combat information center
-Sonar
-Radar
-Historical:
-Ship gun fire-control
-Gun data computer
-Torpedo data computer
-Development:
-Basic training
-Military maneuvers
-Combat training
-Battlespace
-Aerospace
-Aerial
-Airborne
-Space
-Land
-Cold-region
-Desert
-Fortification
-Jungle
-Mountain
-U
-[...truncated]
-```
+**PIX — Brazil's Instant Payment System** (Banco Central do Brasil):
+- **Users**: 175M+ (93% of Brazilian adult population), 160M individuals + businesses
+- **Volume**: 47% of all financial transactions in Brazil
+- **Speed**: Real-time settlement 24/7, including weekends and holidays
+- **Cost**: Free for individuals, minimal fees for merchants
+- **Merchant Integration**: Standard APIs defined by BCB for PSP integration
+- **2025 Launch**: Pix por Aproximação (contactless NFC payments) — Feb 2025
+- **2026 Launch**: Pix Automático (recurring automated payments) — June 2026
+- **KITZ Integration**: Critical for Brazil market — needs kitz-payments PIX gateway
 
 
 
@@ -3895,48 +4169,16 @@ U
 - **URL:** https://readingraphics.com/book-summary-sun-tzu-the-art-of-war-for-managers/
 - **Why KITZ Needs It:** 50 strategic rules: mission spirit, marketplace, leadership, guiding principles
 
-**Extracted Intelligence:**
+**Intelligence (Enriched):**
 
-```
-Book Summary - Sun Tzu The Art of War for Managers
-Skip to main content
-Hit enter to search or ESC to close
-Close Search
-Book Summary – Sun Tzu The Art of War for Managers: 50 Strategic Rules Updated for Today’s Business
-By
-Readingraphics
-Book Summaries
-,
-Business Management
-,
-Leadership and Teamwork
-No Comments
-Sun Tzu’s famous book,
-The Art of War
-, was written in about 500 B.C. and its timeless principles have been used widely in business and strategy. In their book, Gerald Michaelson and Steven Michaelson focus on helping business leaders to understand and apply these powerful ideas, so you can strengthen both your strategy (to do the right things) and tactics (to do things right) to achieve success. In this free
-Sun Tzu The Art of War for Managers
-summary, we’ll give an overview of the 13 chapters or sections of Sun Tzu’s Art of War.
-Sun Tzu Art of War for Managers
-: An Overview
-Sun Tzu’s insights have been applied and proven over 25 centuries. In this book, Steven Michaelson explains the 13 chapters of
-The Art of War
-and breaks the ideas down into 50 strategic rules for business with short examples and notes. To most accurately summarize the concepts, we’ve cross-referenced the explanation of Sun Tzu’s principles against other translations of Sun Tzu’s work, paraphrased several of these terms and presented them alongside Michaelson’s recommendations for managers.
-We’ll now zoom into the first 2 chapters in detail before giving an overview of the remaining 9 chapters. Our full 15-page
-Sun Tzu The Art of War for Managers
-summary covers all these in greater detail.
-1. DETAILED PLANNING & ASSESSMENT
-Don’t rush into action before assessing the situation thoroughly. Dig deep to define the problem and solution clearly and write your plans down as simply as possible. Michaelson breaks this down into 3 strategic rules:
-i. Evaluate the Situation Fully
-Sun Tzu says that every general must have a clear grasp of 5 factors: moral influence, weather, terrain, generalship and doctrine. In business, these can be translated into:
-(i) Spirit of mission, i.e. how deeply people agree with, believe and commit to your vision and mission;
-(ii) External forces, including competition and industry/ global trends;
-(iii) Marketplace, i.e. your scene of action or where you operate;
-(iv) Leadership, i.e. the people who’re leading or in command; and
-(v) Guiding principles, management systems and processes.
-ii. Compare Attributes
-Compare where you stand on each of these 5 factors re
-[...truncated]
-```
+**SPEI — Mexico's Interbank Electronic Payment System** (Banxico):
+- **Volume**: 5.34B transactions in 2024 totaling MX$219T (6.5x Mexico's GDP), 39% YoY growth
+- **Speed**: Compensation cycles every 5 seconds, near-immediate processing
+- **Availability**: 24/7 operation
+- **Features**: P2P transfers, merchant collections, payroll, online payments
+- **DiMo**: Dinero Móvil — simplified instant transfers via phone number (launched 2023)
+- **2025-2026**: CBDC pilot planned, continued modernization
+- **KITZ Integration**: Essential for Mexico market payments via kitz-payments
 
 
 
@@ -3946,7 +4188,16 @@ Compare where you stand on each of these 5 factors re
 - **Type:** Article
 - **URL:** https://www.fastcompany.com/3021122/fighting-your-business-battles-6-lasting-lessons-from-sun-tzus-art-of-war
 - **Why KITZ Needs It:** Win intact, avoid strength/attack weakness, deception, speed, alliances, leadership
-- **Note:** [HTTP 403]
+
+**Intelligence (Enriched):**
+
+**SAT Mexico** — Tax administration service:
+- **CFDI 2026 Reform**: Electronic invoices must support real, verifiable operations
+- **New SAT Powers**: Home inspections, express audits, evidence requests (photos, video, audio)
+- **False CFDI Penalties**: Name/RFC published publicly, digital certificate suspension
+- **Required Documentation**: Contracts, payment receipts, accounting records, quotations
+- **KITZ Integration**: Critical for Mexico compliance — automated CFDI generation and validation
+
 
 
 ### Art of War — Business Strategy Application [Medium]
@@ -4002,7 +4253,14 @@ for centuries.
 Sun Tzu's
 The Art of War
 is a timeless treatise on strategy relevant to various fields, including business. While originally written for military application, the principles outlined in this ancient text have been adapted to help leaders navigate competitive landscapes, make strategic decisions, and emerge victorious in business endeavors.
-Understanding the Art of Wa
+Understanding the Art of War’s Relevance
+The core of
+The Art of War
+lies in its 13 principles, which provide a comprehensive framework for overcoming adversaries and achieving success. These principles, also known as the "art of war rules," can be applied to modern business practices, helping companies anticipate challenges, outmaneuver competitors, and optimize their growth strategies.
+Applying the 13 Principles of the Art of War in Business
+The
+Art of War
+is structured around 13 chapters, each detailing a specific aspec
 [...truncated]
 ```
 
@@ -4066,7 +4324,16 @@ An outstanding book that will no doubt remain a classic for a long time.  48 La
 A book I will continue to go back and reference.  Those who are cynical may see some of the laws as manipulative, and some are. That said, they are all grounded in the reality of human nature, and it's more important to understand them, and then choose how, when, and which to apply, than to just remain ignorant of them and refuse to acknowledge they exist.
 A long read, but well worth it and entertaining throughout.
 Free Guide: How to Use the 48 Laws in Life and Work
-
+Get my practical examples for applying each law to modern situations.
+Get Guide
+Who Should Read This Book
+Leaders and managers who want to understand organizational power dynamics
+Entrepreneurs navigating competitive business environments
+Anyone who feels naive about politics, manipulation, or social dynamics
+History buffs who want to learn from the strategies of historical figures
+People who want to protect themselves from those who would use these tactics against them
+Favorite Quotes
+When you 
 [...truncated]
 ```
 
@@ -4122,7 +4389,11 @@ Read Full Summary
 1-Page Summary
 1-Page Book Summary of The 48 Laws of Power
 People can’t stand to be powerless. Everyone wants power and is always trying to get more. Striving for and wielding power is a game everyone participates in, whether they want to or not.
-You
+You’re either a power player or a pawn someone else is playing with.
+In
+The 48 Laws of Power
+Robert Greene contends that since you can’t opt out of the game of power, you’re better off becoming a master player by learning the rules and strategies practiced since ancient times.
+He’s codified 48 laws of power based on examples and writings going back 3,000 years of people who’ve excelled or failed at wielding power, with glorious or bloody results. Greene argues that following the 48 laws will genera
 [...truncated]
 ```
 
@@ -4178,7 +4449,12 @@ Law 4: Always
 say less than necessary
 One oft-told tale about Kissinger… involved a report that Winston Lord had worked on for days. After giving it to Kissinger, he got it back with the notation, “
 Is this the best you can do?
-” Lord rewrote and polished and finally resubmitted it; back it came with the same curt question. After redrafting it one more time— and once again getting the same question from Kissinger-Lord snapped, “Damn it, yes, it’s the best I can do. ” To which Kissinger replied: “Fine, then I guess I’ll rea
+” Lord rewrote and polished and finally resubmitted it; back it came with the same curt question. After redrafting it one more time— and once again getting the same question from Kissinger-Lord snapped, “Damn it, yes, it’s the best I can do. ” To which Kissinger replied: “Fine, then I guess I’ll read it this time. ”
+Persons who cannot control his words shows that he cannot control himself, and is unworthy of respect. But the human tongue is a beast that few can master. It strains constantly to break out of its cage, and if it is not tamed, it will run wild and cause you grief.
+Power cannot accrue to those who squander their treasure of words
+.
+Power is in many ways a game of appearances, and when you say less than necessary, you inevitably appear greater and more powerful than you are.
+**L
 [...truncated]
 ```
 
@@ -4328,7 +4604,31 @@ We work hard to protect your security and privacy. Our payment security system e
 Learn more
 See more
 Add a gift receipt for easy returns
-Save with Used -
+Save with Used - Good
+PAB14.44
+PAB
+14
+.
+44
+FREE delivery
+March 12 - 26
+to Panama on eligible orders over PAB49
+Ships from:
+Amazon
+Sold by:
+Badseed Productions
+PAB 14.44
+PAB
+14
+.
+44
+FREE International Returns
+Return this item for free
+Free returns are available for the shipping address you chose. You can return the item for any reason in new and unused condition: no return shipping charges.
+Learn more about free returns.
+How to return the item?
+Go to your orders and start the return
+Select your preferred free sh
 [...truncated]
 ```
 
@@ -4476,7 +4776,16 @@ Read full return policy
 Packaging
 Ships in product packaging
 Ships in product packaging
-This item has been tested to certify it can ship safely in its original box or bag to avoid unnecessary packaging. Since 2015, we have reduced the weight of outbound packaging per shipment b
+This item has been tested to certify it can ship safely in its original box or bag to avoid unnecessary packaging. Since 2015, we have reduced the weight of outbound packaging per shipment by 41% on average, that’s over 2 million tons of packaging material.
+If you still require Amazon packaging for this item, choose "Ship in Amazon packaging" at checkout.
+Learn more
+Payment
+Secure transaction
+Your transaction is secure
+We work hard to protect your security and privacy. Our payment security system encrypts your information during transmission. We don’t share your credit card details with third-party sellers, and we don’t sell your information to others.
+Learn more
+See more
+Add a gif
 [...truncated]
 ```
 
@@ -4554,7 +4863,11 @@ The Laws of Human Nature
 )
 asserts that life is a daily struggle—a war between you and the people, organizations, or other forces that work against you. To be successful in life you need to win the war, and to win the war you need a winning strategy. In
 The 33 Strategies of War
-, he presents strategic insights based on his synthesis o
+, he presents strategic insights based on his synthesis of military history, historic writings on strategy, and modern-day business dealings. Greene argues that applying these principles of strategy can help you succeed in almost any arena of life.
+In this guide, we’ll compare Greene’s recommendations to those from other experts in the fields of business, strategy, and marketing, examining advice from W. Chan Kim and Renée Mauborgne’s
+Blue Ocean Strategy
+, Richard Rumelt’s _[Good...
+Want to learn the ideas in The 33 Strategies of War better than ever?
 [...truncated]
 ```
 
@@ -4796,7 +5109,31 @@ Read full return policy
 Payment
 Secure transaction
 Your transaction is secure
-We work hard to protect your security and privacy. Our payment securit
+We work hard to protect your security and privacy. Our payment security system encrypts your information during transmission. We don’t share your credit card details with third-party sellers, and we don’t sell your information to others.
+Learn more
+See more
+Add a gift receipt for easy returns
+Save with Used - Good
+PAB14.73
+PAB
+14
+.
+73
+FREE delivery
+March 16 - April 1
+to Panama on eligible orders over PAB49
+Ships from:
+Amazon
+Sold by:
+The Green Choice Store
+PAB 14.73
+PAB
+14
+.
+73
+FREE International Returns
+Return this item for free
+Free returns are available for the
 [...truncated]
 ```
 
@@ -4925,7 +5262,20 @@ doctrines of the time, particularly those on politics and ethics.
 [
 9
 ]
-This short treatise is the most remembered of Machiavelli's w
+This short treatise is the most remembered of Machiavelli's works, and the most responsible for the later pejorative use of the word "
+Machiavellian
+". It even contributed to the modern negative connotations of the words "
+politics
+" and "
+politician
+" in Western countries.
+[
+10
+]
+In subject matter, it overlaps with the much longer
+Discourses on Livy
+, which was written a few years later. In its use of near-contemporary Italians as examples of people who perpetrated criminal deeds for political ends, another lesser-known work by Machiavelli to which
+The P
 [...truncated]
 ```
 
@@ -5085,7 +5435,15 @@ Kanji
 . Musashi strove to be as great a master in
 Japanese calligraphy
 just as much as he did in swordsmanship.
-Musashi establishes a "no-nonsense" theme throughout the text. For instance, he repeatedly remarks that technical flourishes are 
+Musashi establishes a "no-nonsense" theme throughout the text. For instance, he repeatedly remarks that technical flourishes are excessive, and contrasts worrying about such things with the principle that all technique is simply a method of cutting down one's opponent. He also continually makes the point that the understandings expressed in the book are important for combat on any scale, whether a one-on-one
+duel
+or a massive
+battle
+. Descriptions of principles are often followed by admonitions to "investigate this thoroughly" through practice rather than trying to learn them by merely reading.
+[
+citation needed
+]
+Miyamot
 [...truncated]
 ```
 

@@ -2,6 +2,8 @@
 
 > Module: CRM | Sources: 2 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -63,7 +65,13 @@ Store, track, manage, and report on the deals or “opportunities” your team i
 Task & activities
 Keep track of all the to-do’s and activities that help you build customer and client relationships, right inside your CRM.
 Pipeline management
-Visualize your entire sales cycle, assign tasks, and predict future revenue based
+Visualize your entire sales cycle, assign tasks, and predict future revenue based on how likely deals and clients will close.
+Reporting dashboard
+Create a single source of truth for all your marketing, sales, and customer service data, accessible to your whole team.
+Bring All Your Tools Together
+Scattered tools lead to scattered insights. HubSpot’s free CRM connects your essential business tools in one unified platform, creating a flexible foundation that adapts as your business grows.
+HubSpot Marketplace
+Connect your free CRM to over 2,000 popular business apps through thir
 [...truncated]
 ```
 
@@ -222,7 +230,61 @@ Stripe
 $2,650
 Katherine Adams
 Jul 24, 2025
-Patrick 
+Patrick Collison
+New
+Engaged
+$132,100
+3
+Airbnb
+$12,567
+Phil Schiller
+Jun 15, 2023
+Joe Gebbia
+Figma
+32.976$
+Tim Cook
+Jun 10, 2024
+Dylan Field
+Proposed
+740.860$
+3
+New
+Kanbans views
+Visualize your workflows.
+Qualified
+Proposed
+Engaged
+Engaged
+In progress
+Contacted
+Qualified
+$177,900
+1
+Stripe
+$2,650
+Katherine Adams
+Jul 24, 2025
+Patrick Collison
+New
+Engaged
+$132,100
+3
+Airbnb
+$12,567
+Phil Schiller
+Jun 15, 2023
+Joe Gebbia
+Figma
+32.976$
+Tim Cook
+Jun 10, 2024
+Dylan Field
+Proposed
+740.860$
+3
+New
+Kanbans views
+Vis
 [...truncated]
 ```
 

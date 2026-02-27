@@ -2,6 +2,8 @@
 
 > Module: Costa Rica Business | Sources: 4 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 

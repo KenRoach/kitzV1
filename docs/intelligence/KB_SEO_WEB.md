@@ -2,6 +2,8 @@
 
 > Module: SEO & Web | Sources: 3 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -133,7 +135,15 @@ Compelling content that answers the searcher’s query
 Keyword optimized to attract searchers & engines
 Great user experience including a fast load speed and compelling UX
 Share-worthy content that earns links, citations, and amplification
-Title, URL, & de
+Title, URL, & description to draw high click-through-rate (CTR) in the rankings
+Snippet/schema markup to stand out in SERPs
+We'll spend time on each of these areas throughout this guide, but we wanted to introduce it here because it offers a look at how we structured the guide as a whole.
+Explore the chapters:
+Chapter 0: Quick Start Guide to SEO
+Speed up to catch up
+Go from zero to hero with our step-by-step refresh on the core fundamentals for setting your site up for SEO success.
+Chapter 1: SEO 101
+What is it
 [...truncated]
 ```
 

@@ -2,6 +2,8 @@
 
 > Module: Content Creation | Sources: 4 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -117,7 +119,15 @@ Canva provides an OpenAPI description of the Connect APIs. You can use this with
 openapi-generator
 ⁠
 (opens in a new tab or window)
-, to generate clie
+, to generate client SDKs in various languages. The OpenAPI description is publicly available at
+https://www.canva.dev/sources/connect/api/latest/api.yml
+⁠
+(opens in a new tab or window)
+.
+Preview APIs
+Some APIs and features have notices declaring they're provided as a preview. Although you can use these APIs for development and experimentation, they are not finalized and we don't recommend them for use in production environments.
+Specifically, you should be aware of the following for preview APIs and features:
+T
 [...truncated]
 ```
 
@@ -208,7 +218,61 @@ Receive and reply to Canva comments from any platform and simplify team communic
 View docs
 Expand URLs
 Preview
-Bring content into Canva AI by pasting links from other platforms to design with more 
+Bring content into Canva AI by pasting links from other platforms to design with more context.
+View docs
+Build faster with our tools and resources
+Access tools and guides that will have your app running quickly.
+Canva CLI
+▄▟▀▀▀▄
+█▛   ▝▘ ▄▄▖▄  ▄ ▄▄  ▄ ▗▀▖ ▄▄▖▄
+█▌    ▗▟▛ ▟▛ ▟█▞▗█ ▞█ ▗▛▄█▛ ▟▛
+▝▜▄▄▄▞▘▀▙▞▜▙▞█▘ ▝▙▞ ▜▙▘  ▀▙▞▜▙▞
+W
+e
+l
+c
+o
+m
+e
+!
+L
+e
+t
+'
+s
+b
+r
+i
+n
+g
+y
+o
+u
+r
+C
+a
+n
+v
+a
+a
+p
+p
+t
+o
+l
+i
+f
+e
+.
+Canva CLI
+Leverage a command line tool designed for creating and managing Canva apps.
+Hello World
+Data Connector
+Digital Asset Management
+Generative AI
+Use Canva CLI
+App examples
+Looking fo
 [...truncated]
 ```
 
@@ -281,7 +345,15 @@ Turn any text into natural voiceovers in just a few seconds with CapCut's advanc
 Custom voices
 Record your voice just once, then use it as the voiceover whenever you turn text to speech.
 Enhance voice
-From text-to-speech to voice enh
+From text-to-speech to voice enhancement, get broadcast-quality sound for any project in minutes.
+Reduce noise
+From video upscaler to noise reduction, we restore your footage to perfection, every single time.
+Text to speech
+Turn any text into natural voiceovers in just a few seconds with CapCut's advanced AI voice generator.
+Custom voices
+Record your voice just once, then use it as the voiceover whenever you turn text to speech.
+Enhance voice
+From text-to-speech to voice enhancement, get broadcast-quality sound for any project
 [...truncated]
 ```
 

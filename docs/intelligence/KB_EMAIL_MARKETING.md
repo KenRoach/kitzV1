@@ -2,6 +2,8 @@
 
 > Module: Email Marketing | Sources: 3 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -63,7 +65,18 @@ Case Study
 CHANI’s director of marketing shares how the astrology brand maintains a meaningful, lasting presence in its subscribers’ inboxes.
 How Yuool Grows Revenue—and Their Business
 Case Study
-The Brazilian shoe brand stays connected to thei
+The Brazilian shoe brand stays connected to their audience and keeps them coming back for more using customer journeys.
+Events & Webinars
+Get Holiday Ready with Marketing Success Season 2025
+Rewatch our annual virtual conference, filled with insights, practical strategies, and tools to help you navigate peak season and beyond with confidence.
+On-Demand Webinar
+A Roadmap for Brand Growth
+On-Demand Webinar
+The 4 Revenue Pillars
+More Events & Webinars
+Join us for online and in-person events, conferences, and webinars.
+Explore all events
+Better T
 [...truncated]
 ```
 
@@ -141,7 +154,18 @@ FOR ENTREPRENEURS & SMALL BUSINESSES
 Powerful tools, simple setup
 Start fast. Grow confidently. Launch polished campaigns without complexity.
 Drag-and-drop campaign editor
-Re
+Ready-to-use templates
+No-code marketing automation
+Advanced segmentation including web tracking
+Explore Brevo for SMBs
+Recognized as an industry leader
+Real stories, real success
+SUCCESS STORY
+Adbloom grows revenue by $1M/year
+Discover how this marketing agency used Brevo’s all-in-one platform to turn their Ed-Tech business into a major growth engine.
+SUCCESS STORY
+Buffalo Grill achieves 47% repeat restaurant visits
+After digitizing their loyalty program with Brevo, this popular restaurant chain 
 [...truncated]
 ```
 
@@ -368,7 +392,18 @@ Subject
 Weekly Newsletter
 Go beyond editing
 Group and control your contacts in a simple and intuitive way.
-Straightforward analytics and reporting tools that will help you send
+Straightforward analytics and reporting tools that will help you send better emails.
+Contact Management
+Import your list in minutes, regardless the size of your audience. Get full visibility of each contact and their personal attributes.
+Learn more
+Broadcast Analytics
+Unlock powerful insights and understand exactly how your audience is interacting with your broadcast emails.
+Learn more
+Develop emails using React
+Create beautiful templates without having to deal with <table> layouts and HTML.
+Powered by react-email, our open source component library.
+Get Started
+C
 [...truncated]
 ```
 

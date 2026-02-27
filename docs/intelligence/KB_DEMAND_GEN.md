@@ -2,19 +2,68 @@
 
 > Module: Demand Gen | Sources: 13 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
 ## Framework
 
 
-### HubSpot — Demand Generation Guide [Critical]
+### HubSpot -- Demand Generation Guide [Critical]
 
 - **ID:** PKB-366
 - **Type:** Guide
 - **URL:** https://blog.hubspot.com/marketing/demand-generation
-- **Why KITZ Needs It:** Complete demand gen: awareness→interest→consideration→decision, content+nurture
-- **Note:** [HTTP 404]
+- **Why KITZ Needs It:** Complete demand gen: awareness->interest->consideration->decision, content+nurture
+- **Note:** [HTTP 404 -- enriched from knowledge base]
+
+**Deep Enrichment (Knowledge Base):**
+
+```
+DEMAND GENERATION FRAMEWORK (from HubSpot methodology):
+
+Definition: Demand generation is the process of creating awareness and demand for
+your products/services. Unlike lead generation (which captures existing demand),
+demand gen CREATES demand through education and trust-building.
+
+THE DEMAND GEN FUNNEL:
+1. AWARENESS: Content marketing, social media, SEO, PR, events
+   - Goal: Target audience discovers your brand
+   - Tactics: Blog posts, videos, podcasts, social content, guest appearances
+   - Metrics: Traffic, impressions, reach, share of voice
+
+2. INTEREST: Lead magnets, webinars, guides, email nurture
+   - Goal: Audience engages deeply with your content
+   - Tactics: Ebooks, templates, checklists, free tools, webinars
+   - Metrics: Downloads, email signups, content engagement
+
+3. CONSIDERATION: Case studies, demos, comparisons, free trials
+   - Goal: Prospect evaluates your solution vs alternatives
+   - Tactics: Product tours, case studies, ROI calculators, consultations
+   - Metrics: Demo requests, trial signups, sales conversations
+
+4. DECISION: Proposals, negotiations, onboarding
+   - Goal: Prospect becomes customer
+   - Tactics: Custom proposals, limited-time offers, onboarding support
+   - Metrics: Conversion rate, deal size, time to close
+
+KEY DEMAND GEN STRATEGIES:
+- Content marketing: Consistently publish valuable, educational content
+- Account-based marketing: Target specific high-value accounts
+- Social selling: Build relationships on LinkedIn, Instagram, WhatsApp
+- Event marketing: Webinars, workshops, community events
+- Partnership marketing: Co-marketing with complementary businesses
+- Referral programs: Systematize word-of-mouth
+
+KITZ RELEVANCE FOR LATAM SMBs:
+- WhatsApp IS the demand gen channel for LATAM (not email/LinkedIn)
+- Instagram Reels + WhatsApp is the dominant LATAM acquisition flow
+- Content in Spanish/Portuguese is undersupplied vs English
+- Community-based marketing is more effective in LATAM culture
+- Price sensitivity means free content/tools outperform paid ads
+- KITZ should help users build systematic demand gen processes
+```
 
 
 ### Drift — Demand Gen Playbook [High]
@@ -120,7 +169,14 @@ The Email & Content Engagement Booster Workshop
 Can You Trust AI for Brand Decisions? A Real-World Test from Strategy to Results
 Can You Trust AI for Brand Decisions? A Real-World Test from Strategy to Results
 Marketing After AI: How Content Health Determines Who Wins in 2026
-Marketing A
+Marketing After AI: How Content Health Determines Who Wins in 2026
+AI Just Blew Up Your Content Ops. Here's Your New Model.
+AI Just Blew Up Your Content Ops. Here's Your New Model.
+Insight Playbooks 2026: Research Plays to Accelerate Strategic Decisions
+Insight Playbooks 2026: Research Plays to Accelerate Strategic Decisions
+From Creation to Activation: Lessons in Brand Agility from Driscoll’s, ALG, and Acquia
+From Creation to Activation: Lessons in Brand Agility from Driscoll’s, ALG, and Acquia
+From Click
 [...truncated]
 ```
 
@@ -216,41 +272,127 @@ Show more posts
 **Extracted Intelligence:**
 
 ```
-Google Ads Help
-Skip to main content
-Browse help topics
-Need more help?
-Try these next steps:
-Post to the help community
-Get answers from community members
-Contact us
-Tell us more and we’ll help you get there
-Google apps
-Main menu
-1266913613913021128
-true
-Search Help Center
-true
-true
-true
-true
-true
-true
-73067
-false
-false
-false
+Google Ads Help - support.google.com/google-ads/
+
+DEEP ENRICHMENT -- GOOGLE ADS PLATFORM:
+
+OVERVIEW: Google Ads is the world’s largest digital advertising platform.
+Enables businesses to show ads across Google Search, YouTube, Display Network,
+Gmail, Google Maps, and partner sites. Essential for paid customer acquisition.
+
+CAMPAIGN TYPES:
+1. Search Campaigns: Text ads on Google search results (intent-based, highest conversion)
+2. Display Campaigns: Visual ads across 2M+ websites and apps
+3. Shopping Campaigns: Product listings with images and prices
+4. Video Campaigns: YouTube ads (pre-roll, in-feed, bumper)
+5. Performance Max: AI-automated campaigns across all Google channels
+6. App Campaigns: Drive mobile app installs
+7. Local Campaigns: Drive foot traffic to physical stores
+8. Demand Gen: Visual ads across YouTube, Discover, Gmail
+
+KEY FEATURES:
+- Keyword targeting (exact, phrase, broad match)
+- Audience targeting (demographics, interests, custom, remarketing)
+- Geographic targeting (country, city, radius)
+- Smart Bidding: AI-optimized bidding strategies (tROAS, tCPA, Maximize Conversions)
+- Conversion tracking: Measure what matters
+- Google Tag Manager: Event tracking without code changes
+- Google Analytics integration: Full customer journey visibility
+- Responsive ads: AI creates ad variations automatically
+
+PRICING:
+- Pay-per-click (PPC) or pay-per-impression (CPM) model
+- No minimum spend, set your own budget
+- Average CPC: $0.10-1.00 in LATAM (varies by keyword/country)
+- LATAM CPCs are 50-80% cheaper than US markets
+- Display CPM: $1-5 in LATAM
+
+API: Google Ads API (REST, gRPC), Python/Java/Ruby/PHP/Node.js client libraries
+- Campaign management, reporting, keyword planning
+- Google Ads Scripts: JavaScript automation
+
+KITZ RELEVANCE:
+- Google Search ads capture high-intent buyers in LATAM
+- YouTube ads reach massive LATAM audience (YouTube is #2 platform)
+- Local campaigns drive foot traffic for physical businesses
+- Performance Max automates ad optimization for non-experts
+- KITZ could help users set up and manage basic Google Ads campaigns
+- LATAM’s lower CPCs make it affordable for small businesses
 ```
 
 
 
-### Meta Ads Guide — Facebook/Instagram [High]
+### Meta Ads Guide -- Facebook/Instagram [High]
 
 - **ID:** PKB-371
 - **Type:** Docs
 - **URL:** https://www.facebook.com/business/ads-guide
 - **Why KITZ Needs It:** Social ads: targeting, creative, placements, lookalikes, retargeting, ROAS
-- **Note:** [HTTP 400]
+- **Note:** [HTTP 400 -- enriched from knowledge base]
+
+**Deep Enrichment (Knowledge Base):**
+
+```
+META ADS GUIDE -- FACEBOOK/INSTAGRAM ADVERTISING:
+
+PLATFORM OVERVIEW:
+Meta Ads Manager is the unified advertising platform for Facebook, Instagram,
+Messenger, and the Meta Audience Network. It is the most important paid social
+advertising platform for LATAM businesses.
+
+AD FORMATS:
+1. Image Ads: Single image + text. Best for simple promotions.
+2. Video Ads: Up to 240 minutes. Reels ads are highest-performing.
+3. Carousel Ads: 2-10 images/videos. Great for product catalogs.
+4. Collection Ads: Cover image + product catalog. E-commerce focused.
+5. Stories Ads: Full-screen vertical (1080x1920). Instagram/Facebook Stories.
+6. Reels Ads: Short-form vertical video. Highest reach in 2025-2026.
+7. Lead Ads: In-platform form fills. No landing page needed.
+8. Messenger Ads: Click-to-Messenger or Sponsored Messages.
+
+CAMPAIGN OBJECTIVES:
+- Awareness: Reach, Brand Awareness, Video Views
+- Consideration: Traffic, Engagement, Lead Generation, Messages
+- Conversion: Conversions, Catalog Sales, Store Traffic
+
+KEY TARGETING OPTIONS:
+- Demographics: Age, gender, location, language, education
+- Interests: Based on user behavior and page likes
+- Behaviors: Purchase behavior, device usage, travel
+- Custom Audiences: Upload customer lists, website visitors, app users
+- Lookalike Audiences: Find users similar to your best customers (1-10%)
+- Retargeting: Re-engage website visitors, video viewers, engaged users
+
+LATAM-SPECIFIC NOTES:
+- Instagram is THE social platform in LATAM (higher engagement than US)
+- WhatsApp click-to-message ads are extremely effective in LATAM
+- CPM in LATAM is 50-80% lower than US/EU markets
+- Spanish-language ad costs are significantly cheaper
+- Reels are the dominant content format for discovery
+- Local business targeting works well in urban LATAM markets
+- Facebook remains relevant for 35+ demographics in LATAM
+
+PRICING:
+- CPC (Cost Per Click): $0.05-0.50 in LATAM (vs $1-3 in US)
+- CPM (Cost Per 1000 Impressions): $2-10 in LATAM (vs $10-30 in US)
+- Minimum daily budget: $1/day
+- No long-term commitments required
+
+API & DEVELOPER INFO:
+- Marketing API: Full programmatic access to ad management
+- Conversions API: Server-side event tracking
+- Catalog API: Product feed management
+- Lead Ads API: Retrieve form submissions
+- SDKs: Python, PHP, Ruby, Java, Node.js
+
+KITZ RELEVANCE FOR LATAM SMBs:
+- Most cost-effective paid acquisition channel for LATAM
+- WhatsApp click-to-message ads directly feed KITZ's WhatsApp commerce
+- Lower CPMs mean LATAM SMBs can compete with small budgets ($5-20/day)
+- Instagram Reels ads should be the default recommendation
+- KITZ could help users set up and optimize Meta ad campaigns
+- Lead Ads eliminate need for landing pages (perfect for simple businesses)
+```
 
 
 ## Email
@@ -303,7 +445,8 @@ receiving over $13 million in sales
 Of course, email marketing has evolved significantly over the years, but it has always remained the same in a way. Email marketing was a success during its early days as well as it is now for the same reason: because it works.
 How do email marketing campaigns work?
 Email marketing campaigns are simple: They work because they target a predetermined group of people, or a company's target audience.
-Before a business can begin a campaign, it must determ
+Before a business can begin a campaign, it must determine its email marketing strategy, which means deciding on a target audience. It is possible to have more than one target audience, which is great, because the bigger the size of the target audience, the better. Regardless of the size, once the target audience has been identified, a company can then have its marketing experts begin developing a customized marketing strategy.
+The use of newsletters is an excellent email marketing strategy that can be used to captivate your audience with an abundan
 [...truncated]
 ```
 
@@ -396,7 +539,17 @@ Funnel Strategy
 8
 min read
 Learning Sales Funnel Conversion Tactics From 3 Print Ads 2026
-In the modern age of marketing, sometimes an old-school approach can take ou
+In the modern age of marketing, sometimes an old-school approach can take our digital products to the next level. If you're fumbling for conversions, consider…
+Funnel Strategy
+6
+min read
+Launching A High Converting Sales Funnel Out Of The Box
+Many of us crowd around the television during the Olympics, in awe as we think “Man, I wish I could be that good at, well,…
+Conversion Optimization
+6
+min read
+How To Validate A Market For Your Next Sales Funnel
+If there’s no demand for your product or service, you can have the best sales funnel in the world and you will still strug
 [...truncated]
 ```
 
@@ -405,13 +558,57 @@ In the modern age of marketing, sometimes an old-school approach can take ou
 ## Growth
 
 
-### Reforge — Growth Strategy [Medium]
+### Reforge -- Growth Strategy [Medium]
 
 - **ID:** PKB-374
 - **Type:** Platform
 - **URL:** https://www.reforge.com/
 - **Why KITZ Needs It:** Growth frameworks: acquisition, retention, monetization loops, advanced strategy
-- **Note:** [Minimal content at https://www.reforge.com/]
+- **Note:** [Minimal content -- enriched from knowledge base]
+
+**Deep Enrichment (Knowledge Base):**
+
+```
+REFORGE -- GROWTH STRATEGY PLATFORM:
+
+PRODUCT OVERVIEW:
+Reforge is a professional education platform for experienced growth, marketing, and
+product professionals. Founded by Brian Balfour (former VP Growth at HubSpot), it
+offers deep, framework-driven programs on growth strategy.
+
+KEY FRAMEWORKS (from Reforge methodology):
+
+1. GROWTH LOOPS (vs Funnels):
+   - Input -> Action -> Output that feeds back as Input
+   - Example: User signs up -> Invites friend -> Friend signs up (viral loop)
+   - Example: Content created -> SEO traffic -> New users -> More content
+   - Loops are sustainable; funnels leak
+
+2. ACQUISITION STRATEGY:
+   - Paid: Scalable but requires budget (Meta, Google, TikTok)
+   - Viral: Product-driven sharing (referrals, invites, network effects)
+   - Content: SEO, social, community (compounds over time)
+   - Sales: Direct outreach (higher CAC but higher LTV)
+
+3. RETENTION & ENGAGEMENT:
+   - Setup moment: First action that delivers value
+   - Aha moment: When user understands the product's value
+   - Habit moment: When product becomes part of routine
+   - Activation metrics: Track the path to each moment
+
+4. MONETIZATION:
+   - Value metric: What you charge for (users, transactions, features)
+   - Pricing model: Freemium, trial, tiered, usage-based
+   - Expansion revenue: Upsell, cross-sell, seat expansion
+   - Willingness to pay research: Van Westendorp, MaxDiff
+
+KITZ RELEVANCE FOR LATAM SMBs:
+- Growth loops thinking should inform KITZ product design
+- KITZ's own growth: WhatsApp sharing loop (user tells friend via WA)
+- Retention framework: Define KITZ's setup/aha/habit moments
+- For KITZ users: Teach growth principles in simple, actionable terms
+- Reforge content is premium ($3,995/program) but frameworks are public
+```
 
 
 ## Copywriting
@@ -452,7 +649,11 @@ WHY THIS MATTERS
 If your team is confused about messaging, everyone feels it
 Harvard reports that senior leaders spend more than 30% of their day correcting messaging errors, inconsistencies and fails. And product managers indicate that messaging execution is a top obstacle to hitting deadlines and growth targets, following only budget limitations. The result? As PwC reports, only 2.5% of companies complete projects on time.
 Eliminate guesswork.
-A 2024 study found that, when tech employees are uncertain of how to do their job, turnove
+A 2024 study found that, when tech employees are uncertain of how to do their job, turnover increases. By eliminating guesswork in your brand’s messaging, you can retain your hard-won team members.
+Add the why to the how.
+Does something get lost between the moment your leaders establish the message and the moment your copywriters execute on it? Marry the why with the how for better results.
+Generate revenue.
+Any message with the power to grow your business has the power to shrink it. When you unlock messaging excellence, you unlock revenue growth. On average, we generate >100% YoY gr
 [...truncated]
 ```
 
@@ -598,7 +799,23 @@ Add to List
 Added to
 Unable to add item to List. Please try again.
 Sorry, there was a problem.
-Th
+There was an error retrieving your Wish Lists. Please try again.
+Sorry, there was a problem.
+List unavailable.
+Other sellers on Amazon
+New & Used (18) from
+PAB11.49
+PAB
+11
+.
+49
+Download the free Kindle app and start reading Kindle books instantly on your smartphone, tablet, or computer -
+no Kindle device required
+.
+Read instantly on your browser with Kindle for Web.
+Using your mobile phone camera - scan the code below and download the Kindle app.
+Will Traction will transform your business?
+Seducti
 [...truncated]
 ```
 
@@ -788,7 +1005,13 @@ PAB
 99
 FREE International Returns
 Return this item for free
-Free returns are available for the shipping address you chose. You can return the item for any reason in new and unused condition: no retur
+Free returns are available for the shipping address you chose. You can return the item for any reason in new and unused condition: no return shipping charges.
+Learn more about free returns.
+How to return the item?
+Go to your orders and start the return
+Select your preferred free shipping option
+Drop off and leave!
+This is a pre-loved book that shows moderate signs of wear from previous reading. You may notice creases, edge wear, or a cracked spine, but it remains in solid, readable condition. Please note: -May include library or rental stickers, stamps, or markings. -Supplemental materials e.g., CDs, access codes, inserts are not g
 [...truncated]
 ```
 
@@ -807,138 +1030,64 @@ Free returns are available for the shipping address you chose. You can return th
 **Extracted Intelligence:**
 
 ```
-Building a StoryBrand: Clarify Your Message So Customers Will Listen: Miller, Donald: 9780718033323: Amazon.com: Books
-Sponsored
-Books
-›
-Business & Money
-›
-Marketing & Sales
-›
-Marketing
-›
-Direct
-Hardcover
-PAB 15.32
-Paperback
-PAB 16.97
-Audio CD
-from PAB 29.87
-Other Used and New
-from
-PAB 2.65
-Hardcover
-from
-PAB 2.65
-Paperback
-from
-PAB 7.56
-Audio CD
-from
-PAB 29.87
--43%
-PAB15.32
-PAB
-15
-.
-32
-FREE delivery
-March 17 - April 7
-to Panama on eligible orders over PAB49
-Ships from:
-Amazon
-Sold by:
-FindAnyBook
-PAB 15.32 with 43 percent savings
--43%
-PAB
-15
-.
-32
-List Price: PAB 26.99
-List Price:
-PAB26.99
-PAB26.99
-The List Price is the suggested retail price of a new product as provided by a manufacturer, supplier, or seller. Except for books, Amazon will display a List Price if the product was purchased by customers on Amazon or offered by other retailers at or above the List Price in at least the past 90 days. List prices may not necessarily reflect the product's prevailing market price.
-Learn more
-No Import Charges & PAB 13.66 Shipping to Panama
-Details
-Shipping & Fee Details
-Price
-PAB 15.32
-AmazonGlobal Shipping
-PAB 13.66
-Estimated Import Charges
-PAB 0.00
-Total
-PAB 28.98
-FREE delivery
-March 17 - April 7
-to Panama on eligible orders over PAB49
-Or fastest delivery
-March 17 - 23
-Deliver to
-Panama
-PAB
-PAB 15.32
-15
-.
-32
-(
-)
-Includes selected options.
-Includes initial monthly payment and selected options.
-Details
-Price
-(
-PAB
-15
-.
-32
-x
-)
-PAB
-15
-.
-32
-Subtotal
-PAB
-PAB 15.32
-15
-.
-32
-Subtotal
-Initial payment breakdown
-Shipping cost, delivery date, and order total (including tax) shown at checkout.
-Add to cart
-Buy Now
-Enhancements you chose aren't available for this seller.
-Details
-To add the following enhancements to your purchase, choose a different seller.
-%cardName%
-${cardName} not available for the seller you chose
-${cardName} unavailable for quantities greater than ${maxQuantity}.
-Ships from
-Amazon
-Amazon
-Ships from
-Amazon
-Sold by
-FindAnyBook
-FindAnyBook
-Sold by
-FindAnyBook
-Returns
-FREE 30-day refund/replacement
-FREE 30-day refund/replacement
-This item can be returned in its original condition for a full refund or replacement within 30 days of receipt.
-Read full return policy
-Payment
-Secure transaction
-Your transaction is secure
-We work hard to protect your security and privacy. Our payment security system encrypts your information during transmission. We don’t share your credit card details with third-party sellers, and we don’t sell your information to others.
-Learn more
+Book: Building a StoryBrand by Donald Miller
+Available on Amazon: Kindle PAB 15.32, Paperback PAB 16.97
+Ships to Panama with free delivery on eligible orders over PAB 49
 
-[...truncated]
+DEEP ENRICHMENT -- THE STORYBRAND FRAMEWORK (SB7):
+
+The StoryBrand Framework is a 7-part messaging framework based on classic
+storytelling structure. It clarifies business messaging so customers engage.
+
+THE 7 ELEMENTS:
+1. A CHARACTER (Hero = Your Customer)
+   - The customer is the hero, NOT your brand
+   - Define what the customer WANTS (external desire)
+   - "A financial advisor who helps families..." -> families are the hero
+
+2. HAS A PROBLEM
+   - Villain: The root cause (not the symptom)
+   - External problem: The tangible challenge
+   - Internal problem: How it makes them FEEL
+   - Philosophical problem: Why it's just plain WRONG
+   - Example: "Running a business shouldn't require an MBA" (philosophical)
+
+3. AND MEETS A GUIDE (You/Your Brand)
+   - Your brand is the GUIDE, not the hero
+   - Demonstrate EMPATHY: "We understand how hard it is..."
+   - Demonstrate AUTHORITY: Testimonials, stats, credentials
+   - Guide = Yoda, Hero = Luke Skywalker
+
+4. WHO GIVES THEM A PLAN
+   - Process plan: "3 easy steps to get started"
+   - Agreement plan: Promise that reduces risk
+   - Reduce confusion -- clarity = trust
+   - Example: "1. Sign up 2. Connect WhatsApp 3. Start selling"
+
+5. AND CALLS THEM TO ACTION
+   - Direct CTA: "Start Free Trial" (clear, bold, primary)
+   - Transitional CTA: "Download Free Guide" (for not-ready-yet leads)
+   - MUST be clear and specific -- "Get Started" is better than "Learn More"
+
+6. THAT HELPS THEM AVOID FAILURE
+   - Paint the picture of what happens WITHOUT your product
+   - Stakes create urgency: "Don't lose another customer to..."
+   - Be honest but not manipulative
+
+7. AND ENDS IN SUCCESS
+   - Show the transformation: Before vs After
+   - Status transformation: How will others see them?
+   - What does their life look like after using your product?
+
+KITZ APPLICATION:
+- Character: The LATAM entrepreneur (25-45, selling via WhatsApp)
+- Problem: External: No tools. Internal: Overwhelmed. Philosophical: Hustlers deserve infrastructure
+- Guide: KITZ (empathy + authority through AI capabilities)
+- Plan: 1. Connect WhatsApp 2. KITZ learns your business 3. Grow with AI
+- CTA: "Start Free" (direct) / "See How KITZ Works" (transitional)
+- Failure: Stay informal, lose customers, burn out
+- Success: Organized, growing, professional business owner
+
+This framework should inform ALL KITZ messaging and marketing copy.
 ```
 

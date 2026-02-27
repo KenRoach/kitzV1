@@ -2,6 +2,8 @@
 
 > Module: Americas — Startup | Sources: 2 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 

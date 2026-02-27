@@ -1,0 +1,5369 @@
+{
+  "system_name": "Kitz AI",
+  "version": "1.0",
+  "description": "Master knowledge base for Kitz AI — an AI business advisor for SMB owners across the Americas. Contains 516 curated entries covering business infrastructure, marketing frameworks, legal compliance, payment systems, open-source tools, and growth strategies for every country in the Americas.",
+  "total_entries": 536,
+  "instructions": "You are Kitz AI. Use this knowledge base to advise small and medium business owners across the Americas. When a user asks about starting a business, marketing, payments, legal compliance, or growth strategies, reference the relevant entries below. Always tailor advice to the user's specific country — use the country-specific tax authorities, payment systems, and legal frameworks listed here. Prioritize 'Critical' entries first, then 'High', then 'Medium'. When recommending tools, prefer open-source options where cost sensitivity is indicated. For copywriting and content, apply the frameworks from the Copywriting and Dan S. Kennedy modules. For prompt engineering tasks, reference the Prompt Engineering module to optimize your own outputs.",
+  "knowledge_base": [
+    {
+      "id": "PKB-001",
+      "module": "Panama Payments",
+      "category": "Digital Wallet",
+      "title": "Yappy",
+      "url": "https://www.yappy.com.pa/",
+      "type": "Product",
+      "description": "Core P2P + merchant wallet used widely in Panama",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-002",
+      "module": "Panama Payments",
+      "category": "Digital Wallet",
+      "title": "Yappy — Bancos con Yappy",
+      "url": "https://www.yappy.com.pa/bancos-con-yappy/",
+      "type": "Reference",
+      "description": "Bank integration ecosystem mapping",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-003",
+      "module": "Panama Payments",
+      "category": "Merchant Wallet",
+      "title": "Yappy Comercial",
+      "url": "https://www.yappy.com.pa/yappy-comercial/",
+      "type": "Product",
+      "description": "Business payment acceptance via QR/links",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-004",
+      "module": "Panama Payments",
+      "category": "Merchant Wallet",
+      "title": "Yappy Comercial (Google Play)",
+      "url": "https://play.google.com/store/apps/details?id=com.yappy.comercial",
+      "type": "App",
+      "description": "Merchant app for QR codes & transaction history",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-005",
+      "module": "Panama Payments",
+      "category": "FAQ / Onboarding",
+      "title": "Yappy FAQ",
+      "url": "https://www.yappy.com.pa/faq/",
+      "type": "Docs",
+      "description": "User onboarding & troubleshooting patterns",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-006",
+      "module": "Panama Payments",
+      "category": "FAQ / Onboarding",
+      "title": "Yappy Registration Requirements",
+      "url": "https://www.yappy.com.pa/faq-items/cuales-son-los-requisitos-para-utilizar-yappy-app/",
+      "type": "Docs",
+      "description": "KYC & account setup requirements",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-007",
+      "module": "Panama Payments",
+      "category": "FAQ / Onboarding",
+      "title": "Yappy Bank Connection Guide",
+      "url": "https://www.yappy.com.pa/tutorial/como-agregar-mi-cuenta-de-otro-banco-en-yappy-app/",
+      "type": "Tutorial",
+      "description": "Step-by-step bank linking flow",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-008",
+      "module": "Panama Payments",
+      "category": "Payment Link",
+      "title": "BAC Compra Click",
+      "url": "https://www.baccredomatic.com/es-pa/pymes/comercio-afiliado",
+      "type": "Product",
+      "description": "Card payment links for WhatsApp/social commerce",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-009",
+      "module": "Panama Payments",
+      "category": "Payment Link",
+      "title": "Compra Click Help",
+      "url": "https://ayuda.baccredomatic.com/para_empresas_o_negocios/comercios_afiliados/compra-click?country=es-pa",
+      "type": "Docs",
+      "description": "Merchant onboarding & activation details",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-010",
+      "module": "Panama Payments",
+      "category": "Payment Link",
+      "title": "Compra Click Landing (PYMES)",
+      "url": "https://www.baccredomatic.com/es-cr/pymes/compra-click",
+      "type": "Product",
+      "description": "General info on payment link product",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-011",
+      "module": "Panama Payments",
+      "category": "Payment Link",
+      "title": "Compra Click en Minutos",
+      "url": "https://www.baccredomatic.com/es-sv/pymes/landing/compra-click-en-minutos",
+      "type": "Landing",
+      "description": "Quick merchant activation flow",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-012",
+      "module": "Panama Payments",
+      "category": "Payment Link",
+      "title": "Compra Click Manual (PDF)",
+      "url": "https://www.baccredomatic.com/sites/default/files/2025-04/cr_manual_compra_click_esp.pdf",
+      "type": "Docs",
+      "description": "Full merchant documentation",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-013",
+      "module": "Panama Payments",
+      "category": "Payment Link",
+      "title": "Compra Click FAQ",
+      "url": "https://ayuda.baccredomatic.com/para_empresas_o_negocios/comercios_afiliados/preguntas-frecuentes-con-compra-click?country=es",
+      "type": "FAQ",
+      "description": "Troubleshooting & merchant FAQ",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-014",
+      "module": "Panama Payments",
+      "category": "Interbank Network",
+      "title": "ACH Directo",
+      "url": "https://www.achdirecto.com.pa/",
+      "type": "Infrastructure",
+      "description": "Bank transfer infrastructure (B2B)",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-015",
+      "module": "Panama Payments",
+      "category": "Card Network",
+      "title": "Visa Panama",
+      "url": "https://www.visa.com.pa/",
+      "type": "Infrastructure",
+      "description": "Card processing context",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-016",
+      "module": "Panama Payments",
+      "category": "Card Network",
+      "title": "Mastercard Panama",
+      "url": "https://www.mastercard.com.pa/",
+      "type": "Infrastructure",
+      "description": "Card rails infrastructure",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-017",
+      "module": "Panama Payments",
+      "category": "Payment Gateway",
+      "title": "PagueloFacil",
+      "url": "https://www.paguelofacil.com/",
+      "type": "Product",
+      "description": "Panama local payment gateway",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-018",
+      "module": "Panama Payments",
+      "category": "Payment Gateway",
+      "title": "KuikPay",
+      "url": "https://www.kuikpay.com/",
+      "type": "Product",
+      "description": "Local PSP alternative",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-019",
+      "module": "Panama Payments",
+      "category": "Merchant Context",
+      "title": "About Payments — Panama",
+      "url": "https://www.aboutpayments.com/en-gb/ecommerce-markets/panama-pa",
+      "type": "Reference",
+      "description": "Overview of payment acceptance in Panama",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-020",
+      "module": "Panama Banking",
+      "category": "Regulator",
+      "title": "Superintendencia de Bancos",
+      "url": "https://www.superbancos.gob.pa/",
+      "type": "Government",
+      "description": "Banking regulation context",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-021",
+      "module": "Panama Banking",
+      "category": "State Bank",
+      "title": "Banco Nacional de Panamá",
+      "url": "https://www.banconal.com.pa/",
+      "type": "Bank",
+      "description": "Government-owned bank",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-022",
+      "module": "Panama Banking",
+      "category": "Major Bank",
+      "title": "Banco General",
+      "url": "https://www.bgeneral.com/",
+      "type": "Bank",
+      "description": "Largest private bank in Panama",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-023",
+      "module": "Panama Banking",
+      "category": "Major Bank",
+      "title": "Banistmo",
+      "url": "https://www.banistmo.com/",
+      "type": "Bank",
+      "description": "Major commercial bank",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-024",
+      "module": "Panama Banking",
+      "category": "Major Bank",
+      "title": "BAC Panamá",
+      "url": "https://www.baccredomatic.com/es-pa",
+      "type": "Bank",
+      "description": "Strong merchant ecosystem + Compra Click",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-025",
+      "module": "Panama Banking",
+      "category": "Public Savings",
+      "title": "Caja de Ahorros",
+      "url": "https://www.cajadeahorros.com.pa/",
+      "type": "Bank",
+      "description": "Government-linked savings bank",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-026",
+      "module": "Panama Banking",
+      "category": "Private Bank",
+      "title": "Banisi",
+      "url": "https://www.banisi.com/",
+      "type": "Bank",
+      "description": "Yappy-supported bank",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-027",
+      "module": "Panama Banking",
+      "category": "Private Bank",
+      "title": "MetroBank",
+      "url": "https://www.metrobank.com.pa/",
+      "type": "Bank",
+      "description": "Merchant banking",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-028",
+      "module": "Panama Banking",
+      "category": "Private Bank",
+      "title": "Credicorp Bank",
+      "url": "https://www.credicorpbank.com/",
+      "type": "Bank",
+      "description": "ACH participant, Yappy partner",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-029",
+      "module": "Panama Banking",
+      "category": "Private Bank",
+      "title": "St. Georges Bank",
+      "url": "https://www.stgeorgesbank.com/",
+      "type": "Bank",
+      "description": "Commercial banking",
+      "priority": "Low"
+    },
+    {
+      "id": "PKB-030",
+      "module": "Panama Banking",
+      "category": "Private Bank",
+      "title": "Davivienda Panamá",
+      "url": "https://www.davivienda.com.pa/",
+      "type": "Bank",
+      "description": "Yappy-supported bank",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-031",
+      "module": "Panama Banking",
+      "category": "Reference",
+      "title": "Banking in Panama (Wikipedia)",
+      "url": "https://en.wikipedia.org/wiki/Banking_in_Panama",
+      "type": "Reference",
+      "description": "Banking system structure overview",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-032",
+      "module": "Panama Banking",
+      "category": "Reference",
+      "title": "Best Business Accounts Panama",
+      "url": "https://www.onesafe.io/blog/what-is-the-best-business-account-for-panama-top-banks-reviewed",
+      "type": "Guide",
+      "description": "Business account comparison",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-033",
+      "module": "Panama Banking",
+      "category": "ACH Reference",
+      "title": "Credicorp ACH Info",
+      "url": "https://www.credicorpbank.com/en/producto/sistema-ach/",
+      "type": "Docs",
+      "description": "ACH transit & routing info",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-034",
+      "module": "Government & Regulation",
+      "category": "Business Registration",
+      "title": "Panamá Emprende",
+      "url": "https://www.panamaemprende.gob.pa/",
+      "type": "Government",
+      "description": "Company registration portal",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-035",
+      "module": "Government & Regulation",
+      "category": "Tax Authority",
+      "title": "DGI (Dirección General de Ingresos)",
+      "url": "https://dgi.mef.gob.pa/",
+      "type": "Government",
+      "description": "Tax compliance & fiscal obligations",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-036",
+      "module": "Government & Regulation",
+      "category": "E-Invoicing",
+      "title": "Factura Electrónica Panamá",
+      "url": "https://dgi.mef.gob.pa/FacturaElectronica/",
+      "type": "Government",
+      "description": "Electronic invoicing rules & system",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-037",
+      "module": "Government & Regulation",
+      "category": "Tax Guides",
+      "title": "DGI Tributación",
+      "url": "https://dgi.mef.gob.pa/Tributacion/",
+      "type": "Government",
+      "description": "Tax rules & guides",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-038",
+      "module": "Government & Regulation",
+      "category": "Commerce Ministry",
+      "title": "MICI",
+      "url": "https://www.mici.gob.pa/",
+      "type": "Government",
+      "description": "Business regulation & commerce policy",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-039",
+      "module": "Government & Regulation",
+      "category": "Social Security",
+      "title": "CSS (Caja de Seguro Social)",
+      "url": "https://w3.css.gob.pa/",
+      "type": "Government",
+      "description": "Payroll obligations & employer duties",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-040",
+      "module": "Government & Regulation",
+      "category": "Municipality",
+      "title": "Municipio de Panamá",
+      "url": "https://www.mupa.gob.pa/",
+      "type": "Government",
+      "description": "Operating permits & local compliance",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-041",
+      "module": "Government & Regulation",
+      "category": "SMB Agency",
+      "title": "AMPYME",
+      "url": "https://www.ampyme.gob.pa/",
+      "type": "Government",
+      "description": "Micro & small business support programs",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-042",
+      "module": "Government & Regulation",
+      "category": "Chamber",
+      "title": "Cámara de Comercio Panamá",
+      "url": "https://www.panacamara.com/",
+      "type": "Association",
+      "description": "Business advocacy & networking",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-043",
+      "module": "AI Platforms",
+      "category": "Foundation Model",
+      "title": "OpenAI",
+      "url": "https://openai.com",
+      "type": "Platform",
+      "description": "Industry-leading generative AI APIs",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-044",
+      "module": "AI Platforms",
+      "category": "Foundation Model",
+      "title": "OpenAI Docs",
+      "url": "https://platform.openai.com/docs",
+      "type": "Docs",
+      "description": "API patterns & function calling",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-045",
+      "module": "AI Platforms",
+      "category": "Foundation Model",
+      "title": "OpenAI API Guide (ES)",
+      "url": "https://openai.com/es-419/index/openai-api/",
+      "type": "Docs",
+      "description": "Spanish-language API reference",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-046",
+      "module": "AI Platforms",
+      "category": "Foundation Model",
+      "title": "Anthropic",
+      "url": "https://www.anthropic.com",
+      "type": "Platform",
+      "description": "Claude architecture & safety",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-047",
+      "module": "AI Platforms",
+      "category": "Foundation Model",
+      "title": "Anthropic Docs",
+      "url": "https://docs.anthropic.com",
+      "type": "Docs",
+      "description": "Tool use + safety patterns",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-048",
+      "module": "AI Platforms",
+      "category": "AI Research",
+      "title": "Google DeepMind",
+      "url": "https://deepmind.google",
+      "type": "Research",
+      "description": "Frontier AI research",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-049",
+      "module": "AI Platforms",
+      "category": "AI Platform",
+      "title": "Google AI",
+      "url": "https://ai.google",
+      "type": "Platform",
+      "description": "Gemini ecosystem",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-050",
+      "module": "AI Platforms",
+      "category": "Cloud AI",
+      "title": "Google Vertex AI",
+      "url": "https://cloud.google.com/vertex-ai",
+      "type": "Platform",
+      "description": "Enterprise AI deployment",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-051",
+      "module": "AI Platforms",
+      "category": "Cloud AI",
+      "title": "Microsoft Azure AI",
+      "url": "https://azure.microsoft.com/en-us/products/ai-services",
+      "type": "Platform",
+      "description": "Enterprise AI stack",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-052",
+      "module": "AI Platforms",
+      "category": "Cloud AI",
+      "title": "AWS AI / SageMaker",
+      "url": "https://aws.amazon.com/machine-learning/",
+      "type": "Platform",
+      "description": "Scalable AI infrastructure",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-053",
+      "module": "AI Platforms",
+      "category": "Enterprise AI",
+      "title": "IBM watsonx",
+      "url": "https://www.ibm.com/watsonx",
+      "type": "Platform",
+      "description": "Governance-first enterprise AI",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-054",
+      "module": "AI Platforms",
+      "category": "Enterprise AI",
+      "title": "Salesforce Einstein",
+      "url": "https://www.salesforce.com/products/einstein/overview/",
+      "type": "Platform",
+      "description": "CRM-integrated AI",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-055",
+      "module": "AI Platforms",
+      "category": "Enterprise Data",
+      "title": "Databricks",
+      "url": "https://databricks.com",
+      "type": "Platform",
+      "description": "Data + AI lakehouse",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-056",
+      "module": "AI Platforms",
+      "category": "LLM Provider",
+      "title": "Cohere",
+      "url": "https://cohere.com",
+      "type": "Platform",
+      "description": "Enterprise LLMs & NLP",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-057",
+      "module": "AI Platforms",
+      "category": "Hardware AI",
+      "title": "NVIDIA AI",
+      "url": "https://www.nvidia.com/en-us/ai-data-science/",
+      "type": "Infrastructure",
+      "description": "GPU + AI infra backbone",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-058",
+      "module": "AI Platforms",
+      "category": "AI for Data",
+      "title": "MindsDB",
+      "url": "https://mindsdb.com/",
+      "type": "Platform",
+      "description": "AI layer on databases",
+      "priority": "Low"
+    },
+    {
+      "id": "PKB-059",
+      "module": "AI Platforms",
+      "category": "Open Research",
+      "title": "EleutherAI",
+      "url": "https://eleuther.ai/",
+      "type": "Research",
+      "description": "Open-source LM research",
+      "priority": "Low"
+    },
+    {
+      "id": "PKB-060",
+      "module": "AI Platforms",
+      "category": "AI Search",
+      "title": "You.com",
+      "url": "https://you.com/",
+      "type": "Product",
+      "description": "AI-powered search & assistant",
+      "priority": "Low"
+    },
+    {
+      "id": "PKB-061",
+      "module": "AI Platforms",
+      "category": "Legal AI",
+      "title": "Harvey AI (Wikipedia)",
+      "url": "https://en.wikipedia.org/wiki/Harvey_(software)",
+      "type": "Reference",
+      "description": "Specialized legal AI workflows",
+      "priority": "Low"
+    },
+    {
+      "id": "PKB-062",
+      "module": "AI Agents",
+      "category": "Multi-Agent",
+      "title": "AutoGen",
+      "url": "https://github.com/microsoft/autogen",
+      "type": "Framework",
+      "description": "Agent collaboration patterns",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-063",
+      "module": "AI Agents",
+      "category": "Workflow Agents",
+      "title": "LangGraph",
+      "url": "https://github.com/langchain-ai/langgraph",
+      "type": "Framework",
+      "description": "Deterministic agent flows",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-064",
+      "module": "AI Agents",
+      "category": "Agent Framework",
+      "title": "LangChain",
+      "url": "https://github.com/langchain-ai/langchain",
+      "type": "Framework",
+      "description": "Tool usage & chaining",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-065",
+      "module": "AI Agents",
+      "category": "Agent Framework",
+      "title": "CrewAI",
+      "url": "https://github.com/joaomdmoura/crewAI",
+      "type": "Framework",
+      "description": "Role-based agent teams",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-066",
+      "module": "AI Agents",
+      "category": "Tool Protocol",
+      "title": "MCP Spec",
+      "url": "https://modelcontextprotocol.io",
+      "type": "Standard",
+      "description": "Tool-call protocol standard",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-067",
+      "module": "IBM Tech",
+      "category": "Documentation Hub",
+      "title": "IBM Docs",
+      "url": "https://www.ibm.com/docs/",
+      "type": "Docs",
+      "description": "Core hub for all IBM product docs",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-068",
+      "module": "IBM Tech",
+      "category": "Developer Portal",
+      "title": "IBM Developer",
+      "url": "https://developer.ibm.com/",
+      "type": "Portal",
+      "description": "Learning resources: AI, cloud, data, DevOps",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-069",
+      "module": "IBM Tech",
+      "category": "API Marketplace",
+      "title": "IBM API Hub",
+      "url": "https://developer.ibm.com/apis/",
+      "type": "Docs",
+      "description": "Certified APIs & integration patterns",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-070",
+      "module": "IBM Tech",
+      "category": "Cloud APIs",
+      "title": "IBM Cloud API Docs",
+      "url": "https://cloud.ibm.com/docs?tab=api-docs",
+      "type": "Docs",
+      "description": "REST API references for all IBM Cloud services",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-071",
+      "module": "IBM Tech",
+      "category": "CLI Tooling",
+      "title": "IBM Cloud CLI",
+      "url": "https://cloud.ibm.com/docs/cli?topic=cli-getting-started",
+      "type": "Docs",
+      "description": "Automation & DevOps patterns",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-072",
+      "module": "IBM Tech",
+      "category": "GenAI",
+      "title": "watsonx.ai API",
+      "url": "https://cloud.ibm.com/apidocs/watsonx-ai",
+      "type": "Docs",
+      "description": "LLM inference & generative capabilities",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-073",
+      "module": "IBM Tech",
+      "category": "Conversational AI",
+      "title": "Watson Assistant API",
+      "url": "https://cloud.ibm.com/apidocs/assistant-v2",
+      "type": "Docs",
+      "description": "Dialog & flow APIs",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-074",
+      "module": "IBM Tech",
+      "category": "NLP / Search",
+      "title": "Watson Discovery",
+      "url": "https://www.ibm.com/products/watson-discovery",
+      "type": "Product",
+      "description": "Document insights & extraction",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-075",
+      "module": "IBM Tech",
+      "category": "SDKs",
+      "title": "Watson SDKs (GitHub)",
+      "url": "https://github.com/watson-developer-cloud",
+      "type": "Code",
+      "description": "Client libraries (Node, Python, Java)",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-076",
+      "module": "IBM Tech",
+      "category": "Design System",
+      "title": "Carbon Design System",
+      "url": "https://carbondesignsystem.com/",
+      "type": "Design",
+      "description": "Enterprise UI standards & components",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-077",
+      "module": "IBM Tech",
+      "category": "Mainframe",
+      "title": "IBM Developer for z/OS",
+      "url": "https://www.ibm.com/docs/en/developer-for-zos/",
+      "type": "Docs",
+      "description": "Enterprise mainframe patterns",
+      "priority": "Low"
+    },
+    {
+      "id": "PKB-078",
+      "module": "IBM Tech",
+      "category": "Governance",
+      "title": "IBM OpenPages",
+      "url": "https://www.ibm.com/docs/en/openpages/8.3.0?topic=user-guide",
+      "type": "Docs",
+      "description": "Compliance & governance frameworks",
+      "priority": "Low"
+    },
+    {
+      "id": "PKB-079",
+      "module": "Product & UX",
+      "category": "Fintech UX",
+      "title": "Stripe Docs",
+      "url": "https://stripe.com/docs",
+      "type": "Docs",
+      "description": "Best-in-class fintech UX & API design",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-080",
+      "module": "Product & UX",
+      "category": "Minimal Product",
+      "title": "Linear Blog",
+      "url": "https://linear.app/blog",
+      "type": "Blog",
+      "description": "Product clarity & UX minimalism",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-081",
+      "module": "Product & UX",
+      "category": "Productivity UX",
+      "title": "Notion Help",
+      "url": "https://www.notion.so/help",
+      "type": "Docs",
+      "description": "Clean interface logic & UX flows",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-082",
+      "module": "Product & UX",
+      "category": "Design Standards",
+      "title": "Apple HIG",
+      "url": "https://developer.apple.com/design/human-interface-guidelines/",
+      "type": "Guidelines",
+      "description": "UI principles & interaction patterns",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-083",
+      "module": "Product & UX",
+      "category": "Web Inspiration",
+      "title": "Awwwards",
+      "url": "https://www.awwwards.com",
+      "type": "Showcase",
+      "description": "Premium web design trends",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-084",
+      "module": "Product & UX",
+      "category": "Web Inspiration",
+      "title": "Webflow Showcase",
+      "url": "https://webflow.com/discover/popular",
+      "type": "Showcase",
+      "description": "Modern web design patterns",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-085",
+      "module": "Product & UX",
+      "category": "Content Design",
+      "title": "Dribbble — Web Design",
+      "url": "https://dribbble.com/shots/popular/web-design",
+      "type": "Inspiration",
+      "description": "Visual hierarchy & layout patterns",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-086",
+      "module": "Product & UX",
+      "category": "Content Design",
+      "title": "Dribbble — Mobile",
+      "url": "https://dribbble.com/shots/popular/mobile",
+      "type": "Inspiration",
+      "description": "Mobile-first design patterns",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-087",
+      "module": "Product & UX",
+      "category": "Content Design",
+      "title": "Dribbble — SaaS",
+      "url": "https://dribbble.com/search/saas",
+      "type": "Inspiration",
+      "description": "SaaS dashboard & product patterns",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-088",
+      "module": "Product & UX",
+      "category": "Content Design",
+      "title": "Dribbble — Branding",
+      "url": "https://dribbble.com/search/branding",
+      "type": "Inspiration",
+      "description": "Brand identity patterns",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-089",
+      "module": "Product & UX",
+      "category": "Content Design",
+      "title": "Dribbble — Typography",
+      "url": "https://dribbble.com/shots/popular/typography",
+      "type": "Inspiration",
+      "description": "Type hierarchy & scale",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-090",
+      "module": "Product & UX",
+      "category": "Content Design",
+      "title": "Dribbble — Social Media",
+      "url": "https://dribbble.com/search/social-media",
+      "type": "Inspiration",
+      "description": "Social content layout patterns",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-091",
+      "module": "Product & UX",
+      "category": "Content Design",
+      "title": "Dribbble — Dashboard",
+      "url": "https://dribbble.com/search/dashboard",
+      "type": "Inspiration",
+      "description": "Dashboard UI patterns",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-092",
+      "module": "Product & UX",
+      "category": "Content Design",
+      "title": "Dribbble — Presentation",
+      "url": "https://dribbble.com/search/presentation",
+      "type": "Inspiration",
+      "description": "Presentation slide patterns",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-093",
+      "module": "Product & UX",
+      "category": "Content Design",
+      "title": "Dribbble — Pitch Deck",
+      "url": "https://dribbble.com/search/pitch-deck",
+      "type": "Inspiration",
+      "description": "Deck design patterns",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-094",
+      "module": "Product & UX",
+      "category": "Content Design",
+      "title": "Dribbble — Minimal",
+      "url": "https://dribbble.com/search/minimal",
+      "type": "Inspiration",
+      "description": "Clean minimal design principles",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-095",
+      "module": "Automation",
+      "category": "Workflow Platform",
+      "title": "Zapier",
+      "url": "https://zapier.com/",
+      "type": "Platform",
+      "description": "Workflow patterns & trigger-action chains",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-096",
+      "module": "Automation",
+      "category": "Workflow Platform",
+      "title": "Zapier Blog",
+      "url": "https://zapier.com/blog/",
+      "type": "Blog",
+      "description": "Workflow ideas & codifiable patterns",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-097",
+      "module": "Automation",
+      "category": "Workflow Platform",
+      "title": "n8n",
+      "url": "https://github.com/n8n-io/n8n",
+      "type": "Platform",
+      "description": "Open-source workflow glue",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-098",
+      "module": "Automation",
+      "category": "Workflow Platform",
+      "title": "n8n + OpenAI",
+      "url": "https://n8n.io/integrations/openai/",
+      "type": "Integration",
+      "description": "AI workflow connection patterns",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-099",
+      "module": "Automation",
+      "category": "Workflow Platform",
+      "title": "Make (Integromat)",
+      "url": "https://www.make.com",
+      "type": "Platform",
+      "description": "Visual scenario design patterns",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-100",
+      "module": "Data & Analytics",
+      "category": "Product Analytics",
+      "title": "PostHog",
+      "url": "https://posthog.com",
+      "type": "Platform",
+      "description": "Product analytics & feature flags",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-101",
+      "module": "Data & Analytics",
+      "category": "BI",
+      "title": "Metabase",
+      "url": "https://www.metabase.com",
+      "type": "Platform",
+      "description": "Open-source BI dashboards",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-102",
+      "module": "Data & Analytics",
+      "category": "BI",
+      "title": "Apache Superset",
+      "url": "https://superset.apache.org",
+      "type": "Platform",
+      "description": "Data visualization & exploration",
+      "priority": "Low"
+    },
+    {
+      "id": "PKB-103",
+      "module": "Data & Analytics",
+      "category": "Observability",
+      "title": "OpenTelemetry",
+      "url": "https://opentelemetry.io",
+      "type": "Standard",
+      "description": "Traceability & observability patterns",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-104",
+      "module": "Data & Analytics",
+      "category": "Monitoring",
+      "title": "Grafana",
+      "url": "https://grafana.com",
+      "type": "Platform",
+      "description": "Dashboard & alerting",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-105",
+      "module": "Data & Analytics",
+      "category": "Metrics",
+      "title": "Prometheus",
+      "url": "https://prometheus.io",
+      "type": "Platform",
+      "description": "Metrics collection",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-106",
+      "module": "Security & Governance",
+      "category": "Cybersecurity",
+      "title": "NIST Framework",
+      "url": "https://www.nist.gov/cyberframework",
+      "type": "Framework",
+      "description": "Risk modeling & security baseline",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-107",
+      "module": "Security & Governance",
+      "category": "App Security",
+      "title": "OWASP",
+      "url": "https://owasp.org/",
+      "type": "Framework",
+      "description": "Secure design standards",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-108",
+      "module": "Security & Governance",
+      "category": "Data Privacy",
+      "title": "EU AI Act",
+      "url": "https://artificialintelligenceact.eu",
+      "type": "Regulation",
+      "description": "AI governance & compliance",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-109",
+      "module": "Security & Governance",
+      "category": "Compliance",
+      "title": "SOC 2 Overview (AICPA)",
+      "url": "https://www.aicpa.org/resources/topic/audit-assurance/audit-and-assurance-greater-than-soc-2",
+      "type": "Framework",
+      "description": "Audit & compliance standards",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-110",
+      "module": "SMB Operations",
+      "category": "Mentorship",
+      "title": "SBA (U.S.)",
+      "url": "https://www.sba.gov/",
+      "type": "Government",
+      "description": "Operational framework & SMB planning",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-111",
+      "module": "SMB Operations",
+      "category": "Mentorship",
+      "title": "SCORE",
+      "url": "https://www.score.org/",
+      "type": "Nonprofit",
+      "description": "Practical SMB playbooks & mentoring",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-112",
+      "module": "SMB Operations",
+      "category": "E-commerce Ops",
+      "title": "Shopify Blog",
+      "url": "https://www.shopify.com/blog",
+      "type": "Blog",
+      "description": "Real-world retail & e-commerce ops",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-113",
+      "module": "SMB Operations",
+      "category": "Marketing & CRM",
+      "title": "HubSpot Resources",
+      "url": "https://www.hubspot.com/resources",
+      "type": "Blog",
+      "description": "Funnel, CRM & marketing patterns",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-114",
+      "module": "SMB Operations",
+      "category": "Startup Thinking",
+      "title": "YC Startup Library",
+      "url": "https://www.ycombinator.com/library",
+      "type": "Library",
+      "description": "Founder decision models & frameworks",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-115",
+      "module": "SMB Operations",
+      "category": "Founder Insights",
+      "title": "First Round Review",
+      "url": "https://review.firstround.com/",
+      "type": "Blog",
+      "description": "Operational strategy & lessons",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-116",
+      "module": "SMB Operations",
+      "category": "Digital Transform",
+      "title": "SMB Digital Transformation Guide",
+      "url": "https://kilimokwanza.org/small-business-digital-transformation-guide/",
+      "type": "Guide",
+      "description": "Digital tools adoption for SMBs",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-117",
+      "module": "SMB Operations",
+      "category": "Operations",
+      "title": "Optimizing Small Business Ops",
+      "url": "https://turnkeysr.com/blog/small-business-operations/",
+      "type": "Guide",
+      "description": "Operational best practices",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-118",
+      "module": "SMB Operations",
+      "category": "Resources List",
+      "title": "Top SMB Resources",
+      "url": "https://www.mybtlr.com/blog/top-10-resources-every-small-business-owner-needs",
+      "type": "Guide",
+      "description": "Curated business tools & guides",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-119",
+      "module": "SMB Operations",
+      "category": "Planning",
+      "title": "Business Plan Templates",
+      "url": "https://www.dreamspring.org/business-resources/16-terrific-business-plan-templates",
+      "type": "Templates",
+      "description": "Adaptable business plan structures",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-120",
+      "module": "SMB Operations",
+      "category": "Workflow Tools",
+      "title": "Workflow Automation Guide 2026",
+      "url": "https://www.pathopt.com/blog/workflow-automation-tools-small-business-2025",
+      "type": "Guide",
+      "description": "Workflow tool comparison for SMBs",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-121",
+      "module": "AI Research",
+      "category": "Safety Framework",
+      "title": "AI Safety Rubric (arXiv)",
+      "url": "https://arxiv.org/abs/2409.08751",
+      "type": "Paper",
+      "description": "Frameworks for evaluating model safety",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-122",
+      "module": "AI Research",
+      "category": "EU Compliance",
+      "title": "EU AI Act Practices (arXiv)",
+      "url": "https://arxiv.org/abs/2504.15181",
+      "type": "Paper",
+      "description": "Safety governance practices of providers",
+      "priority": "Low"
+    },
+    {
+      "id": "PKB-123",
+      "module": "AI Research",
+      "category": "Transparency",
+      "title": "AI Transparency Pipeline (arXiv)",
+      "url": "https://arxiv.org/abs/2512.12443",
+      "type": "Paper",
+      "description": "Transparency scoring for model docs",
+      "priority": "Low"
+    },
+    {
+      "id": "PKB-124",
+      "module": "AI Industry",
+      "category": "Market Overview",
+      "title": "Enterprise AI Companies",
+      "url": "https://www.stack-ai.com/blog/top-ai-enterprise-companies",
+      "type": "Article",
+      "description": "Enterprise AI providers overview",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-125",
+      "module": "AI Industry",
+      "category": "Market Overview",
+      "title": "AI API Guide (ES)",
+      "url": "https://www.claudecodecurso.com/post.html?slug=apis-inteligencia-artificial-guia",
+      "type": "Guide",
+      "description": "High-level AI API comparison",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-126",
+      "module": "AI Industry",
+      "category": "Developer Guide",
+      "title": "AI API Guide 2026 (ES)",
+      "url": "https://www.upliora.es/blog/apis-ia-guia-completa-desarrolladores-2026",
+      "type": "Guide",
+      "description": "Developer comparison of platforms",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-127",
+      "module": "AI Industry",
+      "category": "Trends",
+      "title": "AI Companies (BuiltIn)",
+      "url": "https://builtin.com/artificial-intelligence/publicly-traded-ai-companies",
+      "type": "Article",
+      "description": "Companies driving AI investment",
+      "priority": "Low"
+    },
+    {
+      "id": "PKB-128",
+      "module": "Leadership",
+      "category": "Accounting Logic",
+      "title": "Double Entry (Wikipedia)",
+      "url": "https://en.wikipedia.org/wiki/Double-entry_bookkeeping",
+      "type": "Reference",
+      "description": "Accounting logic reference for financial reasoning",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-129",
+      "module": "Automation",
+      "category": "Workflow Templates",
+      "title": "Awesome n8n Templates (GitHub)",
+      "url": "https://github.com/enescingoz/awesome-n8n-templates",
+      "type": "Repo",
+      "description": "Curated n8n workflows, nodes & template library",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-130",
+      "module": "Google AI Tools",
+      "category": "Data & Automation",
+      "title": "Google Stitch",
+      "url": "https://stitch.withgoogle.com/",
+      "type": "Platform",
+      "description": "Data connector & automation workflows",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-131",
+      "module": "Google AI Tools",
+      "category": "AI Studio",
+      "title": "Google AI Studio Build",
+      "url": "https://aistudio.google.com/",
+      "type": "Platform",
+      "description": "Low-code/no-code AI model building",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-132",
+      "module": "Google AI Tools",
+      "category": "Workspace AI",
+      "title": "Google Opal",
+      "url": "https://opal.google/landing/",
+      "type": "Platform",
+      "description": "AI-assisted workspace (planning, docs, notes)",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-133",
+      "module": "Google AI Tools",
+      "category": "Research AI",
+      "title": "NotebookLM",
+      "url": "https://notebooklm.google/",
+      "type": "Platform",
+      "description": "AI notebook for research & study",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-134",
+      "module": "Google AI Tools",
+      "category": "Creative AI",
+      "title": "Pomelli (Google Labs)",
+      "url": "https://labs.google.com/pomelli/about/",
+      "type": "Platform",
+      "description": "Creative coding / AI exploration toolkit",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-135",
+      "module": "Google AI Tools",
+      "category": "Visual AI",
+      "title": "Canvas (Google Gemini)",
+      "url": "https://gemini.google/overview/canvas/",
+      "type": "Platform",
+      "description": "Visual creator + ideation tool",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-136",
+      "module": "Google AI Tools",
+      "category": "Foundation Model",
+      "title": "Gemini AI",
+      "url": "https://gemini.google/",
+      "type": "Platform",
+      "description": "Google broader AI models & ecosystem",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-137",
+      "module": "AI Agents",
+      "category": "Workspace Protocol",
+      "title": "Model Workspace Protocol (MWP)",
+      "url": "https://github.com/RinDig/Model-Workspace-Protocol-MWP-.git",
+      "type": "Repo",
+      "description": "Standardizing model workspaces for AI integrations",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-138",
+      "module": "WhatsApp Business",
+      "category": "Developer Hub",
+      "title": "WhatsApp Business Platform Docs",
+      "url": "https://business.whatsapp.com/developers/developer-hub",
+      "type": "Docs",
+      "description": "Official API docs, webhooks, rate limits, policy",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-139",
+      "module": "WhatsApp Business",
+      "category": "Cloud API",
+      "title": "WhatsApp Cloud API (Meta)",
+      "url": "https://developers.facebook.com/docs/whatsapp/cloud-api",
+      "type": "Docs",
+      "description": "Cloud-hosted API for sending messages at scale",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-140",
+      "module": "WhatsApp Business",
+      "category": "Business App",
+      "title": "WhatsApp Business App",
+      "url": "https://business.whatsapp.com/",
+      "type": "Product",
+      "description": "Free app for small businesses (catalog, quick replies)",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-141",
+      "module": "WhatsApp Business",
+      "category": "Pricing",
+      "title": "WhatsApp API Pricing",
+      "url": "https://developers.facebook.com/docs/whatsapp/pricing",
+      "type": "Docs",
+      "description": "Conversation-based pricing model (marketing/utility/service)",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-142",
+      "module": "WhatsApp Business",
+      "category": "BSP Integration",
+      "title": "Twilio WhatsApp API",
+      "url": "https://www.twilio.com/en-us/messaging/channels/whatsapp",
+      "type": "Platform",
+      "description": "Programmable WhatsApp via Twilio (popular BSP)",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-143",
+      "module": "Social Commerce",
+      "category": "Meta Business",
+      "title": "Meta for Business",
+      "url": "https://business.meta.com/",
+      "type": "Platform",
+      "description": "Central hub for FB + IG + WA business tools & ads",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-144",
+      "module": "Social Commerce",
+      "category": "Meta Developers",
+      "title": "Meta for Developers",
+      "url": "https://developers.facebook.com/",
+      "type": "Portal",
+      "description": "Graph API, Marketing API, app creation",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-145",
+      "module": "Social Commerce",
+      "category": "Instagram API",
+      "title": "Instagram Graph API Docs",
+      "url": "https://developers.facebook.com/docs/instagram-api/",
+      "type": "Docs",
+      "description": "Publish content, read insights, manage comments",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-146",
+      "module": "Social Commerce",
+      "category": "Facebook Pages API",
+      "title": "Facebook Pages API Docs",
+      "url": "https://developers.facebook.com/docs/pages-api/",
+      "type": "Docs",
+      "description": "Manage FB pages, posts, messaging programmatically",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-147",
+      "module": "Social Commerce",
+      "category": "Marketing API",
+      "title": "Meta Marketing API",
+      "url": "https://developers.facebook.com/docs/marketing-apis/",
+      "type": "Docs",
+      "description": "Ad creation, audience targeting, campaign management",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-148",
+      "module": "Social Commerce",
+      "category": "Business SDK",
+      "title": "Meta Business SDK (Python)",
+      "url": "https://github.com/facebook/facebook-python-business-sdk",
+      "type": "Code",
+      "description": "Python SDK for all Meta business APIs",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-149",
+      "module": "Local Discovery",
+      "category": "Google Business",
+      "title": "Google Business Profile Help",
+      "url": "https://support.google.com/business/",
+      "type": "Docs",
+      "description": "Manage how your business appears on Search & Maps",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-150",
+      "module": "Local Discovery",
+      "category": "Google Business API",
+      "title": "Google Business Profile APIs",
+      "url": "https://developers.google.com/my-business",
+      "type": "Docs",
+      "description": "Programmatic listing management & insights",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-151",
+      "module": "Local Discovery",
+      "category": "Google Ads",
+      "title": "Google Ads Help Center",
+      "url": "https://support.google.com/google-ads/",
+      "type": "Docs",
+      "description": "Paid local ads, Performance Max, budgeting",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-152",
+      "module": "Local Discovery",
+      "category": "Google Analytics",
+      "title": "Google Analytics Academy",
+      "url": "https://analytics.google.com/analytics/academy/",
+      "type": "Training",
+      "description": "Learn to measure traffic, conversions, user behavior",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-153",
+      "module": "Local Discovery",
+      "category": "Google Merchant",
+      "title": "Google Merchant Center",
+      "url": "https://merchants.google.com/",
+      "type": "Platform",
+      "description": "Product feeds for Shopping ads & free listings",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-154",
+      "module": "Content Creation",
+      "category": "Design Platform",
+      "title": "Canva",
+      "url": "https://www.canva.com/",
+      "type": "Platform",
+      "description": "Most-used design tool by SMBs for social, flyers, decks",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-155",
+      "module": "Content Creation",
+      "category": "Canva API",
+      "title": "Canva Connect API Docs",
+      "url": "https://www.canva.dev/docs/connect/",
+      "type": "Docs",
+      "description": "Integrate Canva design capabilities programmatically",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-156",
+      "module": "Content Creation",
+      "category": "Canva Dev Portal",
+      "title": "Canva Developers",
+      "url": "https://www.canva.dev/docs/",
+      "type": "Portal",
+      "description": "Apps SDK, Connect API, SCIM, audit logs",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-157",
+      "module": "Content Creation",
+      "category": "Video",
+      "title": "CapCut (Video editing)",
+      "url": "https://www.capcut.com/",
+      "type": "Platform",
+      "description": "Free video editor used heavily for Reels/TikTok content",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-158",
+      "module": "Email Marketing",
+      "category": "Platform",
+      "title": "Mailchimp Resources",
+      "url": "https://mailchimp.com/resources/",
+      "type": "Docs",
+      "description": "Email marketing guides, templates, automation recipes",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-159",
+      "module": "Email Marketing",
+      "category": "Platform",
+      "title": "Brevo (ex-Sendinblue)",
+      "url": "https://www.brevo.com/",
+      "type": "Platform",
+      "description": "Email + SMS + WhatsApp marketing (SMB-friendly pricing)",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-160",
+      "module": "Email Marketing",
+      "category": "Transactional",
+      "title": "Resend (Developer email)",
+      "url": "https://resend.com/",
+      "type": "Platform",
+      "description": "Modern transactional email API for developers",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-161",
+      "module": "CRM",
+      "category": "Free CRM",
+      "title": "HubSpot CRM (Free)",
+      "url": "https://www.hubspot.com/products/crm",
+      "type": "Platform",
+      "description": "Free CRM with contacts, deals, pipeline management",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-162",
+      "module": "CRM",
+      "category": "Open Source CRM",
+      "title": "Twenty CRM (Open Source)",
+      "url": "https://twenty.com/",
+      "type": "Platform",
+      "description": "Modern open-source CRM alternative",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-163",
+      "module": "Accounting",
+      "category": "Platform",
+      "title": "Wave Accounting (Free)",
+      "url": "https://www.waveapps.com/",
+      "type": "Platform",
+      "description": "Free accounting, invoicing & receipts for SMBs",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-164",
+      "module": "Accounting",
+      "category": "Platform",
+      "title": "Xero",
+      "url": "https://www.xero.com/",
+      "type": "Platform",
+      "description": "Cloud accounting with bank feeds & invoicing",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-165",
+      "module": "Accounting",
+      "category": "Platform",
+      "title": "QuickBooks Small Business",
+      "url": "https://quickbooks.intuit.com/global/",
+      "type": "Platform",
+      "description": "Popular SMB accounting & payroll",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-166",
+      "module": "Accounting",
+      "category": "API",
+      "title": "Xero Developer Docs",
+      "url": "https://developer.xero.com/",
+      "type": "Docs",
+      "description": "Accounting API for invoices, contacts, bank transactions",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-167",
+      "module": "E-Commerce",
+      "category": "Platform",
+      "title": "Shopify",
+      "url": "https://www.shopify.com/",
+      "type": "Platform",
+      "description": "Leading e-commerce platform for SMBs",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-168",
+      "module": "E-Commerce",
+      "category": "API",
+      "title": "Shopify API Docs",
+      "url": "https://shopify.dev/docs/api",
+      "type": "Docs",
+      "description": "Storefront, Admin, and Payments APIs",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-169",
+      "module": "E-Commerce",
+      "category": "Open Source",
+      "title": "WooCommerce",
+      "url": "https://woocommerce.com/",
+      "type": "Platform",
+      "description": "WordPress-based open-source e-commerce",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-170",
+      "module": "E-Commerce",
+      "category": "LATAM Platform",
+      "title": "Tiendanube (Nuvemshop)",
+      "url": "https://www.tiendanube.com/",
+      "type": "Platform",
+      "description": "Leading LATAM e-commerce platform",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-171",
+      "module": "Scheduling",
+      "category": "Platform",
+      "title": "Calendly",
+      "url": "https://calendly.com/",
+      "type": "Platform",
+      "description": "Appointment scheduling for service businesses",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-172",
+      "module": "Scheduling",
+      "category": "Platform",
+      "title": "Cal.com (Open Source)",
+      "url": "https://cal.com/",
+      "type": "Platform",
+      "description": "Open-source scheduling infrastructure",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-173",
+      "module": "SEO & Web",
+      "category": "Learning",
+      "title": "Google Search Central",
+      "url": "https://developers.google.com/search",
+      "type": "Docs",
+      "description": "Official SEO documentation & best practices",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-174",
+      "module": "SEO & Web",
+      "category": "Learning",
+      "title": "Moz Beginner SEO Guide",
+      "url": "https://moz.com/beginners-guide-to-seo",
+      "type": "Guide",
+      "description": "Foundational SEO knowledge for SMBs",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-175",
+      "module": "SEO & Web",
+      "category": "Tool",
+      "title": "Google Search Console",
+      "url": "https://search.google.com/search-console/",
+      "type": "Platform",
+      "description": "Monitor search performance & fix issues",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-176",
+      "module": "Legal & Contracts",
+      "category": "Templates",
+      "title": "LawDepot Free Templates",
+      "url": "https://www.lawdepot.com/",
+      "type": "Platform",
+      "description": "Contract templates (NDA, service agreements, leases)",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-177",
+      "module": "Legal & Contracts",
+      "category": "E-Signature",
+      "title": "DocuSign",
+      "url": "https://www.docusign.com/",
+      "type": "Platform",
+      "description": "Electronic signatures & contract management",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-178",
+      "module": "Legal & Contracts",
+      "category": "Open Source",
+      "title": "Documenso (Open Source e-sign)",
+      "url": "https://documenso.com/",
+      "type": "Platform",
+      "description": "Open-source document signing alternative",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-179",
+      "module": "Inventory & POS",
+      "category": "Platform",
+      "title": "Square",
+      "url": "https://squareup.com/",
+      "type": "Platform",
+      "description": "POS + payments + inventory for retail & food",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-180",
+      "module": "Inventory & POS",
+      "category": "Platform",
+      "title": "Loyverse (Free POS)",
+      "url": "https://loyverse.com/",
+      "type": "Platform",
+      "description": "Free POS system for small retail & restaurants",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-181",
+      "module": "Delivery & Logistics",
+      "category": "Platform",
+      "title": "PedidosYa (LATAM delivery)",
+      "url": "https://www.pedidosya.com.pa/",
+      "type": "Platform",
+      "description": "Panama food & product delivery marketplace",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-182",
+      "module": "Delivery & Logistics",
+      "category": "Platform",
+      "title": "Uber Direct API",
+      "url": "https://developer.uber.com/",
+      "type": "Docs",
+      "description": "On-demand delivery API for businesses",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-183",
+      "module": "Customer Support",
+      "category": "Platform",
+      "title": "Tidio (Chat + AI)",
+      "url": "https://www.tidio.com/",
+      "type": "Platform",
+      "description": "Live chat + AI chatbot for SMB websites",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-184",
+      "module": "Customer Support",
+      "category": "Open Source",
+      "title": "Chatwoot",
+      "url": "https://www.chatwoot.com/",
+      "type": "Platform",
+      "description": "Open-source customer engagement (WA, FB, email, chat)",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-185",
+      "module": "Forms & Surveys",
+      "category": "Platform",
+      "title": "Typeform",
+      "url": "https://www.typeform.com/",
+      "type": "Platform",
+      "description": "Beautiful conversational forms for leads & surveys",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-186",
+      "module": "Forms & Surveys",
+      "category": "Platform",
+      "title": "Tally (Free Forms)",
+      "url": "https://tally.so/",
+      "type": "Platform",
+      "description": "Free-tier form builder (Notion-like simplicity)",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-187",
+      "module": "HR & People",
+      "category": "Platform",
+      "title": "Gusto (Payroll & HR)",
+      "url": "https://gusto.com/",
+      "type": "Platform",
+      "description": "Payroll, benefits, HR for small teams",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-188",
+      "module": "HR & People",
+      "category": "LATAM Context",
+      "title": "CSS Panama — Employer Guide",
+      "url": "https://w3.css.gob.pa/patrones/",
+      "type": "Government",
+      "description": "Employer obligations & payroll registration in Panama",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-189",
+      "module": "Pricing Models",
+      "category": "Reference",
+      "title": "Stripe Pricing Page",
+      "url": "https://stripe.com/pricing",
+      "type": "Reference",
+      "description": "Best-in-class SaaS pricing design & transparency",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-190",
+      "module": "Pricing Models",
+      "category": "Reference",
+      "title": "OpenAI Pricing",
+      "url": "https://openai.com/pricing",
+      "type": "Reference",
+      "description": "Token/usage-based AI pricing model",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-191",
+      "module": "Pricing Models",
+      "category": "Guide",
+      "title": "Price Intelligently Blog",
+      "url": "https://www.priceintelligently.com/blog",
+      "type": "Blog",
+      "description": "Pricing strategy research & frameworks",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-192",
+      "module": "Leadership",
+      "category": "Essays",
+      "title": "Paul Graham Essays",
+      "url": "http://www.paulgraham.com/articles.html",
+      "type": "Library",
+      "description": "Startup thinking, simplicity, founder decision models",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-193",
+      "module": "Leadership",
+      "category": "Culture",
+      "title": "Netflix Culture Deck",
+      "url": "https://jobs.netflix.com/culture",
+      "type": "Reference",
+      "description": "High-performance team culture framework",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-194",
+      "module": "Leadership",
+      "category": "Decision Making",
+      "title": "Farnam Street Blog",
+      "url": "https://fs.blog/",
+      "type": "Blog",
+      "description": "Mental models, decision frameworks, clear thinking",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-195",
+      "module": "Leadership",
+      "category": "Principles",
+      "title": "Ray Dalio Principles (Summary)",
+      "url": "https://www.principles.com/",
+      "type": "Reference",
+      "description": "Structured decision-making & management principles",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-196",
+      "module": "Food Business",
+      "category": "Regulation",
+      "title": "AUPSA Panama (Food Safety)",
+      "url": "https://www.aupsa.gob.pa/",
+      "type": "Government",
+      "description": "Panama food safety authority — permits & compliance",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-197",
+      "module": "Food Business",
+      "category": "Platform",
+      "title": "Toast POS (Restaurants)",
+      "url": "https://pos.toasttab.com/",
+      "type": "Platform",
+      "description": "Restaurant POS, online ordering, kitchen management",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-198",
+      "module": "Food Business",
+      "category": "Guide",
+      "title": "FDA Food Business Guide",
+      "url": "https://www.fda.gov/food",
+      "type": "Government",
+      "description": "Food labeling, safety, HACCP principles (reference)",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-199",
+      "module": "Project Management",
+      "category": "Platform",
+      "title": "Trello",
+      "url": "https://trello.com/",
+      "type": "Platform",
+      "description": "Visual kanban boards for task management",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-200",
+      "module": "Project Management",
+      "category": "Platform",
+      "title": "Notion",
+      "url": "https://www.notion.so/",
+      "type": "Platform",
+      "description": "All-in-one workspace (docs, wikis, projects, databases)",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-201",
+      "module": "Project Management",
+      "category": "Platform",
+      "title": "Linear",
+      "url": "https://linear.app/",
+      "type": "Platform",
+      "description": "Modern issue tracking (engineering-grade)",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-202",
+      "module": "AI Content Gen",
+      "category": "Image Gen",
+      "title": "Ideogram",
+      "url": "https://ideogram.ai/",
+      "type": "Platform",
+      "description": "AI image generation with strong text rendering",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-203",
+      "module": "AI Content Gen",
+      "category": "Image Gen",
+      "title": "Midjourney",
+      "url": "https://www.midjourney.com/",
+      "type": "Platform",
+      "description": "Premium AI image generation",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-204",
+      "module": "AI Content Gen",
+      "category": "Image Gen",
+      "title": "DALL-E (OpenAI)",
+      "url": "https://openai.com/dall-e-3",
+      "type": "Platform",
+      "description": "AI image gen integrated with ChatGPT",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-205",
+      "module": "AI Content Gen",
+      "category": "Copywriting",
+      "title": "Copy.ai",
+      "url": "https://www.copy.ai/",
+      "type": "Platform",
+      "description": "AI marketing copy & workflow automation",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-206",
+      "module": "Founder Mindset",
+      "category": "People Skills",
+      "title": "Dale Carnegie — Official Principles",
+      "url": "https://www.dalecarnegie.com/en/dalecarnegieprinciples",
+      "type": "Framework",
+      "description": "Core 30 principles: empathy, listening, influence, leadership",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-207",
+      "module": "Founder Mindset",
+      "category": "People Skills",
+      "title": "How to Win Friends (Wikipedia)",
+      "url": "https://en.wikipedia.org/wiki/How_to_Win_Friends_and_Influence_People",
+      "type": "Reference",
+      "description": "Book structure: 6 sections, 30 principles for handling people",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-208",
+      "module": "Founder Mindset",
+      "category": "People Skills",
+      "title": "Dale Carnegie (Wikipedia)",
+      "url": "https://en.wikipedia.org/wiki/Dale_Carnegie",
+      "type": "Reference",
+      "description": "Context: from poverty to world-changing influence methodology",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-209",
+      "module": "Founder Mindset",
+      "category": "People Skills",
+      "title": "Dale Carnegie Training",
+      "url": "https://www.dalecarnegie.com/",
+      "type": "Platform",
+      "description": "Modern courses: leadership, sales, communication, customer service",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-210",
+      "module": "Founder Mindset",
+      "category": "Sales Psychology",
+      "title": "Carnegie 12 Core Principles (Summary)",
+      "url": "https://davidcummings.org/2012/06/29/12-core-principles-from-how-to-win-friends-and-influence-people/",
+      "type": "Summary",
+      "description": "Distilled: avoid arguments, admit mistakes, see their POV, dramatize ideas",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-211",
+      "module": "Founder Mindset",
+      "category": "Sales Psychology",
+      "title": "How to Stop Worrying & Start Living",
+      "url": "https://en.wikipedia.org/wiki/How_to_Stop_Worrying_and_Start_Living",
+      "type": "Reference",
+      "description": "Stress management framework: live in day-tight compartments, decision clarity",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-212",
+      "module": "Founder Mindset",
+      "category": "Decision Systems",
+      "title": "Ray Dalio — Principles (Official)",
+      "url": "https://www.principles.com/",
+      "type": "Framework",
+      "description": "Radical transparency, idea meritocracy, systematic decision-making",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-213",
+      "module": "Founder Mindset",
+      "category": "Decision Systems",
+      "title": "Principles (Wikipedia)",
+      "url": "https://en.wikipedia.org/wiki/Principles_(book)",
+      "type": "Reference",
+      "description": "Book breakdown: Life Principles + Work Principles + Economic Principles",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-214",
+      "module": "Founder Mindset",
+      "category": "Decision Systems",
+      "title": "Ray Dalio (Wikipedia)",
+      "url": "https://en.wikipedia.org/wiki/Ray_Dalio",
+      "type": "Reference",
+      "description": "Context: Bridgewater founder, largest hedge fund, systematic thinker",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-215",
+      "module": "Founder Mindset",
+      "category": "Economic Thinking",
+      "title": "How the Economic Machine Works (Dalio)",
+      "url": "https://www.youtube.com/watch?v=PHe0bXAIuk0",
+      "type": "Video",
+      "description": "30-min masterclass: credit cycles, deleveraging, economic machine model",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-216",
+      "module": "Founder Mindset",
+      "category": "Economic Thinking",
+      "title": "Principles for Navigating Big Debt Crises",
+      "url": "https://www.principles.com/big-debt-crises/",
+      "type": "Book",
+      "description": "Free book: debt cycles, how economies fail, pattern recognition",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-217",
+      "module": "Founder Mindset",
+      "category": "Economic Thinking",
+      "title": "Principles for Dealing with the Changing World Order",
+      "url": "https://en.wikipedia.org/wiki/Principles_for_Dealing_with_the_Changing_World_Order",
+      "type": "Reference",
+      "description": "Rise & fall of empires, reserve currencies, power cycles",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-218",
+      "module": "Founder Mindset",
+      "category": "Growth Mindset",
+      "title": "Carol Dweck — Mindset (Farnam Street Summary)",
+      "url": "https://fs.blog/carol-dweck-mindset/",
+      "type": "Summary",
+      "description": "Fixed vs growth mindset: effort > talent, failure as learning, resilience",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-219",
+      "module": "Founder Mindset",
+      "category": "Growth Mindset",
+      "title": "Carol Dweck (Wikipedia)",
+      "url": "https://en.wikipedia.org/wiki/Carol_Dweck",
+      "type": "Reference",
+      "description": "Stanford psychologist, implicit theories of intelligence, mindset continuum",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-220",
+      "module": "Founder Mindset",
+      "category": "Growth Mindset",
+      "title": "Mindset Book (Goodreads)",
+      "url": "https://www.goodreads.com/book/show/40745.Mindset",
+      "type": "Reference",
+      "description": "Book overview: how beliefs about ability shape success in every domain",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-221",
+      "module": "Founder Mindset",
+      "category": "Growth Mindset",
+      "title": "10 Big Ideas from Mindset",
+      "url": "https://sourcesofinsight.com/10-big-ideas-from-mindset-the-new-psychology-of-success/",
+      "type": "Summary",
+      "description": "Distilled: embrace challenge, learn from criticism, effort = path to mastery",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-222",
+      "module": "Founder Mindset",
+      "category": "Growth Mindset",
+      "title": "Carol Dweck — Decision Lab Profile",
+      "url": "https://thedecisionlab.com/thinkers/psychology/carol-dweck",
+      "type": "Reference",
+      "description": "Academic context: motivation research, self-regulation, behavioral science",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-223",
+      "module": "Economics",
+      "category": "Macro Fundamentals",
+      "title": "Khan Academy — Economics & Finance",
+      "url": "https://www.khanacademy.org/economics-finance-domain",
+      "type": "Course",
+      "description": "Free: micro/macroeconomics, finance, capital markets, monetary policy",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-224",
+      "module": "Economics",
+      "category": "Macro Fundamentals",
+      "title": "Khan Academy — Core Finance",
+      "url": "https://www.khanacademy.org/economics-finance-domain/core-finance",
+      "type": "Course",
+      "description": "Interest, inflation, stocks, bonds, financial statements",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-225",
+      "module": "Economics",
+      "category": "Economic Data",
+      "title": "FRED (Federal Reserve Economic Data)",
+      "url": "https://fred.stlouisfed.org/",
+      "type": "Database",
+      "description": "816K+ time series: GDP, CPI, unemployment, interest rates, exchange rates",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-226",
+      "module": "Economics",
+      "category": "Economic Data",
+      "title": "FRED — SBA Small Business Data",
+      "url": "https://fred.stlouisfed.org/tags/series?t=sba",
+      "type": "Database",
+      "description": "312 data series specifically about U.S. small business indicators",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-227",
+      "module": "Economics",
+      "category": "Financial Literacy",
+      "title": "Investopedia",
+      "url": "https://www.investopedia.com/",
+      "type": "Encyclopedia",
+      "description": "Definitive finance encyclopedia: terms, concepts, how-tos, tutorials",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-228",
+      "module": "Economics",
+      "category": "Financial Literacy",
+      "title": "Investopedia — Small Business Guide",
+      "url": "https://www.investopedia.com/small-business-4427757",
+      "type": "Guide",
+      "description": "Starting, managing, financing small businesses",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-229",
+      "module": "Economics",
+      "category": "Financial Literacy",
+      "title": "Investopedia — Accounting Basics",
+      "url": "https://www.investopedia.com/terms/a/accounting.asp",
+      "type": "Guide",
+      "description": "Accounting fundamentals, GAAP, financial statement types",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-230",
+      "module": "Economics",
+      "category": "LATAM Economy",
+      "title": "World Bank — Panama Data",
+      "url": "https://data.worldbank.org/country/panama",
+      "type": "Database",
+      "description": "Panama GDP, inflation, trade, demographics, business climate indicators",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-231",
+      "module": "Economics",
+      "category": "LATAM Economy",
+      "title": "INEC Panama (Statistics Institute)",
+      "url": "https://www.inec.gob.pa/",
+      "type": "Government",
+      "description": "Official Panama economic statistics, census, CPI, employment data",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-232",
+      "module": "Economics",
+      "category": "LATAM Economy",
+      "title": "MEF Panama (Ministry of Economy)",
+      "url": "https://www.mef.gob.pa/",
+      "type": "Government",
+      "description": "Fiscal policy, national budget, economic reports",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-233",
+      "module": "Economics",
+      "category": "Business Cycles",
+      "title": "NBER Business Cycle Dating",
+      "url": "https://www.nber.org/research/business-cycle-dating",
+      "type": "Research",
+      "description": "Official recession/expansion dating — understand economic cycles",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-234",
+      "module": "Economics",
+      "category": "Monetary Policy",
+      "title": "Federal Reserve Education",
+      "url": "https://www.federalreserveeducation.org/",
+      "type": "Education",
+      "description": "How interest rates, money supply, and monetary policy affect businesses",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-235",
+      "module": "Accounting",
+      "category": "Learning",
+      "title": "Khan Academy — Accounting & Financial Statements",
+      "url": "https://www.khanacademy.org/economics-finance-domain/core-finance/accounting-and-financial-stateme",
+      "type": "Course",
+      "description": "Free: cash vs accrual, income statements, balance sheets, cash flow",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-236",
+      "module": "Accounting",
+      "category": "Learning",
+      "title": "AccountingCoach (Free Tutorials)",
+      "url": "https://www.accountingcoach.com/",
+      "type": "Course",
+      "description": "Free explanations & quizzes on all accounting topics",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-237",
+      "module": "Accounting",
+      "category": "Learning",
+      "title": "Corporate Finance Institute (CFI)",
+      "url": "https://corporatefinanceinstitute.com/",
+      "type": "Course",
+      "description": "Financial modeling, valuation, accounting courses (free + paid)",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-238",
+      "module": "Accounting",
+      "category": "Standards",
+      "title": "GAAP Overview (FASB)",
+      "url": "https://www.fasb.org/",
+      "type": "Standards",
+      "description": "Generally Accepted Accounting Principles — the rules of the game",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-239",
+      "module": "Accounting",
+      "category": "Standards",
+      "title": "IFRS Foundation",
+      "url": "https://www.ifrs.org/",
+      "type": "Standards",
+      "description": "International Financial Reporting Standards (used outside U.S.)",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-240",
+      "module": "Accounting",
+      "category": "SMB Accounting",
+      "title": "Bench Accounting Blog",
+      "url": "https://bench.co/blog/",
+      "type": "Blog",
+      "description": "Practical small business bookkeeping, tax tips, financial reports",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-241",
+      "module": "Accounting",
+      "category": "SMB Accounting",
+      "title": "FreshBooks Resources",
+      "url": "https://www.freshbooks.com/hub",
+      "type": "Blog",
+      "description": "Invoicing, expenses, time tracking, accounting basics for freelancers/SMBs",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-242",
+      "module": "Accounting",
+      "category": "Financial Statements",
+      "title": "Investopedia — Reading Financial Statements",
+      "url": "https://www.investopedia.com/articles/basics/06/financialreporting.asp",
+      "type": "Guide",
+      "description": "How to read income statement, balance sheet, cash flow statement",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-243",
+      "module": "Accounting",
+      "category": "Financial Statements",
+      "title": "Investopedia — Break-Even Analysis",
+      "url": "https://www.investopedia.com/terms/b/breakevenanalysis.asp",
+      "type": "Guide",
+      "description": "When revenue covers costs — critical for every SMB owner",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-244",
+      "module": "Accounting",
+      "category": "Financial Statements",
+      "title": "Investopedia — Cash Flow Management",
+      "url": "https://www.investopedia.com/terms/c/cashflow.asp",
+      "type": "Guide",
+      "description": "#1 reason businesses fail: poor cash flow. Understand inflows vs outflows",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-245",
+      "module": "Accounting",
+      "category": "Tax (Panama)",
+      "title": "DGI — Tax Calendar Panama",
+      "url": "https://dgi.mef.gob.pa/Calendario/",
+      "type": "Government",
+      "description": "Panama tax filing deadlines & obligations calendar",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-246",
+      "module": "Accounting",
+      "category": "SaaS Metrics",
+      "title": "SaaS Metrics Guide (a16z)",
+      "url": "https://a16z.com/16-startup-metrics/",
+      "type": "Guide",
+      "description": "16 key metrics: MRR, churn, CAC, LTV, burn rate — essential for Kitz pricing",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-247",
+      "module": "Founder Mindset",
+      "category": "Negotiation",
+      "title": "Never Split the Difference (Wikipedia)",
+      "url": "https://en.wikipedia.org/wiki/Never_Split_the_Difference",
+      "type": "Reference",
+      "description": "Chris Voss FBI negotiation: tactical empathy, mirroring, labeling emotions",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-248",
+      "module": "Founder Mindset",
+      "category": "Habits & Systems",
+      "title": "Atomic Habits (James Clear)",
+      "url": "https://jamesclear.com/atomic-habits",
+      "type": "Reference",
+      "description": "1% improvement, habit stacking, systems > goals — operational discipline",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-249",
+      "module": "Founder Mindset",
+      "category": "Startup Strategy",
+      "title": "The Lean Startup (Wikipedia)",
+      "url": "https://en.wikipedia.org/wiki/The_Lean_Startup",
+      "type": "Reference",
+      "description": "Eric Ries: build-measure-learn, MVP, validated learning, pivot vs persevere",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-250",
+      "module": "Founder Mindset",
+      "category": "Business Strategy",
+      "title": "Good Strategy Bad Strategy (Wikipedia)",
+      "url": "https://en.wikipedia.org/wiki/Good_Strategy_Bad_Strategy",
+      "type": "Reference",
+      "description": "Richard Rumelt: diagnosis → guiding policy → coherent action",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-251",
+      "module": "Founder Mindset",
+      "category": "Direct Response Marketing",
+      "title": "Dan Kennedy — Magnetic Marketing (Official)",
+      "url": "https://magneticmarketing.com/",
+      "type": "Platform",
+      "description": "Core system: market → message → media → math. Attract customers magnetically",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-252",
+      "module": "Founder Mindset",
+      "category": "Direct Response Marketing",
+      "title": "Dan Kennedy — All Books",
+      "url": "https://magneticmarketing.com/books",
+      "type": "Library",
+      "description": "Full No B.S. book catalog: direct marketing, sales letters, time mgmt, pricing",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-253",
+      "module": "Founder Mindset",
+      "category": "Direct Response Marketing",
+      "title": "Dan Kennedy — The Direct Marketing Book",
+      "url": "https://www.thedirectmarketingbook.com/",
+      "type": "Book",
+      "description": "10 Rules: always an offer, reason to respond NOW, tracking, strong copy, results rule",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-254",
+      "module": "Founder Mindset",
+      "category": "Sales Copy",
+      "title": "The Ultimate Sales Letter (Amazon)",
+      "url": "https://www.amazon.com/Ultimate-Sales-Letter-Attract-Customers/dp/1580625843",
+      "type": "Book",
+      "description": "How to write sales letters that convert: headlines, offers, urgency, proof, CTAs",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-255",
+      "module": "Founder Mindset",
+      "category": "Sales Copy",
+      "title": "No B.S. Direct Marketing — Summary & Notes",
+      "url": "https://hooshmand.net/no-bs-direct-marketing-dan-kennedy-summary/",
+      "type": "Summary",
+      "description": "Distilled 10 rules: offer, urgency, clear instructions, follow-up, measurement",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-256",
+      "module": "Founder Mindset",
+      "category": "Social Media Marketing",
+      "title": "No B.S. Direct Response Social Media Marketing",
+      "url": "https://www.barnesandnoble.com/w/no-bs-guide-to-direct-response-social-media-marketing-dan-s-kennedy/1132770927",
+      "type": "Book",
+      "description": "6 DR principles for social: convert traffic to sales, not just likes/shares",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-257",
+      "module": "Founder Mindset",
+      "category": "Time Management",
+      "title": "No B.S. Time Management for Entrepreneurs",
+      "url": "https://www.thriftbooks.com/w/no-bs-time-management-for-entrepreneurs-the-ultimate-no-holds-barred-kick-butt-take-no-prisoners-guide-to-time-productivity-and-sanity/254814/",
+      "type": "Book",
+      "description": "Kill time vampires, productivity discipline, guard your time ruthlessly",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-258",
+      "module": "Founder Mindset",
+      "category": "Pricing Strategy",
+      "title": "No B.S. Price Strategy",
+      "url": "https://www.thriftbooks.com/w/no-bs-price-strategy-the-ultimate-no-holds-barred-kick-butt-take-no-prisoner-guide-to-profits-power-and-prosperity_dan-s-kennedy/391894/",
+      "type": "Book",
+      "description": "Stop competing on price, value positioning, premium pricing psychology",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-259",
+      "module": "Founder Mindset",
+      "category": "Wealth Mindset",
+      "title": "No B.S. Wealth Attraction for Entrepreneurs",
+      "url": "https://www.thriftbooks.com/w/no-bs-wealth-attraction-for-entrepreneurs-the-ultimate-no-holds-barred-kick-butt-take-no-prisoners-guide-to-developing-a-millionaire-mindset_dan-s-kennedy/394879/",
+      "type": "Book",
+      "description": "Millionaire mindset, wealth extraction, business as wealth-building vehicle",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-260",
+      "module": "Founder Mindset",
+      "category": "Management",
+      "title": "No B.S. Ruthless Management of People & Profits",
+      "url": "https://www.thriftbooks.com/w/no-bs-ruthless-management-of-people-and-profits-no-holds-barred-kick-butt-take-no-prisoners-guide-to-really-getting-rich_dan-s-kennedy/290671/",
+      "type": "Book",
+      "description": "Hold people accountable, profit-first management, fire fast, measure everything",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-261",
+      "module": "Founder Mindset",
+      "category": "Local Marketing",
+      "title": "No B.S. Grassroots Marketing",
+      "url": "https://www.thriftbooks.com/w/no-bs-grassroots-marketing-the-ultimate-no-holds-barred-take-no-prisoner-guide-to-growing-sales-and-profits-of-local-small-businesses_jeff-slutsky_dan-s-kennedy/8562668/",
+      "type": "Book",
+      "description": "Local business marketing: referrals, community, events, neighborhood domination",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-262",
+      "module": "Founder Mindset",
+      "category": "Sales",
+      "title": "No B.S. Sales Success in the New Economy",
+      "url": "https://www.thriftbooks.com/w/no-bs-sales-success-in-the-new-economy_dan-s-kennedy/302750/",
+      "type": "Book",
+      "description": "Sell without sleaze: positioning, trust-building, closing, objection handling",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-263",
+      "module": "Founder Mindset",
+      "category": "Marketing Automation",
+      "title": "No B.S. Successful Marketing Automation",
+      "url": "https://www.thriftbooks.com/w/no-bs-guide-to-successful-marketing-automation-the-ultimate-no-holds-barred-guide-to-using-technology-automation-and-artificial-intelligence-in-marketing_dan-s-kennedy/19802757/",
+      "type": "Book",
+      "description": "AI + automation in marketing: follow-up sequences, tech that sells for you",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-264",
+      "module": "Founder Mindset",
+      "category": "Referral Systems",
+      "title": "No B.S. Maximum Referrals & Customer Retention",
+      "url": "https://www.thriftbooks.com/w/no-bs-guide-to-maximum-referrals-and-customer-retention-the-ultimate-no-holds-barred-plan-to-securing-new-customers-and-maximum-profits_dan-s-kennedy/11210432/",
+      "type": "Book",
+      "description": "Referral systems, retention loops, customer lifetime value maximization",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-265",
+      "module": "Founder Mindset",
+      "category": "Brand Building",
+      "title": "No B.S. Brand-Building by Direct Response",
+      "url": "https://www.thriftbooks.com/w/no-bs-guide-to-brand-building-by-direct-response-the-ultimate-no-holds-barred-plan-to-creating-and-profiting-from-a-powerful-brand-without-buying-it_dan-s-kennedy/9501780/",
+      "type": "Book",
+      "description": "Build brand through results, not vanity — brand = byproduct of direct response",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-266",
+      "module": "Founder Mindset",
+      "category": "Marketing Strategy",
+      "title": "The Ultimate Marketing Plan (Amazon)",
+      "url": "https://www.amazon.com/Ultimate-Marketing-Plan-Target-Audience/dp/1440511845",
+      "type": "Book",
+      "description": "Find your hook, craft your message, choose your media, build your brand",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-267",
+      "module": "Founder Mindset",
+      "category": "Idea Monetization",
+      "title": "How to Make Millions with Your Ideas (Amazon)",
+      "url": "https://www.amazon.com/Make-Millions-Your-Ideas-Entrepreneurs/dp/0452273161",
+      "type": "Book",
+      "description": "Turn ideas into products into revenue: licensing, info products, direct sales",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-268",
+      "module": "Founder Mindset",
+      "category": "Direct Response History",
+      "title": "Dan Kennedy — Revolutionary (Biography)",
+      "url": "https://www.hireawriter.us/business/dan-kennedy-the-revolutionary-behind-direct-response-marketing",
+      "type": "Article",
+      "description": "Full story: from broke to millionaire-maker, 10 rules, story-selling method",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-269",
+      "module": "Automation Repos",
+      "category": "Workflow Engine",
+      "title": "n8n (GitHub)",
+      "url": "https://github.com/n8n-io/n8n",
+      "type": "Repo",
+      "description": "157k★ Fair-code workflow automation: 400+ integrations, AI agents, LangChain native",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-270",
+      "module": "Automation Repos",
+      "category": "Workflow Engine",
+      "title": "Activepieces (GitHub)",
+      "url": "https://github.com/activepieces/activepieces",
+      "type": "Repo",
+      "description": "MIT no-code automation: 450+ connectors, AI-first, Zapier alternative for SMBs",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-271",
+      "module": "Automation Repos",
+      "category": "Workflow Engine",
+      "title": "Windmill (GitHub)",
+      "url": "https://github.com/windmill-labs/windmill",
+      "type": "Repo",
+      "description": "Developer platform: scripts→workflows, Python/TS/Go, auto-generated UIs",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-272",
+      "module": "Automation Repos",
+      "category": "Workflow Engine",
+      "title": "Node-RED (GitHub)",
+      "url": "https://github.com/node-red/node-red",
+      "type": "Repo",
+      "description": "Flow-based programming: IoT, APIs, 4000+ community nodes, IBM-backed",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-273",
+      "module": "Automation Repos",
+      "category": "Workflow Engine",
+      "title": "Temporal (GitHub)",
+      "url": "https://github.com/temporalio/temporal",
+      "type": "Repo",
+      "description": "Durable execution engine: survives crashes, exactly-once, long-running workflows",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-274",
+      "module": "Automation Repos",
+      "category": "Workflow Engine",
+      "title": "Automatisch (GitHub)",
+      "url": "https://github.com/automatisch/automatisch",
+      "type": "Repo",
+      "description": "Self-hosted Zapier clone: full privacy, open-source, simple UI",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-275",
+      "module": "Automation Repos",
+      "category": "Curated Lists",
+      "title": "Awesome Workflow Automation",
+      "url": "https://github.com/dariubs/awesome-workflow-automation",
+      "type": "Repo",
+      "description": "Curated list of all workflow automation tools, engines, and platforms",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-276",
+      "module": "Automation Repos",
+      "category": "Curated Lists",
+      "title": "Awesome Workflow Engines",
+      "url": "https://github.com/meirwah/awesome-workflow-engines",
+      "type": "Repo",
+      "description": "Comprehensive list of open-source workflow engines with descriptions",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-277",
+      "module": "AI Agent Repos",
+      "category": "Agent Platform",
+      "title": "Dify (GitHub)",
+      "url": "https://github.com/langgenius/dify",
+      "type": "Repo",
+      "description": "114k★ LLM app platform: visual workflows, RAG, agents, prompt IDE, model mgmt",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-278",
+      "module": "AI Agent Repos",
+      "category": "Agent Platform",
+      "title": "Langflow (GitHub)",
+      "url": "https://github.com/langflow-ai/langflow",
+      "type": "Repo",
+      "description": "140k★ Visual AI agent builder: drag-drop LangChain, MCP server, deploy as API",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-279",
+      "module": "AI Agent Repos",
+      "category": "Agent Platform",
+      "title": "Flowise (GitHub)",
+      "url": "https://github.com/FlowiseAI/Flowise",
+      "type": "Repo",
+      "description": "No-code LLM flow builder: drag-drop chains, agents, RAG, lowest entry barrier",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-280",
+      "module": "AI Agent Repos",
+      "category": "Agent Platform",
+      "title": "AutoGPT (GitHub)",
+      "url": "https://github.com/Significant-Gravitas/AutoGPT",
+      "type": "Repo",
+      "description": "180k★ Autonomous agent platform: visual block builder, agent marketplace",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-281",
+      "module": "AI Agent Repos",
+      "category": "Chatbot Framework",
+      "title": "Botpress (GitHub)",
+      "url": "https://github.com/botpress/botpress",
+      "type": "Repo",
+      "description": "Open-source chatbot platform: visual flows, NLU, WhatsApp/Messenger/Slack",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-282",
+      "module": "AI Agent Repos",
+      "category": "Chatbot Framework",
+      "title": "Typebot (GitHub)",
+      "url": "https://github.com/baptisteArno/typebot.io",
+      "type": "Repo",
+      "description": "Open-source conversational form builder: visual editor, WhatsApp, embed anywhere",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-283",
+      "module": "RAG Repos",
+      "category": "Knowledge Base",
+      "title": "AnythingLLM (GitHub)",
+      "url": "https://github.com/Mintplex-Labs/anything-llm",
+      "type": "Repo",
+      "description": "All-in-one RAG app: any doc→chat context, multi-LLM, agents, desktop+Docker",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-284",
+      "module": "RAG Repos",
+      "category": "RAG Engine",
+      "title": "RAGFlow (GitHub)",
+      "url": "https://github.com/infiniflow/ragflow",
+      "type": "Repo",
+      "description": "Deep doc understanding RAG: PDF/DOCX/images, visual chunking, fused re-ranking",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-285",
+      "module": "RAG Repos",
+      "category": "RAG Framework",
+      "title": "RAG-Anything (GitHub)",
+      "url": "https://github.com/HKUDS/RAG-Anything",
+      "type": "Repo",
+      "description": "All-in-one multimodal RAG: text+images+tables+equations, VLM-enhanced queries",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-286",
+      "module": "RAG Repos",
+      "category": "Vector Database",
+      "title": "Chroma (GitHub)",
+      "url": "https://github.com/chroma-core/chroma",
+      "type": "Repo",
+      "description": "Open-source embedding database: simplest vector DB, Python/JS, AI-native",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-287",
+      "module": "RAG Repos",
+      "category": "Vector Database",
+      "title": "Milvus (GitHub)",
+      "url": "https://github.com/milvus-io/milvus",
+      "type": "Repo",
+      "description": "Cloud-native vector DB: billion-scale search, GPU acceleration, enterprise-grade",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-288",
+      "module": "WhatsApp Repos",
+      "category": "API Wrapper",
+      "title": "Evolution API (GitHub)",
+      "url": "https://github.com/EvolutionAPI/evolution-api",
+      "type": "Repo",
+      "description": "Open-source WhatsApp integration: Baileys+Official API, Chatwoot, Dify, n8n",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-289",
+      "module": "WhatsApp Repos",
+      "category": "API Wrapper",
+      "title": "WPPConnect (GitHub Topics)",
+      "url": "https://github.com/topics/whatsapp-bot",
+      "type": "Repo",
+      "description": "Open-source WhatsApp Web API: Node.js framework, multi-device, TypeScript",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-290",
+      "module": "WhatsApp Repos",
+      "category": "AI Chatbot",
+      "title": "WhatsApp ChatGPT Bot",
+      "url": "https://github.com/wassengerhq/whatsapp-chatgpt-bot",
+      "type": "Repo",
+      "description": "Ready-to-use AI WhatsApp bot: GPT-4o, audio+image, RAG, MCP compatible",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-291",
+      "module": "WhatsApp Repos",
+      "category": "AI Chatbot",
+      "title": "Python WhatsApp Bot",
+      "url": "https://github.com/daveebbelaar/python-whatsapp-bot",
+      "type": "Repo",
+      "description": "Pure Python WhatsApp bot: Meta Cloud API, Flask, OpenAI integration guide",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-292",
+      "module": "WhatsApp Repos",
+      "category": "E-Commerce Bot",
+      "title": "WhatsApp E-Commerce Chatbot",
+      "url": "https://github.com/bibinprathap/whatsapp-chatbot",
+      "type": "Repo",
+      "description": "WhatsApp commerce bot: NL-to-cart with OpenAI, Baileys, SQLite, order mgmt",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-293",
+      "module": "Social Media Repos",
+      "category": "Scheduling",
+      "title": "Postiz (GitHub)",
+      "url": "https://github.com/gitroomhq/postiz-app",
+      "type": "Repo",
+      "description": "Open-source social scheduling: X/Bluesky/Mastodon, AI content, n8n/Zapier API",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-294",
+      "module": "Social Media Repos",
+      "category": "Content Pipeline",
+      "title": "ALwrity — AI Digital Marketing",
+      "url": "https://github.com/topics/ai-content-generation",
+      "type": "Repo",
+      "description": "AI-first platform: content plan→generate→publish→analyze, SEO, multilingual",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-295",
+      "module": "Social Media Repos",
+      "category": "Video Automation",
+      "title": "YouTube Automation (GitHub Topic)",
+      "url": "https://github.com/topics/content-creation",
+      "type": "Repo",
+      "description": "AI video pipeline: script→voiceover→edit→upload, thumbnail gen, Gemini/OpenAI",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-296",
+      "module": "Content Creation Repos",
+      "category": "Image Generation",
+      "title": "Stable Diffusion WebUI (AUTOMATIC1111)",
+      "url": "https://github.com/AUTOMATIC1111/stable-diffusion-webui",
+      "type": "Repo",
+      "description": "159k★ Text-to-image UI: model switching, LoRA, batch gen, extensions ecosystem",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-297",
+      "module": "Content Creation Repos",
+      "category": "Image Generation",
+      "title": "ComfyUI (GitHub)",
+      "url": "https://github.com/comfyanonymous/ComfyUI",
+      "type": "Repo",
+      "description": "97k★ Node-based diffusion UI: modular pipelines, most powerful image workflows",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-298",
+      "module": "Content Creation Repos",
+      "category": "Local LLM",
+      "title": "Ollama (GitHub)",
+      "url": "https://github.com/ollama/ollama",
+      "type": "Repo",
+      "description": "Run LLMs locally: one-command install, Llama/Mistral/Gemma, API compatible",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-299",
+      "module": "Content Creation Repos",
+      "category": "Chat Interface",
+      "title": "Open WebUI (GitHub)",
+      "url": "https://github.com/open-webui/open-webui",
+      "type": "Repo",
+      "description": "Self-hosted ChatGPT UI: Ollama/OpenAI compatible, RAG, multi-user, plugins",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-300",
+      "module": "Content Creation Repos",
+      "category": "Chat Interface",
+      "title": "LibreChat (GitHub)",
+      "url": "https://github.com/danny-avila/LibreChat",
+      "type": "Repo",
+      "description": "Multi-provider chat: OpenAI/Anthropic/local, MCP support, plugins, self-hosted",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-301",
+      "module": "Invoice Repos",
+      "category": "Invoicing",
+      "title": "InvoiceShelf (GitHub)",
+      "url": "https://github.com/InvoiceShelf/InvoiceShelf",
+      "type": "Repo",
+      "description": "Open-source invoicing: estimates, payments, expenses, taxes, multi-currency",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-302",
+      "module": "Invoice Repos",
+      "category": "Invoicing",
+      "title": "Crater Invoice (GitHub)",
+      "url": "https://github.com/crater-invoice-inc/crater",
+      "type": "Repo",
+      "description": "Laravel invoicing solution: invoices, estimates, expenses, reports, mobile app",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-303",
+      "module": "Invoice Repos",
+      "category": "Invoice Generator",
+      "title": "Invoify (GitHub)",
+      "url": "https://github.com/al1abb/invoify",
+      "type": "Repo",
+      "description": "Next.js invoice generator: custom inputs, per-line tax, Shadcn UI, MIT license",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-304",
+      "module": "No-Code Repos",
+      "category": "App Builder",
+      "title": "NocoBase (GitHub)",
+      "url": "https://github.com/nocobase/nocobase",
+      "type": "Repo",
+      "description": "Open-source no-code platform: data model-driven, plugin architecture, self-hosted",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-305",
+      "module": "No-Code Repos",
+      "category": "App Builder",
+      "title": "Appsmith (GitHub)",
+      "url": "https://github.com/appsmithorg/appsmith",
+      "type": "Repo",
+      "description": "Open-source internal tool builder: drag-drop UI, connect any DB/API, self-hosted",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-306",
+      "module": "Automation Repos",
+      "category": "CI/CD Agents",
+      "title": "GitHub Agentic Workflows",
+      "url": "https://github.blog/ai-and-ml/automate-repository-tasks-with-github-agentic-workflows/",
+      "type": "Article",
+      "description": "Markdown→Actions: AI agents for issue triage, PR review, CI fixes, repo maintenance",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-307",
+      "module": "CRM Repos",
+      "category": "ERP Suite",
+      "title": "ERPNext (GitHub)",
+      "url": "https://github.com/frappe/erpnext",
+      "type": "Repo",
+      "description": "Full ERP: accounting, inventory, CRM, HR, manufacturing, POS — 100% open source",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-308",
+      "module": "Automation Repos",
+      "category": "Scraping/Monitoring",
+      "title": "Huginn (GitHub)",
+      "url": "https://github.com/huginn/huginn",
+      "type": "Repo",
+      "description": "Self-hosted IFTTT: web monitoring, scraping, alerts, event-driven automation",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-309",
+      "module": "AI Agent Repos",
+      "category": "MCP Ecosystem",
+      "title": "MCP Servers (GitHub)",
+      "url": "https://github.com/modelcontextprotocol/servers",
+      "type": "Repo",
+      "description": "Official MCP server implementations: filesystem, GitHub, Google, Slack, DB connectors",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-310",
+      "module": "Founder Mindset",
+      "category": "Military Strategy",
+      "title": "The Art of War — Sun Tzu (Wikipedia)",
+      "url": "https://en.wikipedia.org/wiki/The_Art_of_War",
+      "type": "Book",
+      "description": "13 chapters: planning, terrain, deception, know enemy & self, win without fighting",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-311",
+      "module": "Founder Mindset",
+      "category": "Military Strategy",
+      "title": "Art of War for Managers — 50 Rules",
+      "url": "https://readingraphics.com/book-summary-sun-tzu-the-art-of-war-for-managers/",
+      "type": "Summary",
+      "description": "50 strategic rules: mission spirit, marketplace, leadership, guiding principles",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-312",
+      "module": "Founder Mindset",
+      "category": "Military Strategy",
+      "title": "Art of War — 6 Business Lessons (Fast Company)",
+      "url": "https://www.fastcompany.com/3021122/fighting-your-business-battles-6-lasting-lessons-from-sun-tzus-art-of-war",
+      "type": "Article",
+      "description": "Win intact, avoid strength/attack weakness, deception, speed, alliances, leadership",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-313",
+      "module": "Founder Mindset",
+      "category": "Military Strategy",
+      "title": "Art of War — Business Strategy Application",
+      "url": "https://asymmetric.pro/use-the-art-of-war-in-your-business/",
+      "type": "Article",
+      "description": "Be proactive, know your enemy, flexible plans, SWOT, competitive positioning",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-314",
+      "module": "Founder Mindset",
+      "category": "Power Dynamics",
+      "title": "The 48 Laws of Power — Robert Greene (Summary)",
+      "url": "https://grahammann.net/book-notes/48-laws-of-power-robert-greene",
+      "type": "Book",
+      "description": "48 laws: never outshine master, conceal intentions, say less, guard reputation",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-315",
+      "module": "Founder Mindset",
+      "category": "Power Dynamics",
+      "title": "48 Laws of Power — Shortform Summary",
+      "url": "https://www.shortform.com/summary/the-48-laws-of-power-summary-robert-greene",
+      "type": "Summary",
+      "description": "Grouped by theme: be strategic not emotional, pursue goals relentlessly, adapt",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-316",
+      "module": "Founder Mindset",
+      "category": "Power Dynamics",
+      "title": "48 Laws of Power — Detailed Notes",
+      "url": "https://www.nateliason.com/notes/48-laws-power-robert-greene",
+      "type": "Summary",
+      "description": "Deep notes: stay calm, mirror enemies, selective honesty, concentrate forces",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-317",
+      "module": "Founder Mindset",
+      "category": "War Strategy",
+      "title": "The 33 Strategies of War — Robert Greene",
+      "url": "https://www.barnesandnoble.com/w/the-33-strategies-of-war-robert-greene/1100623564",
+      "type": "Book",
+      "description": "33 strategies: offensive/defensive, unconventional, identify end state, adapt",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-318",
+      "module": "Founder Mindset",
+      "category": "War Strategy",
+      "title": "33 Strategies of War — Shortform Summary",
+      "url": "https://www.shortform.com/summary/the-33-strategies-of-war-summary-robert-greene",
+      "type": "Summary",
+      "description": "Life = daily war, identify end state, predict enemies, keep options open, grand strategy",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-319",
+      "module": "Founder Mindset",
+      "category": "Power Dynamics",
+      "title": "The Laws of Human Nature — Robert Greene",
+      "url": "https://www.amazon.com/Laws-Human-Nature-Robert-Greene/dp/0525428143",
+      "type": "Book",
+      "description": "Master self-awareness, decode behavior, influence without force, emotional intelligence",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-320",
+      "module": "Founder Mindset",
+      "category": "Mastery",
+      "title": "Mastery — Robert Greene",
+      "url": "https://www.amazon.com/Mastery-Robert-Greene/dp/014312417X",
+      "type": "Book",
+      "description": "Apprenticeship→creative-active→mastery: find lifes task, deep practice, mentors",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-321",
+      "module": "Founder Mindset",
+      "category": "Power Dynamics",
+      "title": "The 50th Law — Robert Greene & 50 Cent",
+      "url": "https://www.amazon.com/50th-Law-50-Cent/dp/006177460X",
+      "type": "Book",
+      "description": "Fearlessness: see reality clearly, embrace death-ground, turn obstacles to power",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-322",
+      "module": "Founder Mindset",
+      "category": "Strategy Classic",
+      "title": "The Prince — Machiavelli (Wikipedia)",
+      "url": "https://en.wikipedia.org/wiki/The_Prince",
+      "type": "Book",
+      "description": "Political realism: ends justify means, feared vs loved, fortune vs virtue",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-323",
+      "module": "Founder Mindset",
+      "category": "Strategy Classic",
+      "title": "The Book of Five Rings — Miyamoto Musashi",
+      "url": "https://en.wikipedia.org/wiki/The_Book_of_Five_Rings",
+      "type": "Book",
+      "description": "Swordsman philosophy: ground, water, fire, wind, void — strategy through mastery",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-324",
+      "module": "Americas Finance",
+      "category": "Brazil Payments",
+      "title": "PIX — Banco Central do Brasil",
+      "url": "https://www.bcb.gov.br/en/financialstability/pix_en",
+      "type": "Government",
+      "description": "Instant payment system: 165M+ users, 63B transactions/year, benchmark for LATAM",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-325",
+      "module": "Americas Finance",
+      "category": "Brazil Payments",
+      "title": "Mercado Pago — Developers",
+      "url": "https://www.mercadopago.com.br/developers",
+      "type": "Docs",
+      "description": "LATAM #1 digital wallet: payments API, QR, checkout, subscriptions, marketplace",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-326",
+      "module": "Americas Finance",
+      "category": "Brazil Fintech",
+      "title": "Nubank — About",
+      "url": "https://nubank.com.br/en/",
+      "type": "Platform",
+      "description": "Worlds largest digital bank: 100M+ customers, credit cards, loans, investments",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-327",
+      "module": "Americas Finance",
+      "category": "Brazil E-commerce",
+      "title": "Mercado Libre — Developers",
+      "url": "https://developers.mercadolibre.com/",
+      "type": "Docs",
+      "description": "LATAM #1 e-commerce marketplace: product listing API, orders, shipping, ads",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-328",
+      "module": "Americas Finance",
+      "category": "Mexico Payments",
+      "title": "SPEI — Banco de México",
+      "url": "https://www.banxico.org.mx/sistemas-de-pago/servicios-transferencia-electronica-background.html",
+      "type": "Government",
+      "description": "Mexico instant transfers: 24/7, interbank, real-time, benchmark system",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-329",
+      "module": "Americas Finance",
+      "category": "Mexico Payments",
+      "title": "OXXO Pay — Conekta",
+      "url": "https://www.conekta.com/en",
+      "type": "Platform",
+      "description": "Cash payment at 20K+ stores: OXXO voucher for unbanked, Mexico #1 cash-in",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-330",
+      "module": "Americas Finance",
+      "category": "Mexico Fintech",
+      "title": "Clip — Mexico POS",
+      "url": "https://www.clip.mx/",
+      "type": "Platform",
+      "description": "Mexico mobile card reader: POS for SMBs, no monthly fee, instant deposits",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-331",
+      "module": "Americas Finance",
+      "category": "Mexico Government",
+      "title": "SAT — Servicio de Administración Tributaria",
+      "url": "https://www.sat.gob.mx/",
+      "type": "Government",
+      "description": "Mexico tax authority: RFC registration, electronic invoicing (CFDI), tax filing",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-332",
+      "module": "Americas Finance",
+      "category": "Colombia Payments",
+      "title": "Nequi — Bancolombia",
+      "url": "https://www.nequi.com.co/",
+      "type": "Platform",
+      "description": "Colombia #1 digital wallet: 54% penetration, P2P, payments, savings, no bank needed",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-333",
+      "module": "Americas Finance",
+      "category": "Colombia Payments",
+      "title": "PSE — ACH Colombia",
+      "url": "https://www.pse.com.co/",
+      "type": "Platform",
+      "description": "Colombia bank transfer: 63.9% of e-commerce, real-time, 34 banks connected",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-334",
+      "module": "Americas Finance",
+      "category": "Colombia Payments",
+      "title": "Daviplata — Davivienda",
+      "url": "https://www.daviplata.com/",
+      "type": "Platform",
+      "description": "Colombia mobile wallet: 22% penetration, P2P, bills, purchases, no fees",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-335",
+      "module": "Americas Finance",
+      "category": "Colombia Payments",
+      "title": "Efecty",
+      "url": "https://www.efecty.com.co/",
+      "type": "Platform",
+      "description": "Colombia cash-in network: pay online orders at physical locations, unbanked reach",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-336",
+      "module": "Americas Finance",
+      "category": "Colombia Government",
+      "title": "DIAN — Tax Authority Colombia",
+      "url": "https://www.dian.gov.co/",
+      "type": "Government",
+      "description": "Colombia tax: RUT registration, electronic invoicing, customs, tax calendar",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-337",
+      "module": "Americas Finance",
+      "category": "Argentina Payments",
+      "title": "Mercado Pago Argentina — QR Payments",
+      "url": "https://www.mercadopago.com.ar/",
+      "type": "Platform",
+      "description": "Argentina #1 wallet: QR ubiquitous, Transferencias 3.0, interoperable payments",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-338",
+      "module": "Americas Finance",
+      "category": "Argentina Payments",
+      "title": "MODO — Argentina Interoperable",
+      "url": "https://www.modo.com.ar/",
+      "type": "Platform",
+      "description": "Argentina bank wallet: interoperable QR across all banks, growing fast",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-339",
+      "module": "Americas Finance",
+      "category": "Argentina Government",
+      "title": "AFIP/ARCA — Tax Authority Argentina",
+      "url": "https://www.afip.gob.ar/",
+      "type": "Government",
+      "description": "Argentina tax: CUIT registration, monotributo, electronic invoicing, tax filing",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-340",
+      "module": "Americas Finance",
+      "category": "Peru Payments",
+      "title": "Yape — BCP Peru",
+      "url": "https://www.yape.com.pe/",
+      "type": "Platform",
+      "description": "Peru #1 digital wallet: instant P2P, QR payments, bill pay, massive adoption",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-341",
+      "module": "Americas Finance",
+      "category": "Peru Payments",
+      "title": "PLIN — Peru Interbank",
+      "url": "https://www.plin.pe/",
+      "type": "Platform",
+      "description": "Peru interbank transfers: instant, multi-bank, QR-based, growing fast",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-342",
+      "module": "Americas Finance",
+      "category": "Chile Payments",
+      "title": "Khipu — Chile Bank Transfer",
+      "url": "https://khipu.com/",
+      "type": "Platform",
+      "description": "Chile simplified bank transfer: e-commerce integration, instant confirmation",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-343",
+      "module": "Americas Finance",
+      "category": "Costa Rica Payments",
+      "title": "SINPE Móvil — Costa Rica",
+      "url": "https://www.sinpemovil.fi.cr/",
+      "type": "Platform",
+      "description": "Costa Rica instant mobile payments: phone-number based, interbank",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-344",
+      "module": "Americas Finance",
+      "category": "USA Payments",
+      "title": "Stripe — Payment Infrastructure",
+      "url": "https://stripe.com/docs",
+      "type": "Docs",
+      "description": "Global payment API: cards, ACH, wallets, subscriptions, Connect marketplace",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-345",
+      "module": "Americas Finance",
+      "category": "USA Payments",
+      "title": "Plaid — Banking API",
+      "url": "https://plaid.com/docs/",
+      "type": "Docs",
+      "description": "Bank account connectivity: identity verification, balance checks, ACH transfers",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-346",
+      "module": "Americas Finance",
+      "category": "USA Government",
+      "title": "IRS — Small Business Tax Center",
+      "url": "https://www.irs.gov/businesses/small-businesses-self-employed",
+      "type": "Government",
+      "description": "US tax: EIN, quarterly filing, 1099, payroll tax, deductions guide",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-347",
+      "module": "Americas Finance",
+      "category": "Canada Government",
+      "title": "CRA — Canada Business Registration",
+      "url": "https://www.canada.ca/en/services/business.html",
+      "type": "Government",
+      "description": "Canada: BN registration, GST/HST, payroll, corporate tax, grants for SMBs",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-348",
+      "module": "Americas Finance",
+      "category": "Cross-Border",
+      "title": "EBANX — LATAM Payments",
+      "url": "https://www.ebanx.com/",
+      "type": "Platform",
+      "description": "All-in-one LATAM payment gateway: PIX, OXXO, PSE, boleto, 15+ countries",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-349",
+      "module": "Americas Finance",
+      "category": "Cross-Border",
+      "title": "dLocal — Emerging Markets Payments",
+      "url": "https://dlocal.com/",
+      "type": "Platform",
+      "description": "Single API for 40 countries: LATAM, Africa, Asia — local payment methods",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-350",
+      "module": "Americas Finance",
+      "category": "Cross-Border",
+      "title": "Rebill — LATAM Subscriptions",
+      "url": "https://www.rebill.com/",
+      "type": "Platform",
+      "description": "LATAM recurring payments: subscriptions, local methods, multi-currency",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-351",
+      "module": "Americas Finance",
+      "category": "LATAM Research",
+      "title": "PCMI — LATAM Payment Methods 2025",
+      "url": "https://paymentscmi.com/insights/main-payment-methods-latin-america-brazil-mexico-chile-peru-colombia-argentina/",
+      "type": "Research",
+      "description": "Definitive report: payment trends, market share, digital wallets, A2A, by country",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-352",
+      "module": "Americas Finance",
+      "category": "LATAM Fintech",
+      "title": "Rappi — Super App",
+      "url": "https://www.rappi.com/",
+      "type": "Platform",
+      "description": "LATAM super app: delivery+payments+banking, RappiPay, 9 countries, $5.25B",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-353",
+      "module": "E-Commerce",
+      "category": "Marketplace",
+      "title": "Mercado Libre — Seller Center",
+      "url": "https://vendedores.mercadolibre.com/",
+      "type": "Platform",
+      "description": "LATAM #1 marketplace: listing, fulfillment, ads, Mercado Envíos, analytics",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-354",
+      "module": "E-Commerce",
+      "category": "Marketplace",
+      "title": "Amazon Seller Central",
+      "url": "https://sellercentral.amazon.com/",
+      "type": "Platform",
+      "description": "World #1 marketplace: FBA, advertising, A+ content, brand registry, analytics",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-355",
+      "module": "E-Commerce",
+      "category": "Platform",
+      "title": "Shopify — E-commerce Platform",
+      "url": "https://www.shopify.com/",
+      "type": "Platform",
+      "description": "Leading e-commerce builder: themes, checkout, apps, POS, Shopify Markets (intl)",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-356",
+      "module": "E-Commerce",
+      "category": "Platform",
+      "title": "Tiendanube / Nuvemshop",
+      "url": "https://www.tiendanube.com/",
+      "type": "Platform",
+      "description": "LATAM-native e-commerce: Brazil, Argentina, Mexico, Colombia — local integrations",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-357",
+      "module": "E-Commerce",
+      "category": "Platform",
+      "title": "VTEX — Enterprise E-commerce",
+      "url": "https://vtex.com/",
+      "type": "Platform",
+      "description": "LATAM enterprise commerce: marketplace, OMS, headless, B2B, used by major brands",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-358",
+      "module": "E-Commerce",
+      "category": "Dropshipping",
+      "title": "Oberlo / DSers — Dropshipping Guide",
+      "url": "https://www.shopify.com/blog/what-is-dropshipping",
+      "type": "Guide",
+      "description": "Dropshipping 101: find products, suppliers, fulfillment, marketing, margins",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-359",
+      "module": "E-Commerce",
+      "category": "Social Commerce",
+      "title": "Instagram Shopping — Setup Guide",
+      "url": "https://business.instagram.com/shopping",
+      "type": "Docs",
+      "description": "Sell on Instagram: product tags, checkout, shops, live shopping, catalogs",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-360",
+      "module": "E-Commerce",
+      "category": "Social Commerce",
+      "title": "TikTok Shop — Seller Center",
+      "url": "https://seller.tiktokglobalshop.com/",
+      "type": "Platform",
+      "description": "TikTok commerce: live selling, product showcase, affiliate, creator marketplace",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-361",
+      "module": "E-Commerce",
+      "category": "Strategy",
+      "title": "$100M Offers — Alex Hormozi (Summary)",
+      "url": "https://www.amazon.com/100M-Offers-People-Stupid-Saying/dp/1737975114",
+      "type": "Book",
+      "description": "Irresistible offers: value equation, dream outcome, perceived likelihood, time, effort",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-362",
+      "module": "E-Commerce",
+      "category": "Strategy",
+      "title": "$100M Leads — Alex Hormozi",
+      "url": "https://www.amazon.com/100M-Leads-Get-Strangers-Want/dp/1737475774",
+      "type": "Book",
+      "description": "Lead generation: warm outreach, cold outreach, content, paid ads, referrals",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-363",
+      "module": "E-Commerce",
+      "category": "Digital Products",
+      "title": "Gumroad — Sell Digital Products",
+      "url": "https://gumroad.com/",
+      "type": "Platform",
+      "description": "Sell courses, ebooks, templates, software: simple checkout, no monthly fee",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-364",
+      "module": "E-Commerce",
+      "category": "Digital Products",
+      "title": "Hotmart — LATAM Digital Products",
+      "url": "https://www.hotmart.com/",
+      "type": "Platform",
+      "description": "LATAM #1 digital product marketplace: courses, ebooks, affiliates, payouts",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-365",
+      "module": "E-Commerce",
+      "category": "Subscriptions",
+      "title": "Stripe Billing — Subscription Docs",
+      "url": "https://stripe.com/docs/billing",
+      "type": "Docs",
+      "description": "Subscription infrastructure: recurring, usage-based, trials, upgrades, invoicing",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-366",
+      "module": "Demand Gen",
+      "category": "Framework",
+      "title": "HubSpot — Demand Generation Guide",
+      "url": "https://blog.hubspot.com/marketing/demand-generation",
+      "type": "Guide",
+      "description": "Complete demand gen: awareness→interest→consideration→decision, content+nurture",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-367",
+      "module": "Demand Gen",
+      "category": "Framework",
+      "title": "Drift — Demand Gen Playbook",
+      "url": "https://www.salesloft.com/resources/",
+      "type": "Guide",
+      "description": "Conversational marketing: chatbots, real-time leads, buyer intent, pipeline acceleration",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-368",
+      "module": "Demand Gen",
+      "category": "Content Marketing",
+      "title": "Content Marketing Institute",
+      "url": "https://contentmarketinginstitute.com/",
+      "type": "Resource",
+      "description": "Content strategy: attract→engage→convert, editorial calendars, measurement",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-369",
+      "module": "Demand Gen",
+      "category": "SEO",
+      "title": "Ahrefs Blog — SEO & Marketing",
+      "url": "https://ahrefs.com/blog/",
+      "type": "Blog",
+      "description": "SEO mastery: keyword research, link building, content strategy, technical SEO",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-370",
+      "module": "Demand Gen",
+      "category": "Paid Ads",
+      "title": "Google Ads Help Center",
+      "url": "https://support.google.com/google-ads/",
+      "type": "Docs",
+      "description": "PPC advertising: search, display, shopping, video, performance max campaigns",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-371",
+      "module": "Demand Gen",
+      "category": "Paid Ads",
+      "title": "Meta Ads Guide — Facebook/Instagram",
+      "url": "https://www.facebook.com/business/ads-guide",
+      "type": "Docs",
+      "description": "Social ads: targeting, creative, placements, lookalikes, retargeting, ROAS",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-372",
+      "module": "Demand Gen",
+      "category": "Email",
+      "title": "Mailchimp — Email Marketing Guide",
+      "url": "https://mailchimp.com/resources/email-marketing-field-guide/",
+      "type": "Guide",
+      "description": "Email strategy: segmentation, automation, A/B testing, deliverability, analytics",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-373",
+      "module": "Demand Gen",
+      "category": "Funnel Strategy",
+      "title": "ClickFunnels — Sales Funnel Guide",
+      "url": "https://www.clickfunnels.com/blog",
+      "type": "Blog",
+      "description": "Funnel architecture: lead magnet→tripwire→core offer→upsell→continuity",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-374",
+      "module": "Demand Gen",
+      "category": "Growth",
+      "title": "Reforge — Growth Strategy",
+      "url": "https://www.reforge.com/",
+      "type": "Platform",
+      "description": "Growth frameworks: acquisition, retention, monetization loops, advanced strategy",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-375",
+      "module": "Demand Gen",
+      "category": "Copywriting",
+      "title": "Copyhackers — Conversion Copywriting",
+      "url": "https://copyhackers.com/",
+      "type": "Resource",
+      "description": "Copy that converts: headlines, CTAs, landing pages, email sequences, A/B testing",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-376",
+      "module": "Economics",
+      "category": "Microeconomics",
+      "title": "Khan Academy — Supply & Demand",
+      "url": "https://www.khanacademy.org/economics-finance-domain/microeconomics/supply-demand-equilibrium",
+      "type": "Course",
+      "description": "Fundamentals: supply curves, demand curves, equilibrium, elasticity, surplus",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-377",
+      "module": "Economics",
+      "category": "Microeconomics",
+      "title": "Investopedia — Supply and Demand",
+      "url": "https://www.investopedia.com/terms/l/law-of-supply-demand.asp",
+      "type": "Article",
+      "description": "Law of supply & demand: price determination, shifts, market equilibrium",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-378",
+      "module": "Economics",
+      "category": "Pricing",
+      "title": "Investopedia — Price Elasticity of Demand",
+      "url": "https://www.investopedia.com/terms/p/priceelasticity.asp",
+      "type": "Article",
+      "description": "Elasticity: how price changes affect demand, elastic vs inelastic goods, examples",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-379",
+      "module": "Economics",
+      "category": "Market Economics",
+      "title": "Investopedia — Market Economy Guide",
+      "url": "https://www.investopedia.com/terms/m/marketeconomy.asp",
+      "type": "Article",
+      "description": "Free market principles: invisible hand, competition, price signals, self-regulation",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-380",
+      "module": "Economics",
+      "category": "LATAM Economics",
+      "title": "CEPAL/ECLAC — Economic Commission for LATAM",
+      "url": "https://www.cepal.org/en",
+      "type": "Research",
+      "description": "UN economic data for Americas: GDP, trade, inequality, development indicators",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-381",
+      "module": "Economics",
+      "category": "LATAM Economics",
+      "title": "IDB — Inter-American Development Bank",
+      "url": "https://www.iadb.org/",
+      "type": "Research",
+      "description": "LATAM development: SMB financing, digital economy, trade, infrastructure data",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-382",
+      "module": "Economics",
+      "category": "LATAM Economics",
+      "title": "World Bank — LATAM & Caribbean Data",
+      "url": "https://data.worldbank.org/region/latin-america-and-caribbean",
+      "type": "Data",
+      "description": "Regional data: GDP per country, inflation, trade, business climate, demographics",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-383",
+      "module": "Economics",
+      "category": "US Economics",
+      "title": "BLS — Bureau of Labor Statistics",
+      "url": "https://www.bls.gov/",
+      "type": "Government",
+      "description": "US economic data: CPI, employment, wages, productivity, industry statistics",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-384",
+      "module": "Economics",
+      "category": "Digital Economy",
+      "title": "McKinsey — Digital Economy Insights",
+      "url": "https://www.mckinsey.com/capabilities/mckinsey-digital/our-insights",
+      "type": "Research",
+      "description": "Digital transformation: AI economics, platform business, digital adoption curves",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-385",
+      "module": "Americas Compliance",
+      "category": "Brazil Business",
+      "title": "Portal do Empreendedor — MEI Brazil",
+      "url": "https://www.gov.br/empresas-e-negocios/pt-br/empreendedor",
+      "type": "Government",
+      "description": "Brazil micro-entrepreneur: MEI registration, tax (DAS), simplified compliance",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-386",
+      "module": "Americas Compliance",
+      "category": "Mexico Business",
+      "title": "SIEM — Mexico Business Registry",
+      "url": "https://siem.gob.mx/",
+      "type": "Government",
+      "description": "Mexico business registration: RFC, permits, industry classification",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-387",
+      "module": "Americas Compliance",
+      "category": "Colombia Business",
+      "title": "Cámara de Comercio Bogotá",
+      "url": "https://www.ccb.org.co/",
+      "type": "Government",
+      "description": "Colombia business registration: mercantile registry, RUT, permits, training",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-388",
+      "module": "Americas Compliance",
+      "category": "USA Business",
+      "title": "SBA — Start Your Business",
+      "url": "https://www.sba.gov/business-guide/launch-your-business",
+      "type": "Government",
+      "description": "US business: LLC/Corp formation, EIN, licenses, funding, government contracts",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-389",
+      "module": "Americas Compliance",
+      "category": "Multi-Country",
+      "title": "Stripe Atlas — Incorporate a Company",
+      "url": "https://stripe.com/atlas",
+      "type": "Platform",
+      "description": "One-click US C-Corp: Delaware incorporation, bank account, tax ID, from anywhere",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-390",
+      "module": "E-Commerce",
+      "category": "Strategy",
+      "title": "DotCom Secrets — Russell Brunson",
+      "url": "https://www.amazon.com/DotCom-Secrets-Underground-Playbook-Company/dp/1401960464",
+      "type": "Book",
+      "description": "Online funnels: value ladder, attractive character, soap opera sequences, secret formula",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-391",
+      "module": "E-Commerce",
+      "category": "Strategy",
+      "title": "Traffic Secrets — Russell Brunson",
+      "url": "https://www.amazon.com/Traffic-Secrets-Underground-Playbook-Customers/dp/1401957919",
+      "type": "Book",
+      "description": "Dream 100: find where your customers are, earn then buy traffic, build your list",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-392",
+      "module": "E-Commerce",
+      "category": "Strategy",
+      "title": "Expert Secrets — Russell Brunson",
+      "url": "https://www.amazon.com/Expert-Secrets-Underground-Playbook-Creating/dp/1401970605",
+      "type": "Book",
+      "description": "Become the expert: create a mass movement, break false beliefs, stack the offer",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-393",
+      "module": "Demand Gen",
+      "category": "Growth Hacking",
+      "title": "Traction — Gabriel Weinberg",
+      "url": "https://www.amazon.com/Traction-Startup-Achieve-Explosive-Customer/dp/1591848369",
+      "type": "Book",
+      "description": "19 traction channels: viral, PR, SEO, content, email, community, sales, partnerships",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-394",
+      "module": "Demand Gen",
+      "category": "Product-Led",
+      "title": "Product-Led Growth — Wes Bush",
+      "url": "https://www.amazon.com/Product-Led-Growth-Build-Product-Itself/dp/1798434520",
+      "type": "Book",
+      "description": "Let product sell itself: free trial, freemium, time-to-value, activation, expansion",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-395",
+      "module": "Economics",
+      "category": "Behavioral",
+      "title": "Influence — Robert Cialdini",
+      "url": "https://www.amazon.com/Influence-Psychology-Persuasion-Robert-Cialdini/dp/006124189X",
+      "type": "Book",
+      "description": "6 principles: reciprocity, commitment, social proof, authority, liking, scarcity",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-396",
+      "module": "Economics",
+      "category": "Behavioral",
+      "title": "Thinking, Fast and Slow — Daniel Kahneman",
+      "url": "https://www.amazon.com/Thinking-Fast-Slow-Daniel-Kahneman/dp/0374533555",
+      "type": "Book",
+      "description": "System 1 vs System 2: heuristics, biases, prospect theory, decision-making errors",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-397",
+      "module": "E-Commerce",
+      "category": "Pricing",
+      "title": "Confessions of the Pricing Man — Hermann Simon",
+      "url": "https://www.amazon.com/Confessions-Pricing-Man-Setting-Changed/dp/3319204009",
+      "type": "Book",
+      "description": "Pricing mastery: value-based pricing, willingness to pay, price differentiation",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-398",
+      "module": "Demand Gen",
+      "category": "Brand",
+      "title": "Building a StoryBrand — Donald Miller",
+      "url": "https://www.amazon.com/Building-StoryBrand-Clarify-Message-Customers/dp/0718033329",
+      "type": "Book",
+      "description": "7-part framework: hero(customer), problem, guide(you), plan, CTA, success, failure",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-399",
+      "module": "USA Business",
+      "category": "Tax",
+      "title": "IRS — Internal Revenue Service",
+      "url": "https://www.irs.gov/",
+      "type": "Gov",
+      "description": "US federal tax authority: EIN registration, income tax, payroll, 1099s, small business hub",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-400",
+      "module": "USA Business",
+      "category": "Registration",
+      "title": "SBA — Small Business Administration",
+      "url": "https://www.sba.gov/",
+      "type": "Gov",
+      "description": "US business registration guide: LLC/Corp formation, licenses, loans, federal contracts",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-401",
+      "module": "USA Business",
+      "category": "Payments",
+      "title": "Stripe — US Payment Infrastructure",
+      "url": "https://stripe.com/",
+      "type": "Platform",
+      "description": "Dominant US payment processor: cards, ACH, subscriptions, invoicing, Connect marketplace",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-402",
+      "module": "USA Business",
+      "category": "Payments",
+      "title": "Square — SMB Payment Platform",
+      "url": "https://squareup.com/",
+      "type": "Platform",
+      "description": "POS + online payments + banking for US SMBs: hardware, invoicing, payroll, loans",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-403",
+      "module": "USA Business",
+      "category": "E-Commerce",
+      "title": "Shopify — US E-Commerce",
+      "url": "https://www.shopify.com/",
+      "type": "Platform",
+      "description": "Leading US e-commerce platform: storefront, payments, shipping, POS, B2B wholesale",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-404",
+      "module": "USA Business",
+      "category": "Legal",
+      "title": "Delaware Division of Corporations",
+      "url": "https://corp.delaware.gov/",
+      "type": "Gov",
+      "description": "Most popular US incorporation state: LLC/Corp filing, franchise tax, registered agents",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-405",
+      "module": "USA Business",
+      "category": "Legal",
+      "title": "FTC — Consumer Protection",
+      "url": "https://www.ftc.gov/",
+      "type": "Gov",
+      "description": "US consumer protection: advertising rules, CAN-SPAM, COPPA, privacy, endorsements",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-406",
+      "module": "USA Business",
+      "category": "Compliance",
+      "title": "CCPA / CPRA — California Privacy",
+      "url": "https://oag.ca.gov/privacy/ccpa",
+      "type": "Gov",
+      "description": "California data privacy law: consumer rights, opt-out, data deletion, business obligations",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-407",
+      "module": "Canada Business",
+      "category": "Tax",
+      "title": "CRA — Canada Revenue Agency",
+      "url": "https://www.canada.ca/en/revenue-agency.html",
+      "type": "Gov",
+      "description": "Canadian tax authority: GST/HST, BN registration, income tax, payroll deductions",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-408",
+      "module": "Canada Business",
+      "category": "Registration",
+      "title": "Corporations Canada (ISED)",
+      "url": "https://ised-isde.canada.ca/site/corporations-canada/en",
+      "type": "Gov",
+      "description": "Federal business incorporation: articles of incorporation, BN, annual returns",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-409",
+      "module": "Canada Business",
+      "category": "Payments",
+      "title": "Interac / Interac e-Transfer",
+      "url": "https://www.interac.ca/",
+      "type": "Platform",
+      "description": "Canada's dominant payment network: Interac e-Transfer (P2P), Interac Debit, Interac Online",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-410",
+      "module": "Canada Business",
+      "category": "Legal",
+      "title": "PIPEDA — Privacy Law",
+      "url": "https://www.priv.gc.ca/en/privacy-topics/privacy-laws-in-canada/the-personal-information-protection-and-electronic-documents-act-pipeda/",
+      "type": "Gov",
+      "description": "Canadian data privacy: consent, purpose limitation, accountability, PIPEDA compliance",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-411",
+      "module": "Canada Business",
+      "category": "SMB Resources",
+      "title": "BDC — Business Development Bank",
+      "url": "https://www.bdc.ca/",
+      "type": "Platform",
+      "description": "Canadian SMB financing + advisory: loans, venture capital, free tools and templates",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-412",
+      "module": "Mexico Business",
+      "category": "Tax",
+      "title": "SAT — Servicio de Administración Tributaria",
+      "url": "https://www.sat.gob.mx/",
+      "type": "Gov",
+      "description": "Mexico tax authority: RFC registration, CFDI e-invoicing, ISR, IVA (16%), payroll",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-413",
+      "module": "Mexico Business",
+      "category": "Registration",
+      "title": "SIGER — Business Registration Portal",
+      "url": "https://www.gob.mx/tuempresa",
+      "type": "Gov",
+      "description": "Mexico business formation: incorporation, permits, RFC, IMSS registration guide",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-414",
+      "module": "Mexico Business",
+      "category": "Payments",
+      "title": "SPEI — Interbank Electronic Payment",
+      "url": "https://www.banxico.org.mx/sistemas-de-pago/servicios-transferencias-elect.html",
+      "type": "Gov",
+      "description": "Mexico's real-time payment system by Banxico: instant transfers, free for individuals",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-415",
+      "module": "Mexico Business",
+      "category": "Payments",
+      "title": "MercadoPago Mexico",
+      "url": "https://www.mercadopago.com.mx/",
+      "type": "Platform",
+      "description": "Mexico's leading digital wallet: QR payments, POS, e-commerce checkout, lending",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-416",
+      "module": "Mexico Business",
+      "category": "Payments",
+      "title": "Clip — Mexico POS",
+      "url": "https://clip.mx/",
+      "type": "Platform",
+      "description": "Mexico's top card reader for SMBs: POS terminal, e-commerce links, instant deposits",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-417",
+      "module": "Mexico Business",
+      "category": "Legal",
+      "title": "PROFECO — Consumer Protection",
+      "url": "https://www.gob.mx/profeco",
+      "type": "Gov",
+      "description": "Mexico consumer protection: advertising, warranties, e-commerce, complaint resolution",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-418",
+      "module": "Mexico Business",
+      "category": "Legal",
+      "title": "LFPDPPP — Data Privacy Law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf",
+      "type": "Gov",
+      "description": "Mexico data protection: consent, ARCO rights (access, rectification, cancel, oppose)",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-419",
+      "module": "Guatemala Business",
+      "category": "Tax",
+      "title": "SAT Guatemala",
+      "url": "https://portal.sat.gob.gt/",
+      "type": "Gov",
+      "description": "Guatemala tax authority: NIT registration, IVA (12%), ISR, electronic invoicing (FEL)",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-420",
+      "module": "Guatemala Business",
+      "category": "Registration",
+      "title": "Registro Mercantil Guatemala",
+      "url": "https://www.registromercantil.gob.gt/",
+      "type": "Gov",
+      "description": "Guatemala commercial registry: company incorporation, trade name, annual filings",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-421",
+      "module": "Guatemala Business",
+      "category": "Payments",
+      "title": "Pagos Ninjacard / VisaNet Guatemala",
+      "url": "https://www.visanet.com.gt/",
+      "type": "Platform",
+      "description": "Guatemala card processing + digital payments for merchants",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-422",
+      "module": "Belize Business",
+      "category": "Tax",
+      "title": "Belize Tax Service Department",
+      "url": "https://www.bts.gov.bz/",
+      "type": "Gov",
+      "description": "Belize tax authority: TIN registration, GST (12.5%), income tax, business tax",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-423",
+      "module": "Belize Business",
+      "category": "Registration",
+      "title": "BCCI — Belize Companies Registry",
+      "url": "https://www.belizecompaniesregistry.gov.bz/",
+      "type": "Gov",
+      "description": "Belize company incorporation: IBC, LLC, domestic companies, annual compliance",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-424",
+      "module": "Honduras Business",
+      "category": "Tax",
+      "title": "SAR — Servicio de Administración de Rentas",
+      "url": "https://www.sar.gob.hn/",
+      "type": "Gov",
+      "description": "Honduras tax authority: RTN registration, ISV (15%), ISR, electronic invoicing",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-425",
+      "module": "Honduras Business",
+      "category": "Registration",
+      "title": "Registro Mercantil Honduras (CCIT)",
+      "url": "https://www.ccit.hn/",
+      "type": "Gov",
+      "description": "Honduras Tegucigalpa Chamber of Commerce: business registration, trade permits",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-426",
+      "module": "Honduras Business",
+      "category": "Payments",
+      "title": "Tigo Money Honduras",
+      "url": "https://www.tigo.com.hn/tigo-money",
+      "type": "Platform",
+      "description": "Honduras mobile money: P2P transfers, bill payments, merchant QR codes",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-427",
+      "module": "El Salvador Business",
+      "category": "Tax",
+      "title": "DGII El Salvador (Ministerio de Hacienda)",
+      "url": "https://www.mh.gob.sv/",
+      "type": "Gov",
+      "description": "El Salvador tax authority: NIT/NRC registration, IVA (13%), ISR, Bitcoin legal tender",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-428",
+      "module": "El Salvador Business",
+      "category": "Registration",
+      "title": "CNR — Centro Nacional de Registros",
+      "url": "https://www.cnr.gob.sv/",
+      "type": "Gov",
+      "description": "El Salvador commercial registry: company incorporation, property, IP registration",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-429",
+      "module": "El Salvador Business",
+      "category": "Payments",
+      "title": "Chivo Wallet / Bitcoin",
+      "url": "https://chivowallet.com/",
+      "type": "Platform",
+      "description": "El Salvador government Bitcoin wallet + USD: P2P, merchant payments, remittances",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-430",
+      "module": "Nicaragua Business",
+      "category": "Tax",
+      "title": "DGI Nicaragua",
+      "url": "https://www.dgi.gob.ni/",
+      "type": "Gov",
+      "description": "Nicaragua tax authority: RUC registration, IVA (15%), IR, withholding taxes",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-431",
+      "module": "Nicaragua Business",
+      "category": "Registration",
+      "title": "Registro Mercantil Nicaragua",
+      "url": "https://www.registropublico.gob.ni/",
+      "type": "Gov",
+      "description": "Nicaragua public registry: company incorporation, commercial registry, property",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-432",
+      "module": "Costa Rica Business",
+      "category": "Tax",
+      "title": "Ministerio de Hacienda Costa Rica",
+      "url": "https://www.hacienda.go.cr/",
+      "type": "Gov",
+      "description": "Costa Rica tax authority: cédula jurídica, IVA (13%), ISR, electronic invoicing",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-433",
+      "module": "Costa Rica Business",
+      "category": "Registration",
+      "title": "Registro Nacional Costa Rica",
+      "url": "https://www.registronacional.go.cr/",
+      "type": "Gov",
+      "description": "Costa Rica national registry: company incorporation, property, vehicles, IP",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-434",
+      "module": "Costa Rica Business",
+      "category": "Payments",
+      "title": "SINPE Móvil",
+      "url": "https://www.bccr.fi.cr/seccion-sistema-de-pagos/sinpe-movil",
+      "type": "Gov",
+      "description": "Costa Rica instant payment: central bank system, phone-number transfers, 89% adoption",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-435",
+      "module": "Costa Rica Business",
+      "category": "Legal",
+      "title": "PRODHAB — Data Protection",
+      "url": "https://www.prodhab.go.cr/",
+      "type": "Gov",
+      "description": "Costa Rica data protection agency: Ley 8968, consent, data subject rights, registration",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-436",
+      "module": "Colombia Business",
+      "category": "Tax",
+      "title": "DIAN — Dirección de Impuestos y Aduanas",
+      "url": "https://www.dian.gov.co/",
+      "type": "Gov",
+      "description": "Colombia tax authority: RUT/NIT registration, IVA (19%), renta, electronic invoicing",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-437",
+      "module": "Colombia Business",
+      "category": "Registration",
+      "title": "Cámara de Comercio de Bogotá",
+      "url": "https://www.ccb.org.co/",
+      "type": "Gov",
+      "description": "Colombia business registration: SAS incorporation (most common), RUES, trade registry",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-438",
+      "module": "Colombia Business",
+      "category": "Payments",
+      "title": "Nequi",
+      "url": "https://www.nequi.com.co/",
+      "type": "Platform",
+      "description": "Colombia's #1 digital wallet (54% adoption): P2P, QR, savings, loans, e-commerce",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-439",
+      "module": "Colombia Business",
+      "category": "Payments",
+      "title": "PSE — Pagos Seguros en Línea",
+      "url": "https://www.pse.com.co/",
+      "type": "Platform",
+      "description": "Colombia bank transfer system: real-time payments, 34 banks, e-commerce standard",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-440",
+      "module": "Colombia Business",
+      "category": "Payments",
+      "title": "Daviplata",
+      "url": "https://www.daviplata.com/",
+      "type": "Platform",
+      "description": "Colombia mobile wallet by Davivienda: 22% adoption, transfers, payments, savings",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-441",
+      "module": "Colombia Business",
+      "category": "Legal",
+      "title": "SIC — Consumer & Data Protection",
+      "url": "https://www.sic.gov.co/",
+      "type": "Gov",
+      "description": "Colombia: Ley 1581 data protection, consumer protection, competition, IP registry",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-442",
+      "module": "Colombia Business",
+      "category": "Startup",
+      "title": "iNNpulsa Colombia",
+      "url": "https://www.innpulsacolombia.com/",
+      "type": "Gov",
+      "description": "Colombia innovation agency: startup funding, acceleration, scaling programs, Aldea",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-443",
+      "module": "Venezuela Business",
+      "category": "Tax",
+      "title": "SENIAT Venezuela",
+      "url": "https://www.seniat.gob.ve/",
+      "type": "Gov",
+      "description": "Venezuela tax authority: RIF registration, IVA (16%), ISLR, fiscal machines",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-444",
+      "module": "Venezuela Business",
+      "category": "Payments",
+      "title": "Pago Móvil Interbancario",
+      "url": "https://www.sudeban.gob.ve/",
+      "type": "Gov",
+      "description": "Venezuela instant payment system: phone-number transfers between all banks",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-445",
+      "module": "Venezuela Business",
+      "category": "Registration",
+      "title": "SAREN — Registro Mercantil",
+      "url": "https://www.saren.gob.ve/",
+      "type": "Gov",
+      "description": "Venezuela commercial registry: company incorporation, legal entities",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-446",
+      "module": "Ecuador Business",
+      "category": "Tax",
+      "title": "SRI — Servicio de Rentas Internas",
+      "url": "https://www.sri.gob.ec/",
+      "type": "Gov",
+      "description": "Ecuador tax authority: RUC registration, IVA (15%), IR, electronic invoicing (RIDE)",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-447",
+      "module": "Ecuador Business",
+      "category": "Registration",
+      "title": "Superintendencia de Compañías Ecuador",
+      "url": "https://www.supercias.gob.ec/",
+      "type": "Gov",
+      "description": "Ecuador company registry: SAS incorporation, annual filings, financial statements",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-448",
+      "module": "Ecuador Business",
+      "category": "Payments",
+      "title": "Banco del Pacífico / Deuna",
+      "url": "https://www.deuna.com/",
+      "type": "Platform",
+      "description": "Ecuador digital payments: QR, wallet, cross-border checkout for LATAM",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-449",
+      "module": "Peru Business",
+      "category": "Tax",
+      "title": "SUNAT — Superintendencia Nacional Tributaria",
+      "url": "https://www.sunat.gob.pe/",
+      "type": "Gov",
+      "description": "Peru tax authority: RUC registration, IGV (18%), IR, electronic invoicing, customs",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-450",
+      "module": "Peru Business",
+      "category": "Registration",
+      "title": "SUNARP — Registros Públicos",
+      "url": "https://www.sunarp.gob.pe/",
+      "type": "Gov",
+      "description": "Peru public registry: company incorporation, property, vehicles, legal entities",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-451",
+      "module": "Peru Business",
+      "category": "Payments",
+      "title": "Yape",
+      "url": "https://www.yape.com.pe/",
+      "type": "Platform",
+      "description": "Peru's #1 payment app (50% population): QR, P2P, merchant payments, no bank needed",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-452",
+      "module": "Peru Business",
+      "category": "Payments",
+      "title": "PLIN",
+      "url": "https://www.pfrancklin.pe/plin",
+      "type": "Platform",
+      "description": "Peru interbank payment app (14M users): instant transfers, QR, interoperable with Yape",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-453",
+      "module": "Peru Business",
+      "category": "Payments",
+      "title": "PagoEfectivo",
+      "url": "https://pagoefectivo.pe/",
+      "type": "Platform",
+      "description": "Peru cash-to-digital: pay online orders at bodegas/banks, 19% of e-commerce",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-454",
+      "module": "Peru Business",
+      "category": "Legal",
+      "title": "INDECOPI — Consumer Protection & IP",
+      "url": "https://www.indecopi.gob.pe/",
+      "type": "Gov",
+      "description": "Peru: consumer protection, competition, trademarks, patents, copyright",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-455",
+      "module": "Brazil Business",
+      "category": "Tax",
+      "title": "Receita Federal do Brasil",
+      "url": "https://www.gov.br/receitafederal/",
+      "type": "Gov",
+      "description": "Brazil tax authority: CNPJ registration, ICMS/ISS/PIS/COFINS, Nota Fiscal Eletrônica",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-456",
+      "module": "Brazil Business",
+      "category": "Registration",
+      "title": "Junta Comercial (REDESIM)",
+      "url": "https://www.gov.br/empresas-e-negocios/pt-br/redesim",
+      "type": "Gov",
+      "description": "Brazil simplified business registration network: CNPJ, state/municipal registrations",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-457",
+      "module": "Brazil Business",
+      "category": "Payments",
+      "title": "PIX — Banco Central do Brasil",
+      "url": "https://www.bcb.gov.br/estabilidadefinanceira/pix",
+      "type": "Gov",
+      "description": "Brazil instant payment: 76% adult adoption, 64B transactions/year, QR, free P2P, 24/7",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-458",
+      "module": "Brazil Business",
+      "category": "Payments",
+      "title": "Nubank",
+      "url": "https://nubank.com.br/",
+      "type": "Platform",
+      "description": "Brazil's largest digital bank (100M+ customers): checking, credit, investments, PIX",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-459",
+      "module": "Brazil Business",
+      "category": "Payments",
+      "title": "MercadoPago Brasil",
+      "url": "https://www.mercadopago.com.br/",
+      "type": "Platform",
+      "description": "Brazil's top e-commerce wallet: PIX integration, POS, checkout, lending, QR",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-460",
+      "module": "Brazil Business",
+      "category": "Payments",
+      "title": "Boleto Bancário",
+      "url": "https://www.bb.com.br/",
+      "type": "Platform",
+      "description": "Brazil cash voucher payment: traditional method, still 9% of e-commerce, printable",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-461",
+      "module": "Brazil Business",
+      "category": "Legal",
+      "title": "LGPD — Lei Geral de Proteção de Dados",
+      "url": "https://www.gov.br/anpd/",
+      "type": "Gov",
+      "description": "Brazil data protection (GDPR-equivalent): ANPD authority, consent, DPO, penalties",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-462",
+      "module": "Brazil Business",
+      "category": "Legal",
+      "title": "PROCON — Consumer Protection",
+      "url": "https://www.procon.sp.gov.br/",
+      "type": "Gov",
+      "description": "Brazil consumer protection: advertising, warranties, e-commerce rules, CDC code",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-463",
+      "module": "Brazil Business",
+      "category": "Startup",
+      "title": "SEBRAE — SMB Support Agency",
+      "url": "https://www.sebrae.com.br/",
+      "type": "Gov",
+      "description": "Brazil's SMB agency: free courses, business plans, MEI registration, market research",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-464",
+      "module": "Bolivia Business",
+      "category": "Tax",
+      "title": "SIN — Servicio de Impuestos Nacionales",
+      "url": "https://www.impuestos.gob.bo/",
+      "type": "Gov",
+      "description": "Bolivia tax authority: NIT registration, IVA (13%), IUE, electronic invoicing",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-465",
+      "module": "Bolivia Business",
+      "category": "Registration",
+      "title": "SEPREC — Registro de Comercio",
+      "url": "https://www.seprec.gob.bo/",
+      "type": "Gov",
+      "description": "Bolivia commercial registry: company incorporation, matrícula de comercio",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-466",
+      "module": "Bolivia Business",
+      "category": "Payments",
+      "title": "Simple — Bolivia Instant Payments",
+      "url": "https://www.simple.com.bo/",
+      "type": "Platform",
+      "description": "Bolivia instant payment system: QR transfers between banks, growing adoption",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-467",
+      "module": "Paraguay Business",
+      "category": "Tax",
+      "title": "SET — Subsecretaría de Estado de Tributación",
+      "url": "https://www.set.gov.py/",
+      "type": "Gov",
+      "description": "Paraguay tax authority: RUC registration, IVA (10%), IRACIS (10% — lowest in region)",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-468",
+      "module": "Paraguay Business",
+      "category": "Registration",
+      "title": "MIC — Registro de Empresas",
+      "url": "https://www.mic.gov.py/",
+      "type": "Gov",
+      "description": "Paraguay business registration via Ministry of Industry: SUACE one-stop portal",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-469",
+      "module": "Paraguay Business",
+      "category": "Payments",
+      "title": "Tigo Money Paraguay",
+      "url": "https://www.tigo.com.py/tigo-money",
+      "type": "Platform",
+      "description": "Paraguay's leading mobile money: P2P, bill payments, merchant QR",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-470",
+      "module": "Chile Business",
+      "category": "Tax",
+      "title": "SII — Servicio de Impuestos Internos",
+      "url": "https://www.sii.cl/",
+      "type": "Gov",
+      "description": "Chile tax authority: RUT registration, IVA (19%), renta, electronic invoicing (DTE)",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-471",
+      "module": "Chile Business",
+      "category": "Registration",
+      "title": "Tu Empresa en un Día (MINECON)",
+      "url": "https://www.registrodeempresasysociedades.cl/",
+      "type": "Gov",
+      "description": "Chile one-day business registration: free online incorporation, digital signatures",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-472",
+      "module": "Chile Business",
+      "category": "Payments",
+      "title": "Khipu",
+      "url": "https://khipu.com/",
+      "type": "Platform",
+      "description": "Chile bank transfer payment: instant verification, e-commerce integration, low fees",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-473",
+      "module": "Chile Business",
+      "category": "Payments",
+      "title": "MACHPay / MACH",
+      "url": "https://www.somosmach.com/",
+      "type": "Platform",
+      "description": "Chile digital wallet by BCI: prepaid card, P2P, international purchases, no fees",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-474",
+      "module": "Chile Business",
+      "category": "Legal",
+      "title": "SERNAC — Consumer Protection",
+      "url": "https://www.sernac.cl/",
+      "type": "Gov",
+      "description": "Chile consumer protection: advertising, warranties, e-commerce, financial products",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-475",
+      "module": "Chile Business",
+      "category": "Startup",
+      "title": "Start-Up Chile (CORFO)",
+      "url": "https://startupchile.org/",
+      "type": "Gov",
+      "description": "Chile government accelerator: equity-free funding, visas, world's first public accelerator",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-476",
+      "module": "Argentina Business",
+      "category": "Tax",
+      "title": "AFIP — Administración Federal de Ingresos",
+      "url": "https://www.afip.gob.ar/",
+      "type": "Gov",
+      "description": "Argentina tax authority: CUIT/CUIL registration, IVA (21%), ganancias, monotributo",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-477",
+      "module": "Argentina Business",
+      "category": "Registration",
+      "title": "IGJ — Inspección General de Justicia",
+      "url": "https://www.argentina.gob.ar/justicia/igj",
+      "type": "Gov",
+      "description": "Argentina company registry (Buenos Aires): SAS/SRL incorporation, annual filings",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-478",
+      "module": "Argentina Business",
+      "category": "Payments",
+      "title": "MercadoPago Argentina",
+      "url": "https://www.mercadopago.com.ar/",
+      "type": "Platform",
+      "description": "Argentina's dominant digital wallet: QR (Transferencias 3.0), POS, lending, e-commerce",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-479",
+      "module": "Argentina Business",
+      "category": "Payments",
+      "title": "MODO — Argentina Interoperable QR",
+      "url": "https://www.modo.com.ar/",
+      "type": "Platform",
+      "description": "Argentina bank consortium wallet: interoperable QR, all banks in one app",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-480",
+      "module": "Argentina Business",
+      "category": "Payments",
+      "title": "Ualá",
+      "url": "https://www.uala.com.ar/",
+      "type": "Platform",
+      "description": "Argentina fintech: prepaid card, investments, crypto, loans, growing SMB tools",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-481",
+      "module": "Argentina Business",
+      "category": "Legal",
+      "title": "Defensa del Consumidor",
+      "url": "https://www.argentina.gob.ar/produccion/defensadelconsumidor",
+      "type": "Gov",
+      "description": "Argentina consumer protection: advertising, e-commerce, warranties, complaint portal",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-482",
+      "module": "Uruguay Business",
+      "category": "Tax",
+      "title": "DGI Uruguay",
+      "url": "https://www.dgi.gub.uy/",
+      "type": "Gov",
+      "description": "Uruguay tax authority: RUT registration, IVA (22%), IRAE (25%), e-invoicing (CFE)",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-483",
+      "module": "Uruguay Business",
+      "category": "Registration",
+      "title": "Empresa en el Día (MEF)",
+      "url": "https://www.gub.uy/tramites/creacion-empresa",
+      "type": "Gov",
+      "description": "Uruguay one-day business creation portal: simplified incorporation, digital",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-484",
+      "module": "Uruguay Business",
+      "category": "Payments",
+      "title": "dLocal / Prex",
+      "url": "https://dlocal.com/",
+      "type": "Platform",
+      "description": "Uruguay-founded cross-border payments: process payments across 40+ emerging markets",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-485",
+      "module": "Uruguay Business",
+      "category": "Legal",
+      "title": "URCDP — Data Protection Uruguay",
+      "url": "https://www.gub.uy/unidad-reguladora-control-datos-personales/",
+      "type": "Gov",
+      "description": "Uruguay data protection: Ley 18.331, first LATAM country with EU adequacy status",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-486",
+      "module": "Guyana Business",
+      "category": "Tax",
+      "title": "GRA — Guyana Revenue Authority",
+      "url": "https://www.gra.gov.gy/",
+      "type": "Gov",
+      "description": "Guyana tax authority: TIN registration, VAT (14%), income tax, customs",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-487",
+      "module": "Guyana Business",
+      "category": "Registration",
+      "title": "Deeds Registry Guyana",
+      "url": "https://www.deedsregistry.gov.gy/",
+      "type": "Gov",
+      "description": "Guyana company registration: business names, partnerships, companies",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-488",
+      "module": "Suriname Business",
+      "category": "Tax",
+      "title": "Belastingdienst Suriname",
+      "url": "https://www.belastingdienst.sr/",
+      "type": "Gov",
+      "description": "Suriname tax authority: tax registration, BTW (VAT 10%), income tax",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-489",
+      "module": "Suriname Business",
+      "category": "Registration",
+      "title": "KKF — Chamber of Commerce Suriname",
+      "url": "https://www.kkf.sr/",
+      "type": "Gov",
+      "description": "Suriname Chamber of Commerce: business registration, trade licenses",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-490",
+      "module": "Dominican Republic Business",
+      "category": "Tax",
+      "title": "DGII — Dirección General de Impuestos Internos",
+      "url": "https://dgii.gov.do/",
+      "type": "Gov",
+      "description": "DR tax authority: RNC registration, ITBIS (18%), ISR (27%), e-invoicing (e-CF)",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-491",
+      "module": "Dominican Republic Business",
+      "category": "Registration",
+      "title": "ONAPI — Registro de Nombre Comercial",
+      "url": "https://www.onapi.gov.do/",
+      "type": "Gov",
+      "description": "DR industrial property office: trade name, trademarks, company name reservation",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-492",
+      "module": "Dominican Republic Business",
+      "category": "Registration",
+      "title": "Cámara de Comercio Santo Domingo",
+      "url": "https://camarasantodomingo.do/",
+      "type": "Gov",
+      "description": "DR commercial registry: SRL/SAS incorporation, mercantile registration",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-493",
+      "module": "Dominican Republic Business",
+      "category": "Payments",
+      "title": "Pagos al Instante (BCRD)",
+      "url": "https://www.bancentral.gov.do/",
+      "type": "Gov",
+      "description": "DR instant payment system by central bank: real-time interbank transfers",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-494",
+      "module": "Puerto Rico Business",
+      "category": "Tax",
+      "title": "SURI — Hacienda PR",
+      "url": "https://suri.hacienda.pr.gov/",
+      "type": "Gov",
+      "description": "Puerto Rico tax portal: IVU (11.5%), income tax, Act 60 incentives (4% corporate)",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-495",
+      "module": "Puerto Rico Business",
+      "category": "Registration",
+      "title": "Departamento de Estado PR",
+      "url": "https://www.estado.pr.gov/",
+      "type": "Gov",
+      "description": "PR company registration: LLC/Corp, US jurisdiction with tax incentives",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-496",
+      "module": "Puerto Rico Business",
+      "category": "Incentives",
+      "title": "Act 60 — Export Services & Individual Investors",
+      "url": "https://www.ddec.pr.gov/",
+      "type": "Gov",
+      "description": "PR tax incentives: 4% corporate tax, 0% capital gains for qualifying individuals",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-497",
+      "module": "Jamaica Business",
+      "category": "Tax",
+      "title": "TAJ — Tax Administration Jamaica",
+      "url": "https://www.jamaicatax.gov.jm/",
+      "type": "Gov",
+      "description": "Jamaica tax authority: TRN registration, GCT (15%), income tax, payroll (PAYE)",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-498",
+      "module": "Jamaica Business",
+      "category": "Registration",
+      "title": "Companies Office of Jamaica",
+      "url": "https://www.orcjamaica.com/",
+      "type": "Gov",
+      "description": "Jamaica company registration: incorporation, annual returns, business names",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-499",
+      "module": "Jamaica Business",
+      "category": "Payments",
+      "title": "Lynk — Jamaica Mobile Wallet",
+      "url": "https://lynk.world/",
+      "type": "Platform",
+      "description": "Jamaica digital wallet: P2P, merchant payments, bill pay, remittances",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-500",
+      "module": "Trinidad & Tobago Business",
+      "category": "Tax",
+      "title": "Board of Inland Revenue T&T",
+      "url": "https://www.ird.gov.tt/",
+      "type": "Gov",
+      "description": "T&T tax authority: BIR registration, VAT (12.5%), corporation tax (25%/15% mfg)",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-501",
+      "module": "Trinidad & Tobago Business",
+      "category": "Registration",
+      "title": "Companies Registry T&T",
+      "url": "https://rgd.legalaffairs.gov.tt/",
+      "type": "Gov",
+      "description": "T&T company incorporation: Companies Act, annual filings, trade marks",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-502",
+      "module": "Haiti Business",
+      "category": "Tax",
+      "title": "DGI Haiti — Direction Générale des Impôts",
+      "url": "https://www.dfrfrh.gouv.ht/",
+      "type": "Gov",
+      "description": "Haiti tax authority: NIF registration, TCA (10% VAT equivalent), income tax",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-503",
+      "module": "Haiti Business",
+      "category": "Payments",
+      "title": "MonCash — Haiti Mobile Money",
+      "url": "https://www.digicelgroup.com/ht/en/moncash.html",
+      "type": "Platform",
+      "description": "Haiti's dominant mobile money by Digicel: P2P, merchant, bill pay, remittances",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-504",
+      "module": "Cuba Business",
+      "category": "Tax",
+      "title": "ONAT Cuba — Oficina Nacional Tributaria",
+      "url": "https://www.onat.gob.cu/",
+      "type": "Gov",
+      "description": "Cuba tax authority: MIPYME registration, tax obligations for private businesses",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-505",
+      "module": "Cuba Business",
+      "category": "Registration",
+      "title": "MIPYMES Cuba — Small Business Registry",
+      "url": "https://www.mep.gob.cu/",
+      "type": "Gov",
+      "description": "Cuba small business formation: MIPYMES (since 2021), cooperatives, self-employment",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-506",
+      "module": "Americas — Payments",
+      "category": "Cross-Border",
+      "title": "EBANX — LATAM Payment Gateway",
+      "url": "https://www.ebanx.com/",
+      "type": "Platform",
+      "description": "Cross-border payments for LATAM: PIX, boleto, OXXO, PSE, local cards — one API",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-507",
+      "module": "Americas — Payments",
+      "category": "Cross-Border",
+      "title": "dLocal — Emerging Market Payments",
+      "url": "https://dlocal.com/",
+      "type": "Platform",
+      "description": "Process payments in 40+ countries: LATAM + Africa + Asia, local methods, one integration",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-508",
+      "module": "Americas — Payments",
+      "category": "Cross-Border",
+      "title": "Rebill — LATAM Payment Infrastructure",
+      "url": "https://www.rebill.com/",
+      "type": "Platform",
+      "description": "LATAM-native payment platform: subscriptions, local methods, cross-border, all countries",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-509",
+      "module": "Americas — Payments",
+      "category": "Guide",
+      "title": "PCMI — LATAM Payment Methods Guide",
+      "url": "https://paymentscmi.com/insights/main-payment-methods-latin-america-brazil-mexico-chile-peru-colombia-argentina/",
+      "type": "Guide",
+      "description": "Comprehensive 2025 guide: dominant payment methods per country, trends, market shares",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-510",
+      "module": "Americas — Legal",
+      "category": "Tax Guide",
+      "title": "PWC Worldwide Tax Summaries",
+      "url": "https://taxsummaries.pwc.com/",
+      "type": "Guide",
+      "description": "Country-by-country tax guides: corporate tax, VAT, withholding, compliance for all Americas",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-511",
+      "module": "Americas — Legal",
+      "category": "Tax Guide",
+      "title": "CIAT — Inter-American Center of Tax Admins",
+      "url": "https://www.ciat.org/",
+      "type": "Guide",
+      "description": "LATAM tax administration observatory: reforms, e-invoicing status, digital economy taxation",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-512",
+      "module": "Americas — Business",
+      "category": "Doing Business",
+      "title": "BizLatinHub — Company Formation All LATAM",
+      "url": "https://www.bizlatinhub.com/",
+      "type": "Platform",
+      "description": "LATAM business services: incorporation, accounting, legal in 17+ countries, country guides",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-513",
+      "module": "Americas — Business",
+      "category": "Doing Business",
+      "title": "EasyCo — LATAM Company Registration",
+      "url": "https://www.itseasyco.com/",
+      "type": "Platform",
+      "description": "Remote company formation across LATAM: Mexico, Colombia, Guatemala, Panama, Belize+",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-514",
+      "module": "Americas — Payments",
+      "category": "Fintech",
+      "title": "MercadoPago — Pan-LATAM",
+      "url": "https://www.mercadopago.com/",
+      "type": "Platform",
+      "description": "LATAM's largest payment network: operates in AR, BR, MX, CL, CO, UY — wallet + POS + lending",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-515",
+      "module": "Americas — Startup",
+      "category": "Ecosystem",
+      "title": "LAVCA — LATAM VC Data",
+      "url": "https://lavca.org/",
+      "type": "Platform",
+      "description": "LATAM venture capital association: deal data, fund rankings, LP resources, ecosystem reports",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-516",
+      "module": "Americas — Startup",
+      "category": "Ecosystem",
+      "title": "Startupblink — Americas Startup Rankings",
+      "url": "https://www.startupblink.com/",
+      "type": "Platform",
+      "description": "Global startup ecosystem rankings: city-by-city LATAM data, industry mapping, reports",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-517",
+      "module": "AWS Cloud",
+      "category": "Platform",
+      "title": "AWS — Amazon Web Services (Main Portal)",
+      "url": "https://aws.amazon.com/",
+      "type": "Platform",
+      "description": "World's largest cloud platform: compute (EC2), storage (S3), databases (RDS/DynamoDB), AI/ML (Bedrock/SageMaker), serverless (Lambda), 200+ services",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-518",
+      "module": "AWS Cloud",
+      "category": "Free Tier",
+      "title": "AWS Free Tier",
+      "url": "https://aws.amazon.com/free/",
+      "type": "Platform",
+      "description": "Up to $200 credits for new accounts, 30+ always-free services (Lambda 1M/mo, S3 5GB, DynamoDB 25GB, CloudFront 1TB), 6-month free plan",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-519",
+      "module": "AWS Cloud",
+      "category": "Startup",
+      "title": "AWS Activate — Startup Program",
+      "url": "https://aws.amazon.com/activate/",
+      "type": "Platform",
+      "description": "Startup credits: Founders tier ($1K bootstrapped), Portfolio tier (up to $100K via accelerators/VCs), technical support, training",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-520",
+      "module": "AWS Cloud",
+      "category": "Compute",
+      "title": "Amazon EC2 — Virtual Servers",
+      "url": "https://aws.amazon.com/ec2/",
+      "type": "Docs",
+      "description": "Elastic compute: on-demand, spot (90% savings), reserved instances, Graviton ARM chips, auto-scaling, global regions",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-521",
+      "module": "AWS Cloud",
+      "category": "Storage",
+      "title": "Amazon S3 — Object Storage",
+      "url": "https://aws.amazon.com/s3/",
+      "type": "Docs",
+      "description": "Scalable object storage: static website hosting, backups, data lake, CDN origin, 11 nines durability, lifecycle policies",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-522",
+      "module": "AWS Cloud",
+      "category": "Serverless",
+      "title": "AWS Lambda — Serverless Functions",
+      "url": "https://aws.amazon.com/lambda/",
+      "type": "Docs",
+      "description": "Run code without servers: 1M free requests/month, pay-per-execution, auto-scales, Python/Node/Go/Rust, API Gateway integration",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-523",
+      "module": "AWS Cloud",
+      "category": "Database",
+      "title": "Amazon RDS & DynamoDB — Managed Databases",
+      "url": "https://aws.amazon.com/rds/",
+      "type": "Docs",
+      "description": "Managed databases: RDS (MySQL/Postgres/Aurora), DynamoDB (NoSQL, 25GB free), serverless options, auto-scaling, backups",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-524",
+      "module": "AWS Cloud",
+      "category": "AI/ML",
+      "title": "Amazon Bedrock — Foundation Models",
+      "url": "https://aws.amazon.com/bedrock/",
+      "type": "Docs",
+      "description": "Managed AI: Claude, Llama, Mistral, Titan models via API, RAG with Knowledge Bases, Agents, fine-tuning, guardrails",
+      "priority": "Critical"
+    },
+    {
+      "id": "PKB-525",
+      "module": "AWS Cloud",
+      "category": "AI/ML",
+      "title": "Amazon SageMaker — ML Platform",
+      "url": "https://aws.amazon.com/sagemaker/",
+      "type": "Docs",
+      "description": "End-to-end ML: build, train, deploy models, JumpStart (pre-trained), Studio notebooks, MLOps pipelines, inference endpoints",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-526",
+      "module": "AWS Cloud",
+      "category": "Messaging",
+      "title": "Amazon SES — Email Service",
+      "url": "https://aws.amazon.com/ses/",
+      "type": "Docs",
+      "description": "Scalable email: transactional + marketing, $0.10/1000 emails, DKIM/SPF, templates, analytics, high deliverability",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-527",
+      "module": "AWS Cloud",
+      "category": "CDN",
+      "title": "Amazon CloudFront — CDN & Edge",
+      "url": "https://aws.amazon.com/cloudfront/",
+      "type": "Docs",
+      "description": "Global CDN: 1TB free/month, edge functions (Lambda@Edge), HTTPS, DDoS protection, S3/ALB origin, 450+ POPs worldwide",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-528",
+      "module": "AWS Cloud",
+      "category": "Hosting",
+      "title": "AWS Amplify — Full-Stack Web/Mobile",
+      "url": "https://aws.amazon.com/amplify/",
+      "type": "Docs",
+      "description": "Full-stack hosting: Git-based CI/CD, serverless backend, auth, storage, API, React/Next.js/Vue, free tier included",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-529",
+      "module": "AWS Cloud",
+      "category": "Hosting",
+      "title": "Amazon Lightsail — Simple VPS",
+      "url": "https://aws.amazon.com/lightsail/",
+      "type": "Docs",
+      "description": "Easy VPS for SMBs: predictable pricing from $3.50/mo, WordPress, Node.js, databases, load balancers, managed containers",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-530",
+      "module": "AWS Cloud",
+      "category": "Auth",
+      "title": "Amazon Cognito — User Authentication",
+      "url": "https://aws.amazon.com/cognito/",
+      "type": "Docs",
+      "description": "Managed auth: sign-up/sign-in, social login, MFA, 50K free MAUs, OAuth2/OIDC, user pools, identity federation",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-531",
+      "module": "AWS Cloud",
+      "category": "DevOps",
+      "title": "AWS CodePipeline & CodeBuild — CI/CD",
+      "url": "https://aws.amazon.com/codepipeline/",
+      "type": "Docs",
+      "description": "Managed CI/CD: 1 free pipeline/month, 100 free build minutes, automated deploy to EC2/ECS/Lambda/S3",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-532",
+      "module": "AWS Cloud",
+      "category": "Documentation",
+      "title": "AWS Documentation Hub",
+      "url": "https://docs.aws.amazon.com/",
+      "type": "Docs",
+      "description": "Complete docs for all 200+ AWS services: getting started guides, API references, tutorials, architecture patterns",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-533",
+      "module": "AWS Cloud",
+      "category": "Training",
+      "title": "AWS Skill Builder — Free Training",
+      "url": "https://explore.skillbuilder.aws/",
+      "type": "Course",
+      "description": "600+ free digital courses: Cloud Practitioner, Solutions Architect, Developer, ML, serverless, hands-on labs",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-534",
+      "module": "AWS Cloud",
+      "category": "Architecture",
+      "title": "AWS Well-Architected Framework",
+      "url": "https://aws.amazon.com/architecture/well-architected/",
+      "type": "Guide",
+      "description": "Best practices: 6 pillars (security, reliability, performance, cost, ops excellence, sustainability), review tool",
+      "priority": "High"
+    },
+    {
+      "id": "PKB-535",
+      "module": "AWS Cloud",
+      "category": "Pricing",
+      "title": "AWS Pricing Calculator",
+      "url": "https://calculator.aws/",
+      "type": "Tool",
+      "description": "Estimate costs before building: configure services, compare regions, export estimates, plan budgets",
+      "priority": "Medium"
+    },
+    {
+      "id": "PKB-536",
+      "module": "Content Creation",
+      "category": "Voice AI",
+      "title": "Voicebox — Open-Source Voice Synthesis Studio",
+      "url": "https://github.com/jamiepine/voicebox",
+      "type": "Repo",
+      "description": "11k★ Open-source voice cloning powered by Qwen3-TTS: instant voice cloning from seconds of audio, multi-language, timeline editor, multi-track podcasts, macOS/Windows, MLX Apple Silicon acceleration",
+      "priority": "High"
+    }
+  ]
+}

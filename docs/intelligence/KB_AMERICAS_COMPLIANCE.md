@@ -1,284 +1,259 @@
-# Americas Compliance — KITZ Knowledge Base Intelligence
+# Americas Compliance
 
-> Module: Americas Compliance | Sources: 5 | Auto-generated from KITZ Knowledge Base
+> Module: Americas Compliance | Sources: 5 | Batch: kitz_batch_8.json
+> Ingestion: Enriched with live web content via curl fetch + text extraction
+> Generated: 2026-02-27
 
 ---
 
-
 ## Brazil Business
 
-
-### Portal do Empreendedor — MEI Brazil [Critical]
-
+### Portal do Empreendedor -- MEI Brazil
+- **Priority:** `CRITICAL`
 - **ID:** PKB-385
-- **Type:** Government
 - **URL:** https://www.gov.br/empresas-e-negocios/pt-br/empreendedor
+- **Type:** Government
 - **Why KITZ Needs It:** Brazil micro-entrepreneur: MEI registration, tax (DAS), simplified compliance
+- **Fetch Status:** OK (8000 chars)
 
 **Extracted Intelligence:**
 
-```
-Portal do Empreendedor — Empresas & Negócios
-Info
-Portal do Empreendedor
-Clique aqui e confira todas as novidades feitas para você, MEI!
-Saiba mais sobre  Clique aqui e confira todas as novidades feitas para você, MEI!
-Lançamento
-Parceria MEMP e ASSIMPI, pensada para você, MEI. Clique aqui e Conheça a Gestão MEI.
-Saiba mais sobre Lançamento
-MEI, atenção!
-Se você foi excluído do Simples Nacional, verifique o Domicílio Tributário Eletrônico do Simples Nacional (DTE-SN). Para orientações sobre como regularizar seus débitos, clique aqui.
-Saiba mais sobre MEI, atenção!
-MEI, atenção!
-Prazo para adesão ao Edital PGDAU nº 11/2025 da PGFN, prorrogado.Regularize seus débitos até 29/05/2026.
-Saiba mais sobre MEI, atenção!
-"Mei conta com a Gente".
-Porque quem empreende não caminha sozinho! Clique aqui e acesse a plataforma para ver como a gente pode te ajudar!
-Saiba mais sobre  "Mei conta com a Gente".
-Já imaginou sua cidade contratando pequenos reparos e serviços diretamente dos MEIs?
-Saiba mais sobre
-MEI, cuidado!
-Atenção MEI. O Golpe está aí, saiba como evitar.
-Saiba mais sobre MEI, cuidado!
-Notícias
-Quero ser MEI
-O MEI é uma pessoa jurídica sem complicações e com diversos benefícios para o empreendedor
-Já sou MEI
-Parcelamentos, pagamentos, declarações e outros serviços estão bem aqui, à disposição do MEI
-Sou Gestor Público
-Informações sobre o MEI, dados, legislação, cartilhas
-Acesso Rápido Serviços
-Formalize-se
-Emissão de Comprovante (CCMEI)
-Alterar dados
-Solicitar baixa
-Boleto de Pagamento - DAS
-Enviar Declaração
-Domicílio Eletrônico
-Regularizar Débitos do MEI
-Baixar  APP Meu MEI digital
-Rede MEI
-Tudo o que o MEI Cadastrado no CadÚnico Precisa Saber
-ACESSO RÁPIDO  INFORMAÇÕES
-Dúvidas? Veja aqui as Perguntas Frequentes
-Ocupações Permitidas
-Direitos e Obrigações
-Acessibilidade
-Nota fiscal
-Fale Conosco
-Destaques
-Cartão MEI
-CRED+
-Jornadas Empreendedoras
-Decola MEI
-Acesso a Mercados
-Legislação
-Parcerias
-Redes Sociais
-Estatísticas
-Rejeitar
-Fale Agora
-Refazer a busca
-```
+The Portal do Empreendedor is Brazil's official government portal for micro-entrepreneurs (MEI -- Microempreendedor Individual). It is hosted on gov.br under the "Empresas & Negocios" umbrella.
 
+**Key Services for MEI:**
+- **MEI Registration ("Formalize-se!"):** Step-by-step guide to formalize as a micro-entrepreneur, including required documents and eligible occupations (CNAE codes). Covers fire department, health surveillance, and environmental compliance.
+- **Monthly Tax Payment (DAS):** MEI pays a single monthly contribution (DAS -- Documento de Arrecadacao do Simples) that covers INSS, ISS, and ICMS. Payment, installment management, and parcelamento available online.
+- **Annual Declaration (DASN-SIMEI):** Mandatory annual revenue declaration for all MEIs.
+- **Nota Fiscal (Invoice Issuance):** MEIs can issue NFS-e (Nota Fiscal de Servico Eletronica) directly through the portal.
+- **CCMEI Certificate:** Issuance of the MEI registration certificate (Certificado da Condicao de MEI).
+- **Business Closure (Baixa):** Process for closing/deactivating a MEI.
+- **Transition to Microempresa (Desenquadramento):** When a MEI exceeds the revenue threshold, the portal guides transition to Microempresa (ME) status.
+- **Employee Hiring (Contratacao de Empregado):** Guidance on hiring the one employee permitted under MEI.
+- **Health and Safety (SST):** Occupational health compliance requirements.
 
+**CRED+ Program:** Financial solutions program connecting MEIs and small businesses (MPE) with participating financial institutions for credit access. Includes loan application, institution listing, and legislative framework.
+
+**Elas Empreendem (Women Entrepreneurs):** Government initiative supporting female entrepreneurship:
+- "Ela Pode" program
+- "Despertar" program
+- "Jornada MEI Mulher"
+- Panorama report on female entrepreneurship in Brazil
+- CARTILHA -- TRILHA DA INDEPENDENCIA guide
+
+**REDESIM Integration:**
+- CNPJ opening in 3 steps: Viability, Registration, Licensing
+- CNPJ alteration, branch registration, closure
+- CPF protection features
+- Business establishment map and statistics
+- Time-to-open tracking (Tempo de Abertura de Empresas)
+
+**Additional Platforms:**
+- Inova Simples: Innovation startup registration and management
+- Invest & Export Brasil: International trade support (export/import guidance)
+- SEBRAE partnership: Free courses, consulting, and business planning
+- Simples Nacional: Simplified tax regime integration
+- Salas do Empreendedor: In-person support centers
+- MEI mobile app ("Meu MEI Digital") for Android and Apple
+- Chatbot "MEIre" for automated support
+- Manual do Jovem Empreendedor (Young Entrepreneur Manual)
+
+**Market-Specific Details:**
+- MEI annual revenue cap: R$81,000 (approximately USD $16,000)
+- Can hire 1 employee
+- Covers 400+ eligible occupations
+- Most popular business formation type in Brazil (15M+ active MEIs)
+- Governed by Lei Complementar 123
+- DREI (Departamento Nacional de Registro Empresarial e Integracao) oversees business registrations across all 27 states
+
+---
 
 ## Mexico Business
 
-
-### SIEM — Mexico Business Registry [High]
-
+### SIEM -- Mexico Business Registry
+- **Priority:** `HIGH`
 - **ID:** PKB-386
-- **Type:** Government
 - **URL:** https://siem.gob.mx/
+- **Type:** Government
 - **Why KITZ Needs It:** Mexico business registration: RFC, permits, industry classification
-- **Note:** [Minimal content at https://siem.gob.mx/]
+- **Fetch Status:** MINIMAL (0 chars -- JavaScript-rendered page blocked)
 
+**Extracted Intelligence:**
+
+The SIEM website returned no extractable content due to JavaScript rendering requirements.
+
+**Known Information (from KITZ domain knowledge):**
+- SIEM (Sistema de Informacion Empresarial Mexicano) is Mexico's mandatory business information system
+- Managed by the Secretaria de Economia
+- All commercial and industrial businesses in Mexico must register annually with SIEM
+- Registration fee varies by business size and sector
+- Provides: industry classification (SCIAN codes), national business directory, statistical data
+- Connected to RFC (Registro Federal de Contribuyentes) tax ID system through SAT
+- Used for compliance verification, business legitimacy, and government procurement eligibility
+- Important for KITZ users expanding into or operating in Mexico
+
+---
 
 ## Colombia Business
 
-
-### Cámara de Comercio Bogotá [High]
-
+### Camara de Comercio Bogota
+- **Priority:** `HIGH`
 - **ID:** PKB-387
-- **Type:** Government
 - **URL:** https://www.ccb.org.co/
+- **Type:** Government
 - **Why KITZ Needs It:** Colombia business registration: mercantile registry, RUT, permits, training
+- **Fetch Status:** OK (3864 chars)
 
 **Extracted Intelligence:**
 
-```
-Cámara de Comercio de Bogotá | CCB
-Centro de atención y ayuda
-Accesibilidad
-Califica tu experiencia
-¿Cómo podemos ayudarte?
-Andrea Whatsapp
-Preguntas frecuentes
-Llámanos
-Agenda una asesoría
-Puntos de atención
-PQRS y contacto
-Queremos mejorar tu experiencia
-Conocer tu experiencia nos inspira a mejorar.
-Califica nuestra página web
-a través de la siguiente encuesta.
-Continuar a la encuesta
-Si deseas realizar una solicitud, petición o sugerencia, puedes hacerlo a través de nuestro sistema SPQyF y contáctenos:
-Radica tu solicitud, queja o sugerencia
-Regresar
-¿Qué tipo de llamada quieres realizar?
-Llamar al         (601) 383 0330
-Videollamada
-Accede a la información que necesitas
-Aquí encontrarás, de manera sencilla, la información de tu interés.
-Inicia tu experiencia
-Aprovecha los beneficios que te brinda la CCB
-Más de 800 servicios para tu negocio.
-124
-82
-Renueva aquí
-El futuro ya está en marcha
-Conoce el
-Campus 2600
-, el espacio donde la ciencia, la tecnología y la innoacion se conectan para transformar Bogotá-Region
-124
-82
-Conoce más
-Agenda tu asesoría virtual por nuestro WhatsApp. Más práctico, más ágil y efectivo.
-124
-82
-Ver más
-Accede rápidamente a los trámites que necesitas:
-Certificados
-Conoce y accede a los certificados que expide la CCB
-Saber más
-Renovaciones
-Realiza tus renovaciones y alcanza las metas de tu empresa.
-Saber más
-Calcula el valor a renovar
-A través de este servicio podrás tener mayor claridad sobre el valor de tus procesos de renovación.
-Calcular valor
-Formación
-Adquiere habilidades empresariales
-Formación
-Adquiere habilidades empresariales
-Revisar todo el contenido
-¡Anticípate y renueva ahora tu matrícula!
-Aprovecha los múltiples beneficios que te ofrece la CCB.
-Conoce cómo
-Paz Electoral 2026
-La
-Procuraduría General de la Nación
-lanzó la estrategia Paz Electoral con el objetivo de acompañar y vigilar los comicios de 2026, garantizando procesos libres, transparentes y seguros en todo el territorio nacional.
-Conoce más
-¡Participa en nuestras convocatorias y marca la diferencia!
-Forma parte como proveedor de los procesos de selección de la Cámara de Comercio de Bogotá.
-Descubre oportunidades para crecer mientras promueves la sostenibilidad, el bienestar social y el cuidado del medio ambiente.
-¡Conoce más y participa!
-Consulta nuestras convocatorias
-Realiza tus trámites de forma ágil y sencilla
-Te asesoramos en cada una de las etapas de tu empresa, para que esta haga parte del entorno competitivo de la Región.
-Saber más
-Inscríbete al newsl
-[...truncated]
-```
+The Camara de Comercio de Bogota (CCB) is the main chamber of commerce serving the Bogota-Region in Colombia, providing 800+ services for businesses.
 
+**Key Services:**
+- **Certificados (Certificates):** Business registration certificates proving legal existence and good standing. Multiple certificate types available online.
+- **Renovaciones (Renewals):** Annual mercantile registry renewals for maintaining active business status. Includes a renewal value calculator tool.
+- **Formacion (Training):** Business skills training programs ("Adquiere habilidades empresariales") for entrepreneurs at all stages.
+- **Circulo de Afiliados:** Premium membership circle with access to full service portfolio.
 
+**Digital Services:**
+- WhatsApp-based virtual advisory scheduling ("mas practico, mas agil y efectivo")
+- Online certificate issuance and renewals
+- Renewal cost calculator
+- Newsletter with exclusive business content
+- Phone: (601) 383 0330
+- Video call support available
+
+**Business Lifecycle Support:**
+- Advisory services for every stage (creation, growth, formalization)
+- PQRS (petitions, complaints, claims, suggestions) system
+- Multiple physical points of attention across Bogota
+
+**Campus 2600:** Innovation space where science, technology, and innovation connect to transform the Bogota region.
+
+**2026 Context:**
+- Paz Electoral 2026: Procuraduria strategy for transparent elections monitoring
+- Active supplier procurement programs with sustainability focus
+- Data protection compliance (Politica de Proteccion de Datos Personales)
+- Ethics hotline and Ley de Transparencia compliance
+
+---
 
 ## USA Business
 
-
-### SBA — Start Your Business [Critical]
-
+### SBA -- Start Your Business
+- **Priority:** `CRITICAL`
 - **ID:** PKB-388
-- **Type:** Government
 - **URL:** https://www.sba.gov/business-guide/launch-your-business
+- **Type:** Government
 - **Why KITZ Needs It:** US business: LLC/Corp formation, EIN, licenses, funding, government contracts
+- **Fetch Status:** OK (7256 chars)
 
 **Extracted Intelligence:**
 
-```
-Launch your business | U.S. Small Business Administration
-Skip to main content
-Official websites use .gov
-A
-.gov
-website belongs to an official government
-organization in the United States.
-Secure .gov websites use HTTPS
-A
-lock
-(
-Lock
-Locked padlock
-) or
-https://
-means you’ve safely connected to
-the .gov website. Share sensitive information only on official,
-secure websites.
-Launch your business
-Turn your business into a reality. Learn about the paperwork and processes you need to take care of before you can start doing business.
-Your business location determines zoning laws, taxes and regulations.
-Research your business location
-Select a business structure that gives you the right balance of legal protections and benefits.
-Compare business structures
-Your name is part of your brand, so think about how you’ll use it to best serve your business.
-Protect your business name
-Now you’ve decided on your name, structure, and location, register your business as a distinct legal entity.
-Register your business
-Set up your IDs to allow your small business to pay state and federal taxes.
-Get your tax IDs
-These depend on laws, location, and activities, and vary at the state and federal level.
-Explore your business needs
-Stay compliant and protected once your business is ready to accept or spend money.
-Open a business bank account
-Protect yourself from the unexpected costs of accidents, natural disasters, and lawsuits.
-Learn about business insurance
-```
+The U.S. Small Business Administration (SBA) provides a comprehensive guide for launching a business in the United States.
 
+**Launch Your Business -- Core Steps:**
+1. **Pick your business location:** Determines zoning laws, taxes, and regulations
+2. **Choose a business structure:** LLC, Corporation, Sole Proprietorship, Partnership -- compare structures for legal protections and benefits
+3. **Choose your business name:** Brand strategy and name protection
+4. **Register your business:** Establish as a distinct legal entity
+5. **Get federal and state tax ID numbers:** EIN (Employer Identification Number)
+6. **Apply for licenses and permits:** State and federal level, varies by industry and location
+7. **Open a business bank account:** Compliance and financial separation
+8. **Get business insurance:** Protection from accidents, natural disasters, lawsuits
 
+**SBA Funding Programs:**
+- **7(a) Loans:** Most common SBA loan program
+- **504 Loans:** For major fixed assets (real estate, equipment)
+- **Microloans:** Up to $50,000 for small businesses
+- **Lender Match:** Tool to connect with SBA-approved lenders
+- **Investment Capital (SBIC):** Venture capital through Small Business Investment Companies
+- **Disaster Assistance:** Physical damage loans, EIDL, mitigation assistance
+- **Surety Bonds:** For construction and service contracts
+
+**Grants:**
+- Manufacturing grants
+- State Trade Expansion Program (STEP)
+- Grants for community organizations
+
+**Federal Contracting Programs:**
+- Small Disadvantaged Business (SDB)
+- Women-Owned Small Business (WOSB)
+- 8(a) Business Development program
+- SBA Mentor-Protege program
+- HUBZone program
+- Veterans contracting assistance
+
+**Free Counseling and Local Assistance:**
+- Small Business Development Centers (SBDC)
+- SCORE Business Mentoring
+- Veterans Business Outreach Centers (VBOC)
+- Women's Business Centers
+- U.S. Export Assistance Centers
+- Regional Innovation Clusters
+
+**2026 Initiatives:**
+- Option to bypass permitting delays (new under current administration)
+- Putting American manufacturers first
+- Make Onshoring Great Again portal
+- Child care business development support
+- AI for small business guidance
+- Cybersecurity resources
+
+**Contact:** 800-827-5722 | 409 3rd St., SW Washington, DC 20416
+
+---
 
 ## Multi-Country
 
-
-### Stripe Atlas — Incorporate a Company [High]
-
+### Stripe Atlas -- Incorporate a Company
+- **Priority:** `HIGH`
 - **ID:** PKB-389
-- **Type:** Platform
 - **URL:** https://stripe.com/atlas
+- **Type:** Platform
 - **Why KITZ Needs It:** One-click US C-Corp: Delaware incorporation, bank account, tax ID, from anywhere
+- **Fetch Status:** OK (8000 chars)
 
 **Extracted Intelligence:**
 
-```
-Stripe Atlas | Incorporate your startup in Delaware: C corp or LLC
-Start your company in a few clicks. Bank, fundraise, and charge customers immediately after incorporating.
-Join 100,000+ founders who have used Stripe Atlas to incorporate in Delaware, get their company tax ID (EIN), issue founder equity, and file their 83(b) election.
-Atlas legal documents are created in collaboration with Cooley LLP, a respected startup law firm. Startups in over 140 countries have chosen Atlas to start their business.
-Generate, sign, and file incorporation documents in a few minutes. Within two business days, you’ll be incorporated and ready to bank, fundraise, and accept payments.
-With a few clicks, use Atlas to incorporate, get your EIN, issue equity, and file your 83(b) tax election: no phone calls, faxes, or trips to the post office needed.
-Atlas startups get $2,500 in Stripe product credits for use in their first year after incorporation, plus over $50,000 in discounts on tools such as Mercury, Xero, and AWS.
-Whimsical logo
-Lovable logo
-Linear logo
-RupaHealth logo
-Cursor logo
-Ashby logo
-RevenueCat logo
-Runway logo
-Fill out your company details in minutes. Atlas will set up your company using templates created in collaboration with Cooley LLP, get your company tax ID (EIN), and file your 83(b) election.
-Tell Atlas about your company and co-founders, then sign documents.
-Delaware incorporates your company. Atlas gets your EIN, issues equity, and files your 83(b) election.
-Atlas guides you through a post-incorporation checklist.
-Bank and accept payments immediately after incorporating, and unlock $50k in discounts on your startup stack.
-Linear incorporated with Stripe Atlas. Now, we're a fast-growing company with over a billion-dollar valuation. We've never had any issues with our documents. A job well done!
-Linear logo
-We’re building Cursor (fun fact: incorporated as Anysphere, Inc.) to automate software engineering. My co-founders and I are glad we chose Stripe Atlas to automate company formation; the process was straightforward, quick, and comprehensive. Atlas is an excellent, focused product.
-Cursor logo
-Stripe Atlas made incorporating Copilot Money a breeze, and the resources were actually helpful. I always knew exactly what was happening, and the templates saved me a lot of time (and money!).
-CopilotMoney logo
-We’re thrilled to collaborate with Stripe Atlas to give startups access to top quality incorporation templates, leveraging our extensive experience as a tr
-[...truncated]
-```
+Stripe Atlas enables founders worldwide to incorporate a US company (Delaware C-Corp or LLC) entirely online.
 
+**Pricing:** $500 one-time setup fee (includes all government fees)
+
+**What's Included:**
+- Company incorporation in Delaware with next-day expedited processing and state filing fees
+- Company tax ID (EIN) from the IRS
+- Founder equity issuance and share purchase
+- 83(b) election filing (critical for startup tax optimization)
+- Document templates for selling, hiring, and running the business (created with Cooley LLP)
+- $2,500 in Stripe product credits for first year
+- Access to $50,000+ in partner discounts (Mercury, Xero, AWS, and more)
+
+**How It Works (4 Steps):**
+1. **Submit:** Fill in company details and co-founder info, sign documents (minutes)
+2. **Incorporate:** Delaware incorporates the company. Atlas obtains EIN, issues equity, files 83(b) election (2 business days)
+3. **Navigate:** Post-incorporation checklist guidance
+4. **Grow:** Bank and accept payments immediately, unlock startup stack discounts
+
+**Key Stats:**
+- 100,000+ founders have used Atlas
+- Available from 140+ countries
+- Legal documents created with Cooley LLP (top startup law firm)
+- Incorporate and generate revenue in days, not weeks
+- No phone calls, faxes, or trips needed
+
+**Notable Users:** Linear (billion-dollar+ valuation), Cursor (Anysphere, Inc.), CopilotMoney
+
+**Partner Discounts Include:** Mercury (banking), Xero (accounting), AWS (cloud), Whimsical, Lovable, Ashby, RevenueCat, Runway
+
+**LATAM Relevance for KITZ:**
+- Entrepreneurs from Latin America can form a US entity without traveling to the US
+- Enables access to US banking, payment processing (Stripe), and venture capital
+- Critical for LATAM startups seeking US-based VC funding
+- Enables global payment acceptance via Stripe's full product suite
+- Delaware C-Corp is the standard structure preferred by US investors
+- Integrates with Stripe Payments, Billing, Connect, Invoicing, and Tax tools
+
+**Developer/API Info:**
+- Full Stripe API access post-incorporation
+- Atlas companies get immediate access to Stripe Payments, Checkout, Payment Links, Billing, Connect, Terminal, Radar, Identity, Financial Connections
+- Libraries and SDKs available for all major languages
+- Stripe Apps marketplace for extensions

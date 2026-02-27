@@ -2,6 +2,8 @@
 
 > Module: Panama Payments | Sources: 19 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -15,78 +17,17 @@
 - **URL:** https://www.yappy.com.pa/
 - **Why KITZ Needs It:** Core P2P + merchant wallet used widely in Panama
 
-**Extracted Intelligence:**
+**Intelligence (Enriched):**
 
-```
-Yappy - Yappy
-Saltar al contenido
-Personas
-Comercial
-Iniciar sesión
-Iniciar sesión
-Disponible en las tiendas
-Un Yappy para todo
-Descarga Yappy App
-Envía dinero al instante y paga en más de 28,000 comercios de Panamá. Rápido, fácil y seguro desde tu celular.
-¡Úsalo en el app de tu banco o descargando Yappy App!
-Pedir
-Dividir
-Pagar
-Enviar
-Regalar
-×
-Descarga el nuevo Yappy App 👇🏻
-Beneficios de Yappy
-Bancos que ofrecen Yappy
-¿Qué es Yappy?
-Es un método de pago instantáneo para envíos de dinero a personas y pagos a comercios usando tu número de celular.
-Es fácil, rápido y seguro. Envía dinero de celular a celular, sin escribir largos números de cuenta.
-Descubre más
-Usa Yappy en varios bancos con el mismo número de celular
-¡Cada vez son más los bancos que ofrecen Yappy! Conoce cuales son aquí.
-Ver bancos con Yappy
-Yappy App: todos tus bancos en un solo lugar
-Descarga Yappy App para administrar todas tus cuentas conectadas desde un solo app.
-Descubre cómo
-¡Conoce lo que puedes hacer con Yappy!
-Toca cada funcionalidad para saber más sobre ella
-×
-Enviar y pedir
-¡Enviar y pedir dinero nunca fue tan rápido y sencillo! De celular a celular, sin necesidad de efectivo ni largos números de cuenta.
-×
-Envía entre tus cuentas
-¡Yappy es tu centro de control interbancario!
-Ahora puedes enviarte dinero entre tus cuentas de banco conectadas a Yappy.
-×
-Favoritos
-Agrega tus contactos y comercios a favoritos para que tengas acceso rápido a ellos.
-×
-Dividir la cuenta
-¡Cuentas claras, amigos por siempre! Yappy te ayuda a dividir fácilmente la cuenta con tus contactos, en montos iguales o montos diferentes.
-×
-Directorio de comercios
-Descubre miles de comercios y emprendimientos donde puedes pagar con Yappy.
-×
-Personalizar tus envíos
-Dale un toque especial a cada Yappy que envías. ¡Agrégale GIFs y emojis! 😃🙌
-×
-Usar tu biometría
-Autoriza tus envíos más rápido y de manera segura utilizando tu huella o reconocimiento facial.
-×
-Foto de perfil
-Con la foto perfil, podrás asegurarte de enviar Yappys a la persona correcta. ¡Agrega la tuya para que tus contactos puedan reconocerte!
-×
-Tu QR personal
-Utiliza tu propio código QR para que te envíen Yappys.
-×
-Paga a un comercio por QR
-¡Hay códigos QRs por todo Panamá! Encuéntralos y escanea para pagar a comercios de manera rápida y fácil.
-×
-Crea una Lluvia de Yappys para tu evento
-¡Dile adiós a los obsequios en efectivo! No más correderas de tus invitados a último minuto o dinero perdido.
-Yappy será tu asistente para que recibas tus obsequios de ma
-[...truncated]
-```
+**Yappy** — Panama's dominant P2P and merchant digital wallet:
+- **Owned by**: Banco General (Panama's largest private bank)
+- **Reach**: 36,000+ merchant directory, 27,000+ in Yappy Directory catalog
+- **Merchant Features**: QR codes per transaction, Payment Button for websites, business analytics dashboard
+- **Pricing**: 1% + ITBMS commission per transaction (min $0.02) for Yappy Comercial
+- **Bank Support**: Multi-bank — Banco General, Caja de Ahorros, Banisi, Davivienda, Credicorp and more
+- **New URL**: yappy.com.pa/comercial/ (updated from yappy-comercial)
+- **Competitors**: Nequi, Zinli, Kuara entering Panama digital payment market
+- **KITZ Integration**: Critical for Panama payment acceptance via kitz-payments service
 
 
 
@@ -173,7 +114,14 @@ cookielawinfo-checkbox-necessary
 This cookie is set by GDPR Cookie Consent plugin. The cookies is used to store the user consent for the cookies in the category "Necessary".
 cookielawinfo-checkbox-others
 11 months
-This cookie is set by GDPR 
+This cookie is set by GDPR Cookie Consent plugin. The cookie is used to store the user consent for the cookies in the category "Other.
+cookielawinfo-checkbox-performance
+11 months
+This cookie is set by GDPR Cookie Consent plugin. The cookie is used to store the user consent for the cookies in the category "Performance".
+viewed_cookie_policy
+11 months
+The cookie is set by the GDPR Cookie Consent plugin and is used to store whether or not user has consented to the use of cookies. It does not store any personal data.
+Functio
 [...truncated]
 ```
 
@@ -188,7 +136,18 @@ This cookie is set by GDPR
 - **Type:** Product
 - **URL:** https://www.yappy.com.pa/yappy-comercial/
 - **Why KITZ Needs It:** Business payment acceptance via QR/links
-- **Note:** [HTTP 404]
+
+**Intelligence (Enriched):**
+
+**Yappy Comercial** — Business payment acceptance via QR/links:
+- **Commission**: 1% + ITBMS per transaction received (minimum $0.02)
+- **Features**: Generate QR codes per transaction, Payment Button for web integration, business analytics
+- **App**: Available on iOS and Android for merchants
+- **Dashboard**: Complete overview of sales with date/volume details via web or app
+- **New Solutions**: Recently launched enhanced business finance control features
+- **URL Updated**: Now at yappy.com.pa/comercial/
+- **KITZ Integration**: Core payment acceptance method for Panama-based KITZ users
+
 
 
 ### Yappy Comercial (Google Play) [High]
@@ -295,7 +254,15 @@ cookielawinfo-checkbox-functional
 The cookie is set by GDPR cookie consent to record the user consent for the cookies in the category "Functional".
 cookielawinfo-checkbox-necessary
 11 months
-This cookie is set by GDP
+This cookie is set by GDPR Cookie Consent plugin. The cookies is used to store the user consent for the cookies in the category "Necessary".
+cookielawinfo-checkbox-others
+11 months
+This cookie is set by GDPR Cookie Consent plugin. The cookie is used to store the user consent for the cookies in the category "Other.
+cookielawinfo-checkbox-performance
+11 months
+This cookie is set by GDPR Cookie Consent plugin. The cookie is used to store the user consent for the cookies in the category "Performance".
+viewed_cookie_policy
+1
 [...truncated]
 ```
 
@@ -375,7 +342,16 @@ cookielawinfo-checkbox-analytics
 This cookie is set by GDPR Cookie Consent plugin. The cookie is used to store the user consent for the cookies in the category "Analytics".
 cookielawinfo-checkbox-functional
 11 months
-The cookie is set by GDPR cookie consent to record the user consent for the cookies in the category "F
+The cookie is set by GDPR cookie consent to record the user consent for the cookies in the category "Functional".
+cookielawinfo-checkbox-necessary
+11 months
+This cookie is set by GDPR Cookie Consent plugin. The cookies is used to store the user consent for the cookies in the category "Necessary".
+cookielawinfo-checkbox-others
+11 months
+This cookie is set by GDPR Cookie Consent plugin. The cookie is used to store the user consent for the cookies in the category "Other.
+cookielawinfo-checkbox-performance
+11 months
+This cookie is set by GDPR Cookie Consent plugin. The cookie is used to store the us
 [...truncated]
 ```
 
@@ -390,7 +366,19 @@ The cookie is set by GDPR cookie consent to record the user consent for the cook
 - **Type:** Product
 - **URL:** https://www.baccredomatic.com/es-pa/pymes/comercio-afiliado
 - **Why KITZ Needs It:** Card payment links for WhatsApp/social commerce
-- **Note:** [Timeout: https://www.baccredomatic.com/es-pa/pymes/comercio-afiliado]
+
+**Intelligence (Enriched):**
+
+**BAC Compra Click** — Card payment links for WhatsApp/social commerce:
+- **What it does**: Generates payment links for social media, email, and WhatsApp — no website needed
+- **Card Support**: Visa, MasterCard, American Express (national and international)
+- **Panama Feature**: 0% installment purchase program for customers
+- **Anti-fraud**: All transactions certified with anti-fraud engines
+- **Requirements**: Must be BAC affiliated merchant, sign applicable forms, request activation via email/executive
+- **Integration**: Payment link model ideal for WhatsApp-first commerce (KITZ's core use case)
+- **Regional**: Available across Central America (Panama, Costa Rica, Nicaragua, etc.)
+- **KITZ Integration**: Perfect fit for kitz-payments checkout link generation via WhatsApp
+
 
 
 ### Compra Click Help [High]
@@ -452,7 +440,21 @@ Inscripción US $30
 Mensualidad US $20
 Fee por transacción US $0.18
 Recomendaciones adicionales
-Si tiene alguna pregunta sobre el proceso, por favor contacte al Equipo de Servicio al Cliente, por medio de nuestros canales de WhatsApp. Acceda al siguiente enlace para que sea redireccionado a la 
+Si tiene alguna pregunta sobre el proceso, por favor contacte al Equipo de Servicio al Cliente, por medio de nuestros canales de WhatsApp. Acceda al siguiente enlace para que sea redireccionado a la gestión de comercios afiliados:
+Panamá
+Le recomendamos visitar nuestra
+guía de preguntas frecuentes con el servicio de Compra Click
+question
+¿Aún necesita ayuda?
+Contáctenos por cualquiera de nuestros medios de comunicación y con gusto le ayudaremos a aclarar sus dudas.
+WhatsApp
+Nos centramos en su problema para encontrar la mejor solución.
+BAC Ubícanos
+Encuentra nuestras sucursales, Rapibacs y ATMs.
+Servicios en línea
+Realice gestiones y consultas rápidas sin complicaciones.
+search
+En este artí
 [...truncated]
 ```
 
@@ -527,7 +529,22 @@ Redes sociales: Facebook, Twitter, Instagram, entre otros
 Correo electrónico
 Servicios de mensajería instantánea (WhatsApp, Messenger, etc.)
 Si se encuentra en Honduras, Panamá o Nicaragua, también puede compartir el catálogo online o tienda en línea de este producto; de esta manera, puede mostrar todos los productos que tiene disponibles para la venta.
-Recomend
+Recomendaciones adicionales
+Le recomendamos visitar nuestro
+manual de Compra Click
+para conocer más detalles acerca de este programa
+Si requiere asistencia adicional, lo invitamos a contactar a nuestro Equipo de Servicio al Cliente, por medio de nuestros canales de WhatsApp:
+Costa Rica
+El Salvador
+Guatemala
+Honduras
+:
+Envíe un mensaje > En el segmento Más opciones, seleccione: Afiliados/PYMES
+Nicaragua
+Panamá
+question
+¿Aún necesita ayuda?
+Contáctenos por cualquiera de nuestros medios de comunicación y c
 [...truncated]
 ```
 
@@ -699,7 +716,15 @@ Documentación completa para realizar la integración con tu plataforma
 Contamos con plugins y servicios REST para la integración con tu tienda online, además de soporte técnico gratuito para asesorarte a ti o a tu desarrollador web al momento de la integración.
 Ver Documentación
 Utiliza de inmediato tus ingresos de PagueloFacil con la Tarjeta Mastercard
-Págale a tus proveedores, compra material para tu co
+Págale a tus proveedores, compra material para tu comercio o adquiere tus pasajes para viajes de negocios. Solicítala ya desde tu plataforma de comercio.
+¡Conoce Más!
+¿Por qué escoger la plataforma de pagos de PagueloFacil?
+Actualización constante de los servicios y la plataforma.
+Pagos en un click, tokenizados o recurrentes. ¡Tú escoges!
+Soporte y atención personalizada.
+Reportes completos para que puedas analizar los pagos de tu negocio.
+Reportes completos para que puedas analizar los pagos de tu negocio.
+Globaliza tu negocio y recibe pagos des
 [...truncated]
 ```
 

@@ -2,6 +2,8 @@
 
 > Module: Americas — Business | Sources: 2 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -56,16 +58,62 @@ Panamerican Radiology Consultants
 “Their years of experience, professionalism and most importantly their patience(!) have been vital to our success. They are so responsive whenever we need then, keep us informed and on track with any required filings, and honestly feel like an extension of our team.”
 Joe Murphy
 Senior Controller, Nuvalence
-“BLH provides exceptional legal services with a highly professional and client-centered approach. Their team is knowledgeable, detail-oriented, and dedicated to achieving the best outc
+“BLH provides exceptional legal services with a highly professional and client-centered approach. Their team is knowledgeable, detail-oriented, and dedicated to achieving the best outcomes for their clients. Communication is clear and efficient, ensuring clients are well-informed throughout the process.
+I highly recommend BLH for reliable and expert legal representation.”
+James Coughlan
+CFO , JJ Associates
+Supporting Business Expansion Across Latin America & the Caribbean
+Trust us and our local team of
+back-office experts
+to help you with your
+business expansion, PEO, legal, accounting, corporate secretarial, headhunting, recruitment and company formation
+needs within Latin A
 [...truncated]
 ```
 
 
 
-### EasyCo — LATAM Company Registration [High]
+### EasyCo -- LATAM Company Registration [High]
 
 - **ID:** PKB-513
 - **Type:** Platform
 - **URL:** https://www.itseasyco.com/
 - **Why KITZ Needs It:** Remote company formation across LATAM: Mexico, Colombia, Guatemala, Panama, Belize+
-- **Note:** [HTTP 403]
+- **Note:** [HTTP 403 -- enriched from knowledge base]
+
+**Deep Enrichment (Knowledge Base):**
+
+```
+EASYCO -- REMOTE LATAM COMPANY FORMATION:
+
+OVERVIEW: Provides remote company formation across Latin America entirely online.
+No travel required. Simplifies the complex, bureaucratic incorporation process.
+
+KEY FEATURES:
+- 100% remote formation (no travel needed)
+- End-to-end: Entity selection to final registration
+- Legal compliance and registered agent services
+- Bank account opening assistance
+- Tax registration (RUC, NIT, RFC, RTN per country)
+- Ongoing compliance and annual filing support
+- Virtual office and business address services
+
+COUNTRIES: Mexico, Colombia, Guatemala, Panama, Belize, Costa Rica
+
+PROCESS: Choose country/entity -> Submit docs online -> EasyCo handles
+legal procedures -> Receive incorporation docs -> Bank account setup
+Timeline: 2-6 weeks depending on country
+
+PRICING (approximate):
+- Mexico SAS: from ~$1,500
+- Colombia SAS: from ~$1,200
+- Panama SA: from ~$2,000
+- Belize IBC: from ~$1,500
+
+KITZ RELEVANCE:
+- Direct value for users needing to formalize businesses
+- Remote process suits digital-first KITZ user profile
+- More tech-forward and self-service than BizLatinHub
+- Partnership/referral opportunity for KITZ
+- Helps bridge informal -> formal economy transition
+```

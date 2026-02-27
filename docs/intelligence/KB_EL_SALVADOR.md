@@ -1,181 +1,52 @@
-# El Salvador Business — KITZ Knowledge Base Intelligence
+# El Salvador Business -- KITZ Knowledge Base Intelligence
 
-> Module: El Salvador Business | Sources: 3 | Auto-generated from KITZ Knowledge Base
+> Module: El Salvador Business | Sources: 3 | Batch 7 Intelligence
+> Last updated: 2026-02-27
 
 ---
 
-
 ## Tax
 
-
-### DGII El Salvador (Ministerio de Hacienda) [Critical]
-
+### DGII El Salvador (Ministerio de Hacienda)
+- **Priority:** Critical
 - **ID:** PKB-427
-- **Type:** Gov
 - **URL:** https://www.mh.gob.sv/
-- **Why KITZ Needs It:** El Salvador tax authority: NIT/NRC registration, IVA (13%), ISR, Bitcoin legal tender
+- **Why KITZ needs it:** El Salvador tax authority: NIT/NRC registration, IVA (13%), ISR, Bitcoin legal tender
 
 **Extracted Intelligence:**
 
-```
-Ministerio de Hacienda, El Salvador
-Anterior
-Siguiente
-SERVICIOS FRECUENTES
-NIT DIGITAL
-Amnistía Fiscal
-Declaración de Renta
-Facturación Electrónica
-Devolución Renta
-Declaraciones e informes en línea
-Consulta Correlativos
-Servicios DGII
-Portal de Pagos
-Pago de impuestos y aranceles fiscales con NCTP
-Fondos ajenos en custodia
-Portal de Transparencia Fiscal
-Procesos LACAP
-Portal Aduanas
-Portal TAIIA
-Portal Contabilidad
-Devolución de Multas de Tránsito
-Servicios en línea DGT
-AVISOS
-Feb
-24
-2026
-Listado de preseleccionados Programa de Formación de Capital Humano 2026
-Feb
-13
-2026
-1ra. Convocatoria del Programa de Formación de Capital Humano 2026
-Ene
-29
-2026
-CONVOCATORIA PARA LA SELECCIÓN Y CONTRATACIÓN DE CONSULTOR INDIVIDUAL
-NOTICIAS
-Feb
-20
-2026
-Programa de Formación de Capital Humano consolida 15 años impulsando el talento universitario
-Feb
-17
-2026
-El Salvador impulsa su agenda digital en la Reunión de Gobernadores del BID en Panamá
-Feb
-03
-2026
-Ministro Jerson Posada posiciona la experiencia fiscal de El Salvador en el Foro Económico Internacional de CAF
-Dic
-16
-2025
-Hacienda refuerza el combate al contrabando con nueva destrucción de cigarrillos ilegales
-Nov
-30
-2025
-El Salvador se convierte en sede del mayor foro de innovación y tecnología de América Latina
-Nov
-26
-2025
-AENOR avala Sistema de Gestión Antisoborno de Hacienda
-Calendario de Actividades
-Descargas
-Preguntas Frecuentes
-Videos
-Avisos
-Únete a nuestra comunidad
-Mapa del Sitio
-Politica Web
-Preguntas Frecuentes
-Carta de Derecho
-Ministerio de Hacienda, El Salvador
-Boulevard de Los Héroes No. 1231, San Salvador.
-(503) 2244-3000
-```
+DGII operates under Ministerio de Hacienda. After incorporation, register with Hacienda, ISSS, Ministry of Labor, Ministry of Finance. NIT/NRC required for all operations. IVA 13%, ISR progressive rates. Bitcoin rescinded as legal tender in 2025 (IMF agreement) -- voluntary only, NOT mandatory for merchants. Bitcoin banned for tax/government payments. 0% Bitcoin capital gains from Jan 1 2026. Crypto licenses: BSP ($5,475 app, $3,650/yr) for Bitcoin-only via BCR; DASP for broader crypto via CNAD.
 
+**KITZ Application:** Track Bitcoin policy reversal. IVA/ISR compliance critical. Focus on USD-based payment solutions for El Salvador businesses.
 
+---
 
 ## Registration
 
-
-### CNR — Centro Nacional de Registros [High]
-
+### CNR -- Centro Nacional de Registros
+- **Priority:** High
 - **ID:** PKB-428
-- **Type:** Gov
 - **URL:** https://www.cnr.gob.sv/
-- **Why KITZ Needs It:** El Salvador commercial registry: company incorporation, property, IP registration
-- **Note:** [HTTP 403]
-
-
-## Payments
-
-
-### Chivo Wallet / Bitcoin [Medium]
-
-- **ID:** PKB-429
-- **Type:** Platform
-- **URL:** https://chivowallet.com/
-- **Why KITZ Needs It:** El Salvador government Bitcoin wallet + USD: P2P, merchant payments, remittances
+- **Why KITZ needs it:** El Salvador commercial registry: company incorporation, property, IP registration
 
 **Extracted Intelligence:**
 
-```
-Inicio | Chivo Wallet
-Cargando...
-Envía y Recibe Bitcoin con Chivo Wallet
-Recarga tu Chivo Wallet
-Recarga tu Chivo Wallet
-Recarga tu Chivo Wallet
-Chivo Wallet Landing Shape
-Created with Sketch
-Chivo Wallet + Beneficios
-Sin comisiones
-No consume saldo
-Compra en comercios
-Muy fácil registro
-Envío de dinero sin intermediarios, 24/7 y sin comisiones
-Puedes retirar dólares cuando quieras
-Puedes manejar la moneda que quieras (BTC o USD)
-¡Descarga Ya!
-Descubre los Puntos Chivo y Cajeros
-Parque Central Chalatenango
-3ra Avenida, Barrio El Centro. En frente de la Catedral de Chalatenango
-Lunes a viernes de 9:00am a 4:30pm. Sábados de 9:00am a 4:00pm. Domingos cerrados
-Mostrar en el mapa
-Parque Daniel Hernández Santa Tecla
-Entre la 3era avenida sur y 5ta avenida sur. Cerca del Banco Azteca
-Lunes a viernes de 9:00am a 4:30pm. Sábados de 9:00am a 4:00pm. Domingos cerrados
-Mostrar en el mapa
-C.C. Plaza Merliot Santa Tecla
-Av. Balsamar, calle Libertad. Cerca del cementerio Municipal
-Lunes a viernes de 9:00am a 5:00pm. Sábados y Domingos de 9:00am a 4:00pm.
-Mostrar en el mapa
-Polideportivo de Lourder Colón
-2da calle oriente. Cerca del colegio Nuestra señora de Lourdes
-Lunes a viernes de 9:00am a 4:30pm. Sábados de 9:00am a 4:00pm. Domingos cerrados
-Mostrar en el mapa
-Parque Central San Juan Opico
-Av. Guerrero, calle Paniagua. Enfrente de el CC. Guadalupe (entre la Alcaldia de San Juan Opico y la Parroquia San Juan Opico
-Lunes a viernes de 9:00am a 4:30pm. Sábados de 9:00am a 4:00pm. Domingos cerrados
-Mostrar en el mapa
-Parque Central Quezaltepeque
-7ma calle Pte. Av. 3 de Mayo. Cerca del centro escolar José Dolores Larreynaga y Bac Credomatic
-Lunes a viernes de 9:00am a 4:30pm. Sábados de 9:00am a 4:00pm. Domingos cerrados
-Mostrar en el mapa
-Parque Central La Libertad
-Calle Gerardo Barrios, Av. Luz. Diagonal a la Alcaldía del Puerto de la Libertad
-Lunes a viernes de 9:00am a 4:30pm. Sábados de 9:00am a 4:00pm. Domingos cerrados
-Mostrar en el mapa
-C.C. Multiplaza
-CC. Multiplaza. Calle el Pedregal. Carretera Panamericana. Terrazas, al lado de La Pizzeria y IceCroll
-Lunes a viernes de 9:00am a 5:00pm. Sábados y domingos de 9:00am a 4:00pm
-Mostrar en el mapa
-Parqueo Municipal Antiguo Cuscatlán
-Blvr. Walter Thilo Deininger. 3 Av Norte. Cerca de la escuela Walter Thilo Deininger
-Lunes a viernes de 9:00am a 4:30pm. Sábados de 9:00am a 4:00pm. Domingos cerrados
-Mostrar en el mapa
-Parque Central Ciudad Arce
-Calle Gerardo Barrios. Enfrente de la Alcaldia de Ciudad Arce, al lado del 
-[...truncated]
-```
+CNR handles commercial, IP, and real estate registrations. Incorporation: choose S.A. de C.V. or S.R.L., reserve name, notarize articles, register. Crea Empresa platform (creaempresa.gob.sv) provides virtual single window: company registration, automatic NIT/NRC issuance, ISSS employer ID, Single Payroll system. IP registration for trademarks, patents, industrial designs (requires lawyer).
 
+**KITZ Application:** Guide users through Crea Empresa. Automatic NIT/NRC simplifies workflow significantly.
+
+---
+
+## Payments
+
+### Chivo Wallet / Bitcoin
+- **Priority:** Medium
+- **ID:** PKB-429
+- **URL:** https://chivowallet.com/
+- **Why KITZ needs it:** El Salvador government Bitcoin wallet + USD: P2P, merchant payments, remittances
+
+**Extracted Intelligence:**
+
+Bitcoin rescinded as legal tender 2025. $1.4B IMF loan required: removing mandatory acceptance, no Bitcoin tax payments, winding down Chivo (sale talks advanced). Merchants no longer required to accept Bitcoin. Only 0.87% of remittances crypto-linked (Dec 2024). Technical problems since rollout, $30 Bitcoin distribution led to quick cash-outs.
+
+**KITZ Application:** Update all Bitcoin/Chivo guidance for 2025 reversal. Focus on USD-based solutions. Chivo may cease to exist -- monitor transition.

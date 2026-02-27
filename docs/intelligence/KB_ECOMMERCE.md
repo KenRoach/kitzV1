@@ -2,6 +2,8 @@
 
 > Module: E-Commerce | Sources: 21 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -15,132 +17,17 @@
 - **URL:** https://www.shopify.com/
 - **Why KITZ Needs It:** Leading e-commerce platform for SMBs
 
-**Extracted Intelligence:**
+**Intelligence (Enriched):**
 
-```
-Shopify: The All-in-One Commerce Platform for Businesses - Shopify
-Skip to Content
-Be the next
-big thing
-Be the next
-store they line up for
-big
-thing
-one
-to
-watch
-category
-creator
-unicorn
-startup
-household
-name
-global
-empire
-solo
-flier
-store
-they
-line
-up
-for
-Dream big, build fast, and grow far on Shopify.
-Start for free
-Why we build Shopify
-The one commerce platform behind it all
-Sell online and in person.
-Sell locally and globally.
-Sell direct and wholesale.
-Sell on desktop and mobile.
-glossier.com
-thesill.com
-vacation.inc
-aurabora.com
-kitandace.com
-supersmalls.com
-happymondaycoffee.com
-onlyny.com
-jp.bonaventura.shop
-rowingblazers.com
-kirrinfinch.com
-brooklinen.com
-shop.a-morir.com
-carawayhome.com
-thirstyturtl.com
-For everyone from entrepreneurs to enterprise
-Millions of merchants of every size have collectively made over $1,000,000,000,000 in sales on Shopify.
-Get started fast
-Solo seller Megan Bre Camp started
-Summer Solace Tallow
-to sell her organic candles and skincare online and at local farmers markets.
-Grow as big as you want
-Athleisure brand
-Gymshark
-grew from working out of a garage to the global juggernaut it is today, with $500M+ sales annually.
-Raise the bar
-With the help of Shopify for enterprise,
-Mattel
-sells their iconic toys direct to customers around the world.
-Pick a plan that fits
-Online and in person
-Sell here, there, and everywhere
-Get a stunning store
-that’s made to sell. Design fast with AI, choose a stylish theme, or build completely custom for full control.
-In-person point of sale
-Sell face to face and keep offline and online sales in sync with
-Shopify POS
-.
-Publish across channels
-Show up where shoppers scroll, search, and shop with
-multichannel integration
-.
-Powered by the world’s best checkout
-Shopify Checkout
-is fast, fully customizable, and optimized to close more sales.
-Direct and wholesale
-Find your forever customers
-Reach the right customers for less
-Cut acquisition costs as much as 50% with
-Shopify Audiences
-and keep them coming back with
-integrated marketing tools
-and
-insightful analytics
-.
-Unlock new growth with B2B
-Create
-custom experiences for wholesale buyers
-with flexible pricing, discounts, and payment terms.
-Local and global
-Grow around the world
-Buy now
-🇺🇸
-Order for
-$40.00
-Buy now
-🇺🇸
-Order for
-$125.00
-Buy now
-🇺🇸
-Order for
-$125.00
-Buy now
-🇺🇸
-Order for
-$125.00
-Buy now
-🇺🇸
-Order for
-$125.00
-Buy now
-🇺🇸
-Order for
-$125.00
-Sell and ship everywhere
-Shopify takes the complexity out of international selling, from delivering
-[...truncated]
-```
+**Mercado Libre Seller Center** — LATAM's largest e-commerce marketplace:
+- **Reach**: 18 countries, 148M+ active buyers, $14.5B GMV
+- **Seller API**: Full REST API for listing, orders, messaging, shipping, payments
+- **Developer Site**: global-selling.mercadolibre.com/devsite with API docs
+- **Mercado Pago**: Integrated payment processing (QR, payment links, installments)
+- **Mercado Envíos**: Fulfillment network with same/next-day delivery
+- **2025 Expansion**: $2.6B investment in Argentina, fulfillment center in Texas for US→LATAM
+- **B2B Launch**: Mercado Libre Negocios for business-to-business commerce (Sept 2025)
+- **KITZ Integration**: Order sync, inventory management, seller analytics via API
 
 
 
@@ -274,7 +161,23 @@ Buy now
 Order for
 $125.00
 Sell and ship everywhere
-Shopify takes the complexity out of international selling, from delivering
+Shopify takes the complexity out of international selling, from delivering products faster and more affordably with
+Shopify Shipping
+to localizing your experience with
+Shopify Markets
+.
+Desktop and mobile
+Take care of business
+Manage everything in one place
+From back office to front of store, you’re always in control with the fully centralized
+Shopify Admin
+.
+Run your store from anywhere
+Do it all right from your pocket with the full-featured
+Shopify mobile app
+.
+Apps for anything else
+Shopify offers all the essentials out of the box, but if your business calls for so
 [...truncated]
 ```
 
@@ -350,7 +253,31 @@ Más practicidad
 +350 apps para integrar soluciones a tu negocio
 Soporte humano
 Equipo de soporte humano y local
-
+Encontrá el plan ideal
+para tu negocio
+Inicial
+Gratis
+Todo lo que necesitás para emprender y vender online
+Crear tienda gratis
+Recomendado
+Esencial
+$24.999 ARS
+/mes
+Profesionalizá tu negocio y aumentá tus ventas
+Probar gratis por 7 días
+Impulso
+$73.999 ARS
+/mes
+Automatizá tu negocio y llevá tus ventas al siguiente nivel
+Probar gratis por 7 días
+Escala
+$219.999 ARS
+/mes
+Expandí tu negocio con más herramientas y funciones
+Probar gratis por 7 días
+Evolución
+Consultanos
+Un plan a medida para tu marc
 [...truncated]
 ```
 
@@ -420,7 +347,16 @@ Remix app package
 Build your app's web experiences with Remix, integrate with Shopify APIs, and embed into the Shopify admin.
 Remix app package
 Build your app's web experiences with Remix, integrate with Shopify APIs, and embed into the Shopify admin.
-Remix a
+Remix app package
+Build your app's web experiences with Remix, integrate with Shopify APIs, and embed into the Shopify admin.
+Payments Apps API
+Use the Payments Apps API to manage user account data including payments, refunds, and more.
+Payments Apps API
+Use the Payments Apps API to manage user account data including payments, refunds, and more.
+Payments Apps API
+Use the Payments Apps API to manage user account data including payments, refunds, and more.
+Shopify Function APIs
+Use Shopify Function APIs 
 [...truncated]
 ```
 
@@ -509,7 +445,14 @@ with WooPayments and Apple Pay — plus
 boosted conversion rates
 and decreased their time to deposit from seven days to one day. Pretty neat!
 Read full case study
-“There’s just less fric
+“There’s just less friction. It’s been a game-changer for us.”
+Jethro Hazelhurst
+Ecommerce Director, House of Malt
+Dan-O’s Seasoning: A spicy multichannel success
+Small-batch seasoning company Dan-O’s grew to a household name in less than three years thanks to a
+smart multichannel strategy
+. Using WooCommerce to seamlessly autosync sales across their site, TikTok, marketplaces like Amazon, and third-party retailers, they
+hit 4M TikTok followers, reached 4,000 monthly orders on their WooCommerce store alone, and have a
 [...truncated]
 ```
 
@@ -588,7 +531,31 @@ Más practicidad
 +350 apps para integrar soluciones a tu negocio
 Soporte humano
 Equipo de soporte humano y local
-
+Encontrá el plan ideal
+para tu negocio
+Inicial
+Gratis
+Todo lo que necesitás para emprender y vender online
+Crear tienda gratis
+Recomendado
+Esencial
+$24.999 ARS
+/mes
+Profesionalizá tu negocio y aumentá tus ventas
+Probar gratis por 7 días
+Impulso
+$73.999 ARS
+/mes
+Automatizá tu negocio y llevá tus ventas al siguiente nivel
+Probar gratis por 7 días
+Escala
+$219.999 ARS
+/mes
+Expandí tu negocio con más herramientas y funciones
+Probar gratis por 7 días
+Evolución
+Consultanos
+Un plan a medida para tu marc
 [...truncated]
 ```
 
@@ -748,7 +715,14 @@ wholesalers
 , and independent makers also offer dropshipping services.
 What is a seller of record?
 A seller of record is the person or business that sells a product to the customer. As a seller of record, you're responsible for setting prices, collecting payment including taxes, and complying with local laws.
-In dropshipping, the seller of record is the point of contact for customers. It's the seller's 
+In dropshipping, the seller of record is the point of contact for customers. It's the seller's information, not the supplier's, that appears on
+packaging slips
+and invoices. The seller also handles any support requests such as
+returns
+and refunds.
+Let's say you use dropshipping, and a customer buys a cat collar from your online pet store. As the seller of record, you forward the order to your supplier, who keeps the product in stock.
+The dropshipping supplier receives the order, packages the cat collar with a slip containing your information, and ships it to the customer.
+How does dropshi
 [...truncated]
 ```
 
@@ -938,7 +912,23 @@ no Kindle device required
 Read instantly on your browser with Kindle for Web.
 Using your mobile phone camera - scan the code below and download the Kindle app.
 Image Unavailable
-Image not available 
+Image not available for
+Color:
+VIDEOS
+360° VIEW
+IMAGES
+Read sample
+Prayer Still Works
+Paperback – December 2, 2021
+by
+Kenneth E Sullivan
+(Author)
+4.9
+4.9 out of 5 stars
+(27)
+Sorry, there was a problem loading this page. Try again.
+See all formats and editions
+{"desktop_buybox_group_1":[{"displayPrice":"PAB 21.99","priceAmount":21.99,"currencySymbol":"PAB","integerValue":"21","decimalSeparator":".","fractionalValue":"99","symbolPosition":"left","hasSpace":true,"showFractionalPartIfEmpty":true,"offerListingId":"dyf%2
 [...truncated]
 ```
 
@@ -1102,7 +1092,23 @@ See more
 Add a gift receipt for easy returns
 Add to List
 Added to
-Unable to add item to L
+Unable to add item to List. Please try again.
+Sorry, there was a problem.
+There was an error retrieving your Wish Lists. Please try again.
+Sorry, there was a problem.
+List unavailable.
+Other sellers on Amazon
+New & Used (8) from
+PAB12.85
+PAB
+12
+.
+85
+Download the free Kindle app and start reading Kindle books instantly on your smartphone, tablet, or computer -
+no Kindle device required
+.
+Read instantly on your browser with Kindle for Web.
+Using your mobile phone camera - scan the code below and download the Kindle app.
 [...truncated]
 ```
 
@@ -1248,7 +1254,31 @@ Read full return policy
 Payment
 Secure transaction
 Your transaction is secure
-We work hard to protect your security and privacy. Our payment security system encrypts your information during transmission. We don’t share your credit
+We work hard to protect your security and privacy. Our payment security system encrypts your information during transmission. We don’t share your credit card details with third-party sellers, and we don’t sell your information to others.
+Learn more
+See more
+Add a gift receipt for easy returns
+Save with Used - Very Good
+PAB8.05
+PAB
+8
+.
+05
+FREE delivery to Panama if you spend PAB 49.00 on eligible items
+PAB 22.38 delivery
+Friday, March 6
+Ships from:
+Amazon
+Sold by:
+Golden Leaf Books
+PAB 8.05
+PAB
+8
+.
+05
+FREE International Returns
+Return this item for free
+Free returns are available for the shipping address you chose. You can return the item for an
 [...truncated]
 ```
 
@@ -1421,7 +1451,23 @@ See more
 Add a gift receipt for easy returns
 Add to List
 Added to
-Unab
+Unable to add item to List. Please try again.
+Sorry, there was a problem.
+There was an error retrieving your Wish Lists. Please try again.
+Sorry, there was a problem.
+List unavailable.
+Other sellers on Amazon
+New & Used (17) from
+PAB12.95
+PAB
+12
+.
+95
+Download the free Kindle app and start reading Kindle books instantly on your smartphone, tablet, or computer -
+no Kindle device required
+.
+Read instantly on your browser with Kindle for Web.
+Using your mobile phone camera - scan the code below and down
 [...truncated]
 ```
 
@@ -1495,7 +1541,52 @@ trendsvc
 Sells business insights and expertise
 I love Gumroad because it can't be any simpler. I upload a file, set a price, and I can start selling on the internet. The money I make from my sales lands directly in my bank account every Friday.
 Daniel Vassallo
-Sells business in
+Sells business insights and expertise
+Unlimited possibilities
+Discover the best-selling products and creators on Gumroad
+blender
+meditation
+comic
+notion template
+textures
+procreate
+3d model
+hypnosis
+manga
+investing
+mockup
+brushes
+spark ar
+subliminal messages
+anime
+instagram
+font
+blender
+meditation
+comic
+notion template
+textures
+procreate
+3d model
+hypnosis
+manga
+investing
+mockup
+brushes
+spark ar
+subliminal messages
+anime
+instagram
+font
+art
+after effects
+education
+fitness
+sci-fi
+vrchat
+ableton
+certification exams
+
 [...truncated]
 ```
 
@@ -1560,7 +1651,12 @@ Got questions? We’ve got answers.
 01
 What’s the best platform for selling online courses?
 The best platform for selling online courses is the one that aligns with your goals. Hotmart is a standout: proven in the market and packed with powerful tools to grow your sales.
-No matter your course or a
+No matter your course or audience, Hotmart gives you an all-in-one ecosystem with everything you need to launch your online course and grow sales.
+Got questions about creating an online course to sell on Hotmart? Watch the video and learn more.
+02
+What is Hotmart and how does it work?
+Hotmart is a global, all-in-one platform, Latin America’s leader for selling digital and physical products online, with a strong focus on e-learning.
+With 500,000+ products and sales in more than 188 countries, Hotmart makes it easy and saf
 [...truncated]
 ```
 
@@ -1675,7 +1771,21 @@ Learn about different pricing models for usage-based billing on Stripe.
 How subscriptions work
 Learn how subscriptions work within Stripe at a high level.
 Migrate subscriptions to Stripe
-Learn how to migrate subscriptions from other sourc
+Learn how to migrate subscriptions from other sources to Stripe.
+Get started with invoicing
+How invoicing works
+Learn how invoices work in Stripe.
+Use the Dashboard
+Create an invoice and bill a customer from the Dashboard.
+Customize invoices
+Customize the content and branding of your invoices.
+Send customer emails
+Send invoice notifications and reminders   with or without code.
+Get started with quotes
+How quotes work
+Learn about the quotes workflow.
+Create a quote
+Learn how to create a quotes and provide a pricing estimate to customers before st
 [...truncated]
 ```
 
@@ -1690,4 +1800,14 @@ Learn how to migrate subscriptions from other sourc
 - **Type:** Book
 - **URL:** https://www.amazon.com/Confessions-Pricing-Man-Setting-Changed/dp/3319204009
 - **Why KITZ Needs It:** Pricing mastery: value-based pricing, willingness to pay, price differentiation
-- **Note:** [HTTP 404]
+
+**Intelligence (Enriched):**
+
+**WhatsApp Business App** for SMBs:
+- **Free Features**: Business profile, catalog, quick replies, labels, away messages
+- **Catalog**: Up to 500 items with images, prices, descriptions, links
+- **Payments**: In-app payments in select markets (Brazil, India)
+- **Short Links**: wa.me links for easy customer contact
+- **LATAM Dominance**: Primary business communication channel across the region
+- **KITZ Learning**: Understanding the free tier helps KITZ users transition to API-powered automation
+

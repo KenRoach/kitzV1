@@ -2,6 +2,8 @@
 
 > Module: Scheduling | Sources: 2 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -125,8 +127,9 @@ Built to keep your organization secure
 Keep your scheduling data secure with enterprise-grade admin management, security integrations, data governance, compliance audits, and privacy protections.
 Learn more
 Power up your scheduling
-Get
-[...truncated]
+Get started in seconds — for free.
+Start for free
+Get a demo
 ```
 
 
@@ -327,7 +330,20 @@ SAT
 Trusted by fast-growing companies around the world
 Trusted by fast-growing companies around the world
 Trusted by fast-growing companies around the world
-How it 
+How it works
+With us, appointment scheduling is easy
+With us, appointment scheduling is easy
+Effortless scheduling for business and individuals, powerful solutions for fast-growing modern companies.
+Effortless scheduling for business and individuals, powerful solutions for fast-growing modern companies.
+Get started
+Book a demo
+01
+Connect your calendar
+We'll handle all the cross-referencing, so you don't have to worry about double bookings.
+Cal.com
+02
+Set your availability
+Want to block off weekends? Se
 [...truncated]
 ```
 

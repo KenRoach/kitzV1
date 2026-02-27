@@ -2,6 +2,8 @@
 
 > Module: Canada Business | Sources: 5 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -186,7 +188,15 @@ Introducing Interac Direct
 Elevate your customers’ online shopping experience with Interac Direct via KONEKTM and offer card-free payments directly from their bank accounts.
 Learn About Interac Direct
 Enable transit payments
-Provide more payment options for your riders with 
+Provide more payment options for your riders with Interac Debit, enabling convenient on-the-go fare payments.
+Learn About Transit Payments
+Protect business payments
+Learn about the secure technology and safety measures we have in place to help keep your business payments safe and secure.
+Safety & Security
+Verification Solutions
+Discover a secure and convenient way to digitally verify and authenticate yourself or your customers with our verification solutions.
+Verify Yourself Securely
+Verify your personal data, streamline your digital experience
 [...truncated]
 ```
 
@@ -333,7 +343,7 @@ Indigenous entrepreneurs
 Build your business and strengthen your positive impact on your community.
 Learn more
 Women entrepreneurs
-Unleash the full potential of your business a
-[...truncated]
+Unleash the full potential of your business and bring your ambitions to life.
+Learn more
 ```
 

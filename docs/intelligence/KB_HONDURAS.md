@@ -2,6 +2,8 @@
 
 > Module: Honduras Business | Sources: 3 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -104,7 +106,20 @@ Deberá pagar la cantidad de
 L 200.00
 mediante un
 Boletín de Pago Libre
-y luego solicitar
+y luego solicitarlo en una de nuestras oficinas.
+¿Se vence el RTN?
+Para una
+Persona Natural
+, su RTN tiene la duración de su vida natural, dándose por entendido la baja de este hasta su fallecimiento.
+Para una
+Persona Jurídica
+, el RTN tiene duración hasta cuando se motive la baja (por cese de operaciones).
+¿El RTN anterior tiene validez?
+Si, el RTN que se imprimió en cartoncillo aún tiene validez.
+¿Con qué frecuencia se realizan los pagos de Pagos a Cuenta?
+Son tres cuotas trimestrales:
+30 de junio.
+30 de septi
 [...truncated]
 ```
 
@@ -221,4 +236,43 @@ bottom of page
 - **Type:** Platform
 - **URL:** https://www.tigo.com.hn/tigo-money
 - **Why KITZ Needs It:** Honduras mobile money: P2P transfers, bill payments, merchant QR codes
-- **Note:** [HTTP 403]
+- **Note:** [HTTP 403 -- enriched from knowledge base]
+
+**Deep Enrichment (Knowledge Base):**
+
+```
+TIGO MONEY HONDURAS -- MOBILE MONEY SERVICE:
+
+OVERVIEW:
+Tigo Money is Honduras's leading mobile money service, operated by Tigo (Millicom
+International). Enables financial transactions via mobile phone for the large
+unbanked population. Tigo is Honduras's largest mobile operator.
+
+KEY FEATURES:
+1. Mobile Money: Send/receive via phone, no bank account required
+   - Works on basic phones (USSD) and smartphones (app)
+   - Available to anyone with a Tigo SIM card
+2. P2P Transfers: Instant Tigo-to-Tigo, cross-network transfers
+3. Bill Payments: ENEE (electricity), SANAA (water), internet, cable
+4. Merchant Payments: QR codes at participating businesses
+5. Remittances: Receive international transfers (Western Union, RIA)
+6. Airtime recharge, micro-insurance, basic savings
+
+AGENT NETWORK:
+- Thousands of authorized agents across Honduras
+- In pharmacies, pulperias, markets, Tigo stores
+- Critical for cash-in/cash-out without bank branches
+
+MARKET CONTEXT:
+- Honduras ~50% unbanked population
+- Remittances represent ~25% of GDP
+- Cash remains dominant but mobile money is growing
+- Competition: Tengo (BAC), banking apps
+
+KITZ RELEVANCE:
+- Most relevant digital payment for Honduras after cash
+- Serves the unbanked population KITZ aims to help
+- Less sophisticated than MercadoPago or Nequi
+- KITZ should adapt expectations to Honduras payment maturity
+- Remittance economy creates unique business opportunities
+```

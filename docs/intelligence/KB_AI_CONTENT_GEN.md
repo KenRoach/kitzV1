@@ -2,6 +2,8 @@
 
 > Module: AI Content Gen | Sources: 4 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -14,7 +16,38 @@
 - **Type:** Platform
 - **URL:** https://ideogram.ai/
 - **Why KITZ Needs It:** AI image generation with strong text rendering
-- **Note:** [HTTP 403]
+- **Note:** [HTTP 403 -- enriched from knowledge base]
+
+**Deep Enrichment (Knowledge Base):**
+
+```
+IDEOGRAM -- AI IMAGE GENERATION WITH TEXT RENDERING:
+
+OVERVIEW: AI image generation platform by former Google Brain researchers.
+Primary differentiator: industry-leading text rendering within images.
+
+KEY FEATURES:
+- Text-in-image rendering: Generates images with legible, accurate text
+  (logos, signs, posters, social media graphics)
+- Styles: Photorealistic, illustration, 3D render, anime, typography
+- Magic Prompt: AI-enhanced prompting
+- Ideogram 2.0: Significant quality improvements
+- Ideogram Canvas: Infinite canvas for editing/compositing
+
+PRICING:
+- Free: ~10 generations/day
+- Basic: $7/month (400 priority generations)
+- Plus: $16/month (1,000 priority generations)
+- Pro: $48/month (3,000 priority generations)
+
+API: REST API available for programmatic generation
+
+KITZ RELEVANCE:
+- Perfect for social media graphics WITH text in Spanish
+- Small businesses can create promo banners, flyers with embedded text
+- Instagram/WhatsApp promotional images with prices and announcements
+- Most cost-effective option for text-heavy marketing visuals
+```
 
 
 ### Midjourney [Medium]
@@ -23,7 +56,38 @@
 - **Type:** Platform
 - **URL:** https://www.midjourney.com/
 - **Why KITZ Needs It:** Premium AI image generation
-- **Note:** [Error: Cannot connect to host www.midjourney.com:443 ssl:<ssl.SSLContext object at 0x105ffdac0> [[SSL: TLSV]
+- **Note:** [SSL error -- enriched from knowledge base]
+
+**Deep Enrichment (Knowledge Base):**
+
+```
+MIDJOURNEY -- PREMIUM AI IMAGE GENERATION:
+
+OVERVIEW: Premium AI image generation platform by David Holz (ex-Leap Motion).
+Widely considered the "gold standard" for artistic and commercial AI imagery.
+
+KEY FEATURES:
+- Industry-leading image quality and artistic style
+- V6.1 model: Photorealism, coherent compositions
+- Web interface (moved beyond Discord-only)
+- Vary, Zoom Out, Pan, Upscale, Blend tools
+- Personalization with --personalize flag
+
+PRICING:
+- Basic: $10/month (~200 generations)
+- Standard: $30/month (15 fast hours, unlimited relaxed)
+- Pro: $60/month (30 fast hours, stealth mode)
+- Mega: $120/month (60 fast hours)
+
+LIMITATIONS: No public API, text rendering is poor
+
+KITZ RELEVANCE:
+- Premium brand imagery for high-end visual content
+- Product photography-style images for e-commerce
+- Best for businesses wanting luxury/aspirational imagery
+- Higher price point may not suit bootstrapped LATAM startups
+- No API limits integration into automated workflows
+```
 
 
 ### DALL-E (OpenAI) [Medium]
@@ -32,7 +96,38 @@
 - **Type:** Platform
 - **URL:** https://openai.com/dall-e-3
 - **Why KITZ Needs It:** AI image gen integrated with ChatGPT
-- **Note:** [HTTP 403]
+- **Note:** [HTTP 403 -- enriched from knowledge base]
+
+**Deep Enrichment (Knowledge Base):**
+
+```
+DALL-E 3 / GPT-IMAGE-1 -- OPENAI IMAGE GENERATION:
+
+OVERVIEW: OpenAI's image generation models, natively integrated into ChatGPT.
+Key advantage: natural language prompting through conversation.
+
+KEY FEATURES:
+- Native ChatGPT integration (describe in plain language)
+- ChatGPT refines prompts automatically
+- gpt-image-1: Next-gen model with editing capabilities (2025)
+- Built-in safety systems, C2PA metadata
+
+PRICING:
+- Included with ChatGPT Plus ($20/month)
+- API (DALL-E 3): $0.040-$0.120/image depending on size/quality
+- gpt-image-1 API: Higher quality, variable pricing
+
+API: Full REST API via OpenAI, Node.js/Python SDKs
+- Endpoint: POST /v1/images/generations
+- Can integrate into KITZ's kitz-llm-hub
+
+KITZ RELEVANCE:
+- Most accessible (conversational interface, no prompt engineering)
+- Spanish-language prompting works well
+- API can be integrated directly into KITZ pipeline
+- Good for quick marketing visuals and product mockups
+- Best developer ecosystem among AI image generators
+```
 
 
 ## Copywriting
@@ -99,7 +194,16 @@ Former Chief Marketing Officer @ Juniper Networks
 Roman Olney
 Head of Global Digital Experience @ Lenovo
 “I didn't even know AI workflows were something that I was lacking until someone said, “Did you know you could do all of this with Copy.ai?”
-Ashle
+Ashley Levesque
+VP of Marketing @ Banzai
+The anti-point solution platform
+Don’t end up with a bloated set of AI point solutions. Our platform architecture helps you solve any GTM use case.
+GTM AI Platform
+Secure, vertical AI-native platform for business-critical operations
+Workflows
+AI-powered codifications of your processes, plays, and best practices. Unifying cross-functional teams, systems, and GTM strategies.
+Actions
+Building blocks that allow users to harness the power of AI without being AI exp
 [...truncated]
 ```
 

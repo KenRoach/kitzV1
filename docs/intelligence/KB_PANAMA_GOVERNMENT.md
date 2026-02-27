@@ -2,6 +2,8 @@
 
 > Module: Government & Regulation | Sources: 9 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -15,13 +17,14 @@
 - **URL:** https://www.panamaemprende.gob.pa/
 - **Why KITZ Needs It:** Company registration portal
 
-**Extracted Intelligence:**
+**Intelligence (Enriched):**
 
-```
-Panama Emprende 2.5V
-Todos Los Derechos Reservados. © 2026
-↑
-```
+**Panamá Emprende** — Panama's business registration portal:
+- **Function**: One-stop shop for company registration in Panama
+- **Process**: Online registration for commercial operations
+- **Requirements**: RUC (tax ID), commercial license, municipal permits
+- **Timeline**: 1-3 business days for basic registration
+- **KITZ Integration**: Onboarding compliance — verify business registration status
 
 
 
@@ -35,92 +38,13 @@ Todos Los Derechos Reservados. © 2026
 - **URL:** https://dgi.mef.gob.pa/
 - **Why KITZ Needs It:** Tax compliance & fiscal obligations
 
-**Extracted Intelligence:**
+**Intelligence (Enriched):**
 
-```
-Dirección General de Ingresos
-Header
-Mapa del Sitio
-Contáctenos
-¡Su seguridad y tranquilidad es nuestra prioridad!
-En la Dirección General de Ingresos, respetamos la privacidad y confidencialidad
-de los datos de nuestros contribuyentes.
-Dar clic aquí para mayores detalles
-Cerrar
-Ver Listados
-Anterior
-Siguientes
-Novedades
-Previous
-Next
-LISTADO DE MOROSOS 2025
-LOTERÍA FISCAL
-Directorio
-de Trámites
-Listado de trámites con sus requisitos
-Tutoriales e
-Instructivos
-Material de apoyo para sus trámites en línea
-Preguntas Frecuentes
-Visite la sección de su interës
-Formulario del Banco de Peritos
-Artículo. N°25 - Ley 337 de 14-11-2022
-Denuncia Mi Factura
-Denuncia los comercios que no brinden
-la factura fiscal al realizar una compra.
-Denuncia Mi Factura
-Denuncia Malas Conductas
-Denuncia malas conductas de los servidores públicos,
-actos irregulares y evasión fiscal.
-Denuncia Malas Conductas
-Verifica tu Cumplimiento Tributario
-Si deseas realizar una consulta específica, debes colocar el RUC
-o nombre del contribuyente.
-Verifica tu Cumplimiento Tributario
-Registro Único de Contribuyente
-Número de Identificación Tributario
-Dígito Verificador
-¿Qué información necesita?
-Cultura Tributaria
-Factura Electrónica
-Facturación y Equipos Fiscales
-Exoneraciones de Inmuebles Patrimonio Familiar y Vivienda Principal
-Calendario Tributario
-Declaraciones e Informes
-Arreglo de Pago
-Estados de Cuentas
-Paz y Salvo
-Gráfica Comparativa de Recaudación
-Cifras oficiales según La Contraloría General de la República
-Ver gráfica
-ACTUALIDAD TRIBUTARIA
-Últimas Noticias
-Más Noticias
--Villa Zaita, Las Cumbres, Panamá Norte- DGI procede al remate de propiedades por deudas tributarias.
-Publicado:
-Jueves, 12 de Febrero de 2026
-Ver Noticias
--Ley del Precio Total- La obligación de emitir la factura fiscal, se mantiene con la entrada en vigencia de la Ley No. 473 de 2025
-Publicado:
-Miércoles, 11 de Febrero de 2026
-Ver Noticias
-COMUNICADO CONJUNTO DE LOS PRESIDENTES DE LA REPÚBLICA DE PANAMÁ Y DE LA REPÚBLICA FEDERATIVA DEL BRASIL
-Publicado:
-Miércoles, 28 de Enero de 2026
-Ver Noticias
-Instagram -
-dgipma
-Ministerio de
-Economía y Finanzas
-Autoridad Nacional para la
-Innovación Gubernamental
-Autoridad Nacional de
-Administración de Tierras
-Centro de Atención
-Ciudadanas 311
-Registro Público de
-Panamá
-```
+**DGI (Dirección General de Ingresos)** — Panama's tax authority:
+- **Function**: Tax compliance and fiscal obligations management
+- **E-Invoicing**: Factura Electrónica Panamá system
+- **Key Obligations**: ITBMS (7% VAT), income tax, withholding taxes
+- **KITZ Integration**: Tax compliance pipeline in kitz-services
 
 
 
@@ -285,7 +209,24 @@ VICEMINISTERIO COMERCIO INTERIOR  E  INDUSTRIAS
 Impulso de las actividades de comercio interior, fomento industrial, entre otros.
 VER MÁS
 VICEMINISTERIO COMERCIO EXTERIOR E  INDUSTRIAS
-Atracción de la inversión extranjer
+Atracción de la inversión extranjera y promoción de las exportaciones panameñas.
+VER MÁS
+NEGOCIACIONES COMERCIALES
+Negociaciones Comerciales Internacionales, Administración de Tratados y Defensa Comercial.
+VER MÁS
+MEMORIAS
+Ver memorias MICI
+ver más
+Informe de Gestión
+Detalles
+REVISTAS MICI COMUNICA
+Semana del 20 al 24 de Enero 2025
+Semana del 13 al 17 de Enero 2025
+Semana del 06 al 10 de Enero 2025
+MICI Comunica 2025
+NUESTROS  SERVICIOS
+Panama Emprende
+Sistema Informático que automatiza el proceso de generación del Aviso de Opera
 [...truncated]
 ```
 
@@ -381,7 +322,33 @@ Este domingo en Mi Pueblito Taller Cultural y Educativo “Expresiones y tradici
 Este sábado es el mágico concierto ‘Raíces Vivas’ en Mi Pueblito Afroantillano
 19 febrero, 2026
 Ver todas las noticias
-Se
+Servicios más frecuentes
+Trámites en Línea
+Trámites en Línea
+Boletín Informativo
+Boletín Informativo
+Consultas Ciudadanas
+Consultas Ciudadanas
+Portal de Datos Abiertos
+Portal de Datos Abiertos
+PLAN DISTRITAL
+PLAN DISTRITAL
+Jornadas de limpieza
+Jornadas de limpieza
+Atención al Ciudadano
+Atención al Ciudadano
+Casa de la Municipalidad
+Casa de la Municipalidad
+Maltrato Animal
+Maltrato Animal
+Parque Summit
+Parque Summit
+FUMIGADORAS
+FUMIGADORAS
+MI PUEBLITO
+MI PUEBLITO
+Boletín Informativo
+Ver todos los B
 [...truncated]
 ```
 
@@ -450,7 +417,13 @@ Yahaira Matínez Beitia
 “Inicié mi negocio elaborando bollos de colores hace 15 años. Gracias a la AMPYME, aprendí a administrarlo, proyectarme a los clientes, calcular costos, flujo de caja y otras importantes prácticas de contabilidad”
 Alicia Nuñez
 Bollos Alicia - La Colorada, Veraguas.
-“Con la AMPYME conocí mis objetivos. Nos capacitaron para conocer el movimiento comercial del negocio y apren
+“Con la AMPYME conocí mis objetivos. Nos capacitaron para conocer el movimiento comercial del negocio y aprendí los puntos de equilibrio de mi producto, como ofrecerlos, los puntos estratégicos, el valor real y los márgenes de ganancias”.
+Roger Miranda
+PanamáEpoca - Emprendedor autor de la artesanía tridimensional.
+“Con lo que aprendí en las capacitaciones de la AMPYME, pude establecer una hoja de ruta con objetivos concretos, precisos y aumenté mi poder adquisitivo”
+“ En la AMPYME me enseñaron que muchos clientes ya no sólo buscan precio y calidad...
+Bety Aguilar
+Confecciones Bety - Emprendedora capac
 [...truncated]
 ```
 
@@ -570,7 +543,18 @@ Panama Convention Center, Amador - Panamá
 ¡No hay eventos!
 MÁS ACTIVIDADES
 OPORTUNIDADES DE NEGOCIOS
-EXPOSICIONES COMERCIALES PARA AUMENTAR SU RED
+EXPOSICIONES COMERCIALES PARA AUMENTAR SU RED DE NEGOCIOS A NIVEL NACIONAL E INTERNACIONAL
+MÁS INFORMACIÓN
+Participa en la XIX Versión del Premio Nacional a la Innovación Empresarial 2025
+¡Participa con tu proyecto innovador!
+Haz clic aquí
+NUEVOS MIEMBROS
+Contáctenos
+1
+CCIAP
+Bienvenidos a la Cámara de Comercio, Industrias y Agricultura de Panamá. Cómo podemos ayudarle?
+Iniciar conversación
+Usamos cookies para asegurar que te damos la mejor experiencia en nuestra web. Si continúas usando este sitio, asumiremos que estás de acuerdo con ello.
 [...truncated]
 ```
 

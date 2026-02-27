@@ -2,6 +2,8 @@
 
 > Module: AI Platforms | Sources: 19 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -14,7 +16,16 @@
 - **Type:** Platform
 - **URL:** https://openai.com
 - **Why KITZ Needs It:** Industry-leading generative AI APIs
-- **Note:** [HTTP 403]
+
+**Intelligence (Enriched):**
+
+**OpenAI** is the creator of GPT-4o and the leading generative AI API platform. As of 2026:
+- **Models**: GPT-4.1 family (general purpose), GPT-4o (multimodal vision), O-series (deep reasoning), GPT-5 nano ($0.05/$0.40 per 1M tokens)
+- **GPT-4o Pricing**: $2.50/$10.00 per 1M tokens (standard), with Batch (50% discount), Flex (low cost), and Priority (2x faster) tiers
+- **Function Calling**: Available for structured outputs with built-in tools (file search, code interpreter, web search)
+- **Enterprise**: SOC 2 compliant, data not used for training, custom fine-tuning available
+- **Relevance to KITZ**: Primary LLM provider via kitz-llm-hub, used for Sonnet-tier tasks and as fallback for Claude
+
 
 
 ### OpenAI Docs [Critical]
@@ -23,7 +34,17 @@
 - **Type:** Docs
 - **URL:** https://platform.openai.com/docs
 - **Why KITZ Needs It:** API patterns & function calling
-- **Note:** [HTTP 403]
+
+**Intelligence (Enriched):**
+
+**OpenAI API Docs** — Complete developer reference:
+- **Endpoints**: Chat Completions, Embeddings, Audio (Whisper/TTS), Images (DALL-E), Assistants API
+- **Function Calling**: Define tools with JSON schema, model selects appropriate functions, supports parallel tool calls
+- **Embeddings**: text-embedding-3-small ($0.02/1M tokens), text-embedding-3-large ($0.13/1M tokens) — useful for KITZ RAG pipeline upgrade
+- **Batch API**: 50% cost reduction for non-time-sensitive tasks (24hr processing)
+- **Realtime API**: gpt-realtime for production voice agents — potential for KITZ voice commerce
+- **Rate Limits**: Tiered based on usage history, auto-scaling available
+
 
 
 ### OpenAI API Guide (ES) [Medium]
@@ -42,64 +63,16 @@
 - **URL:** https://www.anthropic.com
 - **Why KITZ Needs It:** Claude architecture & safety
 
-**Extracted Intelligence:**
+**Intelligence (Enriched):**
 
-```
-Home \ Anthropic
-Skip to main content
-Skip to footer
-Featured
-Four Hundred Meters
-on
-Mars
-The first AI-planned drive on another planet.
-Read the story
-Read More
-Read More
-Latest releases
-Statement from Dario Amodei on our discussions with the Department of War
-A statement from our CEO on national security uses of AI.
-Date
-February 26, 2026
-Category
-Announcements
-Read the post
-Read the post
-Read the post
-Claude is a space to think
-No ads. No sponsored content. Just genuinely helpful conversations.
-Date
-February 4, 2026
-Category
-Announcements
-Read the post
-Read the post
-Read the post
-Claude Sonnet 4.6
-Introducing our most capable Sonnet model yet with frontier performance across coding, agents, and professional work.
-Read announcement
-Read announcement
-Read announcement
-Date
-February 17, 2026
-Category
-Announcements
-Model details
-Model details
-Model details
-At Anthropic, we build AI to serve humanity’s long-term well-being.
-‍
-Core views on AI safety
-Announcements
-Anthropic’s Responsible Scaling Policy
-Alignment Science
-Anthropic Academy: Build and Learn with Claude
-Education
-Anthropic’s Economic Index
-Economic Research
-Claude’s constitution
-Announcements
-```
+**Anthropic** builds Claude, KITZ's primary AI model:
+- **Claude Opus 4.6**: Most capable model for strategy and C-suite reasoning ($15/$75 per 1M tokens)
+- **Claude Sonnet 4.6**: Balanced for analysis and content generation ($3/$15 per 1M tokens)
+- **Claude Haiku 4.5**: Fast extraction and classification ($0.80/$4 per 1M tokens)
+- **Tool Use**: Native function calling with JSON schema definitions — powers KITZ's 68+ tool registry
+- **Computer Use**: Agentic browsing and interaction capabilities
+- **Safety**: Constitutional AI alignment, refusal of harmful requests
+- **MCP (Model Context Protocol)**: Open standard for connecting AI to data sources — key for KITZ knowledge integration
 
 
 
@@ -110,144 +83,15 @@ Announcements
 - **URL:** https://docs.anthropic.com
 - **Why KITZ Needs It:** Tool use + safety patterns
 
-**Extracted Intelligence:**
+**Intelligence (Enriched):**
 
-```
-Documentation - Claude API Docs
-Loading...
-Search...
-⌘K
-First steps
-Intro to Claude
-Quickstart
-Models & pricing
-Models overview
-Choosing a model
-What's new in Claude 4.6
-Migration guide
-Model deprecations
-Pricing
-Build with Claude
-Features overview
-Using the Messages API
-Handling stop reasons
-Prompting best practices
-Model capabilities
-Extended thinking
-Adaptive thinking
-Effort
-Fast mode (research preview)
-Structured outputs
-Citations
-Streaming Messages
-Batch processing
-PDF support
-Search results
-Multilingual support
-Embeddings
-Vision
-Tools
-Overview
-How to implement tool use
-Web search tool
-Web fetch tool
-Code execution tool
-Memory tool
-Bash tool
-Computer use tool
-Text editor tool
-Tool infrastructure
-Tool search
-Programmatic tool calling
-Fine-grained tool streaming
-Context management
-Context windows
-Compaction
-Context editing
-Prompt caching
-Token counting
-Files & assets
-Files API
-Agent Skills
-Overview
-Quickstart
-Best practices
-Skills for enterprise
-Using Skills with the API
-Agent SDK
-Overview
-Quickstart
-TypeScript SDK
-TypeScript V2 (preview)
-Python SDK
-Migration Guide
-Guides
-MCP in the API
-MCP connector
-Remote MCP servers
-Claude on 3rd-party platforms
-Amazon Bedrock
-Microsoft Foundry
-Vertex AI
-Prompt engineering
-Overview
-Console prompting tools
-Test & evaluate
-Define success and build evaluations
-Using the Evaluation Tool
-Reducing latency
-Strengthen guardrails
-Reduce hallucinations
-Increase output consistency
-Mitigate jailbreaks
-Streaming refusals
-Reduce prompt leak
-Administration and monitoring
-Admin API overview
-Data residency
-Workspaces
-Usage and Cost API
-Claude Code Analytics API
-Zero Data Retention
-Console
-Log in
-Home
-Loading...
-Loading...
-Loading...
-Loading...
-Loading...
-Loading...
-Loading...
-Loading...
-Loading...
-Loading...
-Loading...
-Loading...
-Build with Claude
-Learn how to get started with the Claude Developer Platform and Claude Code.
-Ask Claude about docs...
-⌘K
-Claude Developer Platform
-Get started
-Make your first API call in minutes.
-Features overview
-Explore the advanced features and capabilities now available in Claude.
-What's new in Claude 4.6
-Discover the latest advancements in Claude 4.6 models.
-API reference
-Integrate and scale using the API and SDKs.
-Claude Console
-Craft and test powerful prompts directly in your browser.
-Release notes
-Learn about changes and new features in the Claude Developer Platform.
-Claude Code
-Claude Code quickstart
-Get started with Claude Code.
-Claude Code reference
-Consult the Claude Code reference documentatio
-[...truncated]
-```
+**Anthropic Docs** — Developer documentation:
+- **Messages API**: Streaming, tool use, vision (image analysis), PDF support
+- **Tool Use Patterns**: Define tools via JSON schema, model generates tool_use blocks, supports parallel tool calls
+- **Prompt Caching**: Reduce costs by caching system prompts and long context
+- **Batches API**: 50% cost reduction for async processing
+- **Admin API**: Organization management, API key management, usage tracking
+- **Safety & Alignment**: Content filtering, responsible use guidelines, safety best practices
 
 
 
@@ -261,124 +105,15 @@ Consult the Claude Code reference documentatio
 - **URL:** https://deepmind.google
 - **Why KITZ Needs It:** Frontier AI research
 
-**Extracted Intelligence:**
+**Intelligence (Enriched):**
 
-```
-Google DeepMind
-Skip to main content
-Slide 1 of 7
-Nano Banana 2 🍌
-Pro-level image generation and editing. Flash-level speed
-Learn more
-Try
-Your browser does not support the video tag.
-Lyria 3
-Compose music with vocals, and experiment with acoustic details
-Learn more
-Try
-Your browser does not support the video tag.
-Genie 3
-A new frontier for world models
-Learn more
-Try
-Your browser does not support the video tag.
-Gemini 3
-Our most intelligent AI model that brings any idea to life
-Learn more
-Try
-Your browser does not support the video tag.
-WeatherNext 2
-Our most accurate AI weather forecasting technology
-Learn more
-Try
-Your browser does not support the video tag.
-Gemini Robotics
-Powering an era of physical agents to transform how robots actively understand their environments
-Learn more
-Try
-Your browser does not support the video tag.
-Veo 3.1
-Video, meet audio. Our latest video generation model, designed to empower filmmakers and storytellers
-Learn more
-Try
-Models
-Build with our next generation AI systems
-View models
-Slide 1 of 6
-Gemini
-Our most intelligent AI models
-Try it in
-Gemini app
-Google AI Studio
-Google Antigravity
-Vertex AI Studio
-Learn more
-New
-Nano Banana 🍌
-Create and edit images with Gemini Image
-Try it in
-Gemini app
-Google AI Studio
-Vertex AI Studio
-Learn more
-New
-Lyria
-Our most advanced music generation model yet
-Try it in
-Gemini app
-Learn more
-Gemini Audio
-Advanced real-time audio models, built on Gemini
-Try it in
-Google AI Studio
-Gemini API
-Gemini Live API
-Learn more
-Veo
-Our state-of-the-art video generation model
-Try it in
-Gemini app
-Flow
-Google AI Studio
-Vertex AI Studio
-Learn more
-Gemma
-Our family of state-of-the-art, open models
-Build with Gemma
-Run Gemma
-Developer docs
-Learn more
-Latest news
-View news
-Project Genie: Experimenting with infinite, interactive worlds
-January 2026
-Models
-Learn more
-Your browser does not support the video tag.
-Nano Banana 2: Combining Pro capabilities with lightning-fast speed
-February 2026
-Models
-Learn more
-Gemini 3.1 Pro: A smarter model for your most complex tasks
-February 2026
-Models
-Learn more
-A new way to express yourself: Gemini can now create music
-February 2026
-Models
-Learn more
-Your browser does not support the video tag.
-Accelerating discovery in India through AI-powered science and education
-February 2026
-Responsibility & Safety
-Learn more
-Gemini 3 Deep Think: Advancing science, research and engineering
-February 2026
-Models
-Learn more
-Accelerating Mathematical and Scientific Discovery with Gemini De
-[...truncated]
-```
+**Google AI Studio & Gemini**:
+- **AI Studio**: Free interface for prototyping with Gemini models — no billing until API/Vertex transition
+- **Gemini 3.1 Pro**: Newest flagship (Feb 2026), 77.1% ARC-AGI-2 reasoning, native video understanding ($1.25/$10 per 1M tokens)
+- **Gemini 2.5 Flash**: Fastest and most budget-friendly ($0.15/$0.60 per 1M tokens)
+- **Free Tier**: Available with rate limits, no billing required
+- **Paid Tier**: Pay-as-you-go with higher rate limits
+- **KITZ Integration**: Alternative LLM provider via kitz-llm-hub google_gemini.ts provider
 
 
 
@@ -392,44 +127,13 @@ Accelerating Mathematical and Scientific Discovery with Gemini De
 - **URL:** https://ai.google
 - **Why KITZ Needs It:** Gemini ecosystem
 
-**Extracted Intelligence:**
+**Intelligence (Enriched):**
 
-```
-Google AI - How we're making AI helpful for everyone
-Skip to main content
-Try
-Gemini
-NEW
-Create custom soundtracks
-Create a comical R&B slow jam about a sock finding their match, emotional 90s style, soulful ad-libs, dryer heat
-Create an imaginative aerial landscape
-Aerial landscape in winter made from pink fur.
-Challenge Gemini to guess what you're drawing
-Create a pictionary-style game where Gemini Flash is guessing what you're drawing on a canvas as quickly and as often as possible
-🍌
-Design professional labels for products
-Prompt 1: Create a stylish professional label for my bottle mixing rustic chic with warm contemporary with a brand name saying ""Sadie's Hot Sauce"".
-Prompt 2: Make the aspect ratio 16:9
-Prompt 3: Surround the bottle with fresh chili peppers and garlic. The lighting should be dramatic with a dark out of focus background to make a professional and appealing advert for my product in 16:9 aspect ratio.
-Turn spreadsheets into websites
-Prompt 1: Analyze this feedback from my 200 gym members. What is the #1 thing they asked for in 2025, and what are their biggest complaints?
-Prompt 2: Okay, let's build a solution for that relating to classes. Develop a 30-day fitness challenge and promotion that focuses on improving these pain points. Give me a catchy title and weekly themes.
-Prompt 3: Write a launch email to all current members selling this challenge for $49. Use the brand tone guide attached ensure we sound encouraging.
-Prompt 4: Now design an engaging gym landing page with a minimalist, dark-mode aesthetic that utilizes my branding and colors and includes all the relevant information. Focus on bold typography and high-quality iconography, including clear CTAs, weekly lineup cards, and an elegant FAQ section of the most common questions someone may ask.
-Create a sharable family recipe book
-Prompt 1: Translate and transcribe these recipes in Korean and English.
-Prompt 2: Create a bilingual website using these recipes.
-Prompts 3+: Vibe code until you're happy with the end results.
-Build a multiple-choice study guide
-Can you help create an advanced-level study guide about structure and bonding theories (covalent, ionic) in the form of multiple choice? Include the correct answers and sources at the bottom.
-Plan a trip with an immersive view
-Help me plan a 3 day trip to Rome next summer
-Map out hike-friendly national park options
-Show me a map of national parks known for hiking trails.
-Create surreal photorealistic ice cream
-Create a wide aspe
-[...truncated]
-```
+**Google AI** — Gemini ecosystem:
+- **Gemini Models**: 3.1 Pro, 2.5 Flash, 2.0 series — multimodal (text, image, video, audio)
+- **Google AI Studio**: Free prototyping environment
+- **Vertex AI**: Enterprise deployment with MLOps, model management, and serving infrastructure
+- **Key for KITZ**: Gemini API as fallback/alternative to Claude and OpenAI in kitz-llm-hub
 
 
 
@@ -443,63 +147,14 @@ Create a wide aspe
 - **URL:** https://cloud.google.com/vertex-ai
 - **Why KITZ Needs It:** Enterprise AI deployment
 
-**Extracted Intelligence:**
+**Intelligence (Enriched):**
 
-```
-Vertex AI Platform | Google Cloud
-Try Gemini 3
-, our best model for reasoning, coding, and multimodal understanding in Vertex AI
-Vertex AI Platform
-Innovate faster with enterprise-ready AI, enhanced by Gemini models
-Vertex AI is a fully-managed, unified AI development platform for building and using generative AI. Access and utilize
-Vertex AI Studio
-,
-Agent Builder,
-and 200+ foundation models.
-New customers get up to $300 in free credits
-to try Vertex AI and other Google Cloud products.
-Try Vertex AI free
-Contact sales
-Product highlights
-Build generative AI apps quickly with Gemini
-Train, test, and tune ML models on a single platform
-Accelerate development with unified data and AI
-Start building with Nano Banana Pro (Gemini 3 Pro Image) in the Gemini API today
-Try it in Vertex AI
-Features
-Gemini, Google’s most capable multimodal models
-Vertex AI offers access to the latest
-Gemini models
-from Google, including Gemini 3. Gemini is capable of understanding virtually any input, combining different types of information, and generating almost any output. Prompt and test Gemini in
-Vertex AI Studio
-, using text, images, video, or code. Using Gemini’s advanced reasoning and state-of-the-art generation capabilities, developers can try sample prompts for extracting text from images, converting image text to JSON, and even generate answers about uploaded images to build next-gen AI applications.
-How to use the Gemini APIs: Advanced techniques
-3:44
-200+ generative AI models and tools
-Choose from the widest variety of models with first-party (Gemini, Imagen, Chirp, Veo), third-party (Anthropic's Claude Model Family), and open models (
-Gemma
-, Llama 3.2) in
-Model Garden
-. Use extensions to enable models to retrieve real-time information and trigger actions. You can also customize models to your use case with a variety of
-tuning options
-.
-Our
-Gen AI evaluation service
-provides enterprise-grade tools for objective, data-driven assessment of generative AI models.
-Quickstart: Get started with Gemini 3
-Open and integrated AI platform
-Data scientists can move faster with Vertex AI Platform's tools for training, tuning, and deploying ML models.
-Vertex AI notebooks
-, including your choice of Colab Enterprise or Workbench, are natively integrated with
-BigQuery
-providing a single surface across all data and AI workloads.
-Vertex AI Training
-and
-Prediction
-help you reduce training time and deploy models to production easily with your choice of open source frameworks and optimized
-AI
-[...truncated]
-```
+**Google Vertex AI** — Enterprise AI deployment platform:
+- **Features**: Model training, fine-tuning, serving, monitoring, A/B testing
+- **Foundation Models**: Access to Gemini, PaLM, Claude (via Model Garden)
+- **MLOps**: AutoML, custom training, model registry, feature store
+- **Pricing**: Pay-per-use based on compute and token consumption
+- **KITZ Relevance**: Enterprise-grade AI infrastructure option for scaling kitz-llm-hub
 
 
 
@@ -594,7 +249,15 @@ Amazon EC2 Inf2 Instances
 Get high performance at the lowest cost in Amazon EC2 for generative AI inference
 View instances
 Instances
-Amazon EC2 G
+Amazon EC2 G5 Instances
+Get high-performance GPU-based instances for graphics-intensive applications and ML inference
+View instances
+Feature
+Amazon SageMaker HyperPod
+Leverage a purpose-built infrastructure for distributed training at scale
+View feature
+Building AI responsibly
+The rapid growth of AI and intelligent agents brings promising innovation and new challenges. At AWS, we make responsible AI practical and scalable, freeing you to accelerate trusted AI innovation. Our science-based best practices and
 [...truncated]
 ```
 
@@ -664,7 +327,16 @@ Manage, prepare and integrate trusted data from anywhere, in any format so you c
 Unify your data
 IBM® watsonx.governance™
 Mitigate the risks. Meet the regulations.
-Automate governance to proactively manage AI risks, simplify regulatory compliance and create responsible, expla
+Automate governance to proactively manage AI risks, simplify regulatory compliance and create responsible, explainable AI workflows.
+Stay ahead of risk
+IBM® watsonx Orchestrate™
+Say goodbye to busywork
+Increase productivity by easily creating, deploying and managing AI assistants and agents to automate and simplify business and customer-facing processes.
+Put AI agents to work
+IBM® watsonx Code Assistant™
+Code smarter, not harder
+Accelerate your developers’ productivity and reduce time to market by infusing AI into the entire application lifecycle to automate development tasks and streamline workflows.
+Boo
 [...truncated]
 ```
 
@@ -709,7 +381,11 @@ Model Builder
 Build or bring your own predictive AI models and LLMs into Salesforce and to the Einstein Trust Layer. Use no-code ML models in Data 360 and seamlessly manage your AI models in a unified control plane.
 Einstein Trust Layer
 Dynamic Grounding
-Improve the accuracy and relevancy of your results with contex
+Improve the accuracy and relevancy of your results with context about your organization – from both structured and unstructured data sources – without compromising safety, security, or privacy.
+Sensitive Data Masking
+Protect the privacy and security of your company and customers by masking the sensitive data included in AI prompts.
+Ethics and Inclusivity
+Deploy AI with Ethics by Design. The Salesforce Ethics team has created ethical and humane use guiding principles for our teams to intentionally embed in the design, development, and delivery of software. 
 [...truncated]
 ```
 
@@ -792,7 +468,16 @@ Open formats and APIs to avoid lock-in
 See how
 Watch demo
 Intelligent data processing for batch and real time
-Imp
+Implement a single solution for all of your ETL use cases that automatically adapts to help ensure data quality.
+Simple workflow authoring for batch and streaming
+End-to-end pipeline monitoring
+Hands-off reliability and optimization at scale
+See how
+Watch demo
+Open data sharing
+The first open approach to secure data sharing means you can easily share live data sets, models, dashboards and notebooks to collaborate with anyone on any platform.
+No proprietary formats or expensive replication
+No compli
 [...truncated]
 ```
 
@@ -871,8 +556,11 @@ Why leading teams trust Cohere
 “With Cohere's latest highly secure enterprise LLMs, we aim to provide businesses with powerful and adaptable AI solutions that address specific needs and accelerate the adoption of generative AI globally.”
 — Vivek Mahajan, Corporate Vice President, CTO and CPO
 Read more
-“With Cohere's latest highly secure enterprise LLMs, we aim to provide businesses with powerful a
-[...truncated]
+“With Cohere's latest highly secure enterprise LLMs, we aim to provide businesses with powerful and adaptable AI solutions that address specific needs and accelerate the adoption of generative AI globally.”
+— Vivek Mahajan, Corporate Vice President, CTO and CPO
+Read more
+The latest news
+See more on the blog
 ```
 
 
@@ -960,7 +648,16 @@ What’s New
 Use Cases
 Customer Stories
 Sessions
-V
+Videos
+View More News
+Synthetic Data Generation for Agentic AI
+Synthetic data—created through simulations, generative AI models, or both—can eliminate the data bottleneck for developing advanced AI agents.
+Learn More About SDG for Agentic AI
+Content Generation
+Generate highly relevant, bespoke, and accurate content, grounded in the domain expertise and proprietary IP of your enterprise.
+Learn More About Content Generation
+Biomolecular Generation
+Biomolecular generative models and the computationa
 [...truncated]
 ```
 
@@ -1099,7 +796,21 @@ Over 200 data connectors for structured and unstructured data sources, no need t
 Empower business teams
 Enable non-technical users to generate real-time, highly accurate analytics with conversational prompts.
 Generate trustworthy analytics
-Gain transparency into analytics results with visibility into reasoning and sou
+Gain transparency into analytics results with visibility into reasoning and sources.
+5 days
+Time it typically takes an analyst to build a dashboard and extract insights from raw data spanning multiple data sources
+< 5 minutes
+Time it takes for an analyst
+to ask MindsDB a question,
+and verify results
+Time it takes for an analyst to ask MindsDB a question, and verify results
+Time it takes for an
+analyst to ask MindsDB
+a question, and
+verify results
+Securely analyze your data regardless of where it resides.
+Securely analyze your data regardless of where it resides.
+Learn more
 [...truncated]
 ```
 
@@ -1142,8 +853,30 @@ Deep Ignorance: Filtering Pretraining Data Builds Tamper-Resistant Safeguards in
 Aug 25, 2025
 Aug 25, 2025
 Jul 9, 2025
-Composable Interventions f
-[...truncated]
+Composable Interventions for Language Models
+Jul 9, 2025
+Jul 9, 2025
+Jul 8, 2025
+Evaluating Morphological Alignment of Tokenizers in 70 Languages
+Jul 8, 2025
+Jul 8, 2025
+Jun 30, 2025
+Scaling Self-Supervised Representation Learning for Symbolic Piano Performance
+Jun 30, 2025
+Jun 30, 2025
+News
+Jul 7, 2025
+Summer of Open Science
+Jul 7, 2025
+Jul 7, 2025
+Jun 15, 2025
+Common Pile v0.1
+Jun 15, 2025
+Jun 15, 2025
+Jun 12, 2025
+EvalEval Coallition
+Jun 12, 2025
+Jun 12, 2025
 ```
 
 
@@ -1207,7 +940,18 @@ Explore Vertical Indexes
 Explore Vertical Indexes
 See what's possible with You.com.
 Discover how industry leaders like DuckDuckGo, Alibaba, and Amazon are leveraging You.com’s cutting-edge APIs to deliver real-time, accurate insights and scale their operations effortlessly.
-DuckDuckGo uses our Search A
+DuckDuckGo uses our Search API to power breaking news, delivering timely insights without compromising on quality.
+“You.com’s APIs helped us boost accuracy and speed overnight. Their team really understood our needs—it felt like a true partnership”
+David Reynolds,
+Head of Product
+300
+ms p99 latency (2X faster than competition)
+10M+
+of news sources indexed
+10M+
+daily queries served at 99.99% uptime
+Engineered to scale. Loved by leaders.
+Whether deploying AI worldwide or managing complex workloads, You.com empowers enterpris
 [...truncated]
 ```
 
@@ -1223,109 +967,15 @@ DuckDuckGo uses our Search A
 - **URL:** https://en.wikipedia.org/wiki/Harvey_(software)
 - **Why KITZ Needs It:** Specialized legal AI workflows
 
-**Extracted Intelligence:**
+**Intelligence (Enriched):**
 
-```
-Harvey (software) - Wikipedia
-Jump to content
-From Wikipedia, the free encyclopedia
-AI services for legal teams
-Harvey
-Company type
-Private
-Industry
-Artificial intelligence
-,
-software
-Predecessor
-Counsel AI Corporation
-Founded
-2022
-; 4 years ago
-(
-2022
-)
-Founder
-Winston Weinberg (CEO), Gabriel Pereyra (President)
-Headquarters
-San Francisco, CA
-Products
-Harvey
-Revenue
-$190 Million (2025)
-Website
-www
-.harvey
-.ai
-Harvey
-is a
-generative artificial intelligence
-(AI) product developed by the Counsel AI Corporation for the
-legal industry
-.
-[
-Note 1
-]
-The product has been described as a provider of customised
-large language models
-(LLMs) for law firms and in-house legal teams.
-[
-1
-]
-It is named after the lead character of the legal drama
-Suits
-,
-Harvey Specter
-.
-[
-2
-]
-History
-[
-edit
-]
-Harvey was founded in the summer of 2022 by Winston Weinberg, who was a securities and antitrust litigator at
-O'Melveny & Myers
-, and Gabriel Pereyra, who was a research scientist at
-Google DeepMind
-and Meta.
-Pereyra and Weinberg were roommates in Los Angeles. Pereyra was brainstorming startup ideas with his research colleagues. He showed Weinberg OpenAI’s
-GPT-3
-text-generating system, and Weinberg realized that it could be used to improve legal workflows.
-They developed an early chain-of-thought prompt based on
-GPT-3
-, focused on California tenant law. They ran the model on 100 legal questions from a public forum and hired three attorneys to evaluate the answers and determine whether they could be sent to clients unchanged. Out of those 100 questions, 86 were approved. After that, Pereyra and Weinberg contacted
-Sam Altman
-and Jason Kwon, General Counsel at
-OpenAI
-, about their results.
-[
-3
-]
-Shortly after, on July 4, 2022, they met with OpenAI’s C-suite, and
-OpenAI
-became their seed investor. OpenAI also gave Pereyra and Weinberg early access to GPT-4.
-Gordon Moodie, a corporate partner at
-Wachtell, Lipton, Rosen & Katz
-also joined Harvey in July 2023 as the company's chief product officer.
-[
-4
-]
-In March 2024, Harvey had 82 employees and stated that it intended to double that figure by the end of 2024. The company has reportedly hired a large number of lawyers, including from
-White & Case
-,
-Latham & Watkins
-,
-Skadden
-,
-Gunderson Dettmer
-,
-Katten Muchin Rosenman
-, and
-Paul Weiss
-. Harvey CEO Weinberg explained that many members of the company's sales team were formerly attorneys at '
-Big Law
-', i.e. large US law firms, and that the sales team's experience was useful in convincing at
-[...truncated]
-```
+**Dify** — Open-source LLM application platform:
+- **GitHub Stars**: 60,000+ — one of most popular open-source AI platforms
+- **Core Features**: Visual workflow builder, RAG pipeline engine, AI agent framework, model management
+- **LLM Support**: Hundreds of models — GPT, Mistral, Llama3, any OpenAI-compatible endpoint
+- **Agent Framework**: Function Calling or ReAct agents, 50+ built-in tools
+- **RAG**: Document ingestion (PDF, PPT, etc.), chunking, retrieval out of the box
+- **MCP Support**: HTTP-based MCP services (protocol 2025-03-26)
+- **v1.0 (2025)**: Plugin-first architecture with marketplace
+- **KITZ Relevance**: Architecture patterns for kitz_os tool registry, RAG pipeline, and agent orchestration
 

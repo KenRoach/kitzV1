@@ -2,6 +2,8 @@
 
 > Module: Bolivia Business | Sources: 3 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 

@@ -4,6 +4,7 @@
     "critical": 3,
     "high": 11,
     "ingested": 12,
+    "enriched": 0,
     "file": "KB_ACCOUNTING.md"
   },
   "AI Agent Repos": {
@@ -11,13 +12,15 @@
     "critical": 3,
     "high": 4,
     "ingested": 0,
+    "enriched": 0,
     "file": "KB_AI_AGENT_REPOS.md"
   },
   "AI Agents": {
     "count": 6,
     "critical": 3,
     "high": 3,
-    "ingested": 1,
+    "ingested": 0,
+    "enriched": 5,
     "file": "KB_AI_AGENTS.md"
   },
   "AI Content Gen": {
@@ -25,6 +28,7 @@
     "critical": 0,
     "high": 0,
     "ingested": 1,
+    "enriched": 0,
     "file": "KB_AI_CONTENT_GEN.md"
   },
   "AI Industry": {
@@ -32,13 +36,15 @@
     "critical": 0,
     "high": 0,
     "ingested": 4,
+    "enriched": 0,
     "file": "KB_AI_INDUSTRY.md"
   },
   "AI Platforms": {
     "count": 19,
     "critical": 4,
     "high": 6,
-    "ingested": 15,
+    "ingested": 9,
+    "enriched": 8,
     "file": "KB_AI_PLATFORMS.md"
   },
   "AI Research": {
@@ -46,6 +52,7 @@
     "critical": 0,
     "high": 0,
     "ingested": 3,
+    "enriched": 0,
     "file": "KB_AI_RESEARCH.md"
   },
   "Americas \u2014 Business": {
@@ -53,6 +60,7 @@
     "critical": 0,
     "high": 2,
     "ingested": 1,
+    "enriched": 0,
     "file": "KB_AMERICAS_BUSINESS.md"
   },
   "Americas Compliance": {
@@ -60,13 +68,15 @@
     "critical": 2,
     "high": 3,
     "ingested": 4,
+    "enriched": 0,
     "file": "KB_AMERICAS_COMPLIANCE.md"
   },
   "Americas Finance": {
     "count": 29,
     "critical": 13,
     "high": 16,
-    "ingested": 19,
+    "ingested": 18,
+    "enriched": 1,
     "file": "KB_AMERICAS_FINANCE.md"
   },
   "Americas \u2014 Legal": {
@@ -74,6 +84,7 @@
     "critical": 1,
     "high": 1,
     "ingested": 2,
+    "enriched": 0,
     "file": "KB_AMERICAS_LEGAL.md"
   },
   "Americas \u2014 Payments": {
@@ -81,6 +92,7 @@
     "critical": 3,
     "high": 2,
     "ingested": 4,
+    "enriched": 0,
     "file": "KB_AMERICAS_PAYMENTS.md"
   },
   "Americas \u2014 Startup": {
@@ -88,6 +100,7 @@
     "critical": 0,
     "high": 1,
     "ingested": 1,
+    "enriched": 0,
     "file": "KB_AMERICAS_STARTUP.md"
   },
   "Argentina Business": {
@@ -95,6 +108,7 @@
     "critical": 3,
     "high": 3,
     "ingested": 4,
+    "enriched": 0,
     "file": "KB_ARGENTINA.md"
   },
   "Automation Repos": {
@@ -102,6 +116,7 @@
     "critical": 2,
     "high": 3,
     "ingested": 1,
+    "enriched": 0,
     "file": "KB_AUTOMATION_REPOS.md"
   },
   "Automation": {
@@ -109,6 +124,7 @@
     "critical": 1,
     "high": 4,
     "ingested": 3,
+    "enriched": 0,
     "file": "KB_AUTOMATION.md"
   },
   "Belize Business": {
@@ -116,6 +132,7 @@
     "critical": 0,
     "high": 2,
     "ingested": 1,
+    "enriched": 0,
     "file": "KB_BELIZE.md"
   },
   "Bolivia Business": {
@@ -123,6 +140,7 @@
     "critical": 0,
     "high": 2,
     "ingested": 2,
+    "enriched": 0,
     "file": "KB_BOLIVIA.md"
   },
   "Brazil Business": {
@@ -130,6 +148,7 @@
     "critical": 4,
     "high": 4,
     "ingested": 6,
+    "enriched": 0,
     "file": "KB_BRAZIL.md"
   },
   "Canada Business": {
@@ -137,6 +156,7 @@
     "critical": 2,
     "high": 3,
     "ingested": 4,
+    "enriched": 0,
     "file": "KB_CANADA.md"
   },
   "Chile Business": {
@@ -144,6 +164,7 @@
     "critical": 2,
     "high": 4,
     "ingested": 3,
+    "enriched": 0,
     "file": "KB_CHILE.md"
   },
   "Colombia Business": {
@@ -151,6 +172,7 @@
     "critical": 3,
     "high": 4,
     "ingested": 7,
+    "enriched": 0,
     "file": "KB_COLOMBIA.md"
   },
   "Content Creation Repos": {
@@ -158,6 +180,7 @@
     "critical": 1,
     "high": 4,
     "ingested": 0,
+    "enriched": 0,
     "file": "KB_CONTENT_CREATION_REPOS.md"
   },
   "Content Creation": {
@@ -165,6 +188,7 @@
     "critical": 1,
     "high": 2,
     "ingested": 3,
+    "enriched": 0,
     "file": "KB_CONTENT_CREATION.md"
   },
   "Costa Rica Business": {
@@ -172,6 +196,7 @@
     "critical": 3,
     "high": 1,
     "ingested": 2,
+    "enriched": 0,
     "file": "KB_COSTA_RICA.md"
   },
   "CRM Repos": {
@@ -179,6 +204,7 @@
     "critical": 0,
     "high": 1,
     "ingested": 0,
+    "enriched": 0,
     "file": "KB_CRM_REPOS.md"
   },
   "CRM": {
@@ -186,6 +212,7 @@
     "critical": 0,
     "high": 1,
     "ingested": 2,
+    "enriched": 0,
     "file": "KB_CRM.md"
   },
   "Cuba Business": {
@@ -193,20 +220,23 @@
     "critical": 0,
     "high": 0,
     "ingested": 1,
+    "enriched": 0,
     "file": "KB_CUBA.md"
   },
   "Customer Support": {
     "count": 2,
     "critical": 0,
     "high": 1,
-    "ingested": 2,
+    "ingested": 0,
+    "enriched": 2,
     "file": "KB_CUSTOMER_SUPPORT.md"
   },
   "Data & Analytics": {
     "count": 6,
     "critical": 0,
     "high": 1,
-    "ingested": 6,
+    "ingested": 4,
+    "enriched": 2,
     "file": "KB_DATA_ANALYTICS.md"
   },
   "Delivery & Logistics": {
@@ -214,13 +244,15 @@
     "critical": 0,
     "high": 1,
     "ingested": 1,
+    "enriched": 0,
     "file": "KB_DELIVERY_LOGISTICS.md"
   },
   "Demand Gen": {
     "count": 13,
     "critical": 2,
     "high": 10,
-    "ingested": 10,
+    "ingested": 9,
+    "enriched": 1,
     "file": "KB_DEMAND_GEN.md"
   },
   "Dominican Republic Business": {
@@ -228,20 +260,23 @@
     "critical": 1,
     "high": 3,
     "ingested": 4,
+    "enriched": 0,
     "file": "KB_DOMINICAN_REPUBLIC.md"
   },
   "E-Commerce": {
     "count": 21,
     "critical": 7,
     "high": 11,
-    "ingested": 16,
+    "ingested": 15,
+    "enriched": 2,
     "file": "KB_ECOMMERCE.md"
   },
   "Economics": {
     "count": 23,
     "critical": 5,
     "high": 14,
-    "ingested": 14,
+    "ingested": 12,
+    "enriched": 2,
     "file": "KB_ECONOMICS.md"
   },
   "Ecuador Business": {
@@ -249,6 +284,7 @@
     "critical": 1,
     "high": 1,
     "ingested": 2,
+    "enriched": 0,
     "file": "KB_ECUADOR.md"
   },
   "El Salvador Business": {
@@ -256,6 +292,7 @@
     "critical": 1,
     "high": 1,
     "ingested": 2,
+    "enriched": 0,
     "file": "KB_EL_SALVADOR.md"
   },
   "Email Marketing": {
@@ -263,6 +300,7 @@
     "critical": 0,
     "high": 2,
     "ingested": 3,
+    "enriched": 0,
     "file": "KB_EMAIL_MARKETING.md"
   },
   "Food Business": {
@@ -270,6 +308,7 @@
     "critical": 0,
     "high": 1,
     "ingested": 1,
+    "enriched": 0,
     "file": "KB_FOOD_BUSINESS.md"
   },
   "Forms & Surveys": {
@@ -277,13 +316,15 @@
     "critical": 0,
     "high": 0,
     "ingested": 2,
+    "enriched": 0,
     "file": "KB_FORMS_SURVEYS.md"
   },
   "Founder Mindset": {
     "count": 53,
     "critical": 11,
     "high": 27,
-    "ingested": 42,
+    "ingested": 40,
+    "enriched": 3,
     "file": "KB_FOUNDER_MINDSET.md"
   },
   "Google AI Tools": {
@@ -291,20 +332,23 @@
     "critical": 2,
     "high": 3,
     "ingested": 2,
+    "enriched": 0,
     "file": "KB_GOOGLE_AI.md"
   },
   "Government & Regulation": {
     "count": 9,
     "critical": 3,
     "high": 4,
-    "ingested": 8,
+    "ingested": 6,
+    "enriched": 2,
     "file": "KB_PANAMA_GOVERNMENT.md"
   },
   "Guatemala Business": {
     "count": 3,
     "critical": 1,
     "high": 1,
-    "ingested": 2,
+    "ingested": 0,
+    "enriched": 2,
     "file": "KB_GUATEMALA.md"
   },
   "Guyana Business": {
@@ -312,6 +356,7 @@
     "critical": 0,
     "high": 1,
     "ingested": 1,
+    "enriched": 0,
     "file": "KB_GUYANA.md"
   },
   "Haiti Business": {
@@ -319,6 +364,7 @@
     "critical": 0,
     "high": 0,
     "ingested": 0,
+    "enriched": 1,
     "file": "KB_HAITI.md"
   },
   "Honduras Business": {
@@ -326,6 +372,7 @@
     "critical": 1,
     "high": 1,
     "ingested": 2,
+    "enriched": 0,
     "file": "KB_HONDURAS.md"
   },
   "HR & People": {
@@ -333,13 +380,15 @@
     "critical": 0,
     "high": 1,
     "ingested": 0,
+    "enriched": 0,
     "file": "KB_HR_PEOPLE.md"
   },
   "IBM Tech": {
     "count": 12,
     "critical": 0,
     "high": 4,
-    "ingested": 5,
+    "ingested": 3,
+    "enriched": 3,
     "file": "KB_IBM_TECH.md"
   },
   "Inventory & POS": {
@@ -347,6 +396,7 @@
     "critical": 0,
     "high": 2,
     "ingested": 2,
+    "enriched": 0,
     "file": "KB_INVENTORY_POS.md"
   },
   "Invoice Repos": {
@@ -354,6 +404,7 @@
     "critical": 0,
     "high": 2,
     "ingested": 0,
+    "enriched": 0,
     "file": "KB_INVOICE_REPOS.md"
   },
   "Jamaica Business": {
@@ -361,6 +412,7 @@
     "critical": 0,
     "high": 2,
     "ingested": 2,
+    "enriched": 0,
     "file": "KB_JAMAICA.md"
   },
   "Leadership": {
@@ -368,6 +420,7 @@
     "critical": 0,
     "high": 2,
     "ingested": 5,
+    "enriched": 0,
     "file": "KB_LEADERSHIP.md"
   },
   "Legal & Contracts": {
@@ -375,6 +428,7 @@
     "critical": 0,
     "high": 0,
     "ingested": 1,
+    "enriched": 0,
     "file": "KB_LEGAL_CONTRACTS.md"
   },
   "Local Discovery": {
@@ -382,6 +436,7 @@
     "critical": 1,
     "high": 2,
     "ingested": 5,
+    "enriched": 0,
     "file": "KB_LOCAL_DISCOVERY.md"
   },
   "Mexico Business": {
@@ -389,6 +444,7 @@
     "critical": 3,
     "high": 4,
     "ingested": 2,
+    "enriched": 0,
     "file": "KB_MEXICO.md"
   },
   "Nicaragua Business": {
@@ -396,6 +452,7 @@
     "critical": 1,
     "high": 1,
     "ingested": 1,
+    "enriched": 0,
     "file": "KB_NICARAGUA.md"
   },
   "No-Code Repos": {
@@ -403,6 +460,7 @@
     "critical": 0,
     "high": 2,
     "ingested": 0,
+    "enriched": 0,
     "file": "KB_NOCODE_REPOS.md"
   },
   "Panama Banking": {
@@ -410,13 +468,15 @@
     "critical": 3,
     "high": 2,
     "ingested": 9,
+    "enriched": 0,
     "file": "KB_PANAMA_BANKING.md"
   },
   "Panama Payments": {
     "count": 19,
     "critical": 4,
     "high": 7,
-    "ingested": 8,
+    "ingested": 7,
+    "enriched": 3,
     "file": "KB_PANAMA_PAYMENTS.md"
   },
   "Paraguay Business": {
@@ -424,6 +484,7 @@
     "critical": 1,
     "high": 1,
     "ingested": 2,
+    "enriched": 0,
     "file": "KB_PARAGUAY.md"
   },
   "Peru Business": {
@@ -431,6 +492,7 @@
     "critical": 3,
     "high": 3,
     "ingested": 2,
+    "enriched": 0,
     "file": "KB_PERU.md"
   },
   "Pricing Models": {
@@ -438,6 +500,7 @@
     "critical": 0,
     "high": 0,
     "ingested": 1,
+    "enriched": 0,
     "file": "KB_PRICING_MODELS.md"
   },
   "Product & UX": {
@@ -445,6 +508,7 @@
     "critical": 2,
     "high": 4,
     "ingested": 5,
+    "enriched": 1,
     "file": "KB_PRODUCT_UX.md"
   },
   "Project Management": {
@@ -452,6 +516,7 @@
     "critical": 0,
     "high": 1,
     "ingested": 2,
+    "enriched": 0,
     "file": "KB_PROJECT_MANAGEMENT.md"
   },
   "Puerto Rico Business": {
@@ -459,6 +524,7 @@
     "critical": 1,
     "high": 2,
     "ingested": 3,
+    "enriched": 0,
     "file": "KB_PUERTO_RICO.md"
   },
   "RAG Repos": {
@@ -466,6 +532,7 @@
     "critical": 1,
     "high": 3,
     "ingested": 0,
+    "enriched": 0,
     "file": "KB_RAG_REPOS.md"
   },
   "Scheduling": {
@@ -473,6 +540,7 @@
     "critical": 0,
     "high": 2,
     "ingested": 2,
+    "enriched": 0,
     "file": "KB_SCHEDULING.md"
   },
   "Security & Governance": {
@@ -480,6 +548,7 @@
     "critical": 2,
     "high": 1,
     "ingested": 3,
+    "enriched": 0,
     "file": "KB_SECURITY_GOVERNANCE.md"
   },
   "SEO & Web": {
@@ -487,6 +556,7 @@
     "critical": 0,
     "high": 2,
     "ingested": 3,
+    "enriched": 0,
     "file": "KB_SEO_WEB.md"
   },
   "SMB Operations": {
@@ -494,6 +564,7 @@
     "critical": 0,
     "high": 5,
     "ingested": 10,
+    "enriched": 0,
     "file": "KB_SMB_OPERATIONS.md"
   },
   "Social Commerce": {
@@ -501,6 +572,7 @@
     "critical": 1,
     "high": 3,
     "ingested": 0,
+    "enriched": 0,
     "file": "KB_SOCIAL_COMMERCE.md"
   },
   "Social Media Repos": {
@@ -508,6 +580,7 @@
     "critical": 1,
     "high": 1,
     "ingested": 0,
+    "enriched": 0,
     "file": "KB_SOCIAL_MEDIA_REPOS.md"
   },
   "Suriname Business": {
@@ -515,13 +588,15 @@
     "critical": 0,
     "high": 0,
     "ingested": 2,
+    "enriched": 0,
     "file": "KB_SURINAME.md"
   },
   "Trinidad & Tobago Business": {
     "count": 2,
     "critical": 0,
     "high": 2,
-    "ingested": 1,
+    "ingested": 0,
+    "enriched": 2,
     "file": "KB_TRINIDAD_TOBAGO.md"
   },
   "Uruguay Business": {
@@ -529,13 +604,15 @@
     "critical": 1,
     "high": 3,
     "ingested": 3,
+    "enriched": 0,
     "file": "KB_URUGUAY.md"
   },
   "USA Business": {
     "count": 8,
     "critical": 3,
     "high": 5,
-    "ingested": 8,
+    "ingested": 7,
+    "enriched": 1,
     "file": "KB_USA.md"
   },
   "Venezuela Business": {
@@ -543,6 +620,7 @@
     "critical": 0,
     "high": 2,
     "ingested": 1,
+    "enriched": 0,
     "file": "KB_VENEZUELA.md"
   },
   "WhatsApp Business": {
@@ -550,6 +628,7 @@
     "critical": 3,
     "high": 2,
     "ingested": 1,
+    "enriched": 0,
     "file": "KB_WHATSAPP_BUSINESS.md"
   },
   "WhatsApp Repos": {
@@ -557,6 +636,7 @@
     "critical": 1,
     "high": 4,
     "ingested": 0,
+    "enriched": 0,
     "file": "KB_WHATSAPP_REPOS.md"
   }
 }

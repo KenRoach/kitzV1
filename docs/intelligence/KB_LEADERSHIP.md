@@ -2,6 +2,8 @@
 
 > Module: Leadership | Sources: 5 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -161,7 +163,28 @@ Della mercatura e del mercante perfetto
 by
 Benedetto Cotrugli
 , cover of 1602 edition; originally written in 1458
-The earliest exta
+The earliest extant accounting records that follow the modern double-entry system in Europe come from
+Amatino Manucci
+, a
+Florentine
+merchant at the end of the 13th century.
+[
+6
+]
+Manucci was employed by the Farolfi firm and the firm's ledger of 1299–1300 evidences full double-entry bookkeeping. Giovannino Farolfi & Company, a firm of
+Florentine
+merchants  headquartered in
+Nîmes
+, acted as
+moneylenders
+to the
+Archbishop of Arles
+, their most important customer.
+[
+7
+]
+Some sources suggest that
+Giovanni di Bicci d
 [...truncated]
 ```
 
@@ -297,7 +320,27 @@ How to Lose Time and Money
 Organic Startup Ideas
 Apple's Mistake
 What Startups Are Really Like
-Pers
+Persuade xor Discover
+Post-Medium Publishing
+The List of N Things
+The Anatomy of Determination
+What Kate Saw in Silicon Valley
+The Trouble with the Segway
+Ramen Profitable
+Maker's Schedule, Manager's Schedule
+A Local Revolution?
+Why Twitter is a Big Deal
+The Founder Visa
+Five Founders
+Relentlessly Resourceful
+How to Be an Angel Investor
+Why TV Lost
+Can You Buy a Silicon Valley?  Maybe.
+What I've Learned from Hacker News
+Startups in 13 Sentences
+Keep Your Identity Small
+After Credentials
+Could VC be 
 [...truncated]
 ```
 
@@ -362,7 +405,15 @@ Great and Always Better
 We often say Netflix sucks today compared to where we can be tomorrow. We need the self-awareness to understand what should be better, and the discipline and resilience to get there.
 While we don’t always live up to these principles, most people who join Netflix are pleasantly surprised by how great their colleagues are and the way we empower people at every level. As our business grows and evolves, our culture (and this document) will, too. What won’t change is our focus on excellence, and our determination to ensure that Netflix remains a place where great people can do the best work of their lives. If this sounds exciting, you’ll probably love it here. But Netflix is not for everyone, so please read on.
 The Dream Team
-We believe that what makes a fantastic workplace isn’t a great office or free meals and massages — although we have some nice perks. It’s the people. Imagine working alongside stunning colleagues who are great at what they do, and even better at working together. It’s why we model ourselves on a professional sports team, not a family. Families are about unconditional love. They can also be dysfunct
+We believe that what makes a fantastic workplace isn’t a great office or free meals and massages — although we have some nice perks. It’s the people. Imagine working alongside stunning colleagues who are great at what they do, and even better at working together. It’s why we model ourselves on a professional sports team, not a family. Families are about unconditional love. They can also be dysfunctional, as anyone who’s watched
+Ozark
+or
+Wednesday
+knows. Professional sports teams, on the other hand, focus on performance and picking the right person for every position, even when that means swapping out someone they love for a better player.
+While every member of our Dream Team has different skills, we look for common strengths that make us better together.
+These are the values we value:
+Selflessness
+You are humble when searching for the best ideas; you seek what’s best for Netflix, not your
 [...truncated]
 ```
 
@@ -535,7 +586,29 @@ I'm Interested in the following updates from Ray:
 Life and Work Principles
 Economics, Politics, and Culture
 Principles Tools
-Philanth
+Philanthropy
+Economic and Investment Principles
+AI Tools
+I would like to receive a
+free PDF of
+Big Debt Crises
+!
+I would like to receive a free PDF of the charts from
+Principles for Dealing with the Changing World Order
+!
+I would like to receive a free PDF of the
+Country Power Index
+!
+I would like to receive a free PDF of
+How Countries Go Broke
+!
+Please select at least one area of interest.
+Sign Up
+You're almost finished
+You will receive an email confirmation shortly.
+Share Principles
+✕
+Available to Ord
 [...truncated]
 ```
 

@@ -1,86 +1,41 @@
-# Cuba Business — KITZ Knowledge Base Intelligence
+# Cuba Business
 
-> Module: Cuba Business | Sources: 2 | Auto-generated from KITZ Knowledge Base
+> Module: Cuba Business | Sources: 2 | Auto-generated from KITZ Knowledge Base (Batch 4)
 
 ---
 
-
 ## Tax
 
-
-### ONAT Cuba — Oficina Nacional Tributaria [Medium]
-
-- **ID:** PKB-504
-- **Type:** Gov
+### ONAT Cuba -- Oficina Nacional Tributaria
+- **Priority:** `Medium`
 - **URL:** https://www.onat.gob.cu/
-- **Why KITZ Needs It:** Cuba tax authority: MIPYME registration, tax obligations for private businesses
-- **Note:** [Error: Server disconnected]
-
-
-## Registration
-
-
-### MIPYMES Cuba — Small Business Registry [Medium]
-
-- **ID:** PKB-505
 - **Type:** Gov
-- **URL:** https://www.mep.gob.cu/
-- **Why KITZ Needs It:** Cuba small business formation: MIPYMES (since 2021), cooperatives, self-employment
+- **Why KITZ needs it:** Cuba tax authority: MIPYME registration, tax obligations for private businesses
 
 **Extracted Intelligence:**
 
-```
-Ministerio de Economía y Planificación de Cuba
-Pasar al contenido principal
-Toggle navigation
-Select your language
-Inglés
-Español
-Deje este campo en blanco
-Nosotros
-CONSEJO DIRECCIÓN
-Misión, Visión y Objetivos de trabajo
-Estructura
-Funciones específicas
-Historia
-Marco Regulatorio
-Planificación
-NOTICIAS
-Galería
-Galería de Imágenes
-Galería de Videos
-Atención Ciudadana
-Preguntas Frecuentes
-PNDES/ODS 2030
-Objetivos de Desarrollo Sostenible
-Plan Nacional de Desarrollo Económico y Social hasta 2030 (Agenda 2030)
-EliminaElBloqueo
-A LA CUBA DE TODOS
-Cuba Vive y Renace
-El Ministerio de Economía y Planificación, encargado de proponer al Gobierno el Plan de la Economía Nacional, brinda a los ciudadanos a través de este canal de comunicación, la información pública que les permitirá participar en el cumplimiento del plan anual, que es el plan de todos los cubanos. De esta manera, fomentaremos la cultura económica de nuestra población y rendiremos cuenta de forma transparente de nuestra gestión de Gobierno.
-Serán bienvenidas todas las opiniones, sugerencias y críticas, que nos permitan perfeccionar nuestro trabajo.
-Acciones para enfrentar el arreciamiento de las agresiones estadounidenses contra Cuba
-Programa de Gobierno para corregir distorsiones y reimpulsar la economía
-Actores Económicos: Empresa Estatal Socialista - MIPYME - CNA - TPCP
-Ministerio de Economía y Planificación de Cuba |
-Últimas Noticias
-Informan estrategia multisectorial para garantizar protección al pueblo y continuidad de servicios sociales
-Enviado por
-editor1
-Martes, 10/02/26,17:17:03
-Informan estrategia multisectorial para garantizar protección al pueblo y continuidad de servicios sociales
-Ante el impacto de las medidas dictadas por el gobierno de EE. UU. y en respuesta al complejo escenario que ello provoca, los titulares del Ministerio de Finanzas y Precios, el Banco Central de Cuba y el Ministerio de las Comunicaciones informaron, en el espacio de...
-Leer más »
-Nota Informativa a usuarios de la plataforma de actores económicos no estatales
-Enviado por
-editor1
-Lunes, 09/02/26,18:15:10
-Nota Informativa a usuarios de la plataforma de actores económicos no estatales
-La atención presencial a la población que se realiza los miércoles en la sede del Ministerio de Economía y Planificación queda pospuesta hasta nuevo aviso, debido a la compleja situación energética que enfrenta el país.
-...
-Leer más »
-Corporación Cimex anuncia medidas temporales ante situación de disponibilidad de combustibles
-Enviado p
-[...truncated]
-```
+Website did not return content (timeout, Cuba's limited internet infrastructure). Known: ONAT oversees tax obligations for all economic actors including MIPYMEs (legal since 2021). Key taxes: income tax, sales tax, labor force tax, social security. Registration for TCP (self-employed) and MIPYMEs. Tax system evolving rapidly since 2021 reforms.
 
+---
+
+## Registration
+
+### MIPYMES Cuba -- Small Business Registry
+- **Priority:** `Medium`
+- **URL:** https://www.mep.gob.cu/
+- **Type:** Gov
+- **Why KITZ needs it:** Cuba small business formation: MIPYMES (since 2021), cooperatives, self-employment
+
+**Extracted Intelligence:**
+
+Ministerio de Economia y Planificacion (MEP) -- Cuba's economic planning ministry.
+
+**Key Info:** Official site for economic planning and business registration. Handles MIPYME registration (legal since 2021). Three economic actor types: Empresa Estatal Socialista, MIPYME, CNA (Non-Agricultural Cooperatives), TPCP (Self-employed). Dedicated platform for non-state economic actors.
+
+**Current Context (Feb 2026):** Complex economic situation from US embargo/sanctions. Energy crisis affecting operations. MEP coordinating multi-sectoral strategies. UN UNDP Country Program 2026-2030 approved. In-person services suspended due to energy.
+
+**Programs:** Government program to correct economic distortions, PNDES/ODS 2030 (National Development Plan aligned with UN SDGs).
+
+**Contact:** comunicacion@mep.gob.cu, (+53) 7 884 3245, Plaza de la Revolucion, La Habana.
+
+**KITZ Relevance:** Cuba's MIPYME sector is nascent (since 2021) with unique challenges (sanctions, energy crisis, limited internet). Growing but infrastructure-constrained.

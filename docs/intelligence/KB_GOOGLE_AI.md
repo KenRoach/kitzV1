@@ -1,135 +1,126 @@
-# Google AI Tools — KITZ Knowledge Base Intelligence
+# Google AI Tools -- KITZ Knowledge Base Intelligence
 
-> Module: Google AI Tools | Sources: 7 | Auto-generated from KITZ Knowledge Base
+> Module: Google AI Tools | Sources: 7 | Batch 7 Intelligence
+> Last updated: 2026-02-27
 
 ---
 
-
 ## Data & Automation
 
-
-### Google Stitch [High]
-
+### Google Stitch
+- **Priority:** High
 - **ID:** PKB-130
-- **Type:** Platform
 - **URL:** https://stitch.withgoogle.com/
-- **Why KITZ Needs It:** Data connector & automation workflows
-- **Note:** [Minimal content at https://stitch.withgoogle.com/]
+- **Why KITZ needs it:** Data connector & automation workflows
 
+**Extracted Intelligence:**
+
+Google Stitch (launched Google I/O May 2025) is an AI-powered UI design tool -- NOT a data ETL tool. Generates complete UI designs and production-ready frontend code from natural language prompts or uploaded images. Uses Gemini 2.5 models. "Prototypes" feature (December 2025) evolved it from static screen generator to complete prototype creation tool. Free to use as part of Google Labs. Access at stitch.withgoogle.com with Google account.
+
+**KITZ Application:** Could help KITZ users rapidly prototype app interfaces and landing pages. Not a data pipeline tool -- name is misleading. Free access makes it useful for SMB UI prototyping.
+
+---
 
 ## AI Studio
 
-
-### Google AI Studio Build [Critical]
-
+### Google AI Studio Build
+- **Priority:** Critical
 - **ID:** PKB-131
-- **Type:** Platform
 - **URL:** https://aistudio.google.com/
-- **Why KITZ Needs It:** Low-code/no-code AI model building
-- **Note:** [Minimal content at https://aistudio.google.com/]
+- **Why KITZ needs it:** Low-code/no-code AI model building
 
+**Extracted Intelligence:**
+
+Google AI Studio is a free, browser-based platform for testing, building, and deploying applications with Gemini models. Build mode generates complete apps from descriptions (React components, API calls, styling). Gemini 2.5 Pro integrated into native code editor. Generate Media page centralizes Imagen, Veo, Gemini image gen, speech gen models. Audio dialog in preview (30+ voices, speaker distinction). URL Context tool for fact-checking and research. Access at aistudio.google.com (browser-based, no install).
+
+**KITZ Application:** Critical for KITZ's own development -- free access to Gemini models. Could power AI features in KITZ without direct API costs during prototyping. App generation capability could help KITZ users build simple tools.
+
+---
 
 ## Workspace AI
 
-
-### Google Opal [Medium]
-
+### Google Opal
+- **Priority:** Medium
 - **ID:** PKB-132
-- **Type:** Platform
 - **URL:** https://opal.google/landing/
-- **Why KITZ Needs It:** AI-assisted workspace (planning, docs, notes)
-- **Note:** [Minimal content at https://opal.google/landing/]
+- **Why KITZ needs it:** AI-assisted workspace (planning, docs, notes)
 
+**Extracted Intelligence:**
+
+Opal (Google Labs, July 2025) is a no-code AI app platform. Build apps via natural language prompts. Chains multiple Google AI models: Gemini (text/logic), Imagen (images), VO/V3 (video). Embedded in Google Workspace (Gmail, Docs, Sheets). Exports to Docs, Sheets, Slides. Available in 160+ countries, currently free. February 2026: new AI agent for automated workflows (Gemini 3 Flash), dynamic routing with custom logic.
+
+**KITZ Application:** Free no-code AI app builder integrated with Workspace. Could help LATAM SMBs automate workflows without coding. Dynamic routing enables sophisticated business logic.
+
+---
 
 ## Research AI
 
-
-### NotebookLM [High]
-
+### NotebookLM
+- **Priority:** High
 - **ID:** PKB-133
-- **Type:** Platform
 - **URL:** https://notebooklm.google/
-- **Why KITZ Needs It:** AI notebook for research & study
+- **Why KITZ needs it:** AI notebook for research & study
 
 **Extracted Intelligence:**
 
-```
-Google NotebookLM | AI Research Tool & Thinking Partner
-```
+NotebookLM uses Gemini as "research assistant" grounded exclusively in user-uploaded sources. RAG-based: grounded in user material, avoids hallucination. Inline citations for accuracy and trust. Supports 80 languages: PDFs, MP3s, text, Google Docs/Slides, Markdown, URLs (including YouTube). Transforms sources into study guides, briefings, flashcards, quizzes, mind maps. "Audio Overviews" feature: podcast-style conversations by AI hosts. Partnered with OpenStax for interactive textbook Notebooks.
 
+**KITZ Application:** Could power KITZ's own knowledge base -- upload business playbooks and get grounded AI responses. Recommend to LATAM entrepreneurs for market research. 80 language support includes Spanish/Portuguese.
 
+---
 
 ## Creative AI
 
-
-### Pomelli (Google Labs) [Medium]
-
+### Pomelli (Google Labs)
+- **Priority:** Medium
 - **ID:** PKB-134
-- **Type:** Platform
 - **URL:** https://labs.google.com/pomelli/about/
-- **Why KITZ Needs It:** Creative coding / AI exploration toolkit
-- **Note:** [Minimal content at https://labs.google.com/pomelli/about/]
-
-
-## Visual AI
-
-
-### Canvas (Google Gemini) [High]
-
-- **ID:** PKB-135
-- **Type:** Platform
-- **URL:** https://gemini.google/overview/canvas/
-- **Why KITZ Needs It:** Visual creator + ideation tool
+- **Why KITZ needs it:** Creative coding / AI exploration toolkit
 
 **Extracted Intelligence:**
 
-```
-Gemini Canvas: escribe, programa y crea en un solo espacio con IA
-Skip to main content
-Probar Canvas
-Gemini Canvas
-Dales vida a tus ideas en forma de apps, juegos, infografías y más. Pasa de la instrucción al prototipo en minutos con la tecnología de Gemini 3, nuestro modelo más capaz.
-Probar Canvas
-¿Qué es Canvas?
-Visualiza y personaliza
-Convierte tus informes de Deep Research en apps, juegos, cuestionarios interactivos, páginas web o infografías, y transforma el modo en que aprendes, exploras y compartes información.
-Escribe instrucciones y crea
-Solo tienes que describir tu idea y observar cómo Canvas genera el código que le da vida a tu idea en forma de app o juego funcional y que se puede compartir.
-Haz un borrador y mejóralo
-Mejora tu escritura generando borradores atractivos, perfeccionando el tono, ajustando secciones clave y obteniendo comentarios instantáneos y valiosos.
-Para estudiar
-Para trabajar
-Para divertirse
-Personaliza la hora de estudio
-Sube guías de estudio y fuentes, y Gemini creará un cuestionario personalizado para que estudiar sea más entretenido. Úsalo para evaluar tu comprensión o comparte el vínculo con amigos y familiares para un desafío divertido.
-Probarlo ahora
-Visualiza el código
-Profundiza tu comprensión de conceptos abstractos viendo cómo los algoritmos cobran vida a través de animaciones y convirtiendo ideas complejas en puntos clave claros que demuestran cómo funciona el código.
-Probarlo ahora
-Perfecciona borradores
-Perfecciona tus documentos, investigaciones o discursos con Gemini. Las herramientas de edición rápida te ayudan a expandir secciones clave, ajustar el tono y obtener comentarios valiosos sobre tu borrador.
-Acelera el impacto
-Pasa del análisis a la estrategia más rápido con Gemini, que te ayuda a obtener ideas y recomendaciones, y a perfeccionar rápidamente contenido de alta calidad para ahorrar tiempo y generar impacto.
-Optimiza operaciones
-Potencia a tus equipos con paneles personalizados, que incluyen desde sistemas de seguimiento para los equipos hasta sistemas de administración de clientes y canalizaciones de ventas, para mantener a todos informados y optimizar los flujos de trabajo.
-Probarlo ahora
-Impulsa el crecimiento
-Acelera y personaliza las cotizaciones en tiempo real con un control deslizante de precios interactivo. Haz que tu equipo pueda generar propuestas de forma instantánea y personalizada para fomentar conversaciones e impulsar la conversión.
-Probarlo ahora
-Generador de planetas 3D
-Genera tus p
-[...truncated]
-```
+Pomelli is an AI-powered marketing tool from Google Labs + DeepMind designed for SMBs. Launched public beta October 28, 2025. "Business DNA Profile" analyzes your website to extract brand identity (tone, fonts, images, colors). Generates tailored campaign ideas. Creates on-brand marketing assets for social media, site, and ads. Edit text/images in-tool, download ready-to-use assets. Currently free in US, Canada, Australia, New Zealand (English only).
 
+**KITZ Application:** Directly relevant to KITZ's content creation module -- AI-generated on-brand marketing for SMBs. Business DNA concept aligns with KITZ's brand management features. Currently English-only limits LATAM applicability, but monitor for Spanish expansion.
 
+---
+
+## Visual AI
+
+### Canvas (Google Gemini)
+- **Priority:** High
+- **ID:** PKB-135
+- **URL:** https://gemini.google/overview/canvas/
+- **Why KITZ needs it:** Visual creator + ideation tool
+
+**Extracted Intelligence:**
+
+Gemini Canvas allows creating apps, games, infographics from prompts with Gemini 3. "Vibe coding" -- build interactive web apps through conversation. Create web pages, infographics, audio overviews (45+ languages). Upload files/images as sources. Deep Research reports transformable into interactive visuals, quizzes. Dedicated editing, brainstorming, review environment.
+
+**KITZ Application:** Help LATAM entrepreneurs prototype apps and create visual content via natural language. Multi-language support (45+) covers Spanish/Portuguese. Interactive infographic creation valuable for business presentations.
+
+---
 
 ## Foundation Model
 
-
-### Gemini AI [Critical]
-
+### Gemini AI
+- **Priority:** Critical
 - **ID:** PKB-136
-- **Type:** Platform
 - **URL:** https://gemini.google/
-- **Why KITZ Needs It:** Google broader AI models & ecosystem
-- **Note:** [Minimal content at https://gemini.google/]
+- **Why KITZ needs it:** Google broader AI models & ecosystem
+
+**Extracted Intelligence:**
+
+Gemini 3 (late 2025): 80%+ better reasoning, enhanced multimodal understanding, 1M token context window.
+
+**API Pricing (January 2026):**
+- Gemini 2.5 Flash-Lite: $0.10/$0.40 per 1M tokens (most affordable).
+- Gemini 2.5 Pro: $1.25/$10 per 1M tokens (standard mode).
+- Gemini 3 Pro Preview: $2.00/$12.00 per 1M tokens (flagship).
+
+**Consumer Subscriptions:**
+- AI Pro: $19.99/mo. AI Ultra: $149.99/mo.
+
+**Cost Optimization:** Context Caching reduces costs up to 75% for repeated large prompts. December 2025: significant free/paid tier quota adjustments.
+
+**KITZ Application:** Primary alternative/complement to Claude and OpenAI in KITZ's LLM hub. Competitive pricing especially at Flash-Lite tier. Context caching critical for cost optimization in KITZ's AI Battery model.

@@ -2,6 +2,8 @@
 
 > Module: Security & Governance | Sources: 4 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -84,8 +86,10 @@ National Checklist Program for IT Products – Guidelines for Checklist Users an
 is now available for public comment through January 16, 2026, at 11:59 PM. The update includes an appendix with enhanced mapping concepts between checklist settings, NIST Cybersecurity Framework (CSF) 2.0 outcomes, SP 800-53 controls, and Common Configuration Enumeration (CCE) identifiers for evidence-ready automation and reporting.
 See more Latest Updates
 Contacts
-For further information and/or questions about the Cybers
-[...truncated]
+For further information and/or questions about the Cybersecurity Framework
+CONTACT:
+[email protected]
+Was this page helpful?
 ```
 
 
@@ -137,7 +141,9 @@ Join us as we celebrate OWASP’s 25th Anniversary with a free virtual conferenc
 Whether you’re a longtime contributor or new to the OWASP family, this conference is designed to honor our shared achievements, and give back to the community that has fueled OWASP for a quarter century. Let’s celebrate the past, elevate the present, and build a more secure future together.
 Register Now! It’s free!
 Ready to level up your AppSec skills?
-Join us at Lond
+Join us at London OWASP Training Days 2026 - a dedicated hands‑on training experience designed by and for the global application security community!
+From 1‑day intensive skill builders to multi‑day deep dives, our curated training lineup helps security pros, developers, and architects build practical expertise you can apply immediately.
+Whether you’re starting your AppSec journey or mastering advanced techniques, our expert trainers offer practical, interactive sessions that go beyond theory - so you can prote
 [...truncated]
 ```
 
@@ -192,7 +198,14 @@ to enforce laws or personalise advertisements, and are used to diagnose and tre
 AI affects many parts of your life
 .
 Like the EU’s General Data Protection Regulation (GDPR) in 2018, the EU AI Act could become a
-global st
+global standard
+, determining to what extent AI has a positive rather than negative effect on your life wherever you may be. The EU’s AI regulation is already making waves internationally – in late September 2021,
+Brazil’s Congress passed a bill
+that creates a legal framework for artificial intelligence.
+How can organisations apply it?
+We have developed an
+AI Act Compliance Checker
+to help SMEs and startups better understand whether they might have any legal obligations under the EU AI Act or whether the
 [...truncated]
 ```
 

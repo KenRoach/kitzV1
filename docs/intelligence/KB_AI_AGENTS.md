@@ -2,6 +2,8 @@
 
 > Module: AI Agents | Sources: 6 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -14,7 +16,16 @@
 - **Type:** Framework
 - **URL:** https://github.com/microsoft/autogen
 - **Why KITZ Needs It:** Agent collaboration patterns
-- **Note:** [GitHub repo: https://github.com/microsoft/autogen]
+
+**Intelligence (Enriched):**
+
+**Langflow** — Low-code AI builder:
+- **Features**: Visual drag-and-drop for building AI apps and RAG pipelines
+- **LLM Support**: OpenAI, Anthropic, Google, HuggingFace, Ollama and more
+- **Components**: Chains, agents, tools, memory, retrieval, embeddings
+- **Deployment**: Self-hosted or Langflow Cloud
+- **KITZ Relevance**: Visual workflow patterns for building AI-powered business tools
+
 
 
 ## Workflow Agents
@@ -26,7 +37,16 @@
 - **Type:** Framework
 - **URL:** https://github.com/langchain-ai/langgraph
 - **Why KITZ Needs It:** Deterministic agent flows
-- **Note:** [GitHub repo: https://github.com/langchain-ai/langgraph]
+
+**Intelligence (Enriched):**
+
+**Flowise** — Low-code LLM orchestration:
+- **Features**: Drag-and-drop UI for building LLM flows, chatbots, and agents
+- **Integrations**: LangChain-based, supports 100+ components
+- **Deployment**: Self-hosted via Docker, npm, or Flowise Cloud
+- **API**: REST endpoints for embedding flows into applications
+- **KITZ Relevance**: Chatbot and agent flow patterns for kitz_os semantic router
+
 
 
 ## Agent Framework
@@ -38,7 +58,15 @@
 - **Type:** Framework
 - **URL:** https://github.com/langchain-ai/langchain
 - **Why KITZ Needs It:** Tool usage & chaining
-- **Note:** [GitHub repo: https://github.com/langchain-ai/langchain]
+
+**Intelligence (Enriched):**
+
+**AutoGen** (Microsoft) — Multi-agent conversation framework:
+- **Features**: Conversational multi-agent systems with customizable agents
+- **Patterns**: Group chat, nested conversations, tool use, code execution
+- **Model Support**: OpenAI, Azure OpenAI, local models via LiteLLM
+- **KITZ Relevance**: Multi-agent patterns for AOS agent-to-agent communication
+
 
 
 ### CrewAI [High]
@@ -47,7 +75,18 @@
 - **Type:** Framework
 - **URL:** https://github.com/joaomdmoura/crewAI
 - **Why KITZ Needs It:** Role-based agent teams
-- **Note:** [GitHub repo: https://github.com/joaomdmoura/crewAI]
+
+**Intelligence (Enriched):**
+
+**LangGraph** — Agent orchestration framework:
+- **v1.0 Released**: Production-grade, long-running agent support
+- **Features**: Durable state persistence, human-in-the-loop, built-in memory, token streaming
+- **Architecture**: Graph-based state machines for agent control flows
+- **Deployment**: LangGraph Platform (Cloud, Hybrid, self-hosted)
+- **Studio v2**: Visual debugging without desktop app
+- **MCP Integration**: Compatible with Model Context Protocol tools
+- **KITZ Relevance**: Agent orchestration patterns for AOS EventBus and brain agent scheduling
+
 
 
 ## Tool Protocol
@@ -60,81 +99,14 @@
 - **URL:** https://modelcontextprotocol.io
 - **Why KITZ Needs It:** Tool-call protocol standard
 
-**Extracted Intelligence:**
+**Intelligence (Enriched):**
 
-```
-What is the Model Context Protocol (MCP)? - Model Context Protocol
-Skip to main content
-Model Context Protocol
-home page
-Search...
-⌘
-K
-Search...
-Navigation
-Get started
-What is the Model Context Protocol (MCP)?
-Documentation
-Extensions
-Specification
-Registry
-Community
-Get started
-What is MCP?
-About MCP
-Architecture
-Servers
-Clients
-Versioning
-Develop with MCP
-Connect to local MCP servers
-Connect to remote MCP Servers
-Build an MCP server
-Build an MCP client
-SDKs
-Security
-Developer tools
-MCP Inspector
-On this page
-What can MCP enable?
-Why does MCP matter?
-Start Building
-Learn more
-MCP (Model Context Protocol) is an open-source standard for connecting AI applications to external systems.
-Using MCP, AI applications like Claude or ChatGPT can connect to data sources (e.g. local files, databases), tools (e.g. search engines, calculators) and workflows (e.g. specialized prompts)—enabling them to access key information and perform tasks.
-Think of MCP like a USB-C port for AI applications. Just as USB-C provides a standardized way to connect electronic devices, MCP provides a standardized way to connect AI applications to external systems.
-​
-What can MCP enable?
-Agents can access your Google Calendar and Notion, acting as a more personalized AI assistant.
-Claude Code can generate an entire web app using a Figma design.
-Enterprise chatbots can connect to multiple databases across an organization, empowering users to analyze data using chat.
-AI models can create 3D designs on Blender and print them out using a 3D printer.
-​
-Why does MCP matter?
-Depending on where you sit in the ecosystem, MCP can have a range of benefits.
-Developers
-: MCP reduces development time and complexity when building, or integrating with, an AI application or agent.
-AI applications or agents
-: MCP provides access to an ecosystem of data sources, tools and apps which will enhance capabilities and improve the end-user experience.
-End-users
-: MCP results in more capable AI applications or agents which can access your data and take actions on your behalf when necessary.
-​
-Start Building
-Build servers
-Create MCP servers to expose your data and tools
-Build clients
-Develop applications that connect to MCP servers
-​
-Learn more
-Understand concepts
-Learn the core concepts and architecture of MCP
-Was this page helpful?
-Yes
-No
-Architecture
-⌘
-I
-```
+**LangChain** — LLM application framework:
+- **v1.0 Released**: Stable API for production use
+- **Components**: Chains, agents, tools, memory, retrieval, callbacks
+- **Integrations**: 100+ vector stores, 50+ LLM providers, 100+ tools
+- **LangSmith**: Observability platform with agent-specific metrics
+- **KITZ Relevance**: Tool calling patterns, chain composition for kitz_os semantic router
 
 
 

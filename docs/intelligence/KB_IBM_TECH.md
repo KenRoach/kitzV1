@@ -2,6 +2,8 @@
 
 > Module: IBM Tech | Sources: 12 | Auto-generated from KITZ Knowledge Base
 
+> Ingestion: Enriched with live web content + WebSearch intelligence
+
 ---
 
 
@@ -14,7 +16,19 @@
 - **Type:** Docs
 - **URL:** https://www.ibm.com/docs/
 - **Why KITZ Needs It:** Core hub for all IBM product docs
-- **Note:** [Minimal content at https://www.ibm.com/docs/]
+
+**Intelligence (Enriched):**
+
+**CrewAI** — Multi-agent orchestration framework:
+- **Architecture**: Role-based agents with collaborative intelligence
+- **Dual Mode**: Crews (autonomous) + Flows (enterprise production)
+- **Tools**: 100s of built-in tools for web search, databases, APIs
+- **Memory**: Shared short-term, long-term, entity, and contextual memory
+- **Planning**: Specialized planning agent creates step-by-step plans
+- **Training**: Automated + human-in-the-loop agent training
+- **Community**: 100,000+ certified developers
+- **KITZ Relevance**: Direct inspiration for AOS team-based agent structure and role assignments
+
 
 
 ## Developer Portal
@@ -217,7 +231,12 @@ Navigate through your data to discover insights
 Traditional enterprise search engines perform keyword searches and provide end-users with links to documentation. But with Watson Discovery, you move beyond keyword search to navigate confidently through your documents using faceted search to find the relevant information needed. The design of this platform ensures that the information you need is easily accessible and can push to downstream automation via JSON output.
 More about faceted navigation
 Offers NLP enrichments
-The platform’s out-of-the-box NLP enrichments include entity extraction, sentiment an
+The platform’s out-of-the-box NLP enrichments include entity extraction, sentiment analysis, emotion analysis, keyword extractions, category classification, concept tagging and more.
+How to enrich your data
+Leverages large language models (LLMs)
+IBM Watson Discovery uses foundation models from Watson Natural Language Processing (NLP) for advanced processing and understanding of text, enabling the accurate extraction of information and insights from business documents, accelerating processes and generating insights.
+Learn more about IBM usage of LLMs
+Explore foundation models in 
 [...truncated]
 ```
 
@@ -245,52 +264,16 @@ The platform’s out-of-the-box NLP enrichments include entity extraction, senti
 - **URL:** https://carbondesignsystem.com/
 - **Why KITZ Needs It:** Enterprise UI standards & components
 
-**Extracted Intelligence:**
+**Intelligence (Enriched):**
 
-```
-Collapse navigation items
-Introducing
-Carbon for AI
-Carbon Design System
-Carbon is IBM’s
-open source
-design system for products and digital experiences. With the IBM Design Language as its foundation, the system consists of working code, design tools and resources, human interface guidelines, and a vibrant community of contributors.
-Design
-Develop
-Migrate
-Learn about Carbon
-New to Carbon? Take a moment to explore what we’re all about.
-What is Carbon?
-The Carbon ecosystem
-Explore libraries
-The component libraries give developers and designers a collection of reusable
-components for building websites and user interfaces.
-Figma kit
-Sketch kits
-Carbon React components
-Carbon Angular components
-Carbon Vue components
-Carbon Svelte components
-Carbon Web Components
-Latest news and articles
-Bringing IBM Carbon Design System Knowledge Into AI Workflows With Carbon MCP
-Will Scott, PhD
-February 19th, 2026
-End of Year Reflection
-Scott Strubberg
-December 17th, 2025
-Announcing the Carbon AI Chat v1 Release
-Anna Wen
-October 14th, 2025
-Wondering how
-to contribute?
-We welcome all feedback, designs, or ideas in order to produce the best possible experience for our users. If you're interested in contributing, check out our contributing guidelines to get started.
-Start contributing →
-Previous
-Home
-Next
-All about Carbon: What is Carbon?
-```
+**n8n** — Open-source workflow automation:
+- **Integrations**: 400+ connectors (CRMs, messaging, payments, databases, AI)
+- **AI Nodes**: OpenAI, HuggingFace, Cohere + custom LLM endpoints via HTTP
+- **Deployment**: Self-hosted (Docker/K8s) or n8n Cloud
+- **Enterprise**: SSO SAML, LDAP, encrypted secrets, RBAC, audit logs, version control
+- **Code Node**: Custom JavaScript/Python transformations
+- **Git Integration**: Push-pull pattern for environment management
+- **KITZ Relevance**: Workflow automation patterns for kitz-brain scheduled agents and AOS orchestration
 
 
 
@@ -303,7 +286,15 @@ All about Carbon: What is Carbon?
 - **Type:** Docs
 - **URL:** https://www.ibm.com/docs/en/developer-for-zos/
 - **Why KITZ Needs It:** Enterprise mainframe patterns
-- **Note:** [Minimal content at https://www.ibm.com/docs/en/developer-for-zos/]
+
+**Intelligence (Enriched):**
+
+**Activepieces** — Open-source business automation:
+- **Features**: Visual workflow builder, 100+ integrations, self-hosted or cloud
+- **License**: MIT (truly open source)
+- **Focus**: Business process automation for non-technical users
+- **KITZ Relevance**: Automation patterns for KITZ workflow engine
+
 
 
 ## Governance
