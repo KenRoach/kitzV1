@@ -25,6 +25,7 @@ import { searchSOPs } from '../../sops/store.js';
 import { getConversationHistory } from '../../memory/manager.js';
 import type { OutputChannel } from 'kitz-schemas';
 import { getIntelligenceContext } from '../../tools/ragPipelineTools.js';
+import { isBlocked, getToolRisk, getApprovalSummaryForPrompt } from '../../approvals/approvalMatrix.js';
 
 // ── Tool-to-MCP Mapping ──
 // Maps KITZ OS tool names to workspace MCP tool names for direct execution
@@ -344,7 +345,9 @@ EXECUTION RULES:
 CHANNEL STRATEGY:
 - WhatsApp → Business operations: orders, payments, CRM, invoicing, customer service, quick lookups
 - Email → Reports, documents, campaigns, follow-up sequences, detailed analysis
-- Workspace (ChatPanel) → Full interactive workspace: advisory, content creation, analytics, strategy, deep work${sopSection}${intelSection}`;
+- Workspace (ChatPanel) → Full interactive workspace: advisory, content creation, analytics, strategy, deep work
+
+${getApprovalSummaryForPrompt()}${sopSection}${intelSection}`;
 }
 
 // ── Execute a tool ──
@@ -611,8 +614,20 @@ export async function routeWithAI(
         trace_id: traceId,
       }));
 
+      // Blocked: actions that should never be executed by AI
+      if (isBlocked(toolName)) {
+        messages.push({
+          role: 'tool',
+          content: JSON.stringify({ status: 'blocked', message: `Action "${toolName}" is blocked. This action cannot be performed by AI — it requires manual execution by the business owner.` }),
+          tool_call_id: tc.id,
+          name: toolName,
+        });
+        continue;
+      }
+
       // Draft-first: write tools are queued, not executed
       if (isWriteTool(toolName)) {
+        const riskLevel = getToolRisk(toolName);
         const draft: DraftAction = {
           toolName,
           args,
@@ -623,10 +638,12 @@ export async function routeWithAI(
         };
         pendingDrafts.push(draft);
 
+        const riskLabel = riskLevel === 'critical' ? ' ⚠️ CRITICAL — requires dual-channel approval' :
+                          riskLevel === 'high' ? ' ⚠️ HIGH RISK — requires explicit approval' : '';
         // Return a draft confirmation to the AI so it knows the action is pending
         messages.push({
           role: 'tool',
-          content: JSON.stringify({ status: 'drafted', message: `Action "${toolName}" queued as draft. Awaiting user approval.` }),
+          content: JSON.stringify({ status: 'drafted', riskLevel, message: `Action "${toolName}" queued as draft.${riskLabel} Awaiting user approval.` }),
           tool_call_id: tc.id,
           name: toolName,
         });

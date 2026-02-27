@@ -49,6 +49,7 @@ import { isGoogleOAuthConfigured, getAuthUrl, exchangeCode, hasStoredTokens, rev
 import { dispatchMultiChannel } from './channels/dispatcher.js';
 import { getUserPreferences, setUserPreferences } from './channels/preferences.js';
 import * as orchestrator from './orchestrator/channelOrchestrator.js';
+import { APPROVAL_MATRIX, getMatrixByRisk, getMatrixByCategory } from './approvals/approvalMatrix.js';
 import { createArtifactFromToolResult } from './tools/artifactPreview.js';
 import { getContent } from './tools/contentEngine.js';
 import type { OutputChannel } from 'kitz-schemas';
@@ -1496,6 +1497,16 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
   /** Get tasks nearing SLA deadline */
   app.get('/api/kitz/tasks/sla/alerts', async () => {
     return { tasks: orchestrator.getTasksNearingSLA() };
+  });
+
+  // ── Approval Matrix (public — UI uses this to show risk levels) ──
+
+  app.get('/api/kitz/approvals/matrix', async () => {
+    return {
+      total: APPROVAL_MATRIX.length,
+      byRisk: getMatrixByRisk(),
+      byCategory: getMatrixByCategory(),
+    };
   });
 
   // ── SPA fallback — serve index.html for client-side routing ──
