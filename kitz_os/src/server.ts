@@ -48,6 +48,7 @@ import { verifyStripeSignature, verifyHmacSha256, verifyPayPalHeaders } from './
 import { isGoogleOAuthConfigured, getAuthUrl, exchangeCode, hasStoredTokens, revokeTokens } from './auth/googleOAuth.js';
 import { dispatchMultiChannel } from './channels/dispatcher.js';
 import { getUserPreferences, setUserPreferences } from './channels/preferences.js';
+import * as orchestrator from './orchestrator/channelOrchestrator.js';
 import { createArtifactFromToolResult } from './tools/artifactPreview.js';
 import { getContent } from './tools/contentEngine.js';
 import type { OutputChannel } from 'kitz-schemas';
@@ -1370,6 +1371,131 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
     } catch {
       return { error: 'WhatsApp connector unavailable' };
     }
+  });
+
+  // ── Brain Task Orchestrator (multi-channel draft-first lifecycle) ──
+
+  /** Create a brain task from any channel — returns ack + begins processing */
+  app.post<{ Body: { message: string; channel?: string; user_id?: string; org_id?: string; phone?: string; email?: string } }>(
+    '/api/kitz/tasks',
+    async (req) => {
+      const { message, channel, user_id, org_id, phone, email } = req.body || {};
+      const userId = user_id || (req.headers['x-user-id'] as string) || 'default';
+      const orgId = org_id || (req.headers['x-org-id'] as string) || '';
+      const originChannel = (channel || 'web') as OutputChannel;
+
+      const { task, ackMessage } = orchestrator.createTask({
+        userId,
+        orgId,
+        originChannel,
+        userMessage: message || '',
+        recipient: { phone, email, userId },
+      });
+
+      // Begin processing in background (non-blocking)
+      orchestrator.markProcessing(task.id);
+      const hasAI = !!(process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.AI_API_KEY);
+
+      if (hasAI && message) {
+        // Process asynchronously — don't block the ack
+        void (async () => {
+          try {
+            const result = await routeWithAI(message, kernel.tools, task.traceId, undefined, userId, originChannel);
+            // Check if result contains a clarification request
+            const hasClarification = result.toolResults?.some((r: any) => r?.type === 'clarification_request');
+            if (hasClarification) {
+              const clarif = result.toolResults.find((r: any) => r?.type === 'clarification_request') as any;
+              orchestrator.requestClarification(task.id, clarif.question, clarif.context);
+            } else {
+              orchestrator.setDraftOutput(task.id, result.response, result.toolsUsed, result.creditsConsumed);
+            }
+          } catch (err) {
+            orchestrator.setDraftOutput(task.id, `Error processing request: ${(err as Error).message}`, [], 0);
+          }
+        })();
+      }
+
+      return { taskId: task.id, status: task.status, ackMessage, slaDeadline: task.slaDeadline };
+    }
+  );
+
+  /** Get a specific brain task */
+  app.get<{ Params: { taskId: string } }>(
+    '/api/kitz/tasks/:taskId',
+    async (req, reply) => {
+      const task = orchestrator.getTask(req.params.taskId);
+      if (!task) return reply.code(404).send({ error: 'Task not found' });
+      return task;
+    }
+  );
+
+  /** List brain tasks for a user */
+  app.get<{ Querystring: { user_id?: string; status?: string } }>(
+    '/api/kitz/tasks',
+    async (req) => {
+      const userId = req.query.user_id || (req.headers['x-user-id'] as string);
+      if (userId) {
+        const tasks = orchestrator.getTasksByUser(userId);
+        if (req.query.status) {
+          return { tasks: tasks.filter(t => t.status === req.query.status) };
+        }
+        return { tasks };
+      }
+      return orchestrator.getTaskSummary();
+    }
+  );
+
+  /** Approve a brain task draft */
+  app.post<{ Params: { taskId: string } }>(
+    '/api/kitz/tasks/:taskId/approve',
+    async (req, reply) => {
+      const task = orchestrator.approveDraft(req.params.taskId);
+      if (!task) return reply.code(404).send({ error: 'No draft ready for approval' });
+      // Deliver the approved output
+      const delivery = await orchestrator.deliverApproved(task.id);
+      return { taskId: task.id, status: task.status, delivered: delivery.delivered, error: delivery.error };
+    }
+  );
+
+  /** Reject a brain task draft */
+  app.post<{ Params: { taskId: string } }>(
+    '/api/kitz/tasks/:taskId/reject',
+    async (req, reply) => {
+      const task = orchestrator.rejectDraft(req.params.taskId);
+      if (!task) return reply.code(404).send({ error: 'No draft ready for rejection' });
+      return { taskId: task.id, status: task.status };
+    }
+  );
+
+  /** Provide clarification for a pending task */
+  app.post<{ Params: { taskId: string }; Body: { clarification: string } }>(
+    '/api/kitz/tasks/:taskId/clarify',
+    async (req, reply) => {
+      const task = orchestrator.provideClarification(req.params.taskId, req.body?.clarification || '');
+      if (!task) return reply.code(404).send({ error: 'No pending clarification for this task' });
+
+      // Re-process with clarification
+      orchestrator.markProcessing(task.id);
+      const hasAI = !!(process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.AI_API_KEY);
+
+      if (hasAI) {
+        void (async () => {
+          try {
+            const result = await routeWithAI(task.userMessage, kernel.tools, task.traceId, undefined, task.userId, task.originChannel);
+            orchestrator.setDraftOutput(task.id, result.response, result.toolsUsed, result.creditsConsumed);
+          } catch (err) {
+            orchestrator.setDraftOutput(task.id, `Error: ${(err as Error).message}`, [], 0);
+          }
+        })();
+      }
+
+      return { taskId: task.id, status: task.status, message: 'Clarification received, re-processing...' };
+    }
+  );
+
+  /** Get tasks nearing SLA deadline */
+  app.get('/api/kitz/tasks/sla/alerts', async () => {
+    return { tasks: orchestrator.getTasksNearingSLA() };
   });
 
   // ── SPA fallback — serve index.html for client-side routing ──

@@ -107,6 +107,8 @@ const DIRECT_EXECUTE_TOOLS = new Set([
   'image_generate',
   // PDF/document generation
   'pdf_generate',
+  // Clarification + follow-up (brain orchestrator)
+  'ask_clarification', 'schedule_followup',
 ]);
 
 // ── Draft-First Classification ──
@@ -333,7 +335,16 @@ EXECUTION RULES:
 20. For content performance: content_measure to track, content_suggestBoost to find winners, content_promote to boost.
 21. When user mentions a country or asks about tax/payments, search intelligence with rag_search first for deep context.
 22. For image generation (logos, product photos, graphics, flyers), use image_generate. Always include the image URL in your response so the user can see it.
-23. For document/report generation (proposals, reports, summaries, letters), use pdf_generate. Mention the document title in your response.${sopSection}${intelSection}`;
+23. For document/report generation (proposals, reports, summaries, letters), use pdf_generate. Mention the document title in your response.
+24. DRAFT-FIRST: All write actions (messages, CRM updates, orders, invoices) produce a DRAFT first. The user must approve before anything is sent or saved permanently.
+25. CLARIFICATION: If the request is ambiguous, missing critical details, or you need to confirm before acting — use the ask_clarification tool. Be specific about what you need. Include suggestions when possible.
+26. FOLLOW-UP: If you can provide a partial answer now but need time for a complete response, use schedule_followup to send the full answer later (within 24 hours).
+27. ALWAYS DELIVER: Even if your answer is imperfect, always provide a first draft. A partial answer is better than no answer. You can schedule a follow-up for the complete version.
+
+CHANNEL STRATEGY:
+- WhatsApp → Business operations: orders, payments, CRM, invoicing, customer service, quick lookups
+- Email → Reports, documents, campaigns, follow-up sequences, detailed analysis
+- Workspace (ChatPanel) → Full interactive workspace: advisory, content creation, analytics, strategy, deep work${sopSection}${intelSection}`;
 }
 
 // ── Execute a tool ──

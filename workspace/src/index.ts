@@ -1614,6 +1614,271 @@ app.get('/api/ops/metrics', async () => {
   };
 });
 
+/* ── JSON REST API for UI (Bearer token auth) ── */
+
+/** Extract userId from Bearer JWT or cookie session */
+function getApiUser(req: any): { userId: string; orgId: string } | null {
+  // Try Bearer token first (UI sends this)
+  const authHeader = req.headers?.authorization as string | undefined;
+  if (authHeader) {
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+    try {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        // Verify signature
+        const sigCheck = b64url(createHmac('sha256', JWT_SECRET).update(`${parts[0]}.${parts[1]}`).digest());
+        if (sigCheck === parts[2]) {
+          const payload = JSON.parse(Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString());
+          if (payload.sub && payload.exp && payload.exp > Math.floor(Date.now() / 1000)) {
+            return { userId: payload.sub, orgId: payload.org_id || '' };
+          }
+        }
+      }
+    } catch { /* fall through to cookie */ }
+  }
+  // Fall back to cookie session
+  const session = getSession(req);
+  if (session) return { userId: session.userId, orgId: session.orgId };
+  return null;
+}
+
+/** Middleware: require API auth (Bearer or cookie) */
+function requireApiAuth(req: any, reply: any): { userId: string; orgId: string } | null {
+  const user = getApiUser(req);
+  if (!user) {
+    reply.code(401).send({ error: 'AUTH_REQUIRED', message: 'Bearer token or session cookie required' });
+    return null;
+  }
+  return user;
+}
+
+/* ── Leads / CRM ── */
+
+app.get('/api/workspace/leads', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  const leads = userLeads.get(user.userId) || [];
+  return leads;
+});
+
+app.post('/api/workspace/leads', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  const body = req.body || {};
+  const lead: Lead = {
+    id: `lead_${randomUUID().slice(0, 8)}`,
+    name: body.name || '',
+    phone: body.phone || '',
+    email: body.email || '',
+    notes: body.notes || '',
+    createdAt: new Date().toISOString(),
+  };
+  const leads = userLeads.get(user.userId) || [];
+  leads.push(lead);
+  userLeads.set(user.userId, leads);
+  // Persist via MCP if configured
+  if (mcpConfigured) {
+    callMcp('create_contact', { name: lead.name, phone: lead.phone, email: lead.email }, user.userId).catch(() => {});
+  }
+  trackUsage('api.leads.create');
+  return lead;
+});
+
+app.patch('/api/workspace/leads/:id', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  const leads = userLeads.get(user.userId) || [];
+  const lead = leads.find(l => l.id === req.params.id);
+  if (!lead) return reply.code(404).send({ error: 'NOT_FOUND' });
+  const body = req.body || {};
+  if (body.name !== undefined) lead.name = body.name;
+  if (body.phone !== undefined) lead.phone = body.phone;
+  if (body.email !== undefined) lead.email = body.email;
+  if (body.stage !== undefined) (lead as any).stage = body.stage;
+  if (body.addTag) {
+    if (!(lead as any).tags) (lead as any).tags = [];
+    if (!(lead as any).tags.includes(body.addTag)) (lead as any).tags.push(body.addTag);
+  }
+  if (body.removeTag && (lead as any).tags) {
+    (lead as any).tags = (lead as any).tags.filter((t: string) => t !== body.removeTag);
+  }
+  userLeads.set(user.userId, leads);
+  return lead;
+});
+
+app.delete('/api/workspace/leads/:id', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  const leads = userLeads.get(user.userId) || [];
+  userLeads.set(user.userId, leads.filter(l => l.id !== req.params.id));
+  return { deleted: true };
+});
+
+app.post('/api/workspace/leads/:id/notes', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  const leads = userLeads.get(user.userId) || [];
+  const lead = leads.find(l => l.id === req.params.id);
+  if (!lead) return reply.code(404).send({ error: 'NOT_FOUND' });
+  const note = (req.body || {}).note || '';
+  lead.notes = lead.notes ? `${lead.notes}\n${note}` : note;
+  userLeads.set(user.userId, leads);
+  return { ok: true };
+});
+
+/* ── Orders ── */
+
+app.get('/api/workspace/orders', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  return userOrders.get(user.userId) || [];
+});
+
+app.post('/api/workspace/orders', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  const body = req.body || {};
+  const order: Order = {
+    id: `ord_${randomUUID().slice(0, 8)}`,
+    customer: body.customer || body.description || '',
+    amount: Number(body.total || body.amount || 0),
+    description: body.description || '',
+    status: body.status || 'pending',
+    createdAt: new Date().toISOString(),
+  };
+  const orders = userOrders.get(user.userId) || [];
+  orders.push(order);
+  userOrders.set(user.userId, orders);
+  if (mcpConfigured) {
+    callMcp('create_order', { customer: order.customer, amount: order.amount, description: order.description }, user.userId).catch(() => {});
+  }
+  trackUsage('api.orders.create');
+  return order;
+});
+
+/* ── Tasks ── */
+
+app.get('/api/workspace/tasks', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  return userTasks.get(user.userId) || [];
+});
+
+app.post('/api/workspace/tasks', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  const body = req.body || {};
+  const task: Task = {
+    id: `task_${randomUUID().slice(0, 8)}`,
+    title: body.title || '',
+    status: body.status || 'todo',
+    createdAt: new Date().toISOString(),
+  };
+  const tasks = userTasks.get(user.userId) || [];
+  tasks.push(task);
+  userTasks.set(user.userId, tasks);
+  if (mcpConfigured) {
+    callMcp('create_task', { title: task.title }, user.userId).catch(() => {});
+  }
+  trackUsage('api.tasks.create');
+  return task;
+});
+
+/* ── Checkout Links ── */
+
+app.get('/api/workspace/checkout-links', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  return userCheckoutLinks.get(user.userId) || [];
+});
+
+app.post('/api/workspace/checkout-links', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  const body = req.body || {};
+  const link: CheckoutLink = {
+    id: `chk_${randomUUID().slice(0, 8)}`,
+    orderId: body.orderId || '',
+    amount: Number(body.amount || 0),
+    url: `https://workspace.kitz.services/pay/${randomUUID().slice(0, 8)}`,
+    createdAt: new Date().toISOString(),
+  };
+  const links = userCheckoutLinks.get(user.userId) || [];
+  links.push(link);
+  userCheckoutLinks.set(user.userId, links);
+  trackUsage('api.checkout.create');
+  return link;
+});
+
+/* ── Products / Inventory ── */
+
+app.get('/api/workspace/products', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  return (userProducts.get(user.userId) || []).filter(p => p.is_active !== false);
+});
+
+app.post('/api/workspace/products', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  const body = req.body || {};
+  const now = new Date().toISOString();
+  const product: Product = {
+    id: `prod_${randomUUID().slice(0, 8)}`,
+    name: body.name || '',
+    description: body.description || '',
+    price: Number(body.price || 0),
+    cost: Number(body.cost || 0),
+    sku: body.sku || '',
+    stock_qty: Number(body.stock_qty || 0),
+    low_stock_threshold: Number(body.low_stock_threshold || 5),
+    category: body.category || '',
+    image_url: body.image_url || '',
+    is_active: body.is_active !== false,
+    createdAt: now,
+    updatedAt: now,
+  };
+  const products = userProducts.get(user.userId) || [];
+  products.push(product);
+  userProducts.set(user.userId, products);
+  trackUsage('api.products.create');
+  return product;
+});
+
+app.patch('/api/workspace/products/:id', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  const products = userProducts.get(user.userId) || [];
+  const product = products.find(p => p.id === req.params.id);
+  if (!product) return reply.code(404).send({ error: 'NOT_FOUND' });
+  const body = req.body || {};
+  if (body.name !== undefined) product.name = body.name;
+  if (body.description !== undefined) product.description = body.description;
+  if (body.price !== undefined) product.price = Number(body.price);
+  if (body.cost !== undefined) product.cost = Number(body.cost);
+  if (body.sku !== undefined) product.sku = body.sku;
+  if (body.stock_qty !== undefined) product.stock_qty = Number(body.stock_qty);
+  if (body.low_stock_threshold !== undefined) product.low_stock_threshold = Number(body.low_stock_threshold);
+  if (body.category !== undefined) product.category = body.category;
+  if (body.image_url !== undefined) product.image_url = body.image_url;
+  if (body.is_active !== undefined) product.is_active = body.is_active;
+  product.updatedAt = new Date().toISOString();
+  userProducts.set(user.userId, products);
+  return product;
+});
+
+app.delete('/api/workspace/products/:id', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  const products = userProducts.get(user.userId) || [];
+  const product = products.find(p => p.id === req.params.id);
+  if (!product) return reply.code(404).send({ error: 'NOT_FOUND' });
+  product.is_active = false;
+  product.updatedAt = new Date().toISOString();
+  userProducts.set(user.userId, products);
+  return { deleted: true };
+});
+
 app.get('/health', async () => health);
 
 /* ── 404 catch-all — redirect unknown routes to /start ── */

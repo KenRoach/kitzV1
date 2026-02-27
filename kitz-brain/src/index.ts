@@ -28,6 +28,38 @@ const enforcePolicy = async (action: string, traceId: string): Promise<void> => 
   }, traceId);
 };
 
+/** Post a brain task to kitz_os orchestrator for draft-first multi-channel delivery */
+async function createBrainTask(message: string, channel: 'whatsapp' | 'email' | 'web', traceId: string): Promise<void> {
+  const kitzOsUrl = process.env.KITZ_OS_URL || 'http://kitz-os:3012';
+  try {
+    const res = await fetch(`${kitzOsUrl}/api/kitz/tasks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-trace-id': traceId,
+        'x-dev-secret': process.env.DEV_TOKEN_SECRET || '',
+      },
+      body: JSON.stringify({
+        message,
+        channel,
+        user_id: 'brain-system',
+        org_id: process.env.DEFAULT_ORG_ID || '',
+        phone: process.env.CADENCE_PHONE || '',
+        email: process.env.CADENCE_EMAIL || '',
+      }),
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (res.ok) {
+      const data = await res.json() as Record<string, unknown>;
+      logRun('brain.task.created', traceId, { taskId: data.taskId, channel, status: data.status });
+    } else {
+      logRun('brain.task.error', traceId, { status: res.status });
+    }
+  } catch (err) {
+    logRun('brain.task.error', traceId, { error: (err as Error).message });
+  }
+}
+
 async function runDaily(): Promise<void> {
   const traceId = randomUUID();
   logRun('daily.start', traceId, { agent: salesAgent.name });
@@ -36,6 +68,21 @@ async function runDaily(): Promise<void> {
   logRun('daily.sales', traceId, salesReport);
 
   await enforcePolicy('messaging.send', traceId);
+
+  // Deliver daily report as a brain task (draft-first, multi-channel)
+  // WhatsApp gets a quick summary, Email gets the full report
+  await createBrainTask(
+    `Daily sales brief: ${salesReport.summary}. Warm leads: ${salesReport.warmLeads.join(', ') || 'none'}. Follow-ups drafted: ${salesReport.followUpsDrafted}.`,
+    'whatsapp',
+    traceId,
+  );
+
+  await createBrainTask(
+    `Generate a detailed daily business report. Sales data: ${JSON.stringify(salesReport)}. Include: pipeline summary, warm leads to follow up, actions taken, and recommendations for today.`,
+    'email',
+    traceId,
+  );
+
   logRun('daily.complete', traceId, { summary: salesReport.summary });
 }
 
@@ -71,6 +118,19 @@ async function runWeekly(): Promise<void> {
   } else {
     logRun('weekly.funding-blocked', traceId, 'Funding request skipped: validation or ROI threshold not met.');
   }
+
+  // Deliver weekly scorecard via email (detailed) and WhatsApp (summary)
+  await createBrainTask(
+    `Weekly scorecard: Ops: ${opsReport.summary}. Finance: ${cfoReport.summary}. ROI plan: ${roiPlan.projectedRoiMultiple}x.`,
+    'whatsapp',
+    traceId,
+  );
+
+  await createBrainTask(
+    `Generate a comprehensive weekly business scorecard. Operations: ${JSON.stringify(opsReport)}. Finance: ${JSON.stringify(cfoReport)}. Growth plan: ${JSON.stringify(roiPlan)}. Include: KPI trends, wins, blockers, and priorities for next week.`,
+    'email',
+    traceId,
+  );
 
   logRun('weekly.complete', traceId, { ops: opsReport.summary, cfo: cfoReport.summary });
 }
