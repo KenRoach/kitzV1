@@ -362,6 +362,22 @@ async function executeTool(
   return JSON.stringify({ error: `Unknown tool: ${toolName}` });
 }
 
+// ── Fast-path intent matching ──
+// For unambiguous intents, bypass the LLM and call the tool directly.
+const IMAGE_INTENT_RE = /\b(?:create|generate|make|draw|design)\b.*\b(?:image|picture|photo|logo|graphic|illustration|icon)\b/i;
+const IMAGE_INTENT_RE2 = /\b(?:image|picture|photo|logo|graphic|illustration)\b.*\b(?:of|for|about|showing|with)\b/i;
+
+function matchImageIntent(message: string): Record<string, unknown> | null {
+  if (!IMAGE_INTENT_RE.test(message) && !IMAGE_INTENT_RE2.test(message)) return null;
+  // Extract the prompt — strip the command prefix
+  const prompt = message
+    .replace(/^(?:create|generate|make|draw|design)\s+(?:an?\s+)?(?:image|picture|photo|logo|graphic|illustration|icon)\s+(?:of|for|about|showing|with)\s*/i, '')
+    .replace(/^(?:an?\s+)?(?:image|picture|photo|logo|graphic|illustration|icon)\s+(?:of|for|about|showing|with)\s*/i, '')
+    .trim();
+  // If we couldn't extract a meaningful prompt, pass the whole message
+  return { prompt: prompt.length > 5 ? prompt : message };
+}
+
 // ── Intent-based tool filtering ──
 // gpt-4o-mini can't reliably select from 170+ tools.
 // Pre-filter by intent keywords to keep tool list under ~80.
@@ -434,6 +450,24 @@ export async function routeWithAI(
 ): Promise<{ response: string; toolsUsed: string[]; creditsConsumed: number }> {
 
   cleanExpiredDrafts();
+
+  // ── Fast-path: direct tool shortcuts for high-signal intents ──
+  // Bypass the LLM entirely when the intent is unambiguous.
+  const imageShortcut = matchImageIntent(userMessage);
+  if (imageShortcut) {
+    const result = await registry.invoke('image_generate', imageShortcut, traceId) as Record<string, unknown>;
+    if (result.imageUrl) {
+      return {
+        response: `Here's your image, boss 🎨\n\n![Generated image](${result.imageUrl})\n\n${result.revisedPrompt ? `*${result.revisedPrompt}*` : ''}`,
+        toolsUsed: ['image_generate'],
+        creditsConsumed: 0,
+      };
+    }
+    if (result.error) {
+      return { response: `Couldn't generate the image: ${result.error}`, toolsUsed: ['image_generate'], creditsConsumed: 0 };
+    }
+  }
+
   const allToolDefs: ToolDef[] = registry.toOpenAITools();
   // ── Intent-based tool filtering ──
   // gpt-4o-mini struggles with 170+ tools. Pre-filter by intent for reliability.
