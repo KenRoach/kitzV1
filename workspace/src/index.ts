@@ -7,7 +7,7 @@ import {
   listLeads as dbListLeads, createLead as dbCreateLead, updateLead as dbUpdateLead, deleteLead as dbDeleteLead,
   listOrders as dbListOrders, createOrder as dbCreateOrder, updateOrder as dbUpdateOrder, deleteOrder as dbDeleteOrder,
   listTasks as dbListTasks, createTask as dbCreateTask, updateTask as dbUpdateTask, deleteTask as dbDeleteTask,
-  listCheckoutLinks as dbListCheckoutLinks, createCheckoutLink as dbCreateCheckoutLink, deleteCheckoutLink as dbDeleteCheckoutLink,
+  listCheckoutLinks as dbListCheckoutLinks, createCheckoutLink as dbCreateCheckoutLink, updateCheckoutLink as dbUpdateCheckoutLink, deleteCheckoutLink as dbDeleteCheckoutLink,
   listProducts as dbListProducts, createProduct as dbCreateProduct, updateProduct as dbUpdateProduct, deleteProduct as dbDeleteProduct,
   listPayments as dbListPayments, createPayment as dbCreatePayment, deletePayment as dbDeletePayment,
   getDashboardMetrics,
@@ -1619,6 +1619,9 @@ app.patch('/api/workspace/leads/:id', async (req: any, reply: any) => {
   if (body.phone !== undefined) updates.phone = body.phone;
   if (body.email !== undefined) updates.email = body.email;
   if (body.stage !== undefined) updates.stage = body.stage;
+  if (body.tags !== undefined) updates.tags = body.tags;
+  if (body.source !== undefined) updates.source = body.source;
+  if (body.value !== undefined) updates.value = Number(body.value);
   const row = await dbUpdateLead(user.userId, req.params.id, updates);
   if (!row) return reply.code(404).send({ error: 'NOT_FOUND' });
   return dbLeadToLead(row);
@@ -1743,6 +1746,19 @@ app.post('/api/workspace/checkout-links', async (req: any, reply: any) => {
     label: body.orderId || body.label || '', amount: Number(body.amount),
   });
   trackUsage('api.checkout.create');
+  return dbCheckoutToLink(row);
+});
+
+app.patch('/api/workspace/checkout-links/:id', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  const body = req.body || {};
+  const updates: Record<string, unknown> = {};
+  if (body.label !== undefined) updates.label = body.label;
+  if (body.amount !== undefined) updates.amount = Number(body.amount);
+  if (body.active !== undefined) updates.active = body.active;
+  const row = await dbUpdateCheckoutLink(user.userId, req.params.id, updates);
+  if (!row) return reply.code(404).send({ error: 'NOT_FOUND' });
   return dbCheckoutToLink(row);
 });
 

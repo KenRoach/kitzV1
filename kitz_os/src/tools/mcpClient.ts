@@ -27,11 +27,15 @@ async function restFetch(
   path: string,
   userId: string,
   body?: Record<string, unknown>,
+  traceId?: string,
 ): Promise<unknown> {
   const headers: Record<string, string> = {
     'Authorization': `Bearer ${JWT_SECRET}`,
     'x-user-id': userId,
   };
+  if (traceId) {
+    headers['x-trace-id'] = traceId;
+  }
   const opts: RequestInit = {
     method,
     headers,
@@ -57,14 +61,15 @@ async function tryRestRoute(
   toolName: string,
   args: Record<string, unknown>,
   userId: string,
+  traceId?: string,
 ): Promise<unknown | null> {
   switch (toolName) {
     // ── Contacts/Leads ──
     case 'list_contacts':
-      return restFetch('GET', '/api/workspace/leads', userId);
+      return restFetch('GET', '/api/workspace/leads', userId, undefined, traceId);
 
     case 'get_contact': {
-      const rows = await restFetch('GET', '/api/workspace/leads', userId) as any[];
+      const rows = await restFetch('GET', '/api/workspace/leads', userId, undefined, traceId) as any[];
       if (!Array.isArray(rows)) return rows;
       const contact = rows.find((r: any) => r.id === args.contact_id);
       return contact || { error: 'Contact not found' };
@@ -76,7 +81,7 @@ async function tryRestRoute(
         phone: args.phone as string || '',
         email: args.email as string || '',
         notes: args.notes as string || '',
-      });
+      }, traceId);
 
     case 'update_contact':
       if (!args.contact_id) return { error: 'contact_id required' };
@@ -86,14 +91,16 @@ async function tryRestRoute(
         ...(args.email !== undefined && { email: args.email }),
         ...(args.status !== undefined && { stage: args.status }),
         ...(args.tags !== undefined && { tags: args.tags }),
-      });
+        ...(args.source !== undefined && { source: args.source }),
+        ...(args.value !== undefined && { value: args.value }),
+      }, traceId);
 
     // ── Orders ──
     case 'list_orders':
-      return restFetch('GET', '/api/workspace/orders', userId);
+      return restFetch('GET', '/api/workspace/orders', userId, undefined, traceId);
 
     case 'get_order': {
-      const orders = await restFetch('GET', '/api/workspace/orders', userId) as any[];
+      const orders = await restFetch('GET', '/api/workspace/orders', userId, undefined, traceId) as any[];
       if (!Array.isArray(orders)) return orders;
       const order = orders.find((o: any) => o.id === args.order_id);
       return order || { error: 'Order not found' };
@@ -104,7 +111,7 @@ async function tryRestRoute(
         description: args.notes as string || '',
         total: Number(args.total || 0),
         status: args.payment_status as string || 'pending',
-      });
+      }, traceId);
 
     case 'update_order': {
       if (!args.order_id) return { error: 'order_id required' };
@@ -112,40 +119,80 @@ async function tryRestRoute(
       if (args.payment_status) orderUpdates.status = args.payment_status;
       if (args.fulfillment_status) orderUpdates.status = args.fulfillment_status;
       if (args.notes) orderUpdates.description = args.notes;
-      return restFetch('PATCH', `/api/workspace/orders/${args.order_id}`, userId, orderUpdates);
+      return restFetch('PATCH', `/api/workspace/orders/${args.order_id}`, userId, orderUpdates, traceId);
     }
 
     // ── Tasks ──
     case 'list_tasks':
-      return restFetch('GET', '/api/workspace/tasks', userId);
+      return restFetch('GET', '/api/workspace/tasks', userId, undefined, traceId);
 
     case 'create_task':
       return restFetch('POST', '/api/workspace/tasks', userId, {
         title: args.title as string || args.description as string || '',
-      });
+      }, traceId);
 
     case 'update_task': {
       if (!args.task_id) return { error: 'task_id required' };
       const taskUpdates: Record<string, unknown> = {};
       if (args.status === 'done' || args.done === true) taskUpdates.done = true;
       if (args.title) taskUpdates.title = args.title;
-      return restFetch('PATCH', `/api/workspace/tasks/${args.task_id}`, userId, taskUpdates);
+      return restFetch('PATCH', `/api/workspace/tasks/${args.task_id}`, userId, taskUpdates, traceId);
     }
 
     // ── Checkout Links / Storefronts ──
     case 'list_storefronts':
-      return restFetch('GET', '/api/workspace/checkout-links', userId);
+      return restFetch('GET', '/api/workspace/checkout-links', userId, undefined, traceId);
 
     case 'create_storefront':
       return restFetch('POST', '/api/workspace/checkout-links', userId, {
         orderId: args.title as string || '',
         amount: Number(args.price || args.amount || 0),
         label: args.title as string || '',
-      });
+      }, traceId);
+
+    case 'update_storefront': {
+      if (!args.storefront_id) return { error: 'storefront_id required' };
+      const sfUpdates: Record<string, unknown> = {};
+      if (args.title !== undefined) sfUpdates.label = args.title;
+      if (args.description !== undefined) sfUpdates.label = args.description;
+      if (args.price !== undefined) sfUpdates.amount = Number(args.price);
+      return restFetch('PATCH', `/api/workspace/checkout-links/${args.storefront_id}`, userId, sfUpdates, traceId);
+    }
+
+    case 'delete_storefront':
+      if (!args.storefront_id) return { error: 'storefront_id required' };
+      return restFetch('DELETE', `/api/workspace/checkout-links/${args.storefront_id}`, userId, undefined, traceId);
+
+    case 'mark_storefront_paid': {
+      if (!args.storefront_id) return { error: 'storefront_id required' };
+      // Mark the checkout link as paid and create a payment record
+      const [patchResult] = await Promise.all([
+        restFetch('PATCH', `/api/workspace/checkout-links/${args.storefront_id}`, userId, { active: false }, traceId),
+      ]);
+      // Attempt to fetch the link to create a matching payment
+      const links = await restFetch('GET', '/api/workspace/checkout-links', userId, undefined, traceId) as any[];
+      const link = Array.isArray(links) ? links.find((l: any) => l.id === args.storefront_id) : null;
+      if (link) {
+        await restFetch('POST', '/api/workspace/payments', userId, {
+          type: 'incoming',
+          description: `Storefront payment: ${link.label || link.id}`,
+          amount: Number(link.amount || 0),
+          status: 'completed',
+          method: 'storefront',
+        }, traceId);
+      }
+      return { ok: true, message: 'Storefront marked as paid', storefront_id: args.storefront_id, ...patchResult as object };
+    }
+
+    case 'send_storefront': {
+      if (!args.storefront_id) return { error: 'storefront_id required' };
+      // Mark as sent (we don't actually send — draft-first). Return the link URL.
+      return { ok: true, message: 'Storefront link ready to send (draft-first)', storefront_id: args.storefront_id };
+    }
 
     // ── Products ──
     case 'list_products':
-      return restFetch('GET', '/api/workspace/products', userId);
+      return restFetch('GET', '/api/workspace/products', userId, undefined, traceId);
 
     case 'create_product':
       return restFetch('POST', '/api/workspace/products', userId, {
@@ -156,7 +203,9 @@ async function tryRestRoute(
         stock_qty: Number(args.stock_qty || 0),
         low_stock_threshold: Number(args.low_stock_threshold || 5),
         category: args.category as string || '',
-      });
+        description: args.description as string || '',
+        image_url: args.image_url as string || '',
+      }, traceId);
 
     case 'update_product': {
       if (!args.product_id) return { error: 'product_id required' };
@@ -169,12 +218,18 @@ async function tryRestRoute(
       if (args.low_stock_threshold !== undefined) updates.low_stock_threshold = Number(args.low_stock_threshold);
       if (args.category !== undefined) updates.category = args.category;
       if (args.is_active !== undefined) updates.is_active = args.is_active;
-      return restFetch('PATCH', `/api/workspace/products/${args.product_id}`, userId, updates);
+      if (args.description !== undefined) updates.description = args.description;
+      if (args.image_url !== undefined) updates.image_url = args.image_url;
+      return restFetch('PATCH', `/api/workspace/products/${args.product_id}`, userId, updates, traceId);
     }
+
+    case 'delete_product':
+      if (!args.product_id) return { error: 'product_id required' };
+      return restFetch('DELETE', `/api/workspace/products/${args.product_id}`, userId, undefined, traceId);
 
     // ── Payments ──
     case 'list_payments':
-      return restFetch('GET', '/api/workspace/payments', userId);
+      return restFetch('GET', '/api/workspace/payments', userId, undefined, traceId);
 
     case 'create_payment':
       return restFetch('POST', '/api/workspace/payments', userId, {
@@ -183,14 +238,14 @@ async function tryRestRoute(
         amount: Number(args.amount || 0),
         status: args.status as string || 'pending',
         method: args.method as string || 'manual',
-      });
+      }, traceId);
 
     // ── Business Summary (computed) ──
     case 'business_summary': {
       const [leads, orders, payments] = await Promise.all([
-        restFetch('GET', '/api/workspace/leads', userId),
-        restFetch('GET', '/api/workspace/orders', userId),
-        restFetch('GET', '/api/workspace/payments', userId),
+        restFetch('GET', '/api/workspace/leads', userId, undefined, traceId),
+        restFetch('GET', '/api/workspace/orders', userId, undefined, traceId),
+        restFetch('GET', '/api/workspace/payments', userId, undefined, traceId),
       ]);
       const leadsArr = Array.isArray(leads) ? leads : [];
       const ordersArr = Array.isArray(orders) ? orders : [];
@@ -210,23 +265,23 @@ async function tryRestRoute(
     // ── Delete operations ──
     case 'delete_order':
       if (!args.order_id) return { error: 'order_id required' };
-      return restFetch('DELETE', `/api/workspace/orders/${args.order_id}`, userId);
+      return restFetch('DELETE', `/api/workspace/orders/${args.order_id}`, userId, undefined, traceId);
 
     case 'delete_task':
       if (!args.task_id) return { error: 'task_id required' };
-      return restFetch('DELETE', `/api/workspace/tasks/${args.task_id}`, userId);
+      return restFetch('DELETE', `/api/workspace/tasks/${args.task_id}`, userId, undefined, traceId);
 
     case 'delete_checkout_link':
       if (!args.link_id) return { error: 'link_id required' };
-      return restFetch('DELETE', `/api/workspace/checkout-links/${args.link_id}`, userId);
+      return restFetch('DELETE', `/api/workspace/checkout-links/${args.link_id}`, userId, undefined, traceId);
 
     case 'delete_payment':
       if (!args.payment_id) return { error: 'payment_id required' };
-      return restFetch('DELETE', `/api/workspace/payments/${args.payment_id}`, userId);
+      return restFetch('DELETE', `/api/workspace/payments/${args.payment_id}`, userId, undefined, traceId);
 
     // ── Dashboard Metrics ──
     case 'dashboard_metrics':
-      return restFetch('GET', '/api/workspace/dashboard', userId);
+      return restFetch('GET', '/api/workspace/dashboard', userId, undefined, traceId);
 
     // ── Feedback ──
     case 'submit_feedback':
@@ -259,7 +314,7 @@ export async function callWorkspaceMcp(
 
   // ── Try workspace REST API first ──
   try {
-    const restResult = await tryRestRoute(toolName, args, effectiveUserId);
+    const restResult = await tryRestRoute(toolName, args, effectiveUserId, traceId);
     if (restResult !== null) {
       return restResult;
     }

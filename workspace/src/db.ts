@@ -340,6 +340,18 @@ export async function createCheckoutLink(userId: string, data: Partial<DbCheckou
   return link;
 }
 
+export async function updateCheckoutLink(userId: string, id: string, updates: Record<string, unknown>): Promise<DbCheckoutLink | null> {
+  if (hasDB) {
+    const row = await supaPatch<DbCheckoutLink>('checkout_links', id, updates);
+    if (row) return row;
+  }
+  const arr = memCheckoutLinks.get(userId) || [];
+  const link = arr.find(l => l.id === id);
+  if (!link) return null;
+  Object.assign(link, updates);
+  return link;
+}
+
 export async function deleteCheckoutLink(userId: string, id: string): Promise<boolean> {
   if (hasDB) {
     const ok = await supaDelete('checkout_links', id);
