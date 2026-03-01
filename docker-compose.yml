@@ -387,8 +387,12 @@ services:
       WORKSPACE_MCP_KEY: ${WORKSPACE_MCP_KEY:-}
       ELEVENLABS_AGENT_ID: ${ELEVENLABS_AGENT_ID:-}
     depends_on:
-      - kitz-gateway
-      - kitz-whatsapp-connector
+      migrate:
+        condition: service_completed_successfully
+      kitz-gateway:
+        condition: service_healthy
+      kitz-whatsapp-connector:
+        condition: service_started
 
   # ── Comms API (port 3013) ──
   comms-api:
