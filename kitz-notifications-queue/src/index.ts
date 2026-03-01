@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 import { randomUUID } from 'node:crypto';
-import type { EventEnvelope } from 'kitz-schemas';
+import type { EventEnvelope, StandardError } from 'kitz-schemas';
 import { persistJob, updateJobStatus, getJobById, getMetrics } from './db.js';
 
 export const health = { status: 'ok' };
@@ -66,7 +66,8 @@ app.addHook('onRequest', async (req, reply) => {
     const secret = req.headers['x-service-secret'] as string | undefined;
     const devSecret = req.headers['x-dev-secret'] as string | undefined;
     if (secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
-      return reply.code(401).send({ error: 'Unauthorized: missing or invalid service secret' });
+      const traceId = String(req.headers['x-trace-id'] || randomUUID());
+      return reply.code(401).send({ code: 'AUTH_REQUIRED', message: 'Missing or invalid service secret', traceId });
     }
   }
 });
@@ -127,13 +128,20 @@ const processJob = async (job: NotificationJob): Promise<boolean> => {
   return deliverNotification(job);
 };
 
-// ── Health ──
-app.get('/health', async () => ({
-  status: 'ok',
-  service: 'kitz-notifications-queue',
-  queued: queue.length,
-  deadLetter: deadLetter.length,
-}));
+// ── Health — verify connectors are reachable ──
+app.get('/health', async () => {
+  const checks: Record<string, string> = { service: 'ok' };
+  try {
+    const res = await fetch(`${WA_CONNECTOR_URL.replace('/send', '')}/health`, { signal: AbortSignal.timeout(3000) });
+    checks.whatsapp = res.ok ? 'ok' : 'unreachable';
+  } catch { checks.whatsapp = 'unreachable'; }
+  try {
+    const res = await fetch(`${EMAIL_CONNECTOR_URL.replace('/send', '')}/health`, { signal: AbortSignal.timeout(3000) });
+    checks.email = res.ok ? 'ok' : 'unreachable';
+  } catch { checks.email = 'unreachable'; }
+  const allOk = Object.values(checks).every(v => v === 'ok');
+  return { status: allOk ? 'ok' : 'degraded', service: 'kitz-notifications-queue', checks, queued: queue.length, deadLetter: deadLetter.length };
+});
 
 // ── Get job by ID ──
 app.get('/job/:id', async (req: any, reply) => {

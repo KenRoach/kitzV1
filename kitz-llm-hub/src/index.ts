@@ -5,7 +5,7 @@
 
 import Fastify from 'fastify';
 import { randomUUID } from 'node:crypto';
-import type { LLMCompletionRequest, LLMCompletionResponse } from 'kitz-schemas';
+import type { LLMCompletionRequest, LLMCompletionResponse, StandardError } from 'kitz-schemas';
 import { routeRequest, inferTier } from './router.js';
 import { redact } from './redaction.js';
 import { callClaude } from './providers/anthropic_claude.js';
@@ -27,7 +27,8 @@ app.addHook('onRequest', async (req, reply) => {
     const secret = req.headers['x-service-secret'] as string | undefined;
     const devSecret = req.headers['x-dev-secret'] as string | undefined;
     if (secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
-      return reply.code(401).send({ error: 'Unauthorized: missing or invalid service secret' });
+      const traceId = String(req.headers['x-trace-id'] || randomUUID());
+      return reply.code(401).send({ code: 'AUTH_REQUIRED', message: 'Missing or invalid service secret', traceId } as StandardError);
     }
   }
 });
@@ -125,7 +126,13 @@ app.post('/complete/tools', async (req: any) => {
   return complete(request);
 });
 
-app.get('/health', async () => ({ status: 'ok', service: 'kitz-llm-hub' }));
+app.get('/health', async () => {
+  const checks: Record<string, string> = { service: 'ok' };
+  checks.claude = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY ? 'configured' : 'missing';
+  checks.openai = process.env.OPENAI_API_KEY || process.env.AI_API_KEY ? 'configured' : 'missing';
+  const allOk = checks.claude !== 'missing' || checks.openai !== 'missing';
+  return { status: allOk ? 'ok' : 'degraded', service: 'kitz-llm-hub', checks };
+});
 
 app.get('/models', async () => ({
   providers: {

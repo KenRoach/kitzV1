@@ -17,15 +17,25 @@ app.addHook('onRequest', async (req, reply) => {
     const secret = req.headers['x-service-secret'] as string | undefined
     const devSecret = req.headers['x-dev-secret'] as string | undefined
     if (secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
-      return reply.code(401).send({ error: 'Unauthorized: missing or invalid service secret' })
+      const traceId = String(req.headers['x-trace-id'] || randomUUID())
+      return reply.code(401).send({ code: 'AUTH_REQUIRED', message: 'Missing or invalid service secret', traceId })
     }
   }
 })
 
 const EMAIL_CONNECTOR_URL = process.env.EMAIL_CONNECTOR_URL || 'http://kitz-email-connector:3007'
 
-// ── Health ──
-app.get('/health', async () => ({ status: 'ok', service: 'comms-api' }))
+// ── Health — verify downstream connectors ──
+app.get('/health', async () => {
+  const checks: Record<string, string> = { service: 'ok' }
+  try {
+    const res = await fetch(`${EMAIL_CONNECTOR_URL.replace('/outbound/send', '')}/health`, { signal: AbortSignal.timeout(3000) })
+    checks.email = res.ok ? 'ok' : 'unreachable'
+  } catch { checks.email = 'unreachable' }
+  checks.twilio = process.env.TWILIO_ACCOUNT_SID ? 'configured' : 'missing'
+  const allOk = Object.values(checks).every(v => v === 'ok' || v === 'configured')
+  return { status: allOk ? 'ok' : 'degraded', service: 'comms-api', checks }
+})
 
 // ── Voice (Twilio TTS call) ──
 app.post<{ Body: { to: string; message: string; channel?: string } }>('/talk', async (req, reply) => {

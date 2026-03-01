@@ -1,4 +1,5 @@
 import Fastify from 'fastify'
+import { randomUUID } from 'node:crypto'
 import { insertLog, updateLogStatus, queryLogs, getMemLogs, type LogEntry } from './db.js'
 
 const app = Fastify({ logger: true })
@@ -15,17 +16,17 @@ app.addHook('onRequest', async (req, reply) => {
     const secret = req.headers['x-service-secret'] as string | undefined
     const devSecret = req.headers['x-dev-secret'] as string | undefined
     if (secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
-      return reply.code(401).send({ error: 'Unauthorized: missing or invalid service secret' })
+      const traceId = String(req.headers['x-trace-id'] || randomUUID())
+      return reply.code(401).send({ code: 'AUTH_REQUIRED', message: 'Missing or invalid service secret', traceId })
     }
   }
 })
 
-// ── Health ──
-app.get('/health', async () => ({
-  status: 'ok',
-  service: 'logs-api',
-  entries: getMemLogs().length,
-}))
+// ── Health — report log store status ──
+app.get('/health', async () => {
+  const entries = getMemLogs().length
+  return { status: 'ok', service: 'logs-api', checks: { store: 'in-memory', entries: String(entries) } }
+})
 
 // ── Ingest a new log entry ──
 app.post<{ Body: Omit<LogEntry, 'id'> }>('/logs', async (req, reply) => {

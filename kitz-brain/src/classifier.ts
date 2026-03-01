@@ -7,6 +7,9 @@
  */
 
 import { llmHubClient } from './llm/hubClient.js';
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('brain-classifier');
 
 export type Strategy = 'direct_tool' | 'single_agent' | 'multi_agent' | 'swarm' | 'clarify';
 
@@ -201,7 +204,7 @@ export async function classify(req: ClassifyRequest): Promise<BrainDecision> {
     // Parse JSON from LLM response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      console.log(JSON.stringify({ ts: new Date().toISOString(), phase: 'classify.parse_fail', traceId, text: text.slice(0, 200) }));
+      log.warn({ phase: 'classify.parse_fail', traceId, text: text.slice(0, 200) });
       return keywordFallback(message, traceId);
     }
 
@@ -225,12 +228,7 @@ export async function classify(req: ClassifyRequest): Promise<BrainDecision> {
       traceId,
     };
   } catch (err) {
-    console.log(JSON.stringify({
-      ts: new Date().toISOString(),
-      phase: 'classify.error',
-      traceId,
-      error: (err as Error).message,
-    }));
+    log.error({ phase: 'classify.error', traceId, error: (err as Error).message });
     return keywordFallback(message, traceId);
   }
 }

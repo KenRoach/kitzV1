@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 import { randomUUID, createHmac, timingSafeEqual } from 'node:crypto';
-import type { AIBatteryLedgerEntry, CheckoutSession, PaymentWebhookEvent } from 'kitz-schemas';
+import type { AIBatteryLedgerEntry, CheckoutSession, PaymentWebhookEvent, StandardError } from 'kitz-schemas';
 
 export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
@@ -68,7 +68,8 @@ app.addHook('onRequest', async (req, reply) => {
     const secret = req.headers['x-service-secret'] as string | undefined;
     const devSecret = req.headers['x-dev-secret'] as string | undefined;
     if (secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
-      return reply.code(401).send({ error: 'Unauthorized: missing or invalid service secret' });
+      const traceId = String(req.headers['x-trace-id'] || randomUUID());
+      return reply.code(401).send({ code: 'AUTH_REQUIRED', message: 'Missing or invalid service secret', traceId });
     }
   }
 });
@@ -110,8 +111,16 @@ app.post('/checkout-session', async (req: any, reply) => {
   return { sessionId, provider, session };
 });
 
-// Health check
-app.get('/health', async () => ({ status: 'ok', service: 'kitz-payments' }));
+// Health check — verify webhook secrets are configured
+app.get('/health', async () => {
+  const checks: Record<string, string> = { service: 'ok' };
+  checks.stripe = STRIPE_WEBHOOK_SECRET ? 'configured' : 'missing';
+  checks.yappy = YAPPY_WEBHOOK_SECRET ? 'configured' : 'missing';
+  checks.bac = BAC_WEBHOOK_SECRET ? 'configured' : 'missing';
+  checks.ledgerEntries = String(ledger.length);
+  const allOk = checks.stripe !== 'missing';
+  return { status: allOk ? 'ok' : 'degraded', service: 'kitz-payments', checks };
+});
 
 // ── Helper: log webhook + record ledger entry ──
 function recordWebhook(provider: string, eventType: string, orgId: string, traceId: string): void {

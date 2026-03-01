@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import { randomUUID } from 'node:crypto';
+import type { StandardError } from 'kitz-schemas';
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { runCompliancePipeline } from './compliance-agent/run.js';
@@ -38,12 +39,17 @@ export const createApp = () => {
       const secret = req.headers['x-service-secret'] as string | undefined;
       const devSecret = req.headers['x-dev-secret'] as string | undefined;
       if (secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
-        return reply.code(401).send({ error: 'Unauthorized: missing or invalid service secret' });
+        const traceId = String(req.headers['x-trace-id'] || randomUUID());
+        return reply.code(401).send({ code: 'AUTH_REQUIRED', message: 'Missing or invalid service secret', traceId } as StandardError);
       }
     }
   });
 
-  app.get('/health', async () => health);
+  app.get('/health', async () => {
+    const checks: Record<string, string> = { service: 'ok' };
+    checks.elevenlabs = ELEVENLABS_AGENT_ID ? 'configured' : 'missing';
+    return { status: 'ok', service: 'kitz-services', checks };
+  });
 
   app.get('/', async () => ({
     service: 'kitz-services',

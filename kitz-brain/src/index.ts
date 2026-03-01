@@ -240,12 +240,22 @@ server.addHook('onRequest', async (req, reply) => {
     const secret = req.headers['x-service-secret'] as string | undefined;
     const devSecret = req.headers['x-dev-secret'] as string | undefined;
     if (secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
-      return reply.code(401).send({ error: 'Unauthorized: missing or invalid service secret' });
+      const traceId = String(req.headers['x-trace-id'] || randomUUID());
+      return reply.code(401).send({ code: 'AUTH_REQUIRED', message: 'Missing or invalid service secret', traceId });
     }
   }
 });
 
-server.get('/health', async () => ({ status: 'ok', service: 'kitz-brain' }));
+server.get('/health', async () => {
+  const checks: Record<string, string> = { service: 'ok' };
+  const kitzOsUrl = process.env.KITZ_OS_URL || 'http://kitz-os:3012';
+  try {
+    const res = await fetch(`${kitzOsUrl}/health`, { signal: AbortSignal.timeout(3000) });
+    checks.kitzOs = res.ok ? 'ok' : 'unreachable';
+  } catch { checks.kitzOs = 'unreachable'; }
+  const allOk = Object.values(checks).every(v => v === 'ok');
+  return { status: allOk ? 'ok' : 'degraded', service: 'kitz-brain', checks };
+});
 
 server.post<{ Body: ClassifyRequest }>('/decide', async (req, reply) => {
   const { message, channel, userId, traceId, chatHistory, mediaContext } = req.body || {};
