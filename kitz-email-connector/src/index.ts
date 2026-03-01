@@ -279,10 +279,10 @@ app.get('/drafts/:token', async (req: any, reply) => {
 async function boot() {
   const port = Number(process.env.PORT || 3007);
   await app.listen({ port, host: '0.0.0.0' });
-  console.log(`[email-connector] REST API listening on port ${port}`);
+  app.log.info(`email-connector REST API listening on port ${port}`);
 }
 
 boot().catch((err) => {
-  console.error('[email-connector] Boot failed:', err);
+  app.log.error({ err }, 'email-connector boot failed');
   process.exit(1);
 });

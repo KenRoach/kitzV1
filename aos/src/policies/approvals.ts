@@ -23,12 +23,12 @@ export function approvalsPolicy(event: AOSEvent): void {
 
   // Log high-severity events
   if (event.severity === 'critical') {
-    console.log(JSON.stringify({
+    process.stdout.write(JSON.stringify({
       ts: new Date().toISOString(),
       module: 'aos-policy',
       event: 'critical_event',
       type: event.type,
       source: event.source,
-    }));
+    }) + '\n');
   }
 }

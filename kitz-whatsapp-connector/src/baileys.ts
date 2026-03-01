@@ -7,6 +7,9 @@
  */
 
 import { sessionManager } from './sessions.js';
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('baileys');
 
 // ── Legacy API: connection status (aggregate) ──
 export function getConnectionStatus() {
@@ -29,7 +32,7 @@ export async function sendWhatsAppMessage(jid: string, text: string): Promise<bo
       return sessionManager.sendMessage(s.userId, jid, text);
     }
   }
-  console.warn('[baileys] Cannot send — no connected sessions');
+  log.warn('Cannot send — no connected sessions');
   return false;
 }
 
@@ -45,7 +48,7 @@ export async function sendWhatsAppAudio(
       return sessionManager.sendAudio(s.userId, jid, audioBase64, mimeType);
     }
   }
-  console.warn('[baileys] Cannot send audio — no connected sessions');
+  log.warn('Cannot send audio — no connected sessions');
   return false;
 }
 

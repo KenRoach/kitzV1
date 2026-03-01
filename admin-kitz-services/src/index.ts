@@ -14,7 +14,7 @@ const PAYMENTS_URL = process.env.PAYMENTS_URL || 'http://localhost:3005';
 const NOTIFICATIONS_URL = process.env.NOTIFICATIONS_URL || 'http://localhost:3008';
 const DEV_TOKEN_SECRET = process.env.DEV_TOKEN_SECRET || '';
 if (!DEV_TOKEN_SECRET) {
-  console.error('[admin] FATAL: DEV_TOKEN_SECRET must be set. Refusing to start with no secret.');
+  process.stderr.write('[admin] FATAL: DEV_TOKEN_SECRET must be set. Refusing to start with no secret.\n');
   process.exit(1);
 }
 const ADMIN_COOKIE = 'kitz_admin';

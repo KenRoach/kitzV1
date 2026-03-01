@@ -1,5 +1,8 @@
 import { createAOS } from '../index.js';
 
+const print = (msg: string) => process.stdout.write(msg + '\n');
+const printErr = (msg: string) => process.stderr.write(msg + '\n');
+
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
   const aos = createAOS();
@@ -12,7 +15,7 @@ async function main(): Promise<void> {
       severity: 'medium',
       payload: { note: 'simulated' }
     });
-    console.log(`Published event: ${event.type} (${event.id})`);
+    print(`Published event: ${event.type} (${event.id})`);
     return;
   }
 
@@ -52,21 +55,21 @@ async function main(): Promise<void> {
     });
     aos.store.appendArtifact({ kind: 'outcome', data: outcome });
 
-    console.log('Sample ledger artifacts created.');
+    print('Sample ledger artifacts created.');
     return;
   }
 
   if (command === 'digest') {
     await aos.networkingBot.publishOrgDigest();
     const lastEvent = aos.store.listEvents().at(-1);
-    console.log('Digest published:', JSON.stringify(lastEvent, null, 2));
+    print('Digest published: ' + JSON.stringify(lastEvent, null, 2));
     return;
   }
 
-  console.log('Usage: node aos/run simulate-event [EVENT_TYPE] | create-sample-ledger | digest');
+  print('Usage: node aos/run simulate-event [EVENT_TYPE] | create-sample-ledger | digest');
 }
 
 main().catch((error) => {
-  console.error(error);
+  printErr(String(error));
   process.exit(1);
 });

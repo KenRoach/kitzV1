@@ -7,14 +7,16 @@
 import { Client } from 'pg';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { createSubsystemLogger } from '../src/logging.js';
 
+const log = createSubsystemLogger('migrations');
 const DATABASE_URL = process.env.DATABASE_URL;
 
 async function runMigrations(): Promise<void> {
-  console.log('[migrations] Starting migration runner...');
+  log.info('Starting migration runner...');
 
   if (!DATABASE_URL) {
-    console.log('[migrations] No DATABASE_URL set — skipping migrations.');
+    log.info('No DATABASE_URL set — skipping migrations.');
     return;
   }
 
@@ -22,7 +24,7 @@ async function runMigrations(): Promise<void> {
 
   try {
     await client.connect();
-    console.log('[migrations] Connected to database.');
+    log.info('Connected to database.');
 
     // Create tracking table
     await client.query(`
@@ -41,12 +43,12 @@ async function runMigrations(): Promise<void> {
         .filter(f => f.endsWith('.sql'))
         .sort();
     } catch {
-      console.warn(`[migrations] Could not read ${migrationsDir} — no migrations to run.`);
+      log.warn(`Could not read ${migrationsDir} — no migrations to run.`);
       return;
     }
 
     if (files.length === 0) {
-      console.log('[migrations] No .sql files found.');
+      log.info('No .sql files found.');
       return;
     }
 
@@ -57,33 +59,33 @@ async function runMigrations(): Promise<void> {
     let count = 0;
     for (const file of files) {
       if (appliedSet.has(file)) {
-        console.log(`[migrations] Skipping ${file} (already applied)`);
+        log.info(`Skipping ${file} (already applied)`);
         continue;
       }
 
       const sql = readFileSync(join(migrationsDir, file), 'utf-8').trim();
       if (!sql || sql.startsWith('-- TODO')) {
-        console.log(`[migrations] Skipping ${file} (empty/TODO)`);
+        log.info(`Skipping ${file} (empty/TODO)`);
         // Mark as applied so we don't check again
         await client.query('INSERT INTO _migrations (filename) VALUES ($1) ON CONFLICT DO NOTHING', [file]);
         continue;
       }
 
-      console.log(`[migrations] Applying ${file}...`);
+      log.info(`Applying ${file}...`);
       try {
         await client.query(sql);
         await client.query('INSERT INTO _migrations (filename) VALUES ($1)', [file]);
-        console.log(`[migrations] ✓ ${file}`);
+        log.info(`Applied ${file}`);
         count++;
       } catch (err) {
-        console.error(`[migrations] ✗ ${file}:`, (err as Error).message);
+        log.error(`Failed ${file}: ${(err as Error).message}`);
         // Don't abort — IF NOT EXISTS means most failures are non-fatal
       }
     }
 
-    console.log(`[migrations] Done. ${count} new migration(s) applied.`);
+    log.info(`Done. ${count} new migration(s) applied.`);
   } catch (err) {
-    console.error('[migrations] Fatal:', (err as Error).message);
+    log.error(`Fatal: ${(err as Error).message}`);
     process.exit(1);
   } finally {
     await client.end().catch(() => {});
@@ -91,6 +93,6 @@ async function runMigrations(): Promise<void> {
 }
 
 runMigrations().catch(err => {
-  console.error('[migrations] Fatal:', err);
+  log.error(`Fatal: ${err}`);
   process.exit(1);
 });

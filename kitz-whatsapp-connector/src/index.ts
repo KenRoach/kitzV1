@@ -623,14 +623,14 @@ async function boot() {
   // 1. Start Fastify REST API
   const port = Number(process.env.PORT || 3006);
   await app.listen({ port, host: '0.0.0.0' });
-  console.log('[connector] REST API listening on port ' + port);
+  app.log.info(`connector REST API listening on port ${port}`);
 
   // 2. Restore existing WhatsApp sessions
   try {
     await startBaileys();
   } catch (err) {
-    console.error('[connector] Session restore failed:', (err as Error).message);
-    console.error('[connector] REST API is still running — users can connect via /whatsapp/login');
+    app.log.error({ err: (err as Error).message }, 'connector session restore failed');
+    app.log.warn('connector REST API is still running — users can connect via /whatsapp/login');
   }
 }
 

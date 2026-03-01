@@ -2438,7 +2438,7 @@ async function handleInput(input: string): Promise<string> {
     case 'clear': process.stdout.write('\x1B[2J\x1B[H'); return ''
     case 'help': case '?': return cmdHelp()
     case 'quit': case 'exit': case 'q':
-      console.log(dim('\n  👋 KITZ out. Keep building.\n'))
+      process.stdout.write(dim('\n  👋 KITZ out. Keep building.\n') + '\n')
       process.exit(0)
 
     // Default: chat with smart hints
@@ -2465,12 +2465,11 @@ async function main() {
 
   // Clear and show boot screen
   process.stdout.write('\x1B[2J\x1B[H')
-  console.log(renderBootScreen())
+  process.stdout.write(renderBootScreen() + '\n')
 
   // Show preview server status in boot
   if (previewRunning) {
-    console.log(`  ${chalk.green('●')} Preview server: ${chalk.cyan.underline(`http://localhost:${PREVIEW_PORT}`)}`)
-    console.log('')
+    process.stdout.write(`  ${chalk.green('●')} Preview server: ${chalk.cyan.underline(`http://localhost:${PREVIEW_PORT}`)}\n\n`)
   }
 
   // Start REPL
@@ -2491,26 +2490,26 @@ async function main() {
 
   rl.on('line', async (input) => {
     const output = await handleInput(input)
-    if (output) console.log(output)
+    if (output) process.stdout.write(output + '\n')
     rl.setPrompt(getPrompt()) // update prompt in case mode changed
     rl.prompt()
   })
 
   rl.on('close', () => {
     stopPreviewServer()
-    console.log(dim('\n  👋 KITZ out. Keep building.\n'))
+    process.stdout.write(dim('\n  👋 KITZ out. Keep building.\n') + '\n')
     process.exit(0)
   })
 
   // Graceful shutdown
   process.on('SIGINT', () => {
     stopPreviewServer()
-    console.log(dim('\n  👋 KITZ out. Keep building.\n'))
+    process.stdout.write(dim('\n  👋 KITZ out. Keep building.\n') + '\n')
     process.exit(0)
   })
 }
 
 main().catch((err) => {
-  console.error(chalk.red(`\n  Boot failed: ${err.message}\n`))
+  process.stderr.write(chalk.red(`\n  Boot failed: ${err.message}\n`) + '\n')
   process.exit(1)
 })

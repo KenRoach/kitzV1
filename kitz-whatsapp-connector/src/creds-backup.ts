@@ -8,6 +8,9 @@
 
 import fsSync from 'node:fs';
 import { join } from 'node:path';
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('creds-backup');
 
 function resolveCredsPath(authDir: string): string {
   return join(authDir, 'creds.json');
@@ -69,7 +72,7 @@ export function maybeRestoreCredsFromBackup(authDir: string): void {
 
     JSON.parse(backupRaw); // Validate backup
     fsSync.copyFileSync(backupPath, credsPath);
-    console.log(`[creds-backup] Restored corrupted creds.json from backup in ${authDir}`);
+    log.info(`Restored corrupted creds.json from backup in ${authDir}`);
   } catch {
     // Ignore — both creds and backup are gone or corrupt
   }

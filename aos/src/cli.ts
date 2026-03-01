@@ -1,19 +1,22 @@
 import { createAOS } from './index.js';
 import { DailyOpsWorkflow, WeeklyBoardPacketWorkflow } from './runners/workflows.js';
 
+const print = (msg: string) => process.stdout.write(msg + '\n');
+const printErr = (msg: string) => process.stderr.write(msg + '\n');
+
 async function main(): Promise<void> {
   const [command, option, value] = process.argv.slice(2);
   const aos = createAOS();
 
   if (command === 'daily') {
     await DailyOpsWorkflow(aos.bus);
-    console.log('Daily workflow complete. ORG digest published.');
+    print('Daily workflow complete. ORG digest published.');
     return;
   }
 
   if (command === 'weekly-board') {
     await WeeklyBoardPacketWorkflow(aos.bus);
-    console.log('Weekly board workflow complete.');
+    print('Weekly board workflow complete.');
     return;
   }
 
@@ -46,26 +49,26 @@ async function main(): Promise<void> {
     };
     const result = await aos.runLaunchReview(ctx);
     const d = result.decision;
-    console.log(`\n${d.approved ? '🚀 LAUNCH APPROVED' : '🛑 LAUNCH BLOCKED'}`);
-    console.log(`Votes: ${d.totalGo} GO | ${d.totalNoGo} NO-GO | ${d.totalConditional} CONDITIONAL`);
-    console.log(`\nCEO Decision:\n${d.summary}\n`);
+    print(`\n${d.approved ? '🚀 LAUNCH APPROVED' : '🛑 LAUNCH BLOCKED'}`);
+    print(`Votes: ${d.totalGo} GO | ${d.totalNoGo} NO-GO | ${d.totalConditional} CONDITIONAL`);
+    print(`\nCEO Decision:\n${d.summary}\n`);
     for (const r of d.reviews) {
       const icon = r.vote === 'go' ? '🟢' : r.vote === 'no-go' ? '🔴' : '🟡';
-      console.log(`${icon} ${r.role} — ${r.vote} (${r.confidence}%)`);
+      print(`${icon} ${r.role} — ${r.vote} (${r.confidence}%)`);
     }
     return;
   }
 
   if (command === 'simulate' && option === '--event') {
     await aos.bus.publish({ type: value, source: 'cli', severity: 'medium', payload: { simulated: true } });
-    console.log(`Simulated ${value}.`);
+    print(`Simulated ${value}.`);
     return;
   }
 
-  console.log('Usage: node aos/run daily | weekly-board | launch | simulate --event EVENT_TYPE');
+  print('Usage: node aos/run daily | weekly-board | launch | simulate --event EVENT_TYPE');
 }
 
 main().catch((error) => {
-  console.error(error);
+  printErr(String(error));
   process.exitCode = 1;
 });
