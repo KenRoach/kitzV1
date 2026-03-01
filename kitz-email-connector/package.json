@@ -21,6 +21,7 @@
   "dependencies": {
     "dotenv": "^17.3.1",
     "fastify": "^4.26.2",
+    "kitz-schemas": "file:../kitz-schemas",
     "tsx": "^4.7.2"
   }
 }

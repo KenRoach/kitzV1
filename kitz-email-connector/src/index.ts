@@ -1,16 +1,7 @@
 import 'dotenv/config';
 import Fastify from 'fastify';
 import { randomUUID } from 'node:crypto';
-// EventEnvelope type inlined from kitz-schemas (type-only — no runtime dependency)
-interface EventEnvelope {
-  orgId: string;
-  userId: string;
-  source: string;
-  event: string;
-  payload: unknown;
-  traceId: string;
-  ts: string;
-}
+import type { EventEnvelope } from 'kitz-schemas';
 import { sendEmail } from './providers/resend.js';
 import { processInboundEmail, callWorkspaceMcp } from './inbound.js';
 import type { InboundPayload } from './inbound.js';
@@ -21,8 +12,27 @@ import {
   addToSuppression, isSuppressed, listSuppression,
 } from './db.js';
 
-export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
+
+// ── Auth hook (matches kitz-whatsapp-connector pattern) ──
+
+const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
+
+app.addHook('onRequest', async (req, reply) => {
+  const path = req.url.split('?')[0];
+  const skipAuth = path === '/health' || path === '/webhooks/inbound';
+  if (skipAuth) return;
+
+  if (SERVICE_SECRET) {
+    const secret = req.headers['x-service-secret'] as string | undefined;
+    const devSecret = req.headers['x-dev-secret'] as string | undefined;
+    if (secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
+      return reply.code(401).send({ error: 'Unauthorized: missing or invalid service secret' });
+    }
+  }
+});
+
+// ── Audit helper ──
 
 const audit = (event: string, payload: unknown, traceId: string): EventEnvelope => ({
   orgId: 'connector-system',
@@ -34,8 +44,17 @@ const audit = (event: string, payload: unknown, traceId: string): EventEnvelope 
   ts: new Date().toISOString(),
 });
 
-// ── Health ──
-app.get('/health', async () => ({ status: 'ok', service: 'kitz-email-connector' }));
+// ── Health (with provider status) ──
+
+app.get('/health', async () => ({
+  status: 'ok',
+  service: 'kitz-email-connector',
+  providers: {
+    resend: process.env.RESEND_API_KEY ? 'configured' : 'missing',
+    kitzOs: process.env.KITZ_OS_URL ? 'configured' : 'missing',
+    anthropic: process.env.ANTHROPIC_API_KEY ? 'configured' : 'missing',
+  },
+}));
 
 // ── Inbound webhook (Resend) ──
 app.post('/webhooks/inbound', async (req: any, reply) => {
@@ -231,31 +250,15 @@ app.get('/drafts/:token', async (req: any, reply) => {
   return draft.draftHtml;
 });
 
-// ── Debug: test draft generation directly ──
-app.get('/debug/draft-test', async (req: any) => {
-  const { generateDraftResponse } = await import('./drafts.js');
-  try {
-    const result = await generateDraftResponse(
-      'Hi, what are your pricing plans?',
-      'Pricing question',
-      'TestUser',
-      'en',
-      'KITZ-TEST-0000',
-      'debug-trace',
-    );
-    return {
-      ok: true,
-      bodyLen: result.draftBody.length,
-      bodyPreview: result.draftBody.slice(0, 200),
-      subject: result.draftSubject,
-    };
-  } catch (err) {
-    return {
-      ok: false,
-      error: (err as Error).message,
-      stack: (err as Error).stack?.slice(0, 500),
-    };
-  }
-});
+// ── Boot ──
 
-app.listen({ port: Number(process.env.PORT || 3007), host: '0.0.0.0' });
+async function boot() {
+  const port = Number(process.env.PORT || 3007);
+  await app.listen({ port, host: '0.0.0.0' });
+  console.log(`[email-connector] REST API listening on port ${port}`);
+}
+
+boot().catch((err) => {
+  console.error('[email-connector] Boot failed:', err);
+  process.exit(1);
+});

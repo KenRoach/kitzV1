@@ -127,6 +127,7 @@ export function approveDraft(token: string): PendingDraft | null {
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
 const KITZ_OS_URL = process.env.KITZ_OS_URL || '';
+const SERVICE_SECRET = process.env.SERVICE_SECRET || '';
 const DEV_TOKEN_SECRET = process.env.DEV_TOKEN_SECRET || '';
 
 const LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
@@ -184,17 +185,19 @@ export async function generateDraftResponse(
   language: SupportedLanguage,
   caseNumber: string,
   traceId?: string,
+  log?: { info: (obj: unknown) => void },
 ): Promise<{ draftBody: string; draftHtml: string; draftSubject: string }> {
   const draftSubject = `Re: ${originalSubject} — ${caseNumber}`;
 
   // 1. Route through kitz_os brain (semantic router → skills → agents)
   if (KITZ_OS_URL) {
     try {
-      console.log(`[drafts] Brain call: ${KITZ_OS_URL}/api/kitz, hasAuth: ${!!DEV_TOKEN_SECRET}, case: ${caseNumber}`);
+      log?.info({ event: 'drafts.brain_call', kitzOsUrl: KITZ_OS_URL, hasAuth: !!SERVICE_SECRET || !!DEV_TOKEN_SECRET, caseNumber, traceId });
       const res = await fetch(`${KITZ_OS_URL}/api/kitz`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET } : {}),
           ...(DEV_TOKEN_SECRET ? { 'x-dev-secret': DEV_TOKEN_SECRET } : {}),
         },
         body: JSON.stringify({
@@ -206,11 +209,11 @@ export async function generateDraftResponse(
         signal: AbortSignal.timeout(30_000),
       });
 
-      console.log(`[drafts] Brain response status: ${res.status}`);
+      log?.info({ event: 'drafts.brain_response', status: res.status, caseNumber, traceId });
       if (res.ok) {
         const data = (await res.json()) as { response?: string; command?: string };
         const draftBody = data.response?.trim() || '';
-        console.log(`[drafts] Brain body length: ${draftBody.length}`);
+        log?.info({ event: 'drafts.brain_body', bodyLength: draftBody.length, caseNumber, traceId });
         if (draftBody.length > 20) {
           return {
             draftBody,
@@ -220,13 +223,13 @@ export async function generateDraftResponse(
         }
       } else {
         const errText = await res.text().catch(() => 'unknown');
-        console.log(`[drafts] Brain error: ${res.status} ${errText.slice(0, 200)}`);
+        log?.info({ event: 'drafts.brain_error', status: res.status, error: errText.slice(0, 200), caseNumber, traceId });
       }
     } catch (e) {
-      console.log(`[drafts] Brain exception: ${(e as Error).message}`);
+      log?.info({ event: 'drafts.brain_exception', error: (e as Error).message, caseNumber, traceId });
     }
   } else {
-    console.log('[drafts] No KITZ_OS_URL, skipping brain');
+    log?.info({ event: 'drafts.no_kitz_os', caseNumber, traceId });
   }
 
   // 2. Fallback: direct Claude Sonnet (when kitz_os unavailable)
