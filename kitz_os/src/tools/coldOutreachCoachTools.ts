@@ -11,12 +11,8 @@ import { createSubsystemLogger } from 'kitz-schemas';
 
 const log = createSubsystemLogger('coldOutreachCoachTools');
 import type { ToolSchema } from './registry.js';
+import { callLLM } from './shared/callLLM.js';
 
-const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
-const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
-const CLAUDE_API_VERSION = '2023-06-01';
-const OPENAI_API_KEY = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
 const SYSTEM_PROMPT = `You are a cold outreach coach for small businesses in Latin America.
 Personalized, non-spammy WhatsApp/email/Instagram DM outreach. Lead with value.
@@ -29,21 +25,7 @@ Respond with valid JSON:
   "responseTemplates": [{ "trigger": string, "response": string }],
   "conversionTarget": string, "actionSteps": [string] }`;
 
-async function callLLM(input: string): Promise<string> {
-  if (CLAUDE_API_KEY) {
-    try {
-      const res = await fetch(CLAUDE_API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': CLAUDE_API_KEY, 'anthropic-version': CLAUDE_API_VERSION }, body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1024, temperature: 0.3, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: input }] }), signal: AbortSignal.timeout(15_000) });
-      if (res.ok) { const d = await res.json() as { content: Array<{ type: string; text?: string }> }; return d.content?.find(c => c.type === 'text')?.text || ''; }
-    } catch { /* fall through */ }
-  }
-  if (OPENAI_API_KEY) {
-    try {
-      const res = await fetch(OPENAI_API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` }, body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: input }], max_tokens: 1024, temperature: 0.3 }), signal: AbortSignal.timeout(15_000) });
-      if (res.ok) { const d = await res.json() as { choices?: Array<{ message?: { content?: string } }> }; return d.choices?.[0]?.message?.content || ''; }
-    } catch { /* return error */ }
-  }
-  return JSON.stringify({ error: 'No AI available' });
-}
+
 
 export function getAllColdOutreachCoachTools(): ToolSchema[] {
   return [{
@@ -64,7 +46,7 @@ export function getAllColdOutreachCoachTools(): ToolSchema[] {
     riskLevel: 'low',
     execute: async (args, traceId) => {
       const input = `Outreach for: ${args.business}\nProduct: ${args.product}\nTarget: ${args.target_profile}\nGoal: ${args.goal || 'sell'}\nValue: ${args.value_proposition}` + (args.channel ? `\nChannel: ${args.channel}` : '');
-      const raw = await callLLM(input);
+      const raw = await callLLM(SYSTEM_PROMPT, input, { temperature: 0.3 });
       let parsed;
       try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : { error: 'Could not parse' }; } catch { parsed = { raw_plan: raw }; }
       log.info('executed', { trace_id: traceId });

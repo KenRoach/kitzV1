@@ -14,12 +14,8 @@ import { createSubsystemLogger } from 'kitz-schemas';
 
 const log = createSubsystemLogger('browserAgentTools');
 import type { ToolSchema } from './registry.js';
+import { callLLM } from './shared/callLLM.js';
 
-const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
-const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
-const CLAUDE_API_VERSION = '2023-06-01';
-const OPENAI_API_KEY = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
 const PLAN_SYSTEM_PROMPT = `You are a browser automation planner for small businesses in Latin America.
 Plan step-by-step browser actions using Stagehand SDK primitives:
@@ -81,60 +77,7 @@ Respond with valid JSON:
   "estimated_seconds": number
 }`;
 
-async function callLLM(systemPrompt: string, userMessage: string): Promise<string> {
-  if (CLAUDE_API_KEY) {
-    try {
-      const res = await fetch(CLAUDE_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': CLAUDE_API_KEY,
-          'anthropic-version': CLAUDE_API_VERSION,
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 4096,
-          temperature: 0.2,
-          system: systemPrompt,
-          messages: [{ role: 'user', content: userMessage }],
-        }),
-        signal: AbortSignal.timeout(60_000),
-      });
-      if (res.ok) {
-        const data = await res.json() as { content: Array<{ type: string; text?: string }> };
-        return data.content?.find(c => c.type === 'text')?.text || '';
-      }
-    } catch { /* fall through */ }
-  }
 
-  if (OPENAI_API_KEY) {
-    try {
-      const res = await fetch(OPENAI_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userMessage },
-          ],
-          max_tokens: 4096,
-          temperature: 0.2,
-        }),
-        signal: AbortSignal.timeout(60_000),
-      });
-      if (res.ok) {
-        const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-        return data.choices?.[0]?.message?.content || '';
-      }
-    } catch { /* return error */ }
-  }
-
-  return JSON.stringify({ error: 'No AI available for browser planning' });
-}
 
 export function getAllBrowserAgentTools(): ToolSchema[] {
   return [
@@ -172,10 +115,8 @@ export function getAllBrowserAgentTools(): ToolSchema[] {
         const maxSteps = Number(args.max_steps) || 10;
         const urlLine = args.target_url ? `\nStarting URL: ${args.target_url}` : '';
 
-        const raw = await callLLM(
-          PLAN_SYSTEM_PROMPT,
-          `Task: ${task}${urlLine}\nMax steps: ${maxSteps}`,
-        );
+        const raw = await callLLM(PLAN_SYSTEM_PROMPT,
+          `Task: ${task}${urlLine}\nMax steps: ${maxSteps}`,);
 
         let parsed;
         try {
@@ -228,10 +169,8 @@ export function getAllBrowserAgentTools(): ToolSchema[] {
 
         const fieldsLine = args.fields ? `\nRequested fields: ${args.fields}` : '';
 
-        const raw = await callLLM(
-          EXTRACT_SYSTEM_PROMPT,
-          `URL: ${url}\nGoal: ${goal}${fieldsLine}`,
-        );
+        const raw = await callLLM(EXTRACT_SYSTEM_PROMPT,
+          `URL: ${url}\nGoal: ${goal}${fieldsLine}`,);
 
         let parsed;
         try {

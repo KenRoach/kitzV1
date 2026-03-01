@@ -12,12 +12,8 @@ import { createSubsystemLogger } from 'kitz-schemas';
 
 const log = createSubsystemLogger('directResponseMarketingTools');
 import type { ToolSchema } from './registry.js';
+import { callLLM } from './shared/callLLM.js';
 
-const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
-const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
-const CLAUDE_API_VERSION = '2023-06-01';
-const OPENAI_API_KEY = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
 const DR_SYSTEM = `You are a direct response marketing strategist trained on Dan Kennedy's methodology.
 Apply the Results Triangle (Market → Message → Media → Math) and the 10 Rules of Direct Marketing.
@@ -33,31 +29,7 @@ Structure: Headline → Opening Hook → Problem → Solution → Proof → Offe
 Write like Kennedy: conversational, benefit-driven, urgency-loaded, proof-heavy.
 Context: Latin American SMBs. Default language: Spanish.`;
 
-async function callLLM(system: string, input: string, maxTokens = 1024): Promise<string> {
-  if (CLAUDE_API_KEY) {
-    try {
-      const res = await fetch(CLAUDE_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': CLAUDE_API_KEY, 'anthropic-version': CLAUDE_API_VERSION },
-        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: maxTokens, temperature: 0.7, system, messages: [{ role: 'user', content: input }] }),
-        signal: AbortSignal.timeout(30_000),
-      });
-      if (res.ok) { const d = await res.json() as { content: Array<{ type: string; text?: string }> }; return d.content?.find(c => c.type === 'text')?.text || ''; }
-    } catch { /* fall through */ }
-  }
-  if (OPENAI_API_KEY) {
-    try {
-      const res = await fetch(OPENAI_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
-        body: JSON.stringify({ model: 'gpt-4o', messages: [{ role: 'system', content: system }, { role: 'user', content: input }], max_tokens: maxTokens, temperature: 0.7 }),
-        signal: AbortSignal.timeout(30_000),
-      });
-      if (res.ok) { const d = await res.json() as { choices?: Array<{ message?: { content?: string } }> }; return d.choices?.[0]?.message?.content || ''; }
-    } catch { /* return error */ }
-  }
-  return JSON.stringify({ error: 'No AI available' });
-}
+
 
 export function getAllDirectResponseMarketingTools(): ToolSchema[] {
   return [
@@ -81,7 +53,7 @@ export function getAllDirectResponseMarketingTools(): ToolSchema[] {
         const product = String(args.product || '').trim();
         if (!product) return { error: 'Product is required.' };
         const input = `Create a direct response campaign:\nProduct: ${product}\nMarket: ${args.target_market || 'general SMB'}\nPrice: ${args.price ?? 'TBD'}\nChannel: ${args.channel || 'whatsapp'}\nGoal: ${args.goal || 'sale'}\nLanguage: ${args.language || 'es'}\n\nRespond with JSON: { "headline": string, "offer": string, "urgencyTrigger": string, "callToAction": string, "followUpSequence": [{ "day": number, "channel": string, "message": string }], "trackingMetrics": ["string"], "kennedyRulesApplied": ["string"] }`;
-        const raw = await callLLM(DR_SYSTEM, input);
+        const raw = await callLLM(DR_SYSTEM, input, { temperature: 0.7 });
         let parsed;
         try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : null; } catch { parsed = null; }
         if (!parsed) parsed = { headline: `Campaign for ${product}`, offer: product, urgencyTrigger: 'Limited time', callToAction: '¡Escríbenos ahora!', followUpSequence: [], trackingMetrics: ['response_rate', 'conversion_rate'], kennedyRulesApplied: ['Rule 1: Always have an offer'] };
@@ -111,7 +83,7 @@ export function getAllDirectResponseMarketingTools(): ToolSchema[] {
         if (!product) return { error: 'Product is required.' };
         const testimonials = Array.isArray(args.testimonials) ? (args.testimonials as string[]).join('; ') : 'none';
         const input = `Write a sales letter:\nProduct: ${product}\nAudience: ${args.target_audience}\nPrice: $${args.price}\nMain benefit: ${args.main_benefit}\nTestimonials: ${testimonials}\nGuarantee: ${args.guarantee || 'satisfaction guaranteed'}\nLanguage: ${args.language || 'es'}\n\nRespond with JSON: { "headline": string, "openingHook": string, "problemStatement": string, "solution": string, "proof": ["string"], "offer": string, "urgency": string, "guarantee": string, "callToAction": string, "ps": string }`;
-        const raw = await callLLM(SALES_LETTER_SYSTEM, input, 2048);
+        const raw = await callLLM(SALES_LETTER_SYSTEM, input, { maxTokens: 2048, temperature: 0.7 });
         let parsed;
         try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : null; } catch { parsed = null; }
         if (!parsed) parsed = { headline: `Sales letter for ${product}`, openingHook: '', problemStatement: '', solution: '', proof: [], offer: `$${args.price}`, urgency: 'Limited time', guarantee: args.guarantee || 'Satisfacción garantizada', callToAction: '¡Ordena ahora!', ps: '' };

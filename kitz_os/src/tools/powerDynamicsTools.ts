@@ -11,12 +11,8 @@ import { createSubsystemLogger } from 'kitz-schemas';
 
 const log = createSubsystemLogger('powerDynamicsTools');
 import type { ToolSchema } from './registry.js';
+import { callLLM } from './shared/callLLM.js';
 
-const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
-const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
-const CLAUDE_API_VERSION = '2023-06-01';
-const OPENAI_API_KEY = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
 const SYSTEM = `You are a power dynamics advisor trained on Robert Greene's four masterworks.
 48 LAWS OF POWER: Never outshine the master (1), Use enemies (2), Conceal intentions (3), Say less (4), Guard reputation (5), Win through actions (9), Use selective honesty (12), Concentrate forces (23), Re-create yourself (25).
@@ -33,31 +29,7 @@ Respond with valid JSON:
   "human_nature_read": { "their_emotional_state": string, "hidden_motivations": string, "influence_approach": string },
   "warnings": ["string"], "action_plan": ["string"] }`;
 
-async function callLLM(input: string): Promise<string> {
-  if (CLAUDE_API_KEY) {
-    try {
-      const res = await fetch(CLAUDE_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': CLAUDE_API_KEY, 'anthropic-version': CLAUDE_API_VERSION },
-        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1536, temperature: 0.5, system: SYSTEM, messages: [{ role: 'user', content: input }] }),
-        signal: AbortSignal.timeout(30_000),
-      });
-      if (res.ok) { const d = await res.json() as { content: Array<{ type: string; text?: string }> }; return d.content?.find(c => c.type === 'text')?.text || ''; }
-    } catch { /* fall through */ }
-  }
-  if (OPENAI_API_KEY) {
-    try {
-      const res = await fetch(OPENAI_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
-        body: JSON.stringify({ model: 'gpt-4o', messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: input }], max_tokens: 1536, temperature: 0.5 }),
-        signal: AbortSignal.timeout(30_000),
-      });
-      if (res.ok) { const d = await res.json() as { choices?: Array<{ message?: { content?: string } }> }; return d.choices?.[0]?.message?.content || ''; }
-    } catch { /* return error */ }
-  }
-  return JSON.stringify({ error: 'No AI available' });
-}
+
 
 export function getAllPowerDynamicsTools(): ToolSchema[] {
   return [{
@@ -80,7 +52,7 @@ export function getAllPowerDynamicsTools(): ToolSchema[] {
       const situation = String(args.situation || '').trim();
       if (!situation) return { error: 'Situation is required.' };
       const input = `Analyze power dynamics:\n"${situation}"\nPlayers: ${args.players || 'unknown'}\nGoal: ${args.your_goal || 'unknown'}\nPosition: ${args.your_position || 'unknown'}\nContext: ${args.context_type || 'general'}\nLanguage: ${args.language || 'es'}`;
-      const raw = await callLLM(input);
+      const raw = await callLLM(SYSTEM, input, { temperature: 0.5 });
       let parsed;
       try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : null; } catch { parsed = null; }
       if (!parsed) parsed = { situation_read: situation, power_dynamics: [], applicable_laws: [], strategy: {}, human_nature_read: {}, warnings: [], action_plan: [] };

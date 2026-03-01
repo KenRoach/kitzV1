@@ -13,12 +13,8 @@ import { createSubsystemLogger } from 'kitz-schemas';
 
 const log = createSubsystemLogger('contentCreationTools');
 import type { ToolSchema } from './registry.js';
+import { callLLM } from './shared/callLLM.js';
 
-const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
-const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
-const CLAUDE_API_VERSION = '2023-06-01';
-const OPENAI_API_KEY = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
 const CONTENT_SYSTEM = `You are a social media content creator for small businesses in Latin America.
 Create scroll-stopping, conversion-focused content for WhatsApp and Instagram.
@@ -66,60 +62,7 @@ Respond with valid JSON:
   "tips": ["string"]
 }`;
 
-async function callLLM(systemPrompt: string, userMessage: string): Promise<string> {
-  if (CLAUDE_API_KEY) {
-    try {
-      const res = await fetch(CLAUDE_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': CLAUDE_API_KEY,
-          'anthropic-version': CLAUDE_API_VERSION,
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 4096,
-          temperature: 0.6,
-          system: systemPrompt,
-          messages: [{ role: 'user', content: userMessage }],
-        }),
-        signal: AbortSignal.timeout(60_000),
-      });
-      if (res.ok) {
-        const data = await res.json() as { content: Array<{ type: string; text?: string }> };
-        return data.content?.find(c => c.type === 'text')?.text || '';
-      }
-    } catch { /* fall through */ }
-  }
 
-  if (OPENAI_API_KEY) {
-    try {
-      const res = await fetch(OPENAI_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userMessage },
-          ],
-          max_tokens: 4096,
-          temperature: 0.6,
-        }),
-        signal: AbortSignal.timeout(60_000),
-      });
-      if (res.ok) {
-        const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-        return data.choices?.[0]?.message?.content || '';
-      }
-    } catch { /* return error */ }
-  }
-
-  return JSON.stringify({ error: 'No AI available for content creation' });
-}
 
 export function getAllContentCreationTools(): ToolSchema[] {
   return [
@@ -180,10 +123,8 @@ export function getAllContentCreationTools(): ToolSchema[] {
           args.product_price ? `Price: $${args.product_price}` : '',
         ].filter(Boolean).join('\n');
 
-        const raw = await callLLM(
-          CONTENT_SYSTEM,
-          `Create ${type} content for: ${platforms}\nTopic: ${topic}\nTone: ${tone}\n${extra}`,
-        );
+        const raw = await callLLM(CONTENT_SYSTEM,
+          `Create ${type} content for: ${platforms}\nTopic: ${topic}\nTone: ${tone}\n${extra}`, { temperature: 0.6 });
 
         let parsed;
         try {
@@ -230,10 +171,8 @@ export function getAllContentCreationTools(): ToolSchema[] {
         const focus = args.focus ? `\nWeekly focus: ${args.focus}` : '';
         const platforms = args.platforms ? `\nPlatforms: ${args.platforms}` : '\nPlatforms: whatsapp, instagram';
 
-        const raw = await callLLM(
-          CALENDAR_SYSTEM,
-          `Business type: ${businessType}${focus}${platforms}`,
-        );
+        const raw = await callLLM(CALENDAR_SYSTEM,
+          `Business type: ${businessType}${focus}${platforms}`, { temperature: 0.6 });
 
         let parsed;
         try {

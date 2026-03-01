@@ -11,12 +11,8 @@ import { createSubsystemLogger } from 'kitz-schemas';
 
 const log = createSubsystemLogger('funnelArchitectTools');
 import type { ToolSchema } from './registry.js';
+import { callLLM } from './shared/callLLM.js';
 
-const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
-const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
-const CLAUDE_API_VERSION = '2023-06-01';
-const OPENAI_API_KEY = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
 const SYSTEM = `You are a funnel strategist trained on Russell Brunson's trilogy: DotCom Secrets, Traffic Secrets, Expert Secrets.
 VALUE LADDER: Free → $7-47 tripwire → $97-297 core → $997-2997 high-ticket → continuity.
@@ -38,31 +34,7 @@ Respond with valid JSON:
   "email_sequence": [{ "day": number, "subject": string, "type": string, "purpose": string }],
   "false_beliefs": { "vehicle": string, "internal": string, "external": string }, "action_steps": ["string"] }`;
 
-async function callLLM(input: string): Promise<string> {
-  if (CLAUDE_API_KEY) {
-    try {
-      const res = await fetch(CLAUDE_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': CLAUDE_API_KEY, 'anthropic-version': CLAUDE_API_VERSION },
-        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 2048, temperature: 0.7, system: SYSTEM, messages: [{ role: 'user', content: input }] }),
-        signal: AbortSignal.timeout(30_000),
-      });
-      if (res.ok) { const d = await res.json() as { content: Array<{ type: string; text?: string }> }; return d.content?.find(c => c.type === 'text')?.text || ''; }
-    } catch { /* fall through */ }
-  }
-  if (OPENAI_API_KEY) {
-    try {
-      const res = await fetch(OPENAI_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
-        body: JSON.stringify({ model: 'gpt-4o', messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: input }], max_tokens: 2048, temperature: 0.7 }),
-        signal: AbortSignal.timeout(30_000),
-      });
-      if (res.ok) { const d = await res.json() as { choices?: Array<{ message?: { content?: string } }> }; return d.choices?.[0]?.message?.content || ''; }
-    } catch { /* return error */ }
-  }
-  return JSON.stringify({ error: 'No AI available' });
-}
+
 
 export function getAllFunnelArchitectTools(): ToolSchema[] {
   return [{
@@ -86,7 +58,7 @@ export function getAllFunnelArchitectTools(): ToolSchema[] {
       const product = String(args.product || '').trim();
       if (!product) return { error: 'Product is required.' };
       const input = `Design a sales funnel:\nProduct: ${product}\nAudience: ${args.target_audience}\nPrice: ${args.price_range || 'TBD'}\nFunnel type: ${args.funnel_type || 'lead-magnet'}\nAudience size: ${args.existing_audience ?? 0}\nIndustry: ${args.industry || 'general'}\nLanguage: ${args.language || 'es'}`;
-      const raw = await callLLM(input);
+      const raw = await callLLM(SYSTEM, input, { temperature: 0.7 });
       let parsed;
       try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : null; } catch { parsed = null; }
       if (!parsed) parsed = { value_ladder: [], attractive_character: {}, funnel_type: args.funnel_type || 'lead-magnet', funnel_steps: [], traffic_plan: { dream_100: [] }, email_sequence: [], false_beliefs: {}, action_steps: [] };
