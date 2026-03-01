@@ -335,6 +335,7 @@ services:
       COMMS_API_URL: http://comms-api:3013
       KILL_SWITCH: ${KILL_SWITCH:-false}
       KITZ_BRAIN_URL: http://kitz-brain:3015
+      JWT_SECRET: ${JWT_SECRET}
       DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET}
       SERVICE_SECRET: ${DEV_TOKEN_SECRET}
       CADENCE_PHONE: ${CADENCE_PHONE:-}
