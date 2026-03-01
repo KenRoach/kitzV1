@@ -106,7 +106,58 @@ app.get('/health', async () => {
 });
 ```
 
-## 8. Additional Conventions
+## 8. Shared LLM Module
+
+Tool modules in `kitz_os/src/tools/` must use the shared LLM client instead of inlining fetch logic. This eliminates duplication and ensures consistent Claude-first + OpenAI-fallback behavior.
+
+```typescript
+import { callLLM } from './shared/callLLM.js';
+
+const SYSTEM_PROMPT = 'You are a business advisor specializing in...';
+
+execute: async (args, traceId) => {
+  const raw = await callLLM(SYSTEM_PROMPT, JSON.stringify(args));
+  return JSON.parse(raw);
+}
+```
+
+Override defaults per-tool when needed:
+
+```typescript
+await callLLM(SYS, input, { model: 'claude-sonnet-4-20250514', maxTokens: 4096, timeoutMs: 30_000 });
+```
+
+Defaults: Claude Haiku, 1024 tokens, 0.2 temperature, 15s timeout.
+
+## 9. Input Validation
+
+Validate required fields on all POST endpoints. Return 400 with a clear message.
+
+```typescript
+app.post('/api/resource', async (req, reply) => {
+  const { name, amount } = req.body as Record<string, unknown>;
+  if (!name) return reply.code(400).send({ error: 'name is required', traceId });
+  if (!amount && amount !== 0) return reply.code(400).send({ error: 'amount is required', traceId });
+  // ... proceed
+});
+```
+
+## 10. API Response Format
+
+Success responses should include `traceId`. Use `ok: true` for write operations, return data directly for reads.
+
+```typescript
+// Write (POST/PUT/DELETE)
+return { ok: true, id: record.id, traceId };
+
+// Read (GET)
+return { leads, total, traceId };
+
+// Error (all methods) — use StandardError
+return reply.code(400).send(buildError('VALIDATION', 'email required', traceId));
+```
+
+## 11. Additional Conventions
 
 - **TypeScript strict mode** everywhere (`"strict": true` in tsconfig.json)
 - **ESM modules** (`"type": "module"` in package.json)
@@ -114,3 +165,5 @@ app.get('/health', async () => {
 - **Mapper functions** to convert between DB and API shapes
 - **AI Battery** check before every LLM call (`hasBudget()`)
 - **Kill switch** respected at boot (`KILL_SWITCH=true` halts all AI execution)
+- **Supabase persistence**: When adding DB writes, always fall back to in-memory if Supabase is unavailable
+- **Auth hook public paths**: Document which paths skip auth in a comment above the hook

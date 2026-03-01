@@ -19,9 +19,9 @@ TypeScript monorepo with 13+ microservices on Fastify. GitHub: `KenRoach/kitzV1`
 | `kitz-notifications-queue` | 3008 | In-memory FIFO queue, retry (3x), DLQ, idempotency | Stub |
 | `kitz-services` | 3010 | Free marketing content hub + Panama compliance pipeline | Stub |
 | `admin-kitz-services` | 3011 | Admin dashboard, API keys, credits, WhatsApp QR proxy | Stub |
-| `kitz_os` | 3012 | Core AI engine — 123 tool modules (90 brain skills), semantic router, cadence, AI Battery | Functional |
-| `kitz-brain` | cron | Scheduled AI agents (daily 8am, weekly Mon 9am) | Stub |
-| `workspace` | 3001 | workspace.kitz.services — Free manual workspace (CRM, orders, checkout links, tasks, AI direction) for users + AI agents | Functional |
+| `kitz_os` | 3012 | Core AI engine — 130+ tool modules (shared callLLM), semantic router, cadence, AI Battery | Functional |
+| `kitz-brain` | cron | Scheduled AI agents (daily 8am, weekly Mon 9am) + HTTP `/decide` classifier | Stub |
+| `workspace` | 3001 | workspace.kitz.services — Free manual workspace (CRM, orders, checkout links, tasks, dashboard metrics, AI direction) for users + AI agents | Functional |
 | `kitz-schemas` | lib | Shared TypeScript contracts + trace helpers | Functional |
 | `aos` | — | Agent-to-agent OS layer (30+ agent roles, event bus, ledger) | Stub |
 | `kitz-docs` | — | Architecture docs, threat model, approval matrix, runbooks | Docs |
@@ -160,7 +160,8 @@ cd <service> && npm test
 | Repo audit + delta plan | `Kitz-Repo-Audit.md` |
 | Shared contracts (all types) | `kitz-schemas/src/contracts.ts` |
 | Core kernel boot | `kitz_os/src/kernel.ts` |
-| Tool registry (123 modules) | `kitz_os/src/tools/registry.ts` |
+| Tool registry (130+ modules) | `kitz_os/src/tools/registry.ts` |
+| Shared LLM client (tool dedup) | `kitz_os/src/tools/shared/callLLM.ts` |
 | 5-phase semantic router | `kitz_os/src/interfaces/whatsapp/semanticRouter.ts` |
 | AI Battery tracking | `kitz_os/src/aiBattery.ts` |
 | Claude client (tiered routing) | `kitz_os/src/llm/claudeClient.ts` |
@@ -175,6 +176,7 @@ cd <service> && npm test
 | Architecture docs | `kitz-docs/ARCHITECTURE.md` |
 | Threat model | `kitz-docs/THREAT_MODEL.md` |
 | Approval matrix | `kitz-docs/APPROVAL_MATRIX.md` |
+| Coding standards | `kitz-docs/CODING_STANDARDS.md` |
 
 ## WhatsApp Connector (Production-Ready)
 - Uses Baileys v7.0.0-rc.9 (not official WhatsApp Business API)
@@ -216,12 +218,17 @@ When modifying contracts in `kitz-schemas/src/contracts.ts`, check all consuming
 | `content/` | Changelog |
 
 ## Codebase State
+- **Auth**: 12/13 services validate `x-service-secret` (or JWT/cookies for gateway/admin). Only `workspace` uses per-route session auth (by design — user-facing app). See `kitz-docs/CODING_STANDARDS.md` §5.
+- **Logging**: All services and 103+ tool modules use `createSubsystemLogger` or `app.log` (Fastify). ~39 console.log calls remain (boot messages, CLI tools, migration scripts — acceptable). `kitz-whatsapp-connector/src/sessions.ts` fully migrated.
+- **Shared LLM**: 73 tool files use `kitz_os/src/tools/shared/callLLM.ts` (Claude Haiku default, OpenAI fallback). Eliminates ~900 lines of duplicated fetch logic.
 - **Tests**: 9 test files with ~82 test cases total. Real coverage exists in `kitz_os` (4 files, ~64 tests), `kitz-gateway` (JWT tests), `kitz-services`, `workspace`, and `aos`. 10 services have test runners configured but zero test files. CI only runs tests for 3 services.
 - **TypeScript**: All 12 services pass `tsc --noEmit` with zero errors. Strict mode everywhere.
-- **Database**: PostgreSQL wired in docker-compose but most services use in-memory Maps/arrays. Real DB persistence only in `kitz_os` (Supabase).
-- **LLM providers**: Provider files in `kitz-llm-hub` are stubs. Real API call logic lives in `kitz_os/src/llm/`.
+- **Database**: PostgreSQL wired in docker-compose. `kitz_os` and `workspace` use Supabase for real persistence; `kitz_os/src/tools/artifactTools.ts` persists to `artifacts` table. Other services fall back to in-memory Maps/arrays.
+- **LLM providers**: Provider files in `kitz-llm-hub` are stubs. Real API call logic lives in `kitz_os/src/llm/` and `kitz_os/src/tools/shared/callLLM.ts`.
 - **Payment webhooks**: Check header presence but don't cryptographically verify signatures yet.
 - **Docker**: All services have health checks (wget-based for Alpine), memory limits, and restart policies. n8n pinned to v1.76.1.
+- **Brand**: Purple palette (#A855F7, #7C3AED), Inter font, multilingual AI disclaimers, feedback popup on draft approval pages.
+- **Remaining gaps**: StandardError adopted in 2/12 services (gateway, workspace). Static health checks in 9/12 services. Response envelope not yet standardized.
 
 ## Business Context
 - **Target user**: 25-45, LatAm, Spanish-first, sells on WhatsApp/Instagram
