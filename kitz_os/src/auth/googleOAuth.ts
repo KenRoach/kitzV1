@@ -10,10 +10,13 @@
  * Tokens stored in: data/auth/google-tokens.json (gitignored)
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
 import { google, type calendar_v3 } from 'googleapis';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+const log = createSubsystemLogger('googleOAuth');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, '..', '..', 'data', 'auth');
@@ -64,7 +67,7 @@ async function loadTokens(): Promise<StoredTokens | null> {
 async function saveTokens(tokens: StoredTokens): Promise<void> {
   await ensureDataDir();
   await writeFile(TOKEN_FILE, JSON.stringify(tokens, null, 2), 'utf-8');
-  console.log('[googleOAuth] Tokens saved');
+  log.info('Tokens saved');
 }
 
 // ── Public API ──
@@ -168,5 +171,5 @@ export async function revokeTokens(): Promise<void> {
   } catch {
     // File may not exist
   }
-  console.log('[googleOAuth] Tokens revoked and deleted');
+  log.info('Tokens revoked and deleted');
 }

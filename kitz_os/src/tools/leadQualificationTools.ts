@@ -7,6 +7,9 @@
  * Uses Claude Haiku (fast), falls back to OpenAI gpt-4o-mini.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('leadQualificationTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -72,7 +75,7 @@ export function getAllLeadQualificationTools(): ToolSchema[] {
       const raw = await scoreLead(input);
       let parsed;
       try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : { score: 50, tier: 'warm' }; } catch { parsed = { score: 50, tier: 'warm' }; }
-      console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'leadQualificationTools', contact: name, score: parsed.score, tier: parsed.tier, trace_id: traceId }));
+      log.info('executed', { trace_id: traceId });
       return parsed;
     },
   }];

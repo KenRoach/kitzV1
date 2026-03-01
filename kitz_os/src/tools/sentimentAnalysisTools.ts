@@ -8,6 +8,9 @@
  * Cultural context for Latin American Spanish expressions.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('sentimentAnalysisTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -94,7 +97,7 @@ export function getAllSentimentAnalysisTools(): ToolSchema[] {
         } catch {
           parsed = { sentiment: 'neutral', score: 0, urgency: 'low', keywords: [], reason: raw };
         }
-        console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'sentimentAnalysisTools', action: 'sentiment_analyze', sentiment: parsed.sentiment, urgency: parsed.urgency, trace_id: traceId }));
+        log.info('executed', { trace_id: traceId });
         return parsed;
       },
     },

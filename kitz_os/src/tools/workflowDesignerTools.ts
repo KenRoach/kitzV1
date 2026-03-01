@@ -1,4 +1,7 @@
 /** Design automation workflows using n8n, Zapier, Make */
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('workflowDesignerTools');
 import type { ToolSchema } from './registry.js';
 const CK = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
 const OK = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
@@ -9,5 +12,5 @@ async function callLLM(input: string): Promise<string> {
   return JSON.stringify({ error: 'No AI available' });
 }
 export function getAllWorkflowDesignerTools(): ToolSchema[] {
-  return [{ name: 'workflow_design', description: 'Design automation workflows using n8n, Zapier, Make', parameters: { type: "object", properties: { business: { type: "string", description: "Business name" }, process: { type: "string", description: "Process to automate" }, current_steps: { type: "string", description: "Current manual steps" } }, required: ["business", "process"] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(JSON.stringify(args)); let p; try { const m = raw.match(/\{[\s\S]*\}/); p = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { p = { raw }; } console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'workflowDesignerTools', trace_id: traceId })); return p; } }];
+  return [{ name: 'workflow_design', description: 'Design automation workflows using n8n, Zapier, Make', parameters: { type: "object", properties: { business: { type: "string", description: "Business name" }, process: { type: "string", description: "Process to automate" }, current_steps: { type: "string", description: "Current manual steps" } }, required: ["business", "process"] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(JSON.stringify(args)); let p; try { const m = raw.match(/\{[\s\S]*\}/); p = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { p = { raw }; } log.info('executed', { trace_id: traceId }); return p; } }];
 }

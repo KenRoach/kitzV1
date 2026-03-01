@@ -9,6 +9,9 @@
  * Output is a Remotion-compatible spec that can be rendered to MP4.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('videoCreationTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -176,15 +179,7 @@ export function getAllVideoCreationTools(): ToolSchema[] {
         const spec = PLATFORM_SPECS[platform] || PLATFORM_SPECS['whatsapp'];
         parsed.platform = { name: platform, ...spec };
 
-        console.log(JSON.stringify({
-          ts: new Date().toISOString(),
-          module: 'videoCreationTools',
-          action: 'video_createSpec',
-          purpose,
-          platform,
-          scene_count: parsed.scenes?.length || 0,
-          trace_id: traceId,
-        }));
+        log.info('executed', { trace_id: traceId });
 
         return parsed;
       },

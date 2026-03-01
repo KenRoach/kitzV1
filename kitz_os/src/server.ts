@@ -175,7 +175,7 @@ export async function createServer(kernel: KitzKernel) {
 
   // Initialize memory system
   try { initMemory(); } catch (err) {
-    console.warn('[server] Memory init failed (non-fatal):', (err as Error).message);
+    log.warn('Memory init failed (non-fatal):', { detail: (err as Error).message });
   }
 
   // ── Service auth — accepts x-service-secret, x-dev-secret, or Bearer JWT ──
@@ -813,13 +813,7 @@ export async function createServer(kernel: KitzKernel) {
       const traceId = crypto.randomUUID();
       const signature = req.headers['stripe-signature'] as string | undefined;
 
-      console.log(JSON.stringify({
-        ts: new Date().toISOString(),
-        module: 'payment-webhook',
-        provider: 'stripe',
-        trace_id: traceId,
-        action: 'received',
-      }));
+      log.info('received', { trace_id: traceId });
 
       // Cryptographic signature verification
       const stripeSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -830,7 +824,7 @@ export async function createServer(kernel: KitzKernel) {
         const rawBody = JSON.stringify(req.body);
         const result = verifyStripeSignature(rawBody, signature, stripeSecret);
         if (!result.valid) {
-          console.error(JSON.stringify({ ts: new Date().toISOString(), module: 'payment-webhook', provider: 'stripe', trace_id: traceId, error: result.error }));
+          log.error('failed', { trace_id: traceId });
           return reply.code(401).send({ error: `Stripe signature invalid: ${result.error}` });
         }
       } else if (process.env.NODE_ENV === 'production') {
@@ -872,23 +866,17 @@ export async function createServer(kernel: KitzKernel) {
     async (req, reply) => {
       const traceId = crypto.randomUUID();
 
-      console.log(JSON.stringify({
-        ts: new Date().toISOString(),
-        module: 'payment-webhook',
-        provider: 'paypal',
-        trace_id: traceId,
-        action: 'received',
-      }));
+      log.info('received', { trace_id: traceId });
 
       // Cryptographic header verification (defense-in-depth before PayPal API call)
       const paypalResult = verifyPayPalHeaders(req.headers as Record<string, string | string[] | undefined>);
       if (!paypalResult.valid) {
         if (process.env.NODE_ENV === 'production') {
-          console.error(JSON.stringify({ ts: new Date().toISOString(), module: 'payment-webhook', provider: 'paypal', trace_id: traceId, error: paypalResult.error }));
+          log.error('failed', { trace_id: traceId });
           return reply.code(401).send({ error: `PayPal verification failed: ${paypalResult.error}` });
         }
         // Dev mode: log warning but allow through for testing
-        console.warn(JSON.stringify({ ts: new Date().toISOString(), module: 'payment-webhook', provider: 'paypal', trace_id: traceId, warning: paypalResult.error, mode: 'dev-passthrough' }));
+        log.warn('warning', { trace_id: traceId });
       }
 
       const event = req.body || {};
@@ -930,13 +918,7 @@ export async function createServer(kernel: KitzKernel) {
     async (req, reply) => {
       const traceId = crypto.randomUUID();
 
-      console.log(JSON.stringify({
-        ts: new Date().toISOString(),
-        module: 'payment-webhook',
-        provider: 'yappy',
-        trace_id: traceId,
-        action: 'received',
-      }));
+      log.info('received', { trace_id: traceId });
 
       // Cryptographic HMAC-SHA256 signature verification
       const yappySecret = process.env.YAPPY_WEBHOOK_SECRET;
@@ -945,7 +927,7 @@ export async function createServer(kernel: KitzKernel) {
         const rawBody = JSON.stringify(req.body);
         const result = verifyHmacSha256(rawBody, yappySig, yappySecret);
         if (!result.valid) {
-          console.error(JSON.stringify({ ts: new Date().toISOString(), module: 'payment-webhook', provider: 'yappy', trace_id: traceId, error: result.error }));
+          log.error('failed', { trace_id: traceId });
           return reply.code(401).send({ error: `Yappy signature invalid: ${result.error}` });
         }
       } else if (process.env.NODE_ENV === 'production') {
@@ -978,13 +960,7 @@ export async function createServer(kernel: KitzKernel) {
     async (req, reply) => {
       const traceId = crypto.randomUUID();
 
-      console.log(JSON.stringify({
-        ts: new Date().toISOString(),
-        module: 'payment-webhook',
-        provider: 'bac',
-        trace_id: traceId,
-        action: 'received',
-      }));
+      log.info('received', { trace_id: traceId });
 
       // Cryptographic HMAC-SHA256 signature verification
       const bacSecret = process.env.BAC_WEBHOOK_SECRET;
@@ -993,7 +969,7 @@ export async function createServer(kernel: KitzKernel) {
         const rawBody = JSON.stringify(req.body);
         const result = verifyHmacSha256(rawBody, bacSig, bacSecret);
         if (!result.valid) {
-          console.error(JSON.stringify({ ts: new Date().toISOString(), module: 'payment-webhook', provider: 'bac', trace_id: traceId, error: result.error }));
+          log.error('failed', { trace_id: traceId });
           return reply.code(401).send({ error: `BAC signature invalid: ${result.error}` });
         }
       } else if (process.env.NODE_ENV === 'production') {

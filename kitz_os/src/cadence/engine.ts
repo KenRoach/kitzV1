@@ -11,10 +11,13 @@
  *   - Quarterly: 9:00 AM on Jan/Apr/Jul/Oct 1st
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
 import cron from 'node-cron';
 import type { KitzKernel } from '../kernel.js';
 import { generateDailyBrief } from './daily.js';
 import { generateWeeklyScorecard } from './weekly.js';
+
+const log = createSubsystemLogger('engine');
 
 export type CadenceType = 'daily' | 'weekly' | 'monthly' | 'quarterly';
 
@@ -42,7 +45,7 @@ export class CadenceEngine {
 
   start(): void {
     if (!CADENCE_ENABLED) {
-      console.log('[cadence] Engine disabled (set CADENCE_ENABLED=true to activate)');
+      log.info('Engine disabled (set CADENCE_ENABLED=true to activate)');
       return;
     }
 
@@ -74,9 +77,9 @@ export class CadenceEngine {
       }, { timezone: 'America/Panama' })
     );
 
-    console.log(`[cadence] Engine started — ${this.tasks.length} schedules active`);
+    log.info(`Engine started — ${this.tasks.length} schedules active`);
     if (CADENCE_PHONE) {
-      console.log(`[cadence] Reports will be delivered to ${CADENCE_PHONE.slice(0, 4)}${'*'.repeat(Math.max(0, CADENCE_PHONE.length - 4))}`);
+      log.info(`Reports will be delivered to ${CADENCE_PHONE.slice(0, 4)}${'*'.repeat(Math.max(0, CADENCE_PHONE.length - 4))}`);
     }
   }
 
@@ -85,13 +88,13 @@ export class CadenceEngine {
       task.stop();
     }
     this.tasks = [];
-    console.log('[cadence] Engine stopped');
+    log.info('Engine stopped');
   }
 
   /** Run a cadence and optionally deliver via WhatsApp */
   private async runAndDeliver(cadence: CadenceType): Promise<void> {
     try {
-      console.log(`[cadence] Running ${cadence} report...`);
+      log.info(`Running ${cadence} report...`);
       const report = await this.runCadence(cadence);
 
       // Deliver via WhatsApp if phone configured
@@ -99,9 +102,9 @@ export class CadenceEngine {
         await this.deliverViaWhatsApp(report.whatsappFormatted);
       }
 
-      console.log(`[cadence] ${cadence} report delivered`);
+      log.info(`${cadence} report delivered`);
     } catch (err) {
-      console.error(`[cadence] ${cadence} report failed:`, (err as Error).message);
+      log.error(`${cadence} report failed`, { error: (err as Error).message });
     }
   }
 
@@ -119,7 +122,7 @@ export class CadenceEngine {
         signal: AbortSignal.timeout(15_000),
       });
     } catch (err) {
-      console.error('[cadence] WhatsApp delivery failed:', (err as Error).message);
+      log.error('WhatsApp delivery failed', { error: (err as Error).message });
     }
   }
 

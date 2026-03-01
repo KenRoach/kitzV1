@@ -2,6 +2,9 @@
  * Inventory Optimizer Tools — Stock levels, reorder points, dead stock detection.
  * 1 tool: inventory_optimize (low)
  */
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('inventoryOptimizerTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -15,5 +18,5 @@ async function callLLM(input: string): Promise<string> {
 }
 
 export function getAllInventoryOptimizerTools(): ToolSchema[] {
-  return [{ name: 'inventory_optimize', description: 'Optimize inventory: reorder points, dead stock detection, stock recommendations for each product.', parameters: { type: 'object', properties: { products: { type: 'string', description: 'JSON array of products: [{ "name": string, "currentStock": number, "monthlySales": number, "cost": number }]' }, currency: { type: 'string', description: 'Currency (default: USD)' } }, required: ['products'] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(`Inventory: ${args.products}`); let parsed; try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { parsed = { raw: raw }; } console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'inventoryOptimizerTools', trace_id: traceId })); return parsed; } }];
+  return [{ name: 'inventory_optimize', description: 'Optimize inventory: reorder points, dead stock detection, stock recommendations for each product.', parameters: { type: 'object', properties: { products: { type: 'string', description: 'JSON array of products: [{ "name": string, "currentStock": number, "monthlySales": number, "cost": number }]' }, currency: { type: 'string', description: 'Currency (default: USD)' } }, required: ['products'] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(`Inventory: ${args.products}`); let parsed; try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { parsed = { raw: raw }; } log.info('executed', { trace_id: traceId }); return parsed; } }];
 }

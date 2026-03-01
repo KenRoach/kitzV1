@@ -7,6 +7,9 @@
  * Uses Claude Sonnet, falls back to OpenAI gpt-4o.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('funnelArchitectTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -87,7 +90,7 @@ export function getAllFunnelArchitectTools(): ToolSchema[] {
       let parsed;
       try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : null; } catch { parsed = null; }
       if (!parsed) parsed = { value_ladder: [], attractive_character: {}, funnel_type: args.funnel_type || 'lead-magnet', funnel_steps: [], traffic_plan: { dream_100: [] }, email_sequence: [], false_beliefs: {}, action_steps: [] };
-      console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'funnelArchitectTools', product, trace_id: traceId }));
+      log.info('executed', { trace_id: traceId });
       return parsed;
     },
   }];

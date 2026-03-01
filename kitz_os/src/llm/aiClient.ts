@@ -17,6 +17,10 @@
  * transparent to callers. It auto-selects the best provider.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('aiClient');
+
 // ── Config ────────────────────────────────────────────────
 
 // OpenAI for transactional tool-routing (cheapest for volume)
@@ -160,31 +164,14 @@ async function openaiCompletion(
       if (res.status === 429 && attempt < AI_MAX_RETRIES) {
         const retryAfterMs = parseRetryAfter(res.headers.get('retry-after'));
         const backoffMs = retryAfterMs || AI_BASE_BACKOFF_MS * Math.pow(2, attempt);
-        console.warn(JSON.stringify({
-          ts: new Date().toISOString(),
-          module: 'aiClient',
-          provider: 'openai',
-          action: 'retry_backoff',
-          status: 429,
-          attempt,
-          backoff_ms: backoffMs,
-          trace_id: traceId,
-        }));
+        log.warn('warning', { trace_id: traceId });
         await new Promise(resolve => setTimeout(resolve, backoffMs));
         continue;
       }
 
       if (!res.ok) {
         const errorText = await res.text().catch(() => 'unknown error');
-        console.error(JSON.stringify({
-          ts: new Date().toISOString(),
-          module: 'aiClient',
-          provider: 'openai',
-          error: `HTTP ${res.status}`,
-          detail: errorText.slice(0, 500),
-          attempt,
-          trace_id: traceId,
-        }));
+        log.error(`OpenAI HTTP ${res.status}`, { detail: errorText.slice(0, 500), attempt, trace_id: traceId });
         return {
           message: { role: 'assistant', content: `[OpenAI error: ${res.status}]` },
           finishReason: 'error',
@@ -387,31 +374,14 @@ async function claudeCompletion(
       if ((res.status === 429 || res.status === 529) && attempt < AI_MAX_RETRIES) {
         const retryAfterMs = parseRetryAfter(res.headers.get('retry-after'));
         const backoffMs = retryAfterMs || AI_BASE_BACKOFF_MS * Math.pow(2, attempt);
-        console.warn(JSON.stringify({
-          ts: new Date().toISOString(),
-          module: 'aiClient',
-          provider: 'claude',
-          action: 'retry_backoff',
-          status: res.status,
-          attempt,
-          backoff_ms: backoffMs,
-          trace_id: traceId,
-        }));
+        log.warn('warning', { trace_id: traceId });
         await new Promise(resolve => setTimeout(resolve, backoffMs));
         continue;
       }
 
       if (!res.ok) {
         const errorText = await res.text().catch(() => 'unknown error');
-        console.error(JSON.stringify({
-          ts: new Date().toISOString(),
-          module: 'aiClient',
-          provider: 'claude',
-          error: `HTTP ${res.status}`,
-          detail: errorText.slice(0, 500),
-          attempt,
-          trace_id: traceId,
-        }));
+        log.error(`Claude HTTP ${res.status}`, { detail: errorText.slice(0, 500), attempt, trace_id: traceId });
         return {
           message: { role: 'assistant', content: `[Claude error: ${res.status} — retried ${attempt + 1}x]` },
           finishReason: 'error',
@@ -448,16 +418,7 @@ async function claudeCompletion(
       // Network error — retry if possible
       if (attempt < AI_MAX_RETRIES && (err as Error).name !== 'AbortError') {
         const backoffMs = AI_BASE_BACKOFF_MS * Math.pow(2, attempt);
-        console.warn(JSON.stringify({
-          ts: new Date().toISOString(),
-          module: 'aiClient',
-          provider: 'claude',
-          action: 'retry_after_error',
-          error: (err as Error).message,
-          attempt,
-          backoff_ms: backoffMs,
-          trace_id: traceId,
-        }));
+        log.warn('warning', { trace_id: traceId });
         await new Promise(resolve => setTimeout(resolve, backoffMs));
         continue;
       }

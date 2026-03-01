@@ -2,6 +2,9 @@
  * Supply Chain Advisor Tools — Supplier evaluation, negotiation, logistics.
  * 1 tool: supply_chain_advise (low)
  */
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('supplyChainAdvisorTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -15,5 +18,5 @@ async function callLLM(input: string): Promise<string> {
 }
 
 export function getAllSupplyChainAdvisorTools(): ToolSchema[] {
-  return [{ name: 'supply_chain_advise', description: 'Get supply chain advice: supplier evaluation, negotiation scripts, logistics optimization, cost reduction tips.', parameters: { type: 'object', properties: { business: { type: 'string', description: 'Business name' }, suppliers: { type: 'string', description: 'JSON of suppliers: [{ "name": string, "products": string, "monthlySpend": number }]' }, challenges: { type: 'string', description: 'Current challenges' }, country: { type: 'string', description: 'Country' } }, required: ['business'] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(`Supply chain for: ${args.business}\nSuppliers: ${args.suppliers || '[]'}\nCountry: ${args.country || 'LatAm'}\nChallenges: ${args.challenges || 'general'}`); let parsed; try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { parsed = { raw: raw }; } console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'supplyChainAdvisorTools', trace_id: traceId })); return parsed; } }];
+  return [{ name: 'supply_chain_advise', description: 'Get supply chain advice: supplier evaluation, negotiation scripts, logistics optimization, cost reduction tips.', parameters: { type: 'object', properties: { business: { type: 'string', description: 'Business name' }, suppliers: { type: 'string', description: 'JSON of suppliers: [{ "name": string, "products": string, "monthlySpend": number }]' }, challenges: { type: 'string', description: 'Current challenges' }, country: { type: 'string', description: 'Country' } }, required: ['business'] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(`Supply chain for: ${args.business}\nSuppliers: ${args.suppliers || '[]'}\nCountry: ${args.country || 'LatAm'}\nChallenges: ${args.challenges || 'general'}`); let parsed; try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { parsed = { raw: raw }; } log.info('executed', { trace_id: traceId }); return parsed; } }];
 }

@@ -1,4 +1,7 @@
 /** Appointment booking, calendar management, no-show reduction */
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('schedulingAdvisorTools');
 import type { ToolSchema } from './registry.js';
 const CK = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
 const OK = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
@@ -9,5 +12,5 @@ async function callLLM(input: string): Promise<string> {
   return JSON.stringify({ error: 'No AI available' });
 }
 export function getAllSchedulingAdvisorTools(): ToolSchema[] {
-  return [{ name: 'scheduling_advise', description: 'Appointment booking, calendar management, no-show reduction', parameters: { type: "object", properties: { business_type: { type: "string", description: "Business type" }, appointments_per_week: { type: "number", description: "Appointments per week" }, challenges: { type: "string", description: "Challenges" } }, required: ["business_type"] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(JSON.stringify(args)); let p; try { const m = raw.match(/\{[\s\S]*\}/); p = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { p = { raw }; } console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'schedulingAdvisorTools', trace_id: traceId })); return p; } }];
+  return [{ name: 'scheduling_advise', description: 'Appointment booking, calendar management, no-show reduction', parameters: { type: "object", properties: { business_type: { type: "string", description: "Business type" }, appointments_per_week: { type: "number", description: "Appointments per week" }, challenges: { type: "string", description: "Challenges" } }, required: ["business_type"] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(JSON.stringify(args)); let p; try { const m = raw.match(/\{[\s\S]*\}/); p = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { p = { raw }; } log.info('executed', { trace_id: traceId }); return p; } }];
 }

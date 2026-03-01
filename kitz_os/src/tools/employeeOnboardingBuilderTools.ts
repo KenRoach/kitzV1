@@ -1,4 +1,7 @@
 /** Employee onboarding plans, first-day checklists, training schedules */
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('employeeOnboardingBuilderTools');
 import type { ToolSchema } from './registry.js';
 const CK = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
 const OK = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
@@ -9,5 +12,5 @@ async function callLLM(input: string): Promise<string> {
   return JSON.stringify({ error: 'No AI available' });
 }
 export function getAllEmployeeOnboardingBuilderTools(): ToolSchema[] {
-  return [{ name: 'employee_onboarding_build', description: 'Employee onboarding plans, first-day checklists, training schedules', parameters: { type: "object", properties: { role: { type: "string", description: "Role being onboarded" }, business: { type: "string", description: "Business name" }, team_size: { type: "number", description: "Team size" } }, required: ["role", "business"] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(JSON.stringify(args)); let p; try { const m = raw.match(/\{[\s\S]*\}/); p = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { p = { raw }; } console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'employeeOnboardingBuilderTools', trace_id: traceId })); return p; } }];
+  return [{ name: 'employee_onboarding_build', description: 'Employee onboarding plans, first-day checklists, training schedules', parameters: { type: "object", properties: { role: { type: "string", description: "Role being onboarded" }, business: { type: "string", description: "Business name" }, team_size: { type: "number", description: "Team size" } }, required: ["role", "business"] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(JSON.stringify(args)); let p; try { const m = raw.match(/\{[\s\S]*\}/); p = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { p = { raw }; } log.info('executed', { trace_id: traceId }); return p; } }];
 }

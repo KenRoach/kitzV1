@@ -2,6 +2,10 @@
  * OS Tool Registry — Central registry for all KITZ OS tools.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('registry');
+
 export interface ToolSchema {
   name: string;
   description: string;
@@ -337,7 +341,7 @@ export class OsToolRegistry {
           }
         }
       } else {
-        console.warn(`[registry] Failed to load ${getterNames[i]}: ${result.reason}`);
+        log.warn(`Failed to load ${getterNames[i]}`, { reason: String(result.reason) });
       }
     }
   }

@@ -7,6 +7,9 @@
  * Uses Claude Haiku (fast), falls back to OpenAI gpt-4o-mini.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('orderFulfillmentTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -73,7 +76,7 @@ export function getAllOrderFulfillmentTools(): ToolSchema[] {
       const raw = await planFulfillment(input);
       let parsed;
       try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : { order_id: orderId, steps: [] }; } catch { parsed = { order_id: orderId, steps: [] }; }
-      console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'orderFulfillmentTools', order_id: orderId, trace_id: traceId }));
+      log.info('executed', { trace_id: traceId });
       return parsed;
     },
   }];

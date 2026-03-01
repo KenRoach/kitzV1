@@ -30,7 +30,7 @@ function buildStdError(code: string, message: string, traceId: string): Standard
 const COOKIE_NAME = 'kitz_session';
 const JWT_SECRET = process.env.JWT_SECRET || process.env.DEV_TOKEN_SECRET || '';
 if (!JWT_SECRET) {
-  console.error('[workspace] FATAL: JWT_SECRET or DEV_TOKEN_SECRET must be set. Refusing to start with no secret.');
+  app.log.fatal('JWT_SECRET or DEV_TOKEN_SECRET must be set. Refusing to start with no secret.');
   process.exit(1);
 }
 
@@ -1314,7 +1314,7 @@ app.get('/whatsapp/proxy-connect', async (req: any, reply: any) => {
   if (!session) return reply.code(401).send({ error: 'Not authenticated' });
 
   const upstreamUrl = `${waConnectorUrl}/whatsapp/connect?userId=${session.userId}`;
-  console.log(`[workspace] SSE proxy connecting to: ${upstreamUrl}`);
+  app.log.info({ upstreamUrl }, 'SSE proxy connecting');
 
   reply.raw.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -1330,7 +1330,7 @@ app.get('/whatsapp/proxy-connect', async (req: any, reply: any) => {
     });
 
     if (!upstream.ok || !upstream.body) {
-      console.error(`[workspace] SSE proxy upstream failed: ${upstream.status} ${upstream.statusText}`);
+      app.log.error({ status: upstream.status, statusText: upstream.statusText }, 'SSE proxy upstream failed');
       reply.raw.write(`event: error\ndata: ${JSON.stringify({ error: 'WhatsApp connector unavailable (' + upstream.status + ')' })}\n\n`);
       reply.raw.end();
       return;
@@ -1356,7 +1356,7 @@ app.get('/whatsapp/proxy-connect', async (req: any, reply: any) => {
       try { reader.cancel(); } catch {}
     });
   } catch (err) {
-    console.error(`[workspace] SSE proxy error: ${(err as Error).message}. WA_CONNECTOR_URL=${waConnectorUrl}`);
+    app.log.error({ error: (err as Error).message, waConnectorUrl }, 'SSE proxy error');
     reply.raw.write(`event: error\ndata: ${JSON.stringify({ error: 'Cannot reach WhatsApp connector at ' + waConnectorUrl })}\n\n`);
     reply.raw.end();
   }
@@ -1367,7 +1367,7 @@ app.get('/whatsapp/proxy-connect', async (req: any, reply: any) => {
 app.get('/api/whatsapp/whatsapp/connect', async (req: any, reply: any) => {
   const userId = (req.query as any).userId || randomUUID();
   const upstreamUrl = `${waConnectorUrl}/whatsapp/connect?userId=${encodeURIComponent(userId)}`;
-  console.log(`[workspace] React SPA SSE proxy connecting to: ${upstreamUrl}`);
+  app.log.info({ upstreamUrl }, 'React SPA SSE proxy connecting');
 
   reply.raw.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -1825,7 +1825,7 @@ function esc(s: string): string {
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen({ port: Number(process.env.PORT || 3001), host: '0.0.0.0' }).catch((err) => {
-    console.error('FATAL: workspace failed to start', err);
+    app.log.fatal({ err }, 'workspace failed to start');
     process.exit(1);
   });
 }

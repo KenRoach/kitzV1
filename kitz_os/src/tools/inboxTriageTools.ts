@@ -7,6 +7,9 @@
  * Uses Claude Haiku (fast classification), falls back to OpenAI gpt-4o-mini.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('inboxTriageTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -73,7 +76,7 @@ export function getAllInboxTriageTools(): ToolSchema[] {
       const raw = await triageMessage(message, String(args.channel || 'whatsapp'));
       let parsed;
       try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : { intent: 'other', urgency: 'medium' }; } catch { parsed = { intent: 'other', urgency: 'medium' }; }
-      console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'inboxTriageTools', intent: parsed.intent, urgency: parsed.urgency, trace_id: traceId }));
+      log.info('executed', { trace_id: traceId });
       return parsed;
     },
   }];

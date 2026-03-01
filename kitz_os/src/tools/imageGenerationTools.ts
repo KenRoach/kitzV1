@@ -5,6 +5,9 @@
  * (expires ~1hr). Uses fetch() — no OpenAI SDK needed.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('imageGeneration');
 import type { ToolSchema } from './registry.js';
 
 const OPENAI_IMAGES_URL = 'https://api.openai.com/v1/images/generations';
@@ -99,16 +102,7 @@ export function getAllImageGenerationTools(): ToolSchema[] {
         const size = (args.size as string) || '1024x1024';
         const quality = (args.quality as string) || 'standard';
 
-        console.log(JSON.stringify({
-          ts: new Date().toISOString(),
-          module: 'imageGeneration',
-          action: 'request',
-          size,
-          quality,
-          prompt_length: prompt.length,
-          key_prefix: apiKey.slice(0, 7) + '...',
-          trace_id: _traceId,
-        }));
+        log.info('request', { size, quality, prompt_length: prompt.length, trace_id: _traceId });
 
         try {
           const res = await fetch(OPENAI_IMAGES_URL, {
@@ -131,13 +125,7 @@ export function getAllImageGenerationTools(): ToolSchema[] {
           if (!res.ok) {
             const errText = await res.text().catch(() => 'unknown error');
             const errorMessage = parseOpenAIError(res.status, errText);
-            console.error(JSON.stringify({
-              ts: new Date().toISOString(),
-              module: 'imageGeneration',
-              error: errorMessage,
-              status: res.status,
-              trace_id: _traceId,
-            }));
+            log.error(errorMessage, { status: res.status, trace_id: _traceId });
             return { error: errorMessage };
           }
 
@@ -150,12 +138,7 @@ export function getAllImageGenerationTools(): ToolSchema[] {
             return { error: 'No image URL in DALL-E response' };
           }
 
-          console.log(JSON.stringify({
-            ts: new Date().toISOString(),
-            module: 'imageGeneration',
-            action: 'success',
-            trace_id: _traceId,
-          }));
+          log.info('success', { trace_id: _traceId });
 
           return {
             success: true,

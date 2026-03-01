@@ -7,6 +7,9 @@
  * Uses Claude Sonnet, falls back to OpenAI gpt-4o.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('growthMindsetTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -77,7 +80,7 @@ export function getAllGrowthMindsetTools(): ToolSchema[] {
       let parsed;
       try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : null; } catch { parsed = null; }
       if (!parsed) parsed = { current_mindset: 'mixed', fixed_patterns: [], growth_opportunities: [], reframes: [], habit_plan: [], identity_shift: '', daily_1_percent: [], reflection_prompts: [] };
-      console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'growthMindsetTools', trace_id: traceId }));
+      log.info('executed', { trace_id: traceId });
       return parsed;
     },
   }];

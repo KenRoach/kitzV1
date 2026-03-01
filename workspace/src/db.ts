@@ -6,6 +6,9 @@
  */
 
 import { randomUUID } from 'node:crypto';
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('workspace/db');
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.WORKSPACE_SUPABASE_URL || '';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.WORKSPACE_SUPABASE_SERVICE_KEY || '';
@@ -13,9 +16,9 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.WORKSP
 const hasDB = !!(SUPABASE_URL && SUPABASE_KEY);
 
 if (hasDB) {
-  console.log('[workspace/db] Supabase persistence enabled');
+  log.info('Supabase persistence enabled');
 } else {
-  console.log('[workspace/db] No Supabase config — using in-memory fallback');
+  log.info('No Supabase config — using in-memory fallback');
 }
 
 // ── Supabase REST helpers ──
@@ -53,13 +56,13 @@ async function supaInsert<T>(table: string, row: T & object): Promise<T | null> 
     });
     if (!res.ok) {
       const errText = await res.text().catch(() => 'unknown');
-      console.error(`[workspace/db] INSERT ${table} failed: ${res.status} ${errText.slice(0, 200)}`);
+      log.error(`INSERT ${table} failed`, { status: res.status, detail: errText.slice(0, 200) });
       return null;
     }
     const rows = await res.json() as T[];
     return rows[0] ?? null;
   } catch (err) {
-    console.error(`[workspace/db] INSERT ${table} error:`, (err as Error).message);
+    log.error(`INSERT ${table} error`, { error: (err as Error).message });
     return null;
   }
 }

@@ -8,6 +8,9 @@
  * Tone escalation: friendly → firm → urgent. Never threatening.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('paymentCollectionTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -75,7 +78,7 @@ export function getAllPaymentCollectionTools(): ToolSchema[] {
       const raw = await planCollection(input);
       let parsed;
       try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : { invoice_id: invoiceId, reminders: [] }; } catch { parsed = { invoice_id: invoiceId, reminders: [] }; }
-      console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'paymentCollectionTools', invoice_id: invoiceId, trace_id: traceId }));
+      log.info('executed', { trace_id: traceId });
       return parsed;
     },
   }];

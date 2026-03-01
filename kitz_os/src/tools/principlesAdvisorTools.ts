@@ -8,6 +8,9 @@
  * Uses Claude Sonnet, falls back to OpenAI gpt-4o.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('principlesAdvisorTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -81,7 +84,7 @@ export function getAllPrinciplesAdvisorTools(): ToolSchema[] {
         let parsed;
         try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : null; } catch { parsed = null; }
         if (!parsed) parsed = { situation, diagnosis: 'Analysis unavailable', principles_applied: ['Radical Transparency'], options: [], recommendation: 'Gather more data before deciding', next_steps: ['Write down the problem clearly', 'Identify root cause'], reflection_prompt: 'What is the real problem here?' };
-        console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'principlesAdvisorTools', tool: 'principles_decide', trace_id: traceId }));
+        log.info('executed', { trace_id: traceId });
         return parsed;
       },
     },
@@ -108,7 +111,7 @@ export function getAllPrinciplesAdvisorTools(): ToolSchema[] {
         let parsed;
         try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : null; } catch { parsed = null; }
         if (!parsed) parsed = { business_stage: 'startup', cash_flow_health: 'tight', debt_assessment: 'Analysis unavailable', revenue_trend: 'stable', key_risks: ['Insufficient data'], dalio_framework: 'Productivity Growth', action_plan: ['Track revenue and expenses daily', 'Calculate runway'] };
-        console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'principlesAdvisorTools', tool: 'principles_analyzeEconomics', trace_id: traceId }));
+        log.info('executed', { trace_id: traceId });
         return parsed;
       },
     },

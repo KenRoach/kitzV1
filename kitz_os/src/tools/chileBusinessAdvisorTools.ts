@@ -1,4 +1,7 @@
 /** SII, Chilean labor, taxes, business registration */
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('chileBusinessAdvisorTools');
 import type { ToolSchema } from './registry.js';
 const CK = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
 const OK = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
@@ -9,5 +12,5 @@ async function callLLM(input: string): Promise<string> {
   return JSON.stringify({ error: 'No AI available' });
 }
 export function getAllChileBusinessAdvisorTools(): ToolSchema[] {
-  return [{ name: 'chile_business_advise', description: 'SII, Chilean labor, taxes, business registration', parameters: { type: "object", properties: { business_type: { type: "string", description: "Business type" }, employees: { type: "number", description: "Employees" }, question: { type: "string", description: "Question" } }, required: ["business_type"] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(JSON.stringify(args)); let p; try { const m = raw.match(/\{[\s\S]*\}/); p = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { p = { raw }; } console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'chileBusinessAdvisorTools', trace_id: traceId })); return p; } }];
+  return [{ name: 'chile_business_advise', description: 'SII, Chilean labor, taxes, business registration', parameters: { type: "object", properties: { business_type: { type: "string", description: "Business type" }, employees: { type: "number", description: "Employees" }, question: { type: "string", description: "Question" } }, required: ["business_type"] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(JSON.stringify(args)); let p; try { const m = raw.match(/\{[\s\S]*\}/); p = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { p = { raw }; } log.info('executed', { trace_id: traceId }); return p; } }];
 }

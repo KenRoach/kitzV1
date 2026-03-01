@@ -7,6 +7,9 @@
  * Uses Claude Sonnet, falls back to OpenAI gpt-4o.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('leanStartupTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -85,7 +88,7 @@ export function getAllLeanStartupTools(): ToolSchema[] {
       let parsed;
       try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : null; } catch { parsed = null; }
       if (!parsed) parsed = { pmf_score: 0, pmf_status: 'pre-pmf', sean_ellis_estimate: 0, signals: [], gaps: ['Need more data'], build_measure_learn: { current_hypothesis: '', mvp_suggestion: '', metrics_to_track: [], learn_criteria: '' }, pivot_or_persevere: 'need-more-data', default_alive: false, jtbd_insights: [], yc_advice: ['Talk to users'], next_experiment: 'Interview 10 customers' };
-      console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'leanStartupTools', product, trace_id: traceId }));
+      log.info('executed', { trace_id: traceId });
       return parsed;
     },
   }];

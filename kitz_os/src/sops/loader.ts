@@ -7,11 +7,14 @@
  * Never throws — this runs at boot and must not crash the kernel.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
 import { readdir, readFile } from 'node:fs/promises';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { upsertSOP } from './store.js';
 import type { SOPType } from './types.js';
+
+const log = createSubsystemLogger('loader');
 
 // ── Constants ───────────────────────────────────────────
 
@@ -170,7 +173,7 @@ async function loadFromDirectory(
   try {
     files = await readdir(dirPath);
   } catch {
-    console.warn(`[sop-loader] Directory not found, skipping: ${dirPath}`);
+    log.warn(`Directory not found, skipping: ${dirPath}`);
     return 0;
   }
 
@@ -183,7 +186,7 @@ async function loadFromDirectory(
       // Parse filename
       const match = file.match(FILENAME_RE);
       if (!match) {
-        console.warn(`[sop-loader] Skipping file with unexpected name format: ${file}`);
+        log.warn(`Skipping file with unexpected name format: ${file}`);
         continue;
       }
 
@@ -219,10 +222,7 @@ async function loadFromDirectory(
 
       count++;
     } catch (err) {
-      console.warn(
-        `[sop-loader] Failed to parse ${file}:`,
-        (err as Error).message
-      );
+      log.warn(`Failed to parse ${file}`, { error: (err as Error).message });
     }
   }
 
@@ -244,16 +244,16 @@ export async function loadStarterSOPs(): Promise<number> {
     const sopCount = await loadFromDirectory(SOP_DIR, 'sops');
     total += sopCount;
   } catch (err) {
-    console.warn('[sop-loader] Error loading sops directory:', (err as Error).message);
+    log.warn('Error loading sops directory:', { detail: (err as Error).message });
   }
 
   try {
     const playbookCount = await loadFromDirectory(PLAYBOOK_DIR, 'playbooks');
     total += playbookCount;
   } catch (err) {
-    console.warn('[sop-loader] Error loading playbooks directory:', (err as Error).message);
+    log.warn('Error loading playbooks directory:', { detail: (err as Error).message });
   }
 
-  console.log(`[sop-loader] ${total} starter SOPs loaded from kitz-knowledge-base`);
+  log.info(`${total} starter SOPs loaded from kitz-knowledge-base`);
   return total;
 }

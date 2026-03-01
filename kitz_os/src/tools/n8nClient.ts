@@ -3,6 +3,10 @@
  * Follows the same pattern as mcpClient.ts.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('n8nClient');
+
 const N8N_API_URL = process.env.N8N_API_URL || 'http://localhost:5678';
 const N8N_API_KEY = process.env.N8N_API_KEY || '';
 
@@ -23,13 +27,7 @@ async function callN8n(
     headers['x-trace-id'] = traceId;
   }
 
-  console.log(JSON.stringify({
-    ts: new Date().toISOString(),
-    module: 'n8nClient',
-    action: method,
-    path,
-    trace_id: traceId,
-  }));
+  log.info(method, { path, trace_id: traceId });
 
   try {
     const res = await fetch(url, {
@@ -41,14 +39,7 @@ async function callN8n(
 
     if (!res.ok) {
       const errText = await res.text().catch(() => 'unknown');
-      console.error(JSON.stringify({
-        ts: new Date().toISOString(),
-        module: 'n8nClient',
-        error: `HTTP ${res.status}`,
-        detail: errText.slice(0, 300),
-        path,
-        trace_id: traceId,
-      }));
+      log.error(`n8n HTTP ${res.status}`, { path, detail: errText.slice(0, 300), trace_id: traceId });
       return { error: `n8n HTTP ${res.status}` };
     }
 
@@ -61,14 +52,7 @@ async function callN8n(
       return { ok: true, body: text };
     }
   } catch (err) {
-    console.error(JSON.stringify({
-      ts: new Date().toISOString(),
-      module: 'n8nClient',
-      error: 'fetch_failed',
-      detail: (err as Error).message,
-      path,
-      trace_id: traceId,
-    }));
+    log.error('fetch failed', { path, detail: (err as Error).message, trace_id: traceId });
     return { error: (err as Error).message };
   }
 }
@@ -128,13 +112,7 @@ export async function triggerWebhook(
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (traceId) headers['x-trace-id'] = traceId;
 
-  console.log(JSON.stringify({
-    ts: new Date().toISOString(),
-    module: 'n8nClient',
-    action: 'triggerWebhook',
-    webhook: webhookPath,
-    trace_id: traceId,
-  }));
+  log.info('triggerWebhook', { webhook: webhookPath, trace_id: traceId });
 
   try {
     const res = await fetch(url, {

@@ -7,6 +7,9 @@
  * Uses Claude Sonnet, falls back to OpenAI gpt-4o.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('negotiationAdvisorTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -78,7 +81,7 @@ export function getAllNegotiationAdvisorTools(): ToolSchema[] {
       let parsed;
       try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : null; } catch { parsed = null; }
       if (!parsed) parsed = { situation_analysis: situation, tactics: [], calibrated_questions: [], script: 'Analysis unavailable' };
-      console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'negotiationAdvisorTools', trace_id: traceId }));
+      log.info('executed', { trace_id: traceId });
       return parsed;
     },
   }];

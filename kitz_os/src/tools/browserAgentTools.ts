@@ -10,6 +10,9 @@
  * Execution requires user approval (draft-first).
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('browserAgentTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -185,15 +188,7 @@ export function getAllBrowserAgentTools(): ToolSchema[] {
         parsed.status = 'planned';
         parsed.note = 'This is a PLAN only. Execution requires user approval (draft-first).';
 
-        console.log(JSON.stringify({
-          ts: new Date().toISOString(),
-          module: 'browserAgentTools',
-          action: 'browser_planTask',
-          task: task.slice(0, 80),
-          step_count: parsed.steps?.length || 0,
-          risk_level: parsed.risk_level || 'unknown',
-          trace_id: traceId,
-        }));
+        log.info('executed', { trace_id: traceId });
 
         return parsed;
       },
@@ -250,14 +245,7 @@ export function getAllBrowserAgentTools(): ToolSchema[] {
         parsed.note = 'Extraction PLAN only. Execution requires user approval.';
         parsed.target_url = url;
 
-        console.log(JSON.stringify({
-          ts: new Date().toISOString(),
-          module: 'browserAgentTools',
-          action: 'browser_extractData',
-          url: url.slice(0, 100),
-          goal: goal.slice(0, 80),
-          trace_id: traceId,
-        }));
+        log.info('executed', { trace_id: traceId });
 
         return parsed;
       },

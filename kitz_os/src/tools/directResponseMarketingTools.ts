@@ -8,6 +8,9 @@
  * Uses Claude Sonnet, falls back to OpenAI gpt-4o.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('directResponseMarketingTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -82,7 +85,7 @@ export function getAllDirectResponseMarketingTools(): ToolSchema[] {
         let parsed;
         try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : null; } catch { parsed = null; }
         if (!parsed) parsed = { headline: `Campaign for ${product}`, offer: product, urgencyTrigger: 'Limited time', callToAction: '¡Escríbenos ahora!', followUpSequence: [], trackingMetrics: ['response_rate', 'conversion_rate'], kennedyRulesApplied: ['Rule 1: Always have an offer'] };
-        console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'directResponseMarketingTools', tool: 'dr_createCampaign', product, trace_id: traceId }));
+        log.info('executed', { trace_id: traceId });
         return parsed;
       },
     },
@@ -112,7 +115,7 @@ export function getAllDirectResponseMarketingTools(): ToolSchema[] {
         let parsed;
         try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : null; } catch { parsed = null; }
         if (!parsed) parsed = { headline: `Sales letter for ${product}`, openingHook: '', problemStatement: '', solution: '', proof: [], offer: `$${args.price}`, urgency: 'Limited time', guarantee: args.guarantee || 'Satisfacción garantizada', callToAction: '¡Ordena ahora!', ps: '' };
-        console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'directResponseMarketingTools', tool: 'dr_writeSalesLetter', product, trace_id: traceId }));
+        log.info('executed', { trace_id: traceId });
         return parsed;
       },
     },

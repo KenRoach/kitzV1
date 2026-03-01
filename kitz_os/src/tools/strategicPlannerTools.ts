@@ -7,6 +7,9 @@
  * Uses Claude Sonnet, falls back to OpenAI gpt-4o.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('strategicPlannerTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -82,7 +85,7 @@ export function getAllStrategicPlannerTools(): ToolSchema[] {
       let parsed;
       try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : null; } catch { parsed = null; }
       if (!parsed) parsed = { diagnosis: objective, guiding_policy: 'Analysis unavailable', coherent_actions: [], bad_strategy_check: [], competitive_analysis: {}, five_rings: {}, power_moves: [], risks: [], timeline: [] };
-      console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'strategicPlannerTools', trace_id: traceId }));
+      log.info('executed', { trace_id: traceId });
       return parsed;
     },
   }];

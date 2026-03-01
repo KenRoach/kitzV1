@@ -16,7 +16,10 @@
  *   - Model: eleven_multilingual_v2 (32+ languages)
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
 import { recordTTSSpend } from '../aiBattery.js';
+
+const log = createSubsystemLogger('elevenLabsClient');
 
 // ── Config ────────────────────────────────────────────────
 
@@ -113,14 +116,7 @@ export async function textToSpeech(options: TTSOptions): Promise<TTSResult> {
     },
   };
 
-  console.log(JSON.stringify({
-    ts: new Date().toISOString(),
-    module: 'elevenLabs',
-    action: 'tts',
-    voice_id: voiceId,
-    model_id: modelId,
-    char_count: options.text.length,
-  }));
+  log.info('tts', {  });
 
   const res = await fetch(url, {
     method: 'POST',
@@ -135,12 +131,7 @@ export async function textToSpeech(options: TTSOptions): Promise<TTSResult> {
 
   if (!res.ok) {
     const errorText = await res.text().catch(() => 'unknown error');
-    console.error(JSON.stringify({
-      ts: new Date().toISOString(),
-      module: 'elevenLabs',
-      error: `HTTP ${res.status}`,
-      detail: errorText.slice(0, 500),
-    }));
+    log.error(`ElevenLabs HTTP ${res.status}`, { detail: errorText.slice(0, 500) });
     throw new Error(`ElevenLabs TTS error: HTTP ${res.status} — ${errorText.slice(0, 200)}`);
   }
 

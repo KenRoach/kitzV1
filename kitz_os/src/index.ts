@@ -6,23 +6,22 @@
  */
 
 import 'dotenv/config';
+import { createSubsystemLogger } from 'kitz-schemas';
 import { KitzKernel } from './kernel.js';
 
+const log = createSubsystemLogger('kitz-os');
 const kernel = new KitzKernel();
 
 async function main() {
   try {
     await kernel.boot();
-    console.log(JSON.stringify({
-      ts: new Date().toISOString(),
-      module: 'kitz-os',
-      event: 'boot_complete',
+    log.info('boot_complete', {
       status: kernel.getStatus().status,
       tools: kernel.getStatus().toolCount,
       port: process.env.PORT || 3012,
-    }));
+    });
   } catch (err) {
-    console.error('KITZ OS boot failed:', err);
+    log.fatal('boot failed', { error: (err as Error).message });
     process.exit(1);
   }
 }
@@ -30,7 +29,7 @@ async function main() {
 // Graceful shutdown
 for (const sig of ['SIGINT', 'SIGTERM'] as const) {
   process.on(sig, async () => {
-    console.log(`\n[kitz-os] Received ${sig}, shutting down…`);
+    log.info(`Received ${sig}, shutting down…`);
     await kernel.shutdown();
     process.exit(0);
   });

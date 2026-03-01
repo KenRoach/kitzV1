@@ -7,6 +7,9 @@
  * Uses Claude Sonnet for personalization, falls back to OpenAI gpt-4o.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('customerOnboardingTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -73,7 +76,7 @@ export function getAllCustomerOnboardingTools(): ToolSchema[] {
       const raw = await generatePlan(input);
       let parsed;
       try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : { steps: [], error: 'Failed to parse' }; } catch { parsed = { steps: [], error: 'Failed to parse' }; }
-      console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'customerOnboardingTools', customer: name, step_count: parsed.steps?.length || 0, trace_id: traceId }));
+      log.info('executed', { trace_id: traceId });
       return parsed;
     },
   }];

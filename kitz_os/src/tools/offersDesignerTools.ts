@@ -7,6 +7,9 @@
  * Uses Claude Sonnet, falls back to OpenAI gpt-4o.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('offersDesignerTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -88,7 +91,7 @@ export function getAllOffersDesignerTools(): ToolSchema[] {
       let parsed;
       try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : null; } catch { parsed = null; }
       if (!parsed) parsed = { grand_slam_offer: { dream_outcome: product, value_score: 50 }, offer_stack: [], pricing: { suggested_price: 0 }, guarantee: { type: 'satisfaction' }, naming: { offer_name: product }, lead_magnet: {}, lead_channels: [], dream_100: [], action_steps: [] };
-      console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'offersDesignerTools', product, trace_id: traceId }));
+      log.info('executed', { trace_id: traceId });
       return parsed;
     },
   }];

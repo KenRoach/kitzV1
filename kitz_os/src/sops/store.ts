@@ -10,11 +10,14 @@
  * Search scores SOPs by title, triggerKeywords, and summary relevance.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
 import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
 import type { SOPEntry, SOPInput } from './types.js';
+
+const log = createSubsystemLogger('store');
 
 // ── Config ──────────────────────────────────────────────
 
@@ -67,7 +70,7 @@ async function persistLatest(): Promise<void> {
     const activeSOPs = getLatestActivePerSlug();
     await writeFile(LATEST_FILE, JSON.stringify(activeSOPs, null, 2), 'utf-8');
   } catch (err) {
-    console.warn('[sop-store] persistLatest failed:', (err as Error).message);
+    log.warn('persistLatest failed:', { detail: (err as Error).message });
   }
 }
 
@@ -77,7 +80,7 @@ async function appendToLedger(entry: SOPEntry): Promise<void> {
     const line = JSON.stringify(entry) + '\n';
     await appendFile(LEDGER_FILE, line, 'utf-8');
   } catch (err) {
-    console.warn('[sop-store] appendToLedger failed:', (err as Error).message);
+    log.warn('appendToLedger failed:', { detail: (err as Error).message });
   }
 }
 
@@ -109,7 +112,7 @@ export async function initSOPStore(): Promise<void> {
     // File doesn't exist yet or is malformed — silently continue
   }
 
-  console.log(`[sop-store] ${count} SOPs restored`);
+  log.info(`${count} SOPs restored`);
 }
 
 // ── Core Functions ──────────────────────────────────────
@@ -144,10 +147,10 @@ export async function upsertSOP(input: SOPInput): Promise<SOPEntry> {
 
   // Fire-and-forget persistence
   appendToLedger(entry).catch(err => {
-    console.warn('[sop-store] ledger append failed:', (err as Error).message);
+    log.warn('ledger append failed:', { detail: (err as Error).message });
   });
   persistLatest().catch(err => {
-    console.warn('[sop-store] snapshot persist failed:', (err as Error).message);
+    log.warn('snapshot persist failed:', { detail: (err as Error).message });
   });
 
   return entry;

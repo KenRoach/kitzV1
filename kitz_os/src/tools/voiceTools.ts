@@ -14,6 +14,9 @@
  *   - Used for: WhatsApp voice replies, dashboard voice assistant, website Call Assistant
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('voiceTools');
 import {
   textToSpeech,
   listVoices,
@@ -85,15 +88,7 @@ export function getAllVoiceTools(): ToolSchema[] {
             similarityBoost: args.similarity_boost as number | undefined,
           });
 
-          console.log(JSON.stringify({
-            ts: new Date().toISOString(),
-            module: 'voiceTools',
-            action: 'voice_speak',
-            char_count: result.characterCount,
-            estimated_credits: estimatedCredits,
-            voice_id: result.voiceId,
-            trace_id: traceId,
-          }));
+          log.info('executed', { trace_id: traceId });
 
           return {
             audio_base64: result.audioBase64,

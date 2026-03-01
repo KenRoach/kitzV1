@@ -9,6 +9,9 @@
  * Panama-specific: ITBMS 7% tax on invoices, RUC fields, commercial law clauses.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('officeAutomationTools');
 import { callWorkspaceMcp } from './mcpClient.js';
 import type { ToolSchema } from './registry.js';
 
@@ -199,14 +202,7 @@ export function getAllOfficeAutomationTools(): ToolSchema[] {
           parsed.archived = false;
         }
 
-        console.log(JSON.stringify({
-          ts: new Date().toISOString(),
-          module: 'officeAutomationTools',
-          action: 'office_generateDocument',
-          document_type: docType,
-          reference: parsed.reference_number || 'none',
-          trace_id: traceId,
-        }));
+        log.info('executed', { trace_id: traceId });
 
         return parsed;
       },
@@ -265,14 +261,7 @@ export function getAllOfficeAutomationTools(): ToolSchema[] {
           parsed = { title: reportType, headers: [], rows: [], rendered_csv: raw };
         }
 
-        console.log(JSON.stringify({
-          ts: new Date().toISOString(),
-          module: 'officeAutomationTools',
-          action: 'office_generateSpreadsheet',
-          report_type: reportType,
-          row_count: parsed.rows?.length || 0,
-          trace_id: traceId,
-        }));
+        log.info('executed', { trace_id: traceId });
 
         return parsed;
       },

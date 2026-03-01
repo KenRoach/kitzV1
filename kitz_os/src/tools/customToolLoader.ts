@@ -5,9 +5,12 @@
 
 import { readdir, readFile, writeFile, unlink, mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
+import { createSubsystemLogger } from 'kitz-schemas'
 import { executeWorkflow } from './n8nClient.js'
 import { evaluateComputeDSL } from './customToolTypes.js'
 import type { CustomToolDef } from './customToolTypes.js'
+
+const log = createSubsystemLogger('customToolLoader')
 import type { OsToolRegistry, ToolSchema } from './registry.js'
 
 const CUSTOM_TOOLS_DIR = join(process.cwd(), 'data', 'custom-tools')
@@ -71,7 +74,7 @@ export async function loadCustomTools(registry: OsToolRegistry): Promise<number>
       const def: CustomToolDef = JSON.parse(raw)
 
       if (!def.name || !def.type || !def.description) {
-        console.warn(`[customToolLoader] Skipping ${file}: missing required fields`)
+        log.warn(`Skipping ${file}: missing required fields`)
         continue
       }
 
@@ -79,7 +82,7 @@ export async function loadCustomTools(registry: OsToolRegistry): Promise<number>
       registry.register(tool)
       loaded++
     } catch (err) {
-      console.warn(`[customToolLoader] Failed to load ${file}: ${(err as Error).message}`)
+      log.warn(`Failed to load ${file}`, { error: (err as Error).message })
     }
   }
 

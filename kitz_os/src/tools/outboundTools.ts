@@ -12,6 +12,9 @@
  * All outbound tools follow draft-first policy in alpha mode.
  * Voice tools use ElevenLabs TTS for KITZ's female voice.
  */
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('outbound');
 import { textToSpeech, isElevenLabsConfigured } from '../llm/elevenLabsClient.js';
 import type { ToolSchema } from './registry.js';
 
@@ -153,14 +156,7 @@ export function getAllOutboundTools(): ToolSchema[] {
             outputFormat: 'mp3_22050_32', // Smaller file for WhatsApp
           });
 
-          console.log(JSON.stringify({
-            ts: new Date().toISOString(),
-            module: 'outbound',
-            action: 'voice_note_generated',
-            phone,
-            char_count: audioResult.characterCount,
-            trace_id: traceId,
-          }));
+          log.info('executed', { trace_id: traceId });
 
           // 2. Send via WhatsApp connector
           // Draft-first in alpha mode — store the audio for approval
@@ -249,16 +245,7 @@ export function getAllOutboundTools(): ToolSchema[] {
           return { error: 'Both phone and purpose are required.' };
         }
 
-        console.log(JSON.stringify({
-          ts: new Date().toISOString(),
-          module: 'outbound',
-          action: 'call_initiated',
-          phone,
-          purpose,
-          language,
-          max_duration: maxDuration,
-          trace_id: traceId,
-        }));
+        log.info('executed', { trace_id: traceId });
 
         // In alpha mode: queue the call for approval
         // When WhatsApp connector supports calls, this will POST to it

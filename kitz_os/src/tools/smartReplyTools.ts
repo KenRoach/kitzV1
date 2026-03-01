@@ -8,6 +8,9 @@
  * Spanish-first, 5-15 words per reply, warm + professional.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('smartReplyTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -91,7 +94,7 @@ export function getAllSmartReplyTools(): ToolSchema[] {
           parsed = { replies: [raw.slice(0, 100)], recommended: 0 };
         }
         if (parsed.replies) parsed.replies = parsed.replies.slice(0, 3);
-        console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'smartReplyTools', action: 'smartreply_generate', reply_count: parsed.replies?.length || 0, trace_id: traceId }));
+        log.info('executed', { trace_id: traceId });
         return parsed;
       },
     },

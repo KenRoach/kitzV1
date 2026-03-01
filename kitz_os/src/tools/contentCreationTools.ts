@@ -9,6 +9,9 @@
  * Platforms: WhatsApp, Instagram, Facebook, TikTok, Email, Website.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('contentCreationTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -190,15 +193,7 @@ export function getAllContentCreationTools(): ToolSchema[] {
           parsed = { pieces: [{ platform: 'whatsapp', text: raw, type }] };
         }
 
-        console.log(JSON.stringify({
-          ts: new Date().toISOString(),
-          module: 'contentCreationTools',
-          action: 'content_create',
-          topic: topic.slice(0, 50),
-          platforms,
-          piece_count: parsed.pieces?.length || 0,
-          trace_id: traceId,
-        }));
+        log.info('executed', { trace_id: traceId });
 
         return parsed;
       },
@@ -248,14 +243,7 @@ export function getAllContentCreationTools(): ToolSchema[] {
           parsed = { week_theme: businessType, days: [], error: 'Failed to generate calendar' };
         }
 
-        console.log(JSON.stringify({
-          ts: new Date().toISOString(),
-          module: 'contentCreationTools',
-          action: 'content_calendar',
-          business_type: businessType,
-          day_count: parsed.days?.length || 0,
-          trace_id: traceId,
-        }));
+        log.info('executed', { trace_id: traceId });
 
         return parsed;
       },

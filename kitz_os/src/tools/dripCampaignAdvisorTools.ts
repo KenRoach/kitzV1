@@ -1,4 +1,7 @@
 /** Email/WhatsApp automated sequences, triggers, optimization */
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('dripCampaignAdvisorTools');
 import type { ToolSchema } from './registry.js';
 const CK = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
 const OK = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
@@ -9,5 +12,5 @@ async function callLLM(input: string): Promise<string> {
   return JSON.stringify({ error: 'No AI available' });
 }
 export function getAllDripCampaignAdvisorTools(): ToolSchema[] {
-  return [{ name: 'drip_campaign_advise', description: 'Email/WhatsApp automated sequences, triggers, optimization', parameters: { type: "object", properties: { business_type: { type: "string", description: "Business type" }, goal: { type: "string", description: "Campaign goal" }, list_size: { type: "number", description: "List size" } }, required: ["business_type"] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(JSON.stringify(args)); let p; try { const m = raw.match(/\{[\s\S]*\}/); p = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { p = { raw }; } console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'dripCampaignAdvisorTools', trace_id: traceId })); return p; } }];
+  return [{ name: 'drip_campaign_advise', description: 'Email/WhatsApp automated sequences, triggers, optimization', parameters: { type: "object", properties: { business_type: { type: "string", description: "Business type" }, goal: { type: "string", description: "Campaign goal" }, list_size: { type: "number", description: "List size" } }, required: ["business_type"] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(JSON.stringify(args)); let p; try { const m = raw.match(/\{[\s\S]*\}/); p = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { p = { raw }; } log.info('executed', { trace_id: traceId }); return p; } }];
 }

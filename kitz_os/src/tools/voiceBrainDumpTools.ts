@@ -9,6 +9,9 @@
  * Saves extracted items to workspace CRM.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('voiceBrainDumpTools');
 import { callWorkspaceMcp } from './mcpClient.js';
 import type { ToolSchema } from './registry.js';
 
@@ -185,15 +188,7 @@ export function getAllVoiceBrainDumpTools(): ToolSchema[] {
         parsed.saved_to_workspace = savedCount > 0;
         parsed.item_count = parsed.items.length;
 
-        console.log(JSON.stringify({
-          ts: new Date().toISOString(),
-          module: 'voiceBrainDumpTools',
-          action: 'voicebraindump_process',
-          item_count: parsed.items.length,
-          saved_tasks: savedCount,
-          transcript_length: transcript.length,
-          trace_id: traceId,
-        }));
+        log.info('executed', { trace_id: traceId });
 
         return parsed;
       },

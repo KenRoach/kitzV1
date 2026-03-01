@@ -11,11 +11,14 @@
  * Uses better-sqlite3 for sync performance (or falls back to JSON files).
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
 import { readFileSync, existsSync, mkdirSync } from 'node:fs';
 import { writeFile, appendFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
+
+const log = createSubsystemLogger('manager');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -109,11 +112,11 @@ export function initMemory(): void {
   conversations = conversations.filter(m => m.createdAt > cutoff);
   if (before !== conversations.length) {
     persistConversations();
-    console.log(`[memory] Pruned ${before - conversations.length} old messages`);
+    log.info(`Pruned ${before - conversations.length} old messages`);
   }
 
   initialized = true;
-  console.log(`[memory] Initialized: ${conversations.length} messages, ${knowledge.length} knowledge entries`);
+  log.info(`Initialized: ${conversations.length} messages, ${knowledge.length} knowledge entries`);
 }
 
 // ── Persistence ──
@@ -122,14 +125,14 @@ function persistConversations(): void {
   ensureDataDir();
   const lines = conversations.map(m => JSON.stringify(m)).join('\n');
   writeFile(CONVERSATIONS_FILE, lines + '\n').catch(err => {
-    console.warn('[memory] persistConversations failed:', (err as Error).message);
+    log.warn('persistConversations failed:', { detail: (err as Error).message });
   });
 }
 
 function persistKnowledge(): void {
   ensureDataDir();
   writeFile(KNOWLEDGE_FILE, JSON.stringify(knowledge, null, 2)).catch(err => {
-    console.warn('[memory] persistKnowledge failed:', (err as Error).message);
+    log.warn('persistKnowledge failed:', { detail: (err as Error).message });
   });
 }
 
@@ -137,7 +140,7 @@ function appendConversation(msg: ConversationMessage): void {
   ensureDataDir();
   const line = JSON.stringify(msg) + '\n';
   appendFile(CONVERSATIONS_FILE, line).catch(err => {
-    console.warn('[memory] appendConversation failed:', (err as Error).message);
+    log.warn('appendConversation failed:', { detail: (err as Error).message });
   });
 }
 

@@ -26,6 +26,9 @@
 import { appendFile, mkdir, readFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('aiBattery');
 
 // ── Config ──────────────────────────────────────────────
 
@@ -127,28 +130,25 @@ export async function recordSpend(entry: Omit<SpendEntry, 'id' | 'ts'>): Promise
 
   // 2. NDJSON file (fire-and-forget — don't block on I/O)
   persistToFile(fullEntry).catch(err => {
-    console.warn('[aiBattery] file persist failed:', (err as Error).message);
+    log.warn('file persist failed', { error: (err as Error).message });
   });
 
   // 3. Supabase agent_audit_log (fire-and-forget)
   if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
     persistToSupabase(fullEntry).catch(err => {
-      console.warn('[aiBattery] supabase persist failed:', (err as Error).message);
+      log.warn('supabase persist failed', { error: (err as Error).message });
     });
   }
 
   // Log spend
-  console.log(JSON.stringify({
-    ts: fullEntry.ts,
-    module: 'aiBattery',
-    action: 'spend_recorded',
+  log.info('spend_recorded', {
     provider: fullEntry.provider,
     category: fullEntry.category,
     units: fullEntry.units,
     credits: fullEntry.credits,
     model: fullEntry.model,
     trace_id: fullEntry.traceId,
-  }));
+  });
 
   return fullEntry;
 }
@@ -319,13 +319,7 @@ export async function initBattery(): Promise<void> {
     restored = await restoreFromSupabase();
   }
 
-  console.log(JSON.stringify({
-    ts: new Date().toISOString(),
-    module: 'aiBattery',
-    action: 'boot_restore',
-    entries_restored: restored,
-    source: restored > 0 ? 'file_or_supabase' : 'empty',
-  }));
+  log.info('boot_restore', { entries_restored: restored, source: restored > 0 ? 'file_or_supabase' : 'empty' });
 }
 
 async function restoreFromFile(): Promise<number> {
@@ -448,7 +442,7 @@ async function persistToSupabase(entry: SpendEntry): Promise<void> {
 
     if (!res.ok) {
       const detail = await res.text().catch(() => '');
-      console.warn(`[aiBattery] supabase insert failed: ${res.status} ${detail.slice(0, 200)}`);
+      log.warn('supabase insert failed', { status: res.status, detail: detail.slice(0, 200) });
     }
   } catch {
     // Silently fail — Supabase persistence is optional

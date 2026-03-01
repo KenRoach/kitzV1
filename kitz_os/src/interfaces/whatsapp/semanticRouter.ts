@@ -23,7 +23,7 @@ import type { OsToolRegistry } from '../../tools/registry.js';
 import { recordLLMSpend } from '../../aiBattery.js';
 import { searchSOPs } from '../../sops/store.js';
 import { getConversationHistory } from '../../memory/manager.js';
-import type { OutputChannel } from 'kitz-schemas';
+import { createSubsystemLogger, type OutputChannel } from 'kitz-schemas';
 import { getIntelligenceContext } from '../../tools/ragPipelineTools.js';
 import { isBlocked, getToolRisk, getApprovalSummaryForPrompt } from '../../approvals/approvalMatrix.js';
 import { dispatchToAgent } from '../../../../aos/src/runtime/taskDispatcher.js';
@@ -31,6 +31,8 @@ import { runSwarm, type SwarmConfig } from '../../../../aos/src/swarm/swarmRunne
 import type { ExecutionResult } from '../../../../aos/src/runtime/AgentExecutor.js';
 import { getAgent } from '../../../../aos/src/runtime/taskDispatcher.js';
 import { ReviewerAgent } from '../../../../aos/src/agents/governance/Reviewer.js';
+
+const log = createSubsystemLogger('semanticRouter');
 
 const BRAIN_URL = process.env.KITZ_BRAIN_URL || 'http://localhost:3015';
 
@@ -495,7 +497,7 @@ export async function routeWithAI(
   // gpt-4o-mini struggles with 170+ tools. Pre-filter by intent for reliability.
   const toolDefs = filterToolsByIntent(userMessage, allToolDefs);
   if (toolDefs.length < allToolDefs.length) {
-    console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'semanticRouter', action: 'tool_filter', total: allToolDefs.length, filtered: toolDefs.length, trace_id: traceId }));
+    log.info('tool_filter', { trace_id: traceId });
   }
   const toolsUsed: string[] = [];
   const toolResults: Record<string, unknown>[] = [];
@@ -573,7 +575,7 @@ export async function routeWithAI(
     // If error, return a friendly message (hide internal error codes from user)
     if (result.finishReason === 'error') {
       const rawError = result.message.content || '';
-      console.error(JSON.stringify({ ts: new Date().toISOString(), module: 'semanticRouter', error: rawError, loop, trace_id: traceId }));
+      log.error('failed', { trace_id: traceId });
       const friendlyMsg = rawError.includes('rate limit') || rawError.includes('429') || rawError.includes('529')
         ? 'AI is temporarily busy — give me a sec and try again, boss.'
         : rawError.includes('unreachable') || rawError.includes('timeout')
@@ -600,7 +602,7 @@ export async function routeWithAI(
       try {
         args = JSON.parse(tc.function.arguments);
       } catch (parseErr) {
-        console.warn(`[router] Malformed tool args for ${tc.function.name}:`, (parseErr as Error).message);
+        log.warn(`Malformed tool args for ${tc.function.name}`, { error: (parseErr as Error).message });
         messages.push({
           role: 'tool',
           content: JSON.stringify({ error: 'Malformed arguments from AI — please retry.' }),
@@ -612,14 +614,7 @@ export async function routeWithAI(
 
       toolsUsed.push(toolName);
 
-      console.log(JSON.stringify({
-        ts: new Date().toISOString(),
-        module: 'semanticRouter',
-        action: isWriteTool(toolName) ? 'tool_draft' : 'tool_call',
-        tool: toolName,
-        loop,
-        trace_id: traceId,
-      }));
+      log.info('executed', { trace_id: traceId });
 
       // Blocked: actions that should never be executed by AI
       if (isBlocked(toolName)) {
@@ -764,25 +759,10 @@ export async function brainFirstRoute(
 
     if (brainRes.ok) {
       decision = await brainRes.json() as BrainDecision;
-      console.log(JSON.stringify({
-        ts: new Date().toISOString(),
-        module: 'brainFirstRoute',
-        action: 'brain_decision',
-        strategy: decision.strategy,
-        confidence: decision.confidence,
-        agents: decision.agents,
-        reviewRequired: decision.reviewRequired,
-        trace_id: traceId,
-      }));
+      log.info('brain_decision', { trace_id: traceId });
     }
   } catch (err) {
-    console.log(JSON.stringify({
-      ts: new Date().toISOString(),
-      module: 'brainFirstRoute',
-      action: 'brain_unreachable',
-      error: (err as Error).message,
-      trace_id: traceId,
-    }));
+    log.info('brain_unreachable', { trace_id: traceId });
   }
 
   // 2. If brain unreachable, fall through to existing routeWithAI
@@ -817,7 +797,7 @@ export async function brainFirstRoute(
 
       // If agent not found or offline, fall back to routeWithAI
       if (execResult.iterations === 0 && execResult.response.startsWith('Agent "')) {
-        console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'brainFirstRoute', action: 'agent_fallback', agent: agentName, trace_id: traceId }));
+        log.info('agent_fallback', { trace_id: traceId });
         result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
       } else {
         result = adaptExecutionResult(execResult);
@@ -901,7 +881,7 @@ export async function brainFirstRoute(
           })),
         };
       } catch (err) {
-        console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'brainFirstRoute', action: 'swarm_error', error: (err as Error).message, trace_id: traceId }));
+        log.info('swarm_error', { trace_id: traceId });
         result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
       }
       break;
@@ -935,15 +915,7 @@ export async function brainFirstRoute(
           traceId,
         );
 
-        console.log(JSON.stringify({
-          ts: new Date().toISOString(),
-          module: 'brainFirstRoute',
-          action: 'review_gate',
-          approved: reviewResult.approved,
-          confidence: reviewResult.confidence,
-          flags: reviewResult.flags,
-          trace_id: traceId,
-        }));
+        log.info('review_gate', { trace_id: traceId });
 
         // If reviewer provides a revised response, use it
         if (reviewResult.revised) {
@@ -952,13 +924,7 @@ export async function brainFirstRoute(
       }
     } catch (err) {
       // Review gate failure is non-blocking — pass original response through
-      console.log(JSON.stringify({
-        ts: new Date().toISOString(),
-        module: 'brainFirstRoute',
-        action: 'review_gate_error',
-        error: (err as Error).message,
-        trace_id: traceId,
-      }));
+      log.info('review_gate_error', { trace_id: traceId });
     }
   }
 

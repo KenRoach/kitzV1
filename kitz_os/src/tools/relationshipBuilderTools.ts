@@ -7,6 +7,9 @@
  * Uses Claude Sonnet, falls back to OpenAI gpt-4o.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('relationshipBuilderTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -79,7 +82,7 @@ export function getAllRelationshipBuilderTools(): ToolSchema[] {
       let parsed;
       try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : null; } catch { parsed = null; }
       if (!parsed) parsed = { situation_type: args.relationship_type || 'general', principles_applied: [], conversation_guide: {}, mistakes_to_avoid: [], follow_up_plan: [] };
-      console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'relationshipBuilderTools', trace_id: traceId }));
+      log.info('executed', { trace_id: traceId });
       return parsed;
     },
   }];

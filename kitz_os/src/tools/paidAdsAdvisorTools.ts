@@ -7,6 +7,9 @@
  * Uses Claude Haiku, falls back to OpenAI gpt-4o-mini.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('paidAdsAdvisorTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -64,7 +67,7 @@ export function getAllPaidAdsAdvisorTools(): ToolSchema[] {
       const raw = await callLLM(input);
       let parsed;
       try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : { error: 'Could not parse' }; } catch { parsed = { raw_advice: raw }; }
-      console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'paidAdsAdvisorTools', trace_id: traceId }));
+      log.info('executed', { trace_id: traceId });
       return parsed;
     },
   }];

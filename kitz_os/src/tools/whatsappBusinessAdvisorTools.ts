@@ -1,4 +1,7 @@
 /** WhatsApp Business catalog, automation, broadcasts, API */
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('whatsappBusinessAdvisorTools');
 import type { ToolSchema } from './registry.js';
 const CK = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
 const OK = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
@@ -9,5 +12,5 @@ async function callLLM(input: string): Promise<string> {
   return JSON.stringify({ error: 'No AI available' });
 }
 export function getAllWhatsappBusinessAdvisorTools(): ToolSchema[] {
-  return [{ name: 'whatsapp_business_advise', description: 'WhatsApp Business catalog, automation, broadcasts, API', parameters: { type: "object", properties: { business_type: { type: "string", description: "Business type" }, country: { type: "string", description: "Country" }, monthly_messages: { type: "number", description: "Monthly messages" } }, required: ["business_type"] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(JSON.stringify(args)); let p; try { const m = raw.match(/\{[\s\S]*\}/); p = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { p = { raw }; } console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'whatsappBusinessAdvisorTools', trace_id: traceId })); return p; } }];
+  return [{ name: 'whatsapp_business_advise', description: 'WhatsApp Business catalog, automation, broadcasts, API', parameters: { type: "object", properties: { business_type: { type: "string", description: "Business type" }, country: { type: "string", description: "Country" }, monthly_messages: { type: "number", description: "Monthly messages" } }, required: ["business_type"] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(JSON.stringify(args)); let p; try { const m = raw.match(/\{[\s\S]*\}/); p = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { p = { raw }; } log.info('executed', { trace_id: traceId }); return p; } }];
 }

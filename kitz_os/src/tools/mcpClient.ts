@@ -10,6 +10,10 @@
  * Falls back to GOD_MODE_USER_ID when no userId is provided (system/cron calls).
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('mcpClient');
+
 const WORKSPACE_API_URL = process.env.WORKSPACE_API_URL || process.env.WORKSPACE_URL || 'http://localhost:3001';
 const WORKSPACE_MCP_URL = process.env.WORKSPACE_MCP_URL || '';
 const WORKSPACE_MCP_KEY = process.env.WORKSPACE_MCP_KEY || '';
@@ -230,13 +234,7 @@ export async function callWorkspaceMcp(
 ): Promise<unknown> {
   const effectiveUserId = userId || GOD_MODE_USER_ID;
 
-  console.log(JSON.stringify({
-    ts: new Date().toISOString(),
-    module: 'mcpClient',
-    action: 'call',
-    tool: toolName,
-    trace_id: traceId,
-  }));
+  log.info('call', { tool: toolName, trace_id: traceId });
 
   // ── Try workspace REST API first ──
   try {
@@ -245,14 +243,7 @@ export async function callWorkspaceMcp(
       return restResult;
     }
   } catch (err) {
-    console.error(JSON.stringify({
-      ts: new Date().toISOString(),
-      module: 'mcpClient',
-      error: 'rest_failed',
-      detail: (err as Error).message,
-      tool: toolName,
-      trace_id: traceId,
-    }));
+    log.error('REST route failed', { tool: toolName, detail: (err as Error).message, trace_id: traceId });
     // Fall through to MCP
   }
 
@@ -291,14 +282,7 @@ export async function callWorkspaceMcp(
 
     if (!res.ok) {
       const errText = await res.text().catch(() => 'unknown');
-      console.error(JSON.stringify({
-        ts: new Date().toISOString(),
-        module: 'mcpClient',
-        error: `HTTP ${res.status}`,
-        detail: errText.slice(0, 300),
-        tool: toolName,
-        trace_id: traceId,
-      }));
+      log.error(`MCP HTTP ${res.status}`, { tool: toolName, detail: errText.slice(0, 300), trace_id: traceId });
       return { error: `MCP HTTP ${res.status}` };
     }
 
@@ -324,14 +308,7 @@ export async function callWorkspaceMcp(
 
     return data.result || {};
   } catch (err) {
-    console.error(JSON.stringify({
-      ts: new Date().toISOString(),
-      module: 'mcpClient',
-      error: 'fetch_failed',
-      detail: (err as Error).message,
-      tool: toolName,
-      trace_id: traceId,
-    }));
+    log.error('MCP fetch failed', { tool: toolName, detail: (err as Error).message, trace_id: traceId });
     return { error: (err as Error).message };
   }
 }

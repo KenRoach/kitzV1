@@ -1,4 +1,7 @@
 /** Team values, rituals, communication norms, recognition programs */
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('teamCultureBuilderTools');
 import type { ToolSchema } from './registry.js';
 const CK = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
 const OK = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
@@ -9,5 +12,5 @@ async function callLLM(input: string): Promise<string> {
   return JSON.stringify({ error: 'No AI available' });
 }
 export function getAllTeamCultureBuilderTools(): ToolSchema[] {
-  return [{ name: 'team_culture_build', description: 'Team values, rituals, communication norms, recognition programs', parameters: { type: "object", properties: { business: { type: "string", description: "Business name" }, team_size: { type: "number", description: "Team size" }, challenges: { type: "string", description: "Current challenges" } }, required: ["business", "team_size"] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(JSON.stringify(args)); let p; try { const m = raw.match(/\{[\s\S]*\}/); p = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { p = { raw }; } console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'teamCultureBuilderTools', trace_id: traceId })); return p; } }];
+  return [{ name: 'team_culture_build', description: 'Team values, rituals, communication norms, recognition programs', parameters: { type: "object", properties: { business: { type: "string", description: "Business name" }, team_size: { type: "number", description: "Team size" }, challenges: { type: "string", description: "Current challenges" } }, required: ["business", "team_size"] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(JSON.stringify(args)); let p; try { const m = raw.match(/\{[\s\S]*\}/); p = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { p = { raw }; } log.info('executed', { trace_id: traceId }); return p; } }];
 }

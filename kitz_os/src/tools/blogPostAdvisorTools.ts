@@ -1,4 +1,7 @@
 /** Blog strategy, SEO writing, content structure, promotion */
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('blogPostAdvisorTools');
 import type { ToolSchema } from './registry.js';
 const CK = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
 const OK = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
@@ -9,5 +12,5 @@ async function callLLM(input: string): Promise<string> {
   return JSON.stringify({ error: 'No AI available' });
 }
 export function getAllBlogPostAdvisorTools(): ToolSchema[] {
-  return [{ name: 'blog_post_advise', description: 'Blog strategy, SEO writing, content structure, promotion', parameters: { type: "object", properties: { niche: { type: "string", description: "Niche/industry" }, target_audience: { type: "string", description: "Target audience" }, challenges: { type: "string", description: "Challenges" } }, required: ["niche"] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(JSON.stringify(args)); let p; try { const m = raw.match(/\{[\s\S]*\}/); p = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { p = { raw }; } console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'blogPostAdvisorTools', trace_id: traceId })); return p; } }];
+  return [{ name: 'blog_post_advise', description: 'Blog strategy, SEO writing, content structure, promotion', parameters: { type: "object", properties: { niche: { type: "string", description: "Niche/industry" }, target_audience: { type: "string", description: "Target audience" }, challenges: { type: "string", description: "Challenges" } }, required: ["niche"] }, riskLevel: 'low' as const, execute: async (args, traceId) => { const raw = await callLLM(JSON.stringify(args)); let p; try { const m = raw.match(/\{[\s\S]*\}/); p = m ? JSON.parse(m[0]) : { error: 'Parse failed' }; } catch { p = { raw }; } log.info('executed', { trace_id: traceId }); return p; } }];
 }

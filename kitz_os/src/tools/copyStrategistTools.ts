@@ -7,6 +7,9 @@
  * Uses Claude Sonnet for quality copy, falls back to OpenAI gpt-4o-mini.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('copyStrategistTools');
 import type { ToolSchema } from './registry.js';
 
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -78,7 +81,7 @@ export function getAllCopyStrategistTools(): ToolSchema[] {
       const raw = await callLLM(input);
       let parsed;
       try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : { error: 'Could not parse response' }; } catch { parsed = { raw_copy: raw }; }
-      console.log(JSON.stringify({ ts: new Date().toISOString(), module: 'copyStrategistTools', trace_id: traceId }));
+      log.info('executed', { trace_id: traceId });
       return parsed;
     },
   }];
