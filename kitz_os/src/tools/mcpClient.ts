@@ -207,6 +207,27 @@ async function tryRestRoute(
       };
     }
 
+    // ── Delete operations ──
+    case 'delete_order':
+      if (!args.order_id) return { error: 'order_id required' };
+      return restFetch('DELETE', `/api/workspace/orders/${args.order_id}`, userId);
+
+    case 'delete_task':
+      if (!args.task_id) return { error: 'task_id required' };
+      return restFetch('DELETE', `/api/workspace/tasks/${args.task_id}`, userId);
+
+    case 'delete_checkout_link':
+      if (!args.link_id) return { error: 'link_id required' };
+      return restFetch('DELETE', `/api/workspace/checkout-links/${args.link_id}`, userId);
+
+    case 'delete_payment':
+      if (!args.payment_id) return { error: 'payment_id required' };
+      return restFetch('DELETE', `/api/workspace/payments/${args.payment_id}`, userId);
+
+    // ── Dashboard Metrics ──
+    case 'dashboard_metrics':
+      return restFetch('GET', '/api/workspace/dashboard', userId);
+
     // ── Feedback ──
     case 'submit_feedback':
       // Store as a note on a contact or log it

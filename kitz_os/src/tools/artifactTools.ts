@@ -19,8 +19,11 @@
  */
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { createSubsystemLogger } from 'kitz-schemas';
 import { callWorkspaceMcp } from './mcpClient.js';
 import type { ToolSchema } from './registry.js';
+
+const log = createSubsystemLogger('artifactTools');
 
 // ── Config ──
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -28,6 +31,69 @@ const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
 const CLAUDE_API_VERSION = '2023-06-01';
 const OPENAI_API_KEY = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+
+// ── Supabase persistence ──
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+async function persistArtifact(opts: {
+  businessId: string;
+  artifactType: string;
+  name: string;
+  content: string;
+  filePath?: string;
+  language?: string;
+  traceId?: string;
+}): Promise<boolean> {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return false;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/artifacts`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+      },
+      body: JSON.stringify({
+        business_id: opts.businessId,
+        artifact_type: opts.artifactType,
+        name: opts.name,
+        content: opts.content,
+        file_path: opts.filePath || '',
+        language: opts.language || '',
+        trace_id: opts.traceId || '',
+      }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    return res.ok;
+  } catch {
+    log.warn('Failed to persist artifact to Supabase');
+    return false;
+  }
+}
+
+async function listArtifactsFromDb(businessId: string, artifactType?: string, limit = 20): Promise<unknown[]> {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return [];
+  try {
+    const filter = artifactType && artifactType !== 'all'
+      ? `&artifact_type=eq.${artifactType}`
+      : '';
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/artifacts?business_id=eq.${businessId}${filter}&order=created_at.desc&limit=${limit}`,
+      {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+        },
+        signal: AbortSignal.timeout(10_000),
+      },
+    );
+    if (res.ok) return await res.json() as unknown[];
+    return [];
+  } catch {
+    return [];
+  }
+}
 
 const LOVABLE_WEBHOOK_URL = process.env.LOVABLE_WEBHOOK_URL || '';
 const LOVABLE_WEBHOOK_TOKEN = process.env.LOVABLE_WEBHOOK_TOKEN || '';
@@ -272,6 +338,13 @@ ${context ? `\nCodebase context:\n${context}` : ''}`;
           output.saved_to_knowledge = false;
         }
 
+        // Persist to Supabase
+        const businessId = String(args._businessId || args._orgId || '134f52d0-90a3-4806-a1bd-c37ef31d4f6f');
+        output.persisted = await persistArtifact({
+          businessId, artifactType: 'code', name: description.slice(0, 200),
+          content: code, filePath: saveTo, language, traceId,
+        });
+
         return output;
       },
     },
@@ -365,6 +438,13 @@ ${context ? `\nBusiness context:\n${context}` : ''}`;
         } catch {
           output.saved_to_knowledge = false;
         }
+
+        // Persist to Supabase
+        const businessId = String(args._businessId || args._orgId || '134f52d0-90a3-4806-a1bd-c37ef31d4f6f');
+        output.persisted = await persistArtifact({
+          businessId, artifactType: 'document', name: `${docType}: ${topic.slice(0, 180)}`,
+          content: doc, filePath: saveTo, traceId,
+        });
 
         return output;
       },
@@ -470,6 +550,13 @@ ${usesLlm ? '- Include Claude API calls with OpenAI fallback (same pattern as br
           const writeResult = await writeArtifact(saveTo, cleanCode);
           output.saved = writeResult;
         }
+
+        // Persist to Supabase
+        const businessId = String(args._businessId || args._orgId || '134f52d0-90a3-4806-a1bd-c37ef31d4f6f');
+        output.persisted = await persistArtifact({
+          businessId, artifactType: 'tool', name: toolName,
+          content: cleanCode, filePath: saveTo as string | undefined, language: 'typescript', traceId,
+        });
 
         return output;
       },
@@ -618,6 +705,13 @@ ${tables.length ? `\nTables to create/modify: ${tables.join(', ')}` : ''}`;
         const writeResult = await writeArtifact(saveTo, cleanSql);
         output.saved = writeResult;
 
+        // Persist to Supabase
+        const businessId = String(args._businessId || args._orgId || '134f52d0-90a3-4806-a1bd-c37ef31d4f6f');
+        output.persisted = await persistArtifact({
+          businessId, artifactType: 'migration', name: description.slice(0, 200),
+          content: cleanSql, filePath: saveTo, language: 'sql', traceId,
+        });
+
         return output;
       },
     },
@@ -689,13 +783,26 @@ ${tables.length ? `\nTables to create/modify: ${tables.join(', ')}` : ''}`;
       riskLevel: 'low',
       execute: async (args, traceId) => {
         const limit = (args.limit as number) || 10;
+        const businessId = String(args._businessId || args._orgId || '134f52d0-90a3-4806-a1bd-c37ef31d4f6f');
 
+        // Try Supabase first
+        const categoryMap: Record<string, string> = {
+          artifact_code: 'code', artifact_report: 'document', artifact_proposal: 'document',
+          artifact_plan: 'document', artifact_spec: 'document',
+        };
+        const dbType = args.category ? categoryMap[args.category as string] : undefined;
+        const dbArtifacts = await listArtifactsFromDb(businessId, dbType, limit);
+        if (dbArtifacts.length > 0) {
+          return { artifacts: dbArtifacts, source: 'database' };
+        }
+
+        // Fallback to MCP knowledge base
         try {
           const results = await callWorkspaceMcp('list_knowledge', {
             limit,
             category: args.category !== 'all' ? args.category : undefined,
           }, traceId);
-          return { artifacts: results };
+          return { artifacts: results, source: 'knowledge_base' };
         } catch (err) {
           return { error: (err as Error).message };
         }

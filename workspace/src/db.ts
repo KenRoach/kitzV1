@@ -251,6 +251,16 @@ export async function updateOrder(userId: string, id: string, updates: Record<st
   return order;
 }
 
+export async function deleteOrder(userId: string, id: string): Promise<boolean> {
+  if (hasDB) {
+    const ok = await supaDelete('orders', id);
+    if (ok) return true;
+  }
+  const arr = memOrders.get(userId) || [];
+  memOrders.set(userId, arr.filter(o => o.id !== id));
+  return true;
+}
+
 // ── CRUD: Tasks ──
 
 export async function listTasks(userId: string): Promise<DbTask[]> {
@@ -291,6 +301,16 @@ export async function updateTask(userId: string, id: string, updates: Record<str
   return task;
 }
 
+export async function deleteTask(userId: string, id: string): Promise<boolean> {
+  if (hasDB) {
+    const ok = await supaDelete('tasks', id);
+    if (ok) return true;
+  }
+  const arr = memTasks.get(userId) || [];
+  memTasks.set(userId, arr.filter(t => t.id !== id));
+  return true;
+}
+
 // ── CRUD: Checkout Links ──
 
 export async function listCheckoutLinks(userId: string): Promise<DbCheckoutLink[]> {
@@ -318,6 +338,16 @@ export async function createCheckoutLink(userId: string, data: Partial<DbCheckou
   arr.push(link);
   memCheckoutLinks.set(userId, arr);
   return link;
+}
+
+export async function deleteCheckoutLink(userId: string, id: string): Promise<boolean> {
+  if (hasDB) {
+    const ok = await supaDelete('checkout_links', id);
+    if (ok) return true;
+  }
+  const arr = memCheckoutLinks.get(userId) || [];
+  memCheckoutLinks.set(userId, arr.filter(l => l.id !== id));
+  return true;
 }
 
 // ── CRUD: Products ──
@@ -408,6 +438,49 @@ export async function createPayment(userId: string, data: Partial<DbPayment>): P
   arr.push(payment);
   memPayments.set(userId, arr);
   return payment;
+}
+
+export async function deletePayment(userId: string, id: string): Promise<boolean> {
+  if (hasDB) {
+    const ok = await supaDelete('payments', id);
+    if (ok) return true;
+  }
+  const arr = memPayments.get(userId) || [];
+  memPayments.set(userId, arr.filter(p => p.id !== id));
+  return true;
+}
+
+// ── Dashboard Metrics ──
+
+export interface DashboardMetrics {
+  contacts_count: number;
+  orders_count: number;
+  orders_total_revenue: number;
+  tasks_pending: number;
+  tasks_completed: number;
+  checkout_links_count: number;
+  leads_count: number;
+  products_count: number;
+}
+
+export async function getDashboardMetrics(userId: string): Promise<DashboardMetrics> {
+  const [leads, orders, tasks, links, products] = await Promise.all([
+    listLeads(userId),
+    listOrders(userId),
+    listTasks(userId),
+    listCheckoutLinks(userId),
+    listProducts(userId),
+  ]);
+  return {
+    contacts_count: leads.length,
+    orders_count: orders.length,
+    orders_total_revenue: orders.reduce((sum, o) => sum + (o.total || 0), 0),
+    tasks_pending: tasks.filter(t => !t.done).length,
+    tasks_completed: tasks.filter(t => t.done).length,
+    checkout_links_count: links.length,
+    leads_count: leads.length,
+    products_count: products.length,
+  };
 }
 
 export { hasDB };

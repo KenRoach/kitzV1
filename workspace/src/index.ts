@@ -5,11 +5,12 @@ import { randomUUID, createHash, createHmac } from 'node:crypto';
 import { createTraceId, type StandardError } from 'kitz-schemas';
 import {
   listLeads as dbListLeads, createLead as dbCreateLead, updateLead as dbUpdateLead, deleteLead as dbDeleteLead,
-  listOrders as dbListOrders, createOrder as dbCreateOrder, updateOrder as dbUpdateOrder,
-  listTasks as dbListTasks, createTask as dbCreateTask, updateTask as dbUpdateTask,
-  listCheckoutLinks as dbListCheckoutLinks, createCheckoutLink as dbCreateCheckoutLink,
+  listOrders as dbListOrders, createOrder as dbCreateOrder, updateOrder as dbUpdateOrder, deleteOrder as dbDeleteOrder,
+  listTasks as dbListTasks, createTask as dbCreateTask, updateTask as dbUpdateTask, deleteTask as dbDeleteTask,
+  listCheckoutLinks as dbListCheckoutLinks, createCheckoutLink as dbCreateCheckoutLink, deleteCheckoutLink as dbDeleteCheckoutLink,
   listProducts as dbListProducts, createProduct as dbCreateProduct, updateProduct as dbUpdateProduct, deleteProduct as dbDeleteProduct,
-  listPayments as dbListPayments, createPayment as dbCreatePayment,
+  listPayments as dbListPayments, createPayment as dbCreatePayment, deletePayment as dbDeletePayment,
+  getDashboardMetrics,
   hasDB,
   type DbLead, type DbOrder, type DbTask, type DbCheckoutLink, type DbProduct, type DbPayment,
 } from './db.js';
@@ -1600,6 +1601,7 @@ app.post('/api/workspace/leads', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
   const body = req.body || {};
+  if (!body.name) return reply.code(400).send({ error: 'name is required' });
   const row = await dbCreateLead(user.userId, {
     name: body.name || '', phone: body.phone || '', email: body.email || '',
     notes: body.notes ? [body.notes] : [],
@@ -1655,6 +1657,7 @@ app.post('/api/workspace/orders', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
   const body = req.body || {};
+  if (!body.description && !body.customer) return reply.code(400).send({ error: 'description is required' });
   const row = await dbCreateOrder(user.userId, {
     description: body.description || body.customer || '',
     total: Number(body.total || body.amount || 0),
@@ -1677,6 +1680,13 @@ app.patch('/api/workspace/orders/:id', async (req: any, reply: any) => {
   return dbOrderToOrder(row);
 });
 
+app.delete('/api/workspace/orders/:id', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  await dbDeleteOrder(user.userId, req.params.id);
+  return { ok: true };
+});
+
 /* ── Tasks ── */
 
 app.get('/api/workspace/tasks', async (req: any, reply: any) => {
@@ -1690,7 +1700,8 @@ app.post('/api/workspace/tasks', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
   const body = req.body || {};
-  const row = await dbCreateTask(user.userId, body.title || '');
+  if (!body.title) return reply.code(400).send({ error: 'title is required' });
+  const row = await dbCreateTask(user.userId, body.title);
   trackUsage('api.tasks.create');
   return dbTaskToTask(row);
 });
@@ -1707,6 +1718,13 @@ app.patch('/api/workspace/tasks/:id', async (req: any, reply: any) => {
   return dbTaskToTask(row);
 });
 
+app.delete('/api/workspace/tasks/:id', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  await dbDeleteTask(user.userId, req.params.id);
+  return { ok: true };
+});
+
 /* ── Checkout Links ── */
 
 app.get('/api/workspace/checkout-links', async (req: any, reply: any) => {
@@ -1720,11 +1738,19 @@ app.post('/api/workspace/checkout-links', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
   const body = req.body || {};
+  if (!body.amount && body.amount !== 0) return reply.code(400).send({ error: 'amount is required' });
   const row = await dbCreateCheckoutLink(user.userId, {
-    label: body.orderId || body.label || '', amount: Number(body.amount || 0),
+    label: body.orderId || body.label || '', amount: Number(body.amount),
   });
   trackUsage('api.checkout.create');
   return dbCheckoutToLink(row);
+});
+
+app.delete('/api/workspace/checkout-links/:id', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  await dbDeleteCheckoutLink(user.userId, req.params.id);
+  return { ok: true };
 });
 
 /* ── Products / Inventory ── */
@@ -1740,8 +1766,10 @@ app.post('/api/workspace/products', async (req: any, reply: any) => {
   const user = requireApiAuth(req, reply);
   if (!user) return;
   const body = req.body || {};
+  if (!body.name) return reply.code(400).send({ error: 'name is required' });
+  if (body.price === undefined && body.price !== 0) return reply.code(400).send({ error: 'price is required' });
   const row = await dbCreateProduct(user.userId, {
-    name: body.name || '', description: body.description || '',
+    name: body.name, description: body.description || '',
     price: Number(body.price || 0), cost: Number(body.cost || 0),
     sku: body.sku || '', stock_qty: Number(body.stock_qty || 0),
     low_stock_threshold: Number(body.low_stock_threshold || 5),
@@ -1797,6 +1825,22 @@ app.post('/api/workspace/payments', async (req: any, reply: any) => {
     status: status || 'pending', method: method || 'manual',
   });
   return reply.code(201).send(dbPaymentToPayment(row));
+});
+
+app.delete('/api/workspace/payments/:id', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  await dbDeletePayment(user.userId, req.params.id);
+  return { ok: true };
+});
+
+/* ── Dashboard Metrics ── */
+
+app.get('/api/workspace/dashboard', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  const metrics = await getDashboardMetrics(user.userId);
+  return metrics;
 });
 
 app.get('/health', async () => {

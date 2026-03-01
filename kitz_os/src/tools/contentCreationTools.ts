@@ -15,6 +15,31 @@ const log = createSubsystemLogger('contentCreationTools');
 import type { ToolSchema } from './registry.js';
 import { callLLM } from './shared/callLLM.js';
 
+const NOTIF_QUEUE_URL = process.env.NOTIF_QUEUE_URL || 'http://kitz-notifications-queue:3008';
+
+async function enqueueContent(channel: 'whatsapp' | 'email', text: string, orgId: string, traceId: string): Promise<void> {
+  try {
+    await fetch(`${NOTIF_QUEUE_URL}/enqueue`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-trace-id': traceId,
+        'x-org-id': orgId,
+        'x-service-secret': process.env.SERVICE_SECRET || '',
+      },
+      body: JSON.stringify({
+        idempotencyKey: `content_${traceId}_${channel}`,
+        channel,
+        draftOnly: true,
+        payload: { text },
+      }),
+      signal: AbortSignal.timeout(5_000),
+    });
+  } catch {
+    log.warn('Failed to enqueue content for auto-send', { channel, traceId });
+  }
+}
+
 
 const CONTENT_SYSTEM = `You are a social media content creator for small businesses in Latin America.
 Create scroll-stopping, conversion-focused content for WhatsApp and Instagram.
@@ -105,6 +130,10 @@ export function getAllContentCreationTools(): ToolSchema[] {
             enum: ['casual', 'professional', 'urgent', 'playful', 'inspirational'],
             description: 'Content tone (default: casual)',
           },
+          autoSend: {
+            type: 'boolean',
+            description: 'Queue generated content for delivery as draft (default: false)',
+          },
         },
         required: ['topic'],
       },
@@ -132,6 +161,20 @@ export function getAllContentCreationTools(): ToolSchema[] {
           parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : { pieces: [{ platform: 'whatsapp', text: raw, type }] };
         } catch {
           parsed = { pieces: [{ platform: 'whatsapp', text: raw, type }] };
+        }
+
+        // Auto-send to notification queue if requested (draft-first)
+        if (args.autoSend && parsed.pieces) {
+          const orgId = String(args._orgId || 'default');
+          const tid = traceId || 'unknown';
+          for (const piece of parsed.pieces as Array<{ platform: string; text: string }>) {
+            if (piece.platform === 'whatsapp') {
+              await enqueueContent('whatsapp', piece.text, orgId, tid);
+            } else if (piece.platform === 'email') {
+              await enqueueContent('email', piece.text, orgId, tid);
+            }
+          }
+          parsed._autoSendQueued = true;
         }
 
         log.info('executed', { trace_id: traceId });
