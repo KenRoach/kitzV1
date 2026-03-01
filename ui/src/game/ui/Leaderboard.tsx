@@ -55,7 +55,7 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
       >
         <div
           className="flex items-center px-4 py-3 text-[7px] uppercase tracking-[0.2em]"
-          style={{ borderBottom: '2px solid #333355', color: '#6366F1' }}
+          style={{ borderBottom: '2px solid #333355', color: '#7C3AED' }}
         >
           <span className="w-10">Rank</span>
           <span className="flex-1">Founder</span>
@@ -111,8 +111,8 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
         style={{
           color: '#C084FC',
           background: 'linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%)',
-          border: '2px solid #6366F180',
-          boxShadow: '0 0 15px #6366F120',
+          border: '2px solid #7C3AED80',
+          boxShadow: '0 0 15px #7C3AED20',
         }}
       >
         {'<'} Back

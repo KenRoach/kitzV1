@@ -140,7 +140,7 @@ export const AUTOMATION_CATALOG: AutomationGroup[] = [
     label: 'Analytics & Reports',
     description: 'Dashboards, metrics, scheduled reports',
     icon: 'BarChart3',
-    color: 'indigo',
+    color: 'purple',
     items: [
       { id: 'ar-1', name: 'Live Dashboard', description: 'Real-time KPIs — revenue, contacts, orders', monitoredBy: 'Kitz Manager', status: 'live', trigger: 'on-demand' },
       { id: 'ar-2', name: 'Campaign Analytics', description: 'ROI, open rates, and engagement per campaign', monitoredBy: 'Campaign Agent', status: 'live', trigger: 'on-demand' },

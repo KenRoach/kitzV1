@@ -79,7 +79,7 @@ const kitzCapabilities = [
     title: 'Get Paid Faster',
     description: 'Generate invoices, send payment links, track who owes you. Auto-invoice when orders confirm.',
     example: '"Create an invoice for Carlos — 3 t-shirts at $25"',
-    color: 'from-emerald-500 to-teal-600',
+    color: 'from-emerald-500 to-emerald-600',
     stats: '6 automations',
   },
   {
@@ -95,7 +95,7 @@ const kitzCapabilities = [
     title: 'Grow Your Pipeline',
     description: 'Score leads, track conversions, get AI recommendations on your next best move.',
     example: '"Who should I follow up with today?"',
-    color: 'from-blue-500 to-indigo-600',
+    color: 'from-blue-500 to-purple-600',
     stats: '7 automations',
   },
   {
@@ -119,7 +119,7 @@ const kitzCapabilities = [
     title: 'Deploy to the Web',
     description: 'Push landing pages and catalogs live. Generate bio links for Instagram.',
     example: '"Deploy my catalog as a website"',
-    color: 'from-cyan-500 to-blue-600',
+    color: 'from-purple-500 to-purple-700',
     stats: '4 automations',
   },
   {

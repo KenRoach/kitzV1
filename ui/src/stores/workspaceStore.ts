@@ -17,7 +17,7 @@ export const STAGE_LABELS: Record<PipelineStage, string> = {
 
 export const STAGE_COLORS: Record<PipelineStage, { bg: string; text: string; dot: string }> = {
   new: { bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500' },
-  contacted: { bg: 'bg-cyan-50', text: 'text-cyan-700', dot: 'bg-cyan-500' },
+  contacted: { bg: 'bg-purple-50', text: 'text-purple-700', dot: 'bg-purple-400' },
   qualified: { bg: 'bg-purple-50', text: 'text-purple-700', dot: 'bg-purple-500' },
   proposal: { bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-500' },
   won: { bg: 'bg-green-50', text: 'text-green-700', dot: 'bg-green-500' },

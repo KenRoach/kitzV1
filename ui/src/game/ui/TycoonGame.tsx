@@ -426,7 +426,7 @@ export function TycoonGame({ onQuit, onFinish }: Props) {
                           }
                         }}
                       >
-                        <span style={{ color: selected !== null ? textColor : '#6366F1', marginRight: 8 }}>
+                        <span style={{ color: selected !== null ? textColor : '#7C3AED', marginRight: 8 }}>
                           {String.fromCharCode(65 + i)}.
                         </span>
                         {opt}

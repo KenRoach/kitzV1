@@ -343,21 +343,22 @@ const LOGIN_PAGE_HTML = (error: boolean) => `<!DOCTYPE html>
   <title>KITZ Admin \u2014 Login</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
     .container { max-width: 360px; width: 100%; padding: 40px 24px; text-align: center; }
-    .logo { font-size: 48px; font-weight: 800; letter-spacing: -2px; margin-bottom: 8px; background: linear-gradient(135deg, #00d4aa, #00b4d8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .logo { font-size: 48px; font-weight: 800; letter-spacing: -2px; margin-bottom: 8px; background: linear-gradient(135deg, #A855F7, #7C3AED); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .subtitle { color: #555; font-size: 13px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 32px; }
     .card { background: #111; border: 1px solid #222; border-radius: 12px; padding: 24px; text-align: left; }
     label { display: block; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
     input { width: 100%; padding: 10px 14px; background: #0a0a0a; border: 1px solid #222; border-radius: 8px; color: #fff; font-size: 14px; font-family: inherit; }
-    input:focus { outline: none; border-color: #00d4aa; }
-    .btn { display: block; width: 100%; padding: 10px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; background: #00d4aa; color: #000; margin-top: 16px; }
-    .btn:hover { background: #00e8bb; }
+    input:focus { outline: none; border-color: #A855F7; }
+    .btn { display: block; width: 100%; padding: 10px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; background: #A855F7; color: #fff; margin-top: 16px; }
+    .btn:hover { background: #9333EA; }
     .error { background: #ff6b6b12; color: #ff6b6b; border: 1px solid #ff6b6b22; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; }
   </style>
 </head>
 <body>
   <div class="container">
+    <div style="margin-bottom:8px"><img src="https://kitz.services/kitz-logo.png" alt="KITZ" width="48" height="48" style="display:inline-block"></div>
     <div class="logo">KITZ</div>
     <div class="subtitle">Admin</div>
     <div class="card">
@@ -382,7 +383,7 @@ const ADMIN_HTML = `<!DOCTYPE html>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       background: #0a0a0a;
       color: #fff;
       min-height: 100vh;
@@ -398,7 +399,7 @@ const ADMIN_HTML = `<!DOCTYPE html>
       font-size: 28px;
       font-weight: 800;
       letter-spacing: -1px;
-      background: linear-gradient(135deg, #00d4aa, #00b4d8);
+      background: linear-gradient(135deg, #A855F7, #7C3AED);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -441,7 +442,7 @@ const ADMIN_HTML = `<!DOCTYPE html>
     .card .card-value {
       font-size: 28px;
       font-weight: 700;
-      color: #00d4aa;
+      color: #A855F7;
     }
     .card .card-sub {
       font-size: 12px;
@@ -480,7 +481,7 @@ const ADMIN_HTML = `<!DOCTYPE html>
       border-radius: 50%;
       background: #333;
     }
-    .wa-status .dot.on { background: #00d4aa; }
+    .wa-status .dot.on { background: #A855F7; }
     .wa-status .dot.off { background: #ff6b6b; }
     .btn {
       display: inline-flex;
@@ -495,10 +496,10 @@ const ADMIN_HTML = `<!DOCTYPE html>
       transition: all 0.2s;
     }
     .btn-primary {
-      background: #00d4aa;
-      color: #000;
+      background: #A855F7;
+      color: #fff;
     }
-    .btn-primary:hover { background: #00e8bb; }
+    .btn-primary:hover { background: #9333EA; }
     .btn-danger {
       background: transparent;
       color: #ff6b6b;
@@ -568,7 +569,7 @@ const ADMIN_HTML = `<!DOCTYPE html>
     }
     #qr-status {
       font-size: 14px;
-      color: #00d4aa;
+      color: #A855F7;
       min-height: 20px;
       margin-bottom: 12px;
     }
@@ -583,7 +584,7 @@ const ADMIN_HTML = `<!DOCTYPE html>
       width: 40px;
       height: 40px;
       border: 3px solid #333;
-      border-top-color: #00d4aa;
+      border-top-color: #A855F7;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
       margin: 80px auto;
@@ -598,7 +599,7 @@ const ADMIN_HTML = `<!DOCTYPE html>
       border-radius: 6px;
     }
     .tab:hover { color: #ccc; background: #111; }
-    .tab.active { color: #00d4aa; background: #00d4aa12; border-color: #00d4aa22; }
+    .tab.active { color: #A855F7; background: #A855F712; border-color: #A855F722; }
 
     /* Connected state in modal */
     .modal-connected {
@@ -610,7 +611,7 @@ const ADMIN_HTML = `<!DOCTYPE html>
     .modal-connected .phone {
       font-size: 18px;
       font-weight: 600;
-      color: #00d4aa;
+      color: #A855F7;
       margin-bottom: 4px;
     }
     .modal-connected .done-msg {
@@ -647,7 +648,7 @@ const ADMIN_HTML = `<!DOCTYPE html>
 </head>
 <body>
   <div class="topbar">
-    <div class="logo">KITZ</div>
+    <div style="display:flex;align-items:center;gap:8px"><img src="https://kitz.services/kitz-logo.png" alt="" width="28" height="28" style="display:block"><span class="logo">KITZ</span></div>
     <div style="display:flex;align-items:center;gap:12px;">
       <div class="label">Admin</div>
       <a href="/admin/logout" style="color:#666;text-decoration:none;font-size:12px;padding:4px 10px;border:1px solid #333;border-radius:6px;">Log out</a>
@@ -749,7 +750,7 @@ const ADMIN_HTML = `<!DOCTYPE html>
         <div class="wa-header">
           <h3>User List</h3>
           <div class="wa-status">
-            <span id="user-count-badge" style="font-size:13px;color:#00d4aa;">Loading...</span>
+            <span id="user-count-badge" style="font-size:13px;color:#A855F7;">Loading...</span>
           </div>
         </div>
         <div id="users-list" class="session-list" style="max-height:500px;overflow-y:auto;">
@@ -776,7 +777,7 @@ const ADMIN_HTML = `<!DOCTYPE html>
         <div class="wa-header">
           <h3>Recent AI Spend</h3>
           <div class="wa-status">
-            <span id="audit-count" style="font-size:13px;color:#00d4aa;">Loading...</span>
+            <span id="audit-count" style="font-size:13px;color:#A855F7;">Loading...</span>
           </div>
         </div>
         <div id="audit-list" class="session-list" style="max-height:500px;overflow-y:auto;">
@@ -985,7 +986,7 @@ const ADMIN_HTML = `<!DOCTYPE html>
         var list = document.getElementById('api-keys-list');
         list.innerHTML = '<div class="wa-header"><h3>Service Keys (' + d.configured + '/' + d.total + ')</h3></div>' +
           keys.map(function(k) {
-            return '<div class="session-item"><div class="session-info"><span class="dot ' + (k.configured ? 'on' : 'off') + '"></span><span class="session-phone">' + k.name + '</span><span class="session-id">' + k.env + '</span></div><div style="font-size:12px;color:' + (k.configured ? '#00d4aa' : '#555') + ';">' + (k.configured ? 'Configured' : 'Not set') + '</div></div>';
+            return '<div class="session-item"><div class="session-info"><span class="dot ' + (k.configured ? 'on' : 'off') + '"></span><span class="session-phone">' + k.name + '</span><span class="session-id">' + k.env + '</span></div><div style="font-size:12px;color:' + (k.configured ? '#A855F7' : '#555') + ';">' + (k.configured ? 'Configured' : 'Not set') + '</div></div>';
           }).join('');
       }).catch(function() {});
     }
