@@ -1,9 +1,17 @@
 import Fastify from 'fastify';
 import { randomUUID, createHmac, timingSafeEqual } from 'node:crypto';
-import type { AIBatteryLedgerEntry, CheckoutSession, PaymentWebhookEvent, StandardError } from 'kitz-schemas';
+import type { CheckoutSession, PaymentWebhookEvent, StandardError } from 'kitz-schemas';
+import { insertLedgerEntry, getLedger, queryLedger, upsertSubscription, getSubscription, hasDB, type SubscriptionRecord } from './db.js';
 
 export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
+
+// Security headers
+app.addHook('onSend', async (_req, reply) => {
+  reply.header('X-Frame-Options', 'DENY');
+  reply.header('X-Content-Type-Options', 'nosniff');
+  reply.header('X-XSS-Protection', '1; mode=block');
+});
 
 // ── Webhook secrets (env vars from docker-compose) ──
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
@@ -50,13 +58,6 @@ function getWebhookSecret(provider: string): string {
   }
 }
 
-interface SubscriptionRecord {
-  orgId: string;
-  plan: 'starter' | 'growth' | 'enterprise';
-  status: 'active' | 'paused' | 'canceled';
-  traceId: string;
-}
-
 // ── Auth hook (validates x-service-secret; skips health + webhooks) ──
 const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
 
@@ -74,8 +75,6 @@ app.addHook('onRequest', async (req, reply) => {
   }
 });
 
-const ledger: AIBatteryLedgerEntry[] = [];
-const subscriptions = new Map<string, SubscriptionRecord>();
 const allowedReceiveProviders = new Set(['stripe', 'paypal', 'yappy', 'bac']);
 
 app.post('/checkout-session', async (req: any, reply) => {
@@ -107,7 +106,7 @@ app.post('/checkout-session', async (req: any, reply) => {
     traceId
   };
 
-  ledger.push({ orgId, deltaCredits: 0, reason: `incoming_payment_session:${provider}:${sessionId}`, traceId, ts: new Date().toISOString() });
+  await insertLedgerEntry({ orgId, deltaCredits: 0, reason: `incoming_payment_session:${provider}:${sessionId}`, traceId, ts: new Date().toISOString() });
   return { sessionId, provider, session };
 });
 
@@ -117,14 +116,15 @@ app.get('/health', async () => {
   checks.stripe = STRIPE_WEBHOOK_SECRET ? 'configured' : 'missing';
   checks.yappy = YAPPY_WEBHOOK_SECRET ? 'configured' : 'missing';
   checks.bac = BAC_WEBHOOK_SECRET ? 'configured' : 'missing';
-  checks.ledgerEntries = String(ledger.length);
+  checks.database = hasDB() ? 'configured' : 'in-memory';
+  checks.ledgerEntries = String(getLedger().length);
   const allOk = checks.stripe !== 'missing';
   return { status: allOk ? 'ok' : 'degraded', service: 'kitz-payments', checks };
 });
 
 // ── Helper: log webhook + record ledger entry ──
-function recordWebhook(provider: string, eventType: string, orgId: string, traceId: string): void {
-  ledger.push({ orgId, deltaCredits: 0, reason: `incoming_webhook:${provider}:${eventType}`, traceId, ts: new Date().toISOString() });
+async function recordWebhook(provider: string, eventType: string, orgId: string, traceId: string): Promise<void> {
+  await insertLedgerEntry({ orgId, deltaCredits: 0, reason: `incoming_webhook:${provider}:${eventType}`, traceId, ts: new Date().toISOString() });
 }
 
 // ── Stripe Webhook ──
@@ -144,7 +144,7 @@ app.post('/webhooks/stripe', async (req: any, reply) => {
   }
 
   const event = req.body as PaymentWebhookEvent;
-  recordWebhook('stripe', event.eventType || 'unknown', event.orgId || 'unknown', traceId);
+  await recordWebhook('stripe', event.eventType || 'unknown', event.orgId || 'unknown', traceId);
   app.log.info({ traceId, provider: 'stripe' }, 'webhook.processed');
   return { ok: true, provider: 'stripe', traceId };
 });
@@ -182,7 +182,7 @@ app.post('/webhooks/paypal', async (req: any, reply) => {
   }
 
   const event = req.body as PaymentWebhookEvent;
-  recordWebhook('paypal', event.eventType || 'unknown', event.orgId || 'unknown', traceId);
+  await recordWebhook('paypal', event.eventType || 'unknown', event.orgId || 'unknown', traceId);
   app.log.info({ traceId, provider: 'paypal', transmissionId: txId }, 'webhook.processed');
   return { ok: true, provider: 'paypal', traceId };
 });
@@ -203,7 +203,7 @@ app.post('/webhooks/yappy', async (req: any, reply) => {
   }
 
   const event = req.body as PaymentWebhookEvent;
-  recordWebhook('yappy', event.eventType || 'unknown', event.orgId || 'unknown', traceId);
+  await recordWebhook('yappy', event.eventType || 'unknown', event.orgId || 'unknown', traceId);
   app.log.info({ traceId, provider: 'yappy' }, 'webhook.processed');
   return { ok: true, provider: 'yappy', traceId };
 });
@@ -224,7 +224,7 @@ app.post('/webhooks/bac', async (req: any, reply) => {
   }
 
   const event = req.body as PaymentWebhookEvent;
-  recordWebhook('bac', event.eventType || 'unknown', event.orgId || 'unknown', traceId);
+  await recordWebhook('bac', event.eventType || 'unknown', event.orgId || 'unknown', traceId);
   app.log.info({ traceId, provider: 'bac' }, 'webhook.processed');
   return { ok: true, provider: 'bac', traceId };
 });
@@ -239,11 +239,15 @@ app.post('/subscriptions', async (req: any) => {
   const orgId = String(req.headers['x-org-id'] || 'unknown-org');
   const plan = (req.body?.plan || 'starter') as SubscriptionRecord['plan'];
   const record: SubscriptionRecord = { orgId, plan, status: 'active', traceId };
-  subscriptions.set(orgId, record);
+  await upsertSubscription(record);
   return record;
 });
 
-app.get('/subscriptions/:orgId', async (req: any) => subscriptions.get(req.params.orgId) || null);
-app.get('/ledger', async () => ({ entries: ledger, policy: 'receive_only', providers: Array.from(allowedReceiveProviders) }));
+app.get('/subscriptions/:orgId', async (req: any) => (await getSubscription(req.params.orgId)) || null);
+app.get('/ledger', async (req: any) => {
+  const orgId = req.query?.orgId as string | undefined;
+  const entries = orgId ? await queryLedger(orgId) : getLedger();
+  return { entries, policy: 'receive_only', providers: Array.from(allowedReceiveProviders) };
+});
 
 app.listen({ port: Number(process.env.PORT || 3005), host: '0.0.0.0' });

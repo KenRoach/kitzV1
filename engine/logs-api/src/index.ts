@@ -5,6 +5,13 @@ import { insertLog, updateLogStatus, queryLogs, getMemLogs, type LogEntry } from
 const app = Fastify({ logger: true })
 const PORT = Number(process.env.PORT) || 3014
 
+// Security headers
+app.addHook('onSend', async (_req, reply) => {
+  reply.header('X-Frame-Options', 'DENY')
+  reply.header('X-Content-Type-Options', 'nosniff')
+  reply.header('X-XSS-Protection', '1; mode=block')
+})
+
 // ── Auth hook (validates x-service-secret for inter-service calls) ──
 const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || ''
 

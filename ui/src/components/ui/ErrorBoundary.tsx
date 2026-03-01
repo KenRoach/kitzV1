@@ -20,6 +20,22 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error }
   }
 
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    // Report to logs-api (fire-and-forget)
+    try {
+      fetch('/api/logs/logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-dev-secret': import.meta.env.VITE_SERVICE_SECRET || '' },
+        body: JSON.stringify({
+          type: 'frontend_error',
+          action: 'error_boundary_catch',
+          detail: `${error.message}\n${info.componentStack?.slice(0, 500) || ''}`,
+          timestamp: new Date().toISOString(),
+        }),
+      }).catch(() => {})
+    } catch { /* best-effort */ }
+  }
+
   handleReset = () => {
     this.setState({ hasError: false, error: null })
   }

@@ -37,9 +37,23 @@ app.get('/health', async () => {
   return { status: allOk ? 'ok' : 'degraded', service: 'comms-api', checks }
 })
 
+// ── Input validation helpers ──
+const PHONE_RE = /^\+?[0-9]{7,15}$/
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+// ── Security headers ──
+app.addHook('onSend', async (_req, reply) => {
+  reply.header('X-Frame-Options', 'DENY')
+  reply.header('X-Content-Type-Options', 'nosniff')
+  reply.header('X-XSS-Protection', '1; mode=block')
+})
+
 // ── Voice (Twilio TTS call) ──
 app.post<{ Body: { to: string; message: string; channel?: string } }>('/talk', async (req, reply) => {
   const { to, message } = req.body
+  if (!to || !PHONE_RE.test(to)) {
+    return reply.code(400).send({ code: 'INVALID_PHONE', message: 'Valid phone number required (7-15 digits)', traceId: String(req.headers['x-trace-id'] || randomUUID()) })
+  }
   const traceId = String(req.headers['x-trace-id'] || randomUUID())
   const orgId = String(req.headers['x-org-id'] || 'unknown-org')
   const id = `comms_${Date.now()}_${randomUUID().slice(0, 8)}`
@@ -66,6 +80,9 @@ app.post<{ Body: { to: string; message: string; channel?: string } }>('/talk', a
 // ── SMS (Twilio) ──
 app.post<{ Body: { to: string; message: string } }>('/text', async (req, reply) => {
   const { to, message } = req.body
+  if (!to || !PHONE_RE.test(to)) {
+    return reply.code(400).send({ code: 'INVALID_PHONE', message: 'Valid phone number required (7-15 digits)', traceId: String(req.headers['x-trace-id'] || randomUUID()) })
+  }
   const traceId = String(req.headers['x-trace-id'] || randomUUID())
   const orgId = String(req.headers['x-org-id'] || 'unknown-org')
   const id = `comms_${Date.now()}_${randomUUID().slice(0, 8)}`
@@ -92,6 +109,9 @@ app.post<{ Body: { to: string; message: string } }>('/text', async (req, reply) 
 // ── Email (forwards to email connector) ──
 app.post<{ Body: { to: string; subject: string; body: string } }>('/email', async (req, reply) => {
   const { to, subject, body } = req.body
+  if (!to || !EMAIL_RE.test(to)) {
+    return reply.code(400).send({ code: 'INVALID_EMAIL', message: 'Valid email address required', traceId: String(req.headers['x-trace-id'] || randomUUID()) })
+  }
   const traceId = String(req.headers['x-trace-id'] || randomUUID())
   const orgId = String(req.headers['x-org-id'] || 'unknown-org')
   const id = `comms_${Date.now()}_${randomUUID().slice(0, 8)}`

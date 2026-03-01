@@ -28,6 +28,13 @@ const complianceHtml = (countryMarkdown: string, latestAt: string): string => `<
 export const createApp = () => {
   const app = Fastify({ logger: true });
 
+  // Security headers
+  app.addHook('onSend', async (_req, reply) => {
+    reply.header('X-Frame-Options', 'DENY');
+    reply.header('X-Content-Type-Options', 'nosniff');
+    reply.header('X-XSS-Protection', '1; mode=block');
+  });
+
   // ── Auth hook (validates x-service-secret; skips health + public content) ──
   const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
 

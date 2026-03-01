@@ -1,5 +1,15 @@
-import { AUTH_TOKEN_KEY } from './constants'
+import { AUTH_TOKEN_KEY, AUTH_USER_KEY } from './constants'
 import { generateTraceId } from './utils'
+
+/** Check if a JWT is expired (with 60s buffer) */
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1] ?? ''))
+    return payload.exp ? payload.exp * 1000 < Date.now() - 60_000 : false
+  } catch {
+    return true
+  }
+}
 
 export async function apiFetch<T>(
   url: string,
@@ -7,6 +17,14 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const token = localStorage.getItem(AUTH_TOKEN_KEY)
   const headers = new Headers(options.headers)
+
+  // Check token expiry before making the request
+  if (token && isTokenExpired(token)) {
+    localStorage.removeItem(AUTH_TOKEN_KEY)
+    localStorage.removeItem(AUTH_USER_KEY)
+    window.dispatchEvent(new CustomEvent('kitz:auth-expired'))
+    throw new Error('Session expired — please log in again.')
+  }
 
   if (token) {
     headers.set('Authorization', `Bearer ${token}`)
@@ -33,9 +51,22 @@ export async function apiFetch<T>(
   }
   clearTimeout(timeoutId)
 
+  // Handle 401 — clear auth and notify
+  if (res.status === 401) {
+    localStorage.removeItem(AUTH_TOKEN_KEY)
+    localStorage.removeItem(AUTH_USER_KEY)
+    window.dispatchEvent(new CustomEvent('kitz:auth-expired'))
+    throw new Error('Session expired — please log in again.')
+  }
+
   if (!res.ok) {
     const body = await res.text()
-    throw new Error(`API ${res.status}: ${body}`)
+    let message = `API ${res.status}: ${body}`
+    try {
+      const parsed = JSON.parse(body)
+      if (parsed.message) message = parsed.message
+    } catch { /* use raw body */ }
+    throw new Error(message)
   }
 
   return res.json() as Promise<T>

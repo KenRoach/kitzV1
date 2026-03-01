@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { apiFetch } from '@/lib/api'
 import { API } from '@/lib/constants'
+import { useToastStore } from './toastStore'
 
 // CRM Pipeline stages
 export const PIPELINE_STAGES = ['new', 'contacted', 'qualified', 'proposal', 'won', 'lost'] as const
@@ -74,6 +75,7 @@ export interface Product {
   updatedAt: string
 }
 
+const toast = (msg: string) => useToastStore.getState().add(msg, 'error')
 
 interface WorkspaceState {
   leads: Lead[]; orders: Order[]; tasks: Task[]; checkoutLinks: CheckoutLink[]; payments: Payment[]; products: Product[]
@@ -115,8 +117,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     try {
       const leads = await apiFetch<Lead[]>(`${API.WORKSPACE}/leads`)
       set({ leads, isLoading: false })
-    } catch {
+    } catch (err) {
       set({ isLoading: false })
+      toast(err instanceof Error ? err.message : 'Failed to load leads')
     }
   },
   addLead: async (data) => {
@@ -133,45 +136,47 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       createdAt: new Date().toISOString(),
     }
     set((s) => ({ leads: [...s.leads, newLead] }))
-    // Also try API
     try {
       await apiFetch(`${API.WORKSPACE}/leads`, { method: 'POST', body: JSON.stringify(data) })
-    } catch { /* local-first */ }
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to save lead')
+    }
   },
   deleteLead: async (id) => {
     set((s) => ({ leads: s.leads.filter((l) => l.id !== id) }))
     try {
       await apiFetch(`${API.WORKSPACE}/leads/${id}`, { method: 'DELETE' })
-    } catch { /* local-first */ }
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to delete lead')
+    }
   },
   updateLeadStage: (id, stage) => {
     set((s) => ({ leads: s.leads.map((l) => l.id === id ? { ...l, stage } : l) }))
-    // Async API sync (local-first)
     apiFetch(`${API.WORKSPACE}/leads/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({ stage }),
-    }).catch(() => { /* local-first: keep local state on failure */ })
+    }).catch((err) => { toast(err instanceof Error ? err.message : 'Failed to update lead') })
   },
   addLeadNote: (id, note) => {
     set((s) => ({ leads: s.leads.map((l) => l.id === id ? { ...l, notes: [...l.notes, note] } : l) }))
     apiFetch(`${API.WORKSPACE}/leads/${id}/notes`, {
       method: 'POST',
       body: JSON.stringify({ note }),
-    }).catch(() => { /* local-first */ })
+    }).catch((err) => { toast(err instanceof Error ? err.message : 'Failed to add note') })
   },
   addLeadTag: (id, tag) => {
     set((s) => ({ leads: s.leads.map((l) => l.id === id && !l.tags.includes(tag) ? { ...l, tags: [...l.tags, tag] } : l) }))
     apiFetch(`${API.WORKSPACE}/leads/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({ addTag: tag }),
-    }).catch(() => { /* local-first */ })
+    }).catch((err) => { toast(err instanceof Error ? err.message : 'Failed to add tag') })
   },
   removeLeadTag: (id, tag) => {
     set((s) => ({ leads: s.leads.map((l) => l.id === id ? { ...l, tags: l.tags.filter((t) => t !== tag) } : l) }))
     apiFetch(`${API.WORKSPACE}/leads/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({ removeTag: tag }),
-    }).catch(() => { /* local-first */ })
+    }).catch((err) => { toast(err instanceof Error ? err.message : 'Failed to remove tag') })
   },
 
   fetchOrders: async () => {
@@ -179,11 +184,18 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     try {
       const orders = await apiFetch<Order[]>(`${API.WORKSPACE}/orders`)
       set({ orders, isLoading: false })
-    } catch { set({ isLoading: false }) }
+    } catch (err) {
+      set({ isLoading: false })
+      toast(err instanceof Error ? err.message : 'Failed to load orders')
+    }
   },
   addOrder: async (data) => {
-    await apiFetch(`${API.WORKSPACE}/orders`, { method: 'POST', body: JSON.stringify(data) })
-    await get().fetchOrders()
+    try {
+      await apiFetch(`${API.WORKSPACE}/orders`, { method: 'POST', body: JSON.stringify(data) })
+      await get().fetchOrders()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to create order')
+    }
   },
 
   fetchTasks: async () => {
@@ -191,11 +203,18 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     try {
       const tasks = await apiFetch<Task[]>(`${API.WORKSPACE}/tasks`)
       set({ tasks, isLoading: false })
-    } catch { set({ isLoading: false }) }
+    } catch (err) {
+      set({ isLoading: false })
+      toast(err instanceof Error ? err.message : 'Failed to load tasks')
+    }
   },
   addTask: async (title) => {
-    await apiFetch(`${API.WORKSPACE}/tasks`, { method: 'POST', body: JSON.stringify({ title }) })
-    await get().fetchTasks()
+    try {
+      await apiFetch(`${API.WORKSPACE}/tasks`, { method: 'POST', body: JSON.stringify({ title }) })
+      await get().fetchTasks()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to create task')
+    }
   },
 
   fetchCheckoutLinks: async () => {
@@ -203,11 +222,18 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     try {
       const checkoutLinks = await apiFetch<CheckoutLink[]>(`${API.WORKSPACE}/checkout-links`)
       set({ checkoutLinks, isLoading: false })
-    } catch { set({ isLoading: false }) }
+    } catch (err) {
+      set({ isLoading: false })
+      toast(err instanceof Error ? err.message : 'Failed to load checkout links')
+    }
   },
   addCheckoutLink: async (data) => {
-    await apiFetch(`${API.WORKSPACE}/checkout-links`, { method: 'POST', body: JSON.stringify(data) })
-    await get().fetchCheckoutLinks()
+    try {
+      await apiFetch(`${API.WORKSPACE}/checkout-links`, { method: 'POST', body: JSON.stringify(data) })
+      await get().fetchCheckoutLinks()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to create checkout link')
+    }
   },
 
   fetchPayments: async () => {
@@ -215,8 +241,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     try {
       const payments = await apiFetch<Payment[]>(`${API.WORKSPACE}/payments`)
       set({ payments, isLoading: false })
-    } catch {
+    } catch (err) {
       set({ isLoading: false })
+      toast(err instanceof Error ? err.message : 'Failed to load payments')
     }
   },
 
@@ -225,9 +252,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     try {
       const products = await apiFetch<Product[]>(`${API.WORKSPACE}/products`)
       set({ products, isLoading: false })
-    } catch {
-      // Keep existing products on API failure
+    } catch (err) {
       set({ isLoading: false })
+      toast(err instanceof Error ? err.message : 'Failed to load products')
     }
   },
   addProduct: async (data) => {
@@ -241,7 +268,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     set((s) => ({ products: [...s.products, newProduct] }))
     try {
       await apiFetch(`${API.WORKSPACE}/products`, { method: 'POST', body: JSON.stringify(data) })
-    } catch { /* local-first */ }
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to save product')
+    }
   },
   updateProduct: async (id, data) => {
     set((s) => ({
@@ -249,7 +278,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     }))
     try {
       await apiFetch(`${API.WORKSPACE}/products/${id}`, { method: 'PATCH', body: JSON.stringify(data) })
-    } catch { /* local-first */ }
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to update product')
+    }
   },
   deleteProduct: async (id) => {
     set((s) => ({
@@ -257,6 +288,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     }))
     try {
       await apiFetch(`${API.WORKSPACE}/products/${id}`, { method: 'DELETE' })
-    } catch { /* local-first */ }
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to delete product')
+    }
   },
 }))

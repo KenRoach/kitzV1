@@ -118,28 +118,28 @@ const memPayments = new Map<string, DbPayment[]>();
 // ── Types (DB row shapes with snake_case) ──
 
 export interface DbLead {
-  id: string; user_id: string; name: string; phone: string; email: string;
+  id: string; user_id: string; org_id?: string; name: string; phone: string; email: string;
   source: string; stage: string; value: number; tags: string[]; notes: string[];
   last_contact: string | null; created_at: string; updated_at: string;
 }
 
 export interface DbOrder {
-  id: string; user_id: string; lead_id: string | null; description: string;
+  id: string; user_id: string; org_id?: string; lead_id: string | null; description: string;
   total: number; status: string; created_at: string; updated_at: string;
 }
 
 export interface DbTask {
-  id: string; user_id: string; title: string; done: boolean;
+  id: string; user_id: string; org_id?: string; title: string; done: boolean;
   created_at: string; updated_at: string;
 }
 
 export interface DbCheckoutLink {
-  id: string; user_id: string; slug: string; amount: number; label: string;
+  id: string; user_id: string; org_id?: string; slug: string; amount: number; label: string;
   product_id: string | null; active: boolean; created_at: string;
 }
 
 export interface DbProduct {
-  id: string; user_id: string; name: string; description: string;
+  id: string; user_id: string; org_id?: string; name: string; description: string;
   price: number; cost: number; sku: string; stock_qty: number;
   low_stock_threshold: number; category: string; image_url: string;
   is_active: boolean; created_at: string; updated_at: string;

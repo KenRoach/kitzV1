@@ -2,7 +2,7 @@
  * Gateway user persistence — PostgreSQL when DATABASE_URL is set, in-memory fallback.
  */
 
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomUUID, scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
 
 export interface UserRecord {
   id: string;
@@ -16,8 +16,23 @@ export interface UserRecord {
   picture?: string;
 }
 
+const SCRYPT_KEYLEN = 64;
+const SCRYPT_COST = 16384; // N=2^14
+
 function hashPassword(password: string): string {
-  return createHash('sha256').update(password).digest('hex');
+  const salt = randomBytes(16).toString('hex');
+  const hash = scryptSync(password, salt, SCRYPT_KEYLEN, { N: SCRYPT_COST, r: 8, p: 1 }).toString('hex');
+  return `scrypt:${salt}:${hash}`;
+}
+
+function verifyHash(stored: string, password: string): boolean {
+  if (stored.startsWith('scrypt:')) {
+    const [, salt, hash] = stored.split(':');
+    const derived = scryptSync(password, salt, SCRYPT_KEYLEN, { N: SCRYPT_COST, r: 8, p: 1 });
+    return timingSafeEqual(derived, Buffer.from(hash, 'hex'));
+  }
+  // Legacy SHA256 migration path — verify old hashes, caller should re-hash on success
+  return stored === createHash('sha256').update(password).digest('hex');
 }
 
 // In-memory store (used when DATABASE_URL is not set)
@@ -205,9 +220,35 @@ export async function updateUser(email: string, updates: Partial<Pick<UserRecord
   }
 }
 
-/** Verify password hash */
+/** Verify password — supports scrypt (new) and SHA256 (legacy, auto-migrates) */
 export function verifyPassword(user: UserRecord, password: string): boolean {
-  return user.passwordHash === hashPassword(password);
+  const ok = verifyHash(user.passwordHash, password);
+  // Auto-migrate legacy SHA256 hashes to scrypt on successful login
+  if (ok && !user.passwordHash.startsWith('scrypt:')) {
+    const newHash = hashPassword(password);
+    user.passwordHash = newHash;
+    // Fire-and-forget: persist upgraded hash
+    upgradePasswordHash(user.email, newHash).catch(() => {});
+  }
+  return ok;
+}
+
+/** Persist upgraded password hash to database */
+async function upgradePasswordHash(email: string, newHash: string): Promise<void> {
+  const supabaseUrl = process.env.SUPABASE_URL || '';
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+  if (!supabaseUrl || !supabaseKey) return;
+  try {
+    await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` },
+      body: JSON.stringify({ password_hash: newHash }),
+      signal: AbortSignal.timeout(5_000),
+    });
+  } catch { /* best-effort upgrade */ }
+  // Also update memory
+  const memUser = memoryUsers.get(email.toLowerCase());
+  if (memUser) memUser.passwordHash = newHash;
 }
 
 /** List all users (admin) — DB first, memory fallback */

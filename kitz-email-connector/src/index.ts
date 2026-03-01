@@ -14,6 +14,13 @@ import {
 
 const app = Fastify({ logger: true });
 
+// Security headers
+app.addHook('onSend', async (_req, reply) => {
+  reply.header('X-Frame-Options', 'DENY');
+  reply.header('X-Content-Type-Options', 'nosniff');
+  reply.header('X-XSS-Protection', '1; mode=block');
+});
+
 const buildError = (code: string, message: string, traceId: string): StandardError => ({ code, message, traceId });
 
 // ── Auth hook (matches kitz-whatsapp-connector pattern) ──

@@ -839,14 +839,15 @@ const ADMIN_HTML = `<!DOCTYPE html>
           statusText.textContent = 'Not connected';
         }
 
+        function esc(str) { var d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
         list.innerHTML = sessions.map(s =>
           '<div class="session-item">' +
             '<div class="session-info">' +
               '<span class="dot ' + (s.isConnected ? 'on' : 'off') + '"></span>' +
-              '<span class="session-phone">' + (s.phoneNumber ? '+' + s.phoneNumber : 'Connecting...') + '</span>' +
-              '<span class="session-id">' + s.userId.slice(0, 8) + '</span>' +
+              '<span class="session-phone">' + esc(s.phoneNumber ? '+' + s.phoneNumber : 'Connecting...') + '</span>' +
+              '<span class="session-id">' + esc(s.userId.slice(0, 8)) + '</span>' +
             '</div>' +
-            '<button class="btn btn-danger" onclick="disconnectSession(\\'' + s.userId + '\\')">Disconnect</button>' +
+            '<button class="btn btn-danger" onclick="disconnectSession(\\'' + esc(s.userId) + '\\')">Disconnect</button>' +
           '</div>'
         ).join('');
       } catch {
@@ -970,9 +971,10 @@ const ADMIN_HTML = `<!DOCTYPE html>
           list.innerHTML = '<div style="color:#555;text-align:center;padding:24px;font-size:13px;">No users registered yet.</div>';
           return;
         }
+        function escH(str) { var d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
         list.innerHTML = users.map(function(u) {
           var date = new Date(u.createdAt).toLocaleDateString();
-          return '<div class="session-item"><div class="session-info"><span class="dot on"></span><span class="session-phone">' + (u.name || 'Unknown') + '</span><span class="session-id">' + u.email + '</span></div><div style="color:#555;font-size:12px;">' + date + '</div></div>';
+          return '<div class="session-item"><div class="session-info"><span class="dot on"></span><span class="session-phone">' + escH(u.name || 'Unknown') + '</span><span class="session-id">' + escH(u.email) + '</span></div><div style="color:#555;font-size:12px;">' + escH(date) + '</div></div>';
         }).join('');
       }).catch(function() {
         document.getElementById('users-list').innerHTML = '<div style="color:#ff6b6b;text-align:center;padding:24px;font-size:13px;">Could not load users.</div>';
@@ -986,7 +988,7 @@ const ADMIN_HTML = `<!DOCTYPE html>
         var list = document.getElementById('api-keys-list');
         list.innerHTML = '<div class="wa-header"><h3>Service Keys (' + d.configured + '/' + d.total + ')</h3></div>' +
           keys.map(function(k) {
-            return '<div class="session-item"><div class="session-info"><span class="dot ' + (k.configured ? 'on' : 'off') + '"></span><span class="session-phone">' + k.name + '</span><span class="session-id">' + k.env + '</span></div><div style="font-size:12px;color:' + (k.configured ? '#A855F7' : '#555') + ';">' + (k.configured ? 'Configured' : 'Not set') + '</div></div>';
+            return '<div class="session-item"><div class="session-info"><span class="dot ' + (k.configured ? 'on' : 'off') + '"></span><span class="session-phone">' + escH(k.name) + '</span><span class="session-id">' + escH(k.env) + '</span></div><div style="font-size:12px;color:' + (k.configured ? '#A855F7' : '#555') + ';">' + (k.configured ? 'Configured' : 'Not set') + '</div></div>';
           }).join('');
       }).catch(function() {});
     }

@@ -21,6 +21,13 @@ import { getAutoReplyConfig, setAutoReplyConfig } from './autoReplyConfig.js';
 export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
 
+// Security headers
+app.addHook('onSend', async (_req, reply) => {
+  reply.header('X-Frame-Options', 'DENY');
+  reply.header('X-Content-Type-Options', 'nosniff');
+  reply.header('X-XSS-Protection', '1; mode=block');
+});
+
 const templates = new Map<string, string>();
 const consent = new Map<string, boolean>();
 const CONNECTOR_SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';

@@ -123,6 +123,19 @@ export const useAuthStore = create<AuthState>((set) => ({
     const token = localStorage.getItem(AUTH_TOKEN_KEY)
     const raw = localStorage.getItem(AUTH_USER_KEY)
     if (token && raw) {
+      // Check token expiry
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1] ?? ''))
+        if (payload.exp && payload.exp * 1000 < Date.now()) {
+          localStorage.removeItem(AUTH_TOKEN_KEY)
+          localStorage.removeItem(AUTH_USER_KEY)
+          return
+        }
+      } catch {
+        localStorage.removeItem(AUTH_TOKEN_KEY)
+        localStorage.removeItem(AUTH_USER_KEY)
+        return
+      }
       try {
         const user = JSON.parse(raw) as User
         set({ user, token })
@@ -131,5 +144,10 @@ export const useAuthStore = create<AuthState>((set) => ({
         localStorage.removeItem(AUTH_USER_KEY)
       }
     }
+
+    // Listen for auth expiry events from apiFetch
+    window.addEventListener('kitz:auth-expired', () => {
+      set({ user: null, token: null, error: 'Session expired — please log in again.' })
+    })
   },
 }))

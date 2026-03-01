@@ -64,8 +64,11 @@ const voiceWidget = ELEVENLABS_AGENT_ID
 await app.register(cookie);
 await app.register(formbody);
 
-/* ── Auto-detect HTML responses and set correct Content-Type ── */
+/* ── Security headers + auto-detect HTML Content-Type ── */
 app.addHook('onSend', async (_req, reply, payload) => {
+  reply.header('X-Frame-Options', 'DENY');
+  reply.header('X-Content-Type-Options', 'nosniff');
+  reply.header('X-XSS-Protection', '1; mode=block');
   if (typeof payload === 'string' && payload.trimStart().startsWith('<!DOCTYPE html>')) {
     reply.header('content-type', 'text/html; charset=utf-8');
   }

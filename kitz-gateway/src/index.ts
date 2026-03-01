@@ -18,6 +18,14 @@ const app = Fastify({ logger: true });
 
 await app.register(rateLimit, { max: 120, timeWindow: '1 minute', store: FileBackedRateLimitStore });
 
+// Security headers
+app.addHook('onSend', async (_req, reply) => {
+  reply.header('X-Frame-Options', 'DENY');
+  reply.header('X-Content-Type-Options', 'nosniff');
+  reply.header('X-XSS-Protection', '1; mode=block');
+  reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+});
+
 const JWT_SECRET = process.env.JWT_SECRET || process.env.DEV_TOKEN_SECRET || '';
 const TOKEN_EXPIRY_SECONDS = 86400 * 7; // 7 days
 
@@ -187,8 +195,14 @@ app.post('/auth/signup', async (req, reply) => {
   if (!email || !password || !name) {
     return reply.code(400).send(buildError('VALIDATION', 'email, password, and name are required', traceId));
   }
-  if (password.length < 6) {
-    return reply.code(400).send(buildError('VALIDATION', 'Password must be at least 6 characters', traceId));
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return reply.code(400).send(buildError('VALIDATION', 'Invalid email format', traceId));
+  }
+  if (password.length < 8) {
+    return reply.code(400).send(buildError('VALIDATION', 'Password must be at least 8 characters', traceId));
+  }
+  if (name.length < 2 || name.length > 100) {
+    return reply.code(400).send(buildError('VALIDATION', 'Name must be 2-100 characters', traceId));
   }
 
   const existing = await findUserByEmail(email);

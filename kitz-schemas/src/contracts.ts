@@ -283,6 +283,9 @@ export interface CommsResponse {
 export type LogEntryType = 'agent_action' | 'crm' | 'order' | 'message' | 'system' | 'draft';
 export type LogEntryStatus = 'pending' | 'approved' | 'rejected';
 
+/** Generic activity log shape for the Logs API contract layer.
+ *  Note: engine/logs-api/src/db.ts defines its own LogEntry with actor
+ *  flattening (actor_name + actor_is_agent) for the activity_logs DB table. */
 export interface LogEntry {
   id: string;
   type: LogEntryType;
@@ -346,4 +349,39 @@ export interface GoogleUserProfile {
   email: string;
   name: string;
   picture?: string;
+}
+
+// ── Database Record Types ──
+// These interfaces match SQL schemas in database/migrations/ for type-safe
+// persistence code.  They use snake_case to align with PostgreSQL column names.
+// NOTE: agent_audit_log.business_id and artifacts.business_id map to users.org_id.
+// No FK constraint is enforced (bare UUIDs for operational flexibility).
+
+/** Matches artifacts table (006_artifacts.sql). */
+export interface ArtifactRecord {
+  id: string;
+  business_id: string;
+  artifact_type: 'code' | 'document' | 'tool' | 'migration' | 'other';
+  name: string;
+  content: string;
+  file_path: string;
+  language: string;
+  trace_id: string;
+  created_at: string;
+}
+
+/** Matches skills table (003_skills.sql). */
+export interface SkillRecord {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  category: string;
+  version: string;
+  tier: 'haiku' | 'sonnet' | 'opus';
+  credits_per_use: number;
+  is_active: boolean;
+  config: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
 }
