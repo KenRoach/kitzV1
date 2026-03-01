@@ -6,6 +6,22 @@ import { saveComms, updateCommsStatus, getCommsById, type CommsRecord } from './
 const app = Fastify({ logger: true })
 const PORT = Number(process.env.PORT) || 3013
 
+// ── Auth hook (validates x-service-secret for inter-service calls) ──
+const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || ''
+
+app.addHook('onRequest', async (req, reply) => {
+  const path = req.url.split('?')[0]
+  if (path === '/health') return
+
+  if (SERVICE_SECRET) {
+    const secret = req.headers['x-service-secret'] as string | undefined
+    const devSecret = req.headers['x-dev-secret'] as string | undefined
+    if (secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
+      return reply.code(401).send({ error: 'Unauthorized: missing or invalid service secret' })
+    }
+  }
+})
+
 const EMAIL_CONNECTOR_URL = process.env.EMAIL_CONNECTOR_URL || 'http://kitz-email-connector:3007'
 
 // ── Health ──

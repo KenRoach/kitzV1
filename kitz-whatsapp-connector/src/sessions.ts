@@ -30,6 +30,9 @@ import { isDuplicateMessage, buildDedupeKey } from './dedupe.js';
 import { extractReplyContext, extractLocationData, formatLocationText } from './extract.js';
 import { checkAccess, type AccessMode } from './access-control.js';
 import { getAutoReplyConfig, renderMessage } from './autoReplyConfig.js';
+import { createSubsystemLogger } from 'kitz-schemas';
+
+const log = createSubsystemLogger('whatsapp-sessions');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -93,7 +96,7 @@ function enqueueSaveCreds(authDir: string, saveCreds: () => Promise<void> | void
       backupCredsBeforeSave(authDir);
       return Promise.resolve(saveCreds());
     })
-    .catch((err) => console.error('[sessions] creds save error:', err));
+    .catch((err) => log.error('creds save error', { err }));
 }
 
 // ── Response rules sent to KITZ OS ──
@@ -172,14 +175,14 @@ async function forwardToKitzOs(
     });
 
     if (!res.ok) {
-      console.error(`[session:${userId}] KITZ OS returned ${res.status}`);
+      log.error('KITZ OS returned error status', { userId, status: res.status });
       return 'KITZ OS is temporarily unavailable. Try again in a moment.';
     }
 
     const data = (await res.json()) as { response?: string; error?: string };
     return data.response || data.error || 'Done.';
   } catch (err) {
-    console.error(`[session:${userId}] Forward failed:`, (err as Error).message);
+    log.error('forward failed', { userId, err });
     return 'Could not reach KITZ OS. Is it running?';
   }
 }
@@ -213,7 +216,7 @@ async function forwardMediaToKitzOs(
     const data = (await res.json()) as { response?: string; error?: string };
     return data.response || data.error || 'Media processed.';
   } catch (err) {
-    console.error(`[session:${userId}] Media forward failed:`, (err as Error).message);
+    log.error('media forward failed', { userId, err });
     return 'Could not process media. Is KITZ OS running?';
   }
 }
@@ -339,7 +342,7 @@ class SessionManager {
             session.lastQr = qr;
             session.lastEmittedQr = qr;
             this.emit(session, 'qr', qr);
-            console.log(`[session:${userId}] QR code generated — waiting for scan`);
+            log.info('QR code generated — waiting for scan', { userId });
           }
         }
 
@@ -362,13 +365,13 @@ class SessionManager {
           if (session.phoneNumber) {
             const existingUserId = this.phoneToUserId.get(session.phoneNumber);
             if (existingUserId && existingUserId !== userId) {
-              console.log(`[session:${userId}] Phone +${session.phoneNumber} was on session ${existingUserId} — killing old session`);
+              log.info('phone collision — killing old session', { userId, phone: session.phoneNumber, existingUserId });
               this.stopSession(existingUserId);
             }
             this.phoneToUserId.set(session.phoneNumber, userId);
           }
 
-          console.log(`[session:${userId}] CONNECTED as +${session.phoneNumber}`);
+          log.info('CONNECTED', { userId, phone: session.phoneNumber });
           this.emit(session, 'connected', JSON.stringify({ phone: session.phoneNumber }));
 
           // Start watchdog + heartbeat
@@ -394,9 +397,9 @@ class SessionManager {
                   text: 'Kitz connected. You\'re live. 🟢',
                 });
                 if (sent?.key?.id) trackKitzSent(sent.key.id);
-                console.log(`[session:${userId}] Confirmation sent to ${selfJid}`);
+                log.info('confirmation sent', { userId, selfJid });
               } catch (err) {
-                console.error(`[session:${userId}] Failed to send confirmation:`, (err as Error).message);
+                log.error('failed to send confirmation', { userId, err });
               }
             }, 3000);
           }
@@ -421,16 +424,7 @@ class SessionManager {
           // Self-healing: always reconnect if we were previously connected (except logout)
           const shouldReconnect = wasConnected && !isLoggedOut && !isQrTimeout && !is515Restart;
 
-          console.log(JSON.stringify({
-            ts: new Date().toISOString(),
-            module: 'sessions',
-            userId,
-            action: 'connection_closed',
-            statusCode,
-            shouldReconnect,
-            wasConnected,
-            is515Restart,
-          }));
+          log.info('connection closed', { userId, statusCode, shouldReconnect, wasConnected, is515Restart });
 
           this.emit(session, 'disconnected', JSON.stringify({ statusCode }));
 
@@ -441,7 +435,7 @@ class SessionManager {
           // Error 515: WhatsApp asked for restart after pairing — retry once
           if (is515Restart && !session.restartAttempted) {
             session.restartAttempted = true;
-            console.log(`[session:${userId}] Error 515 — restarting socket once (WhatsApp pairing restart)`);
+            log.info('error 515 — restarting socket once (WhatsApp pairing restart)', { userId });
             setTimeout(() => this.connectBaileys(session), 1000);
             return;
           }
@@ -455,7 +449,7 @@ class SessionManager {
           });
         }
       } catch (err) {
-        console.error(`[session:${userId}] connection.update handler error:`, (err as Error).message);
+        log.error('connection.update handler error', { userId, err });
       }
     });
 
@@ -478,7 +472,7 @@ class SessionManager {
         try {
           await this.handleMessage(session, msg);
         } catch (err) {
-          console.error(`[session:${userId}] Message handler error:`, (err as Error).message);
+          log.error('message handler error', { userId, err });
         }
       }
     });
@@ -486,7 +480,7 @@ class SessionManager {
     // 4. WebSocket error handler — LAST (after all event handlers, matching OpenClaw)
     if (sock.ws && typeof (sock.ws as any).on === 'function') {
       (sock.ws as any).on('error', (err: Error) => {
-        console.error(`[session:${userId}] WebSocket error:`, err.message);
+        log.error('WebSocket error', { userId, err });
       });
     }
   }
@@ -498,7 +492,7 @@ class SessionManager {
       if (!session.isConnected) return;
       const silenceMs = Date.now() - session.lastMessageAtMs;
       if (silenceMs > WATCHDOG_INTERVAL_MS) {
-        console.log(`[session:${session.userId}] Watchdog: no messages for ${Math.round(silenceMs / 60000)}m — force reconnecting`);
+        log.info('watchdog: no messages — force reconnecting', { userId: session.userId, silenceMin: Math.round(silenceMs / 60000) });
         this.forceReconnect(session);
       }
     }, 60_000); // Check every minute
@@ -512,16 +506,14 @@ class SessionManager {
       if (!session.isConnected) return;
       const uptimeMs = Date.now() - session.connectedAtMs;
       const authAge = getCredsAgeMs(session.authDir);
-      console.log(JSON.stringify({
-        ts: new Date().toISOString(),
-        module: 'heartbeat',
+      log.info('heartbeat', {
         userId: session.userId,
         phone: session.phoneNumber,
         connected: true,
         uptimeMin: Math.round(uptimeMs / 60000),
         reconnectAttempts: session.reconnectAttempts,
         authAgeMin: authAge ? Math.round(authAge / 60000) : null,
-      }));
+      });
     }, HEARTBEAT_INTERVAL_MS);
     session.heartbeatTimer.unref();
   }
@@ -544,10 +536,10 @@ class SessionManager {
     session.reconnectAttempts++;
     if (session.reconnectAttempts <= DEFAULT_RECONNECT_POLICY.maxAttempts) {
       const delay = computeBackoff(session.reconnectAttempts - 1);
-      console.log(`[session:${session.userId}] Watchdog reconnect in ${Math.round(delay / 1000)}s (attempt ${session.reconnectAttempts}/${DEFAULT_RECONNECT_POLICY.maxAttempts})`);
+      log.info('watchdog reconnect scheduled', { userId: session.userId, delaySec: Math.round(delay / 1000), attempt: session.reconnectAttempts, maxAttempts: DEFAULT_RECONNECT_POLICY.maxAttempts });
       setTimeout(() => this.connectBaileys(session), delay);
     } else {
-      console.log(`[session:${session.userId}] Max reconnect attempts after watchdog — removing session`);
+      log.info('max reconnect attempts after watchdog — removing session', { userId: session.userId });
       session.listeners.clear();
       this.sessions.delete(session.userId);
     }
@@ -562,7 +554,7 @@ class SessionManager {
     const { isQrTimeout, isLoggedOut, shouldReconnect, statusCode } = flags;
 
     if (isQrTimeout) {
-      console.log(`[session:${userId}] QR timeout (${statusCode}) — cleaning up`);
+      log.info('QR timeout — cleaning up', { userId, statusCode });
       const dir = join(AUTH_ROOT, userId);
       rm(dir, { recursive: true, force: true }).catch(() => {});
       session.listeners.clear();
@@ -570,10 +562,10 @@ class SessionManager {
     } else if (shouldReconnect && session.reconnectAttempts < DEFAULT_RECONNECT_POLICY.maxAttempts) {
       session.reconnectAttempts++;
       const delay = computeBackoff(session.reconnectAttempts - 1);
-      console.log(`[session:${userId}] Reconnecting in ${Math.round(delay / 1000)}s (attempt ${session.reconnectAttempts}/${DEFAULT_RECONNECT_POLICY.maxAttempts})`);
+      log.info('reconnecting', { userId, delaySec: Math.round(delay / 1000), attempt: session.reconnectAttempts, maxAttempts: DEFAULT_RECONNECT_POLICY.maxAttempts });
       setTimeout(() => this.connectBaileys(session), delay);
     } else if (isLoggedOut) {
-      console.log(`[session:${userId}] Logged out — cleaning up session`);
+      log.info('logged out — cleaning up session', { userId });
       this.emit(session, 'logged_out', '');
       if (session.phoneNumber) this.phoneToUserId.delete(session.phoneNumber);
       const dir = join(AUTH_ROOT, userId);
@@ -583,7 +575,7 @@ class SessionManager {
     } else if (flags.statusCode === 401) {
       // 401 device_removed — WhatsApp permanently revoked this session.
       // Do NOT self-heal — user must re-scan QR.
-      console.log(`[session:${userId}] 401 device_removed — session revoked, cleaning up`);
+      log.info('401 device_removed — session revoked, cleaning up', { userId });
       this.emit(session, 'logged_out', '');
       if (session.phoneNumber) this.phoneToUserId.delete(session.phoneNumber);
       const dir = join(AUTH_ROOT, userId);
@@ -594,10 +586,10 @@ class SessionManager {
       // Self-healing: for transient errors (not 401), wait and retry
       session.reconnectAttempts = 0;
       const healDelay = 60_000; // 1 minute cooldown, then restart backoff cycle
-      console.log(`[session:${userId}] Max reconnect attempts — self-healing in 60s`);
+      log.info('max reconnect attempts — self-healing in 60s', { userId });
       setTimeout(() => this.connectBaileys(session), healDelay);
     } else {
-      console.log(`[session:${userId}] Session removed — no phone number or unknown state`);
+      log.info('session removed — no phone number or unknown state', { userId });
       session.listeners.clear();
       this.sessions.delete(userId);
     }
@@ -614,7 +606,7 @@ class SessionManager {
     const senderNumber = senderJid.split('@')[0];
 
     // Log EVERY message that arrives (before any filtering)
-    console.log(`[session:${userId}] RAW MSG: fromMe=${msg.key.fromMe} remoteJid=${senderJid} myNumber=${myNumber} keys=[${Object.keys(msg.message || {}).join(',')}]`);
+    log.info('raw message received', { userId, fromMe: msg.key.fromMe, remoteJid: senderJid, myNumber, keys: Object.keys(msg.message || {}) });
 
     // ── ACCESS MODEL ──
     // 1. Self-chat ("Me" / "Notes to self") → always process
@@ -648,7 +640,7 @@ class SessionManager {
 
       if (!isMentioned && !kitzMentioned) return;
       // User was @mentioned or Kitz was named — fall through to process
-      console.log(`[session:${userId}] Activated in group ${senderJid} (mentioned=${isMentioned}, kitz=${kitzMentioned})`);
+      log.info('activated in group', { userId, groupJid: senderJid, isMentioned, kitzMentioned });
     }
 
     // If it's NOT self-chat and NOT a group (i.e., a DM):
@@ -663,7 +655,7 @@ class SessionManager {
 
     // Skip Kitz's own replies echoing back (prevents infinite loops)
     if (msg.key.id && kitzSentIds.has(msg.key.id)) {
-      console.log(`[session:${userId}] Skipping Kitz echo (msg ${msg.key.id})`);
+      log.info('skipping Kitz echo', { userId, msgId: msg.key.id });
       return;
     }
 
@@ -705,7 +697,7 @@ class SessionManager {
     });
     if (!access.allowed) {
       if (access.reason === 'pre_connection_message') {
-        console.log(`[session:${userId}] Skipping pre-connection message`);
+        log.info('skipping pre-connection message', { userId });
       }
       return;
     }
@@ -722,7 +714,7 @@ class SessionManager {
 
     // Debug: log message keys
     const debugKeys = Object.keys(msg.message || {});
-    console.log(`[session:${userId}] msg.message keys: [${debugKeys.join(', ')}]`);
+    log.info('msg.message keys', { userId, msgKeys: debugKeys });
 
     const hasText = !!msg.message?.conversation || !!msg.message?.extendedTextMessage?.text;
     const hasImage = !!msg.message?.imageMessage;
@@ -730,21 +722,18 @@ class SessionManager {
     const hasAudio = !!msg.message?.audioMessage;
     const hasLocation = !!locationData;
 
-    console.log(JSON.stringify({
-      ts: new Date().toISOString(),
-      module: 'sessions',
+    log.info('message received', {
       userId,
-      action: 'message_received',
       sender: senderJid,
-      trace_id: traceId,
-      has_text: hasText,
-      has_image: hasImage,
-      has_document: hasDocument,
-      has_audio: hasAudio,
-      has_location: hasLocation,
-      has_reply: !!replyContext,
-      msg_keys: debugKeys,
-    }));
+      traceId,
+      hasText,
+      hasImage,
+      hasDocument,
+      hasAudio,
+      hasLocation,
+      hasReply: !!replyContext,
+      msgKeys: debugKeys,
+    });
 
     // Helper: type then reply in self-chat (tracks sent ID to prevent echo loops)
     const typeThenReply = async (text: string) => {
@@ -755,9 +744,9 @@ class SessionManager {
       try {
         const sent = await sock.sendMessage(replyJid, { text: prefixed });
         if (sent?.key?.id) trackKitzSent(sent.key.id);
-        console.log(`[session:${userId}] Reply sent to self-chat`);
+        log.info('reply sent to self-chat', { userId });
       } catch (err) {
-        console.error(`[session:${userId}] Reply FAILED:`, (err as Error).message);
+        log.error('reply failed', { userId, err });
       }
     };
 
@@ -784,20 +773,20 @@ class SessionManager {
     if (text) {
       const fullText = locationText ? `${text}\n${locationText}` : text;
       try { await sock.sendPresenceUpdate('composing', replyJid); } catch {}
-      console.log(`[session:${userId}] Forwarding text to kitz_os: "${fullText.slice(0, 50)}"`);
+      log.info('forwarding text to kitz_os', { userId, textPreview: fullText.slice(0, 50) });
       const response = await forwardToKitzOs(fullText, replyJid, userId, traceId, {
         replyContext,
         location: locationText,
       });
-      console.log(`[session:${userId}] kitz_os response: "${response.slice(0, 80)}"`);
+      log.info('kitz_os response', { userId, responsePreview: response.slice(0, 80) });
       await sleep(typingDelayMs(response));
       try { await sock.sendPresenceUpdate('available', replyJid); } catch {}
       try {
         const sent = await sock.sendMessage(replyJid, { text: kitzReply(response) });
         if (sent?.key?.id) trackKitzSent(sent.key.id);
-        console.log(`[session:${userId}] Reply sent to self-chat`);
+        log.info('reply sent to self-chat', { userId });
       } catch (sendErr) {
-        console.error(`[session:${userId}] Reply FAILED:`, (sendErr as Error).message);
+        log.error('reply failed', { userId, err: sendErr });
       }
       return;
     }
@@ -810,7 +799,7 @@ class SessionManager {
         const buffer = await downloadMediaMessage(msg, 'buffer', {});
         const base64 = (buffer as Buffer).toString('base64');
         const rawSizeKB = Math.round(buffer.length / 1024);
-        console.log(`[session:${userId}] Image received: ${rawSizeKB}KB raw, ${Math.round(base64.length / 1024)}KB base64`);
+        log.info('image received', { userId, rawSizeKB, base64SizeKB: Math.round(base64.length / 1024) });
         if (base64.length > MAX_MEDIA_SIZE) {
           await typeThenReply(`Image too large (${rawSizeKB}KB) — max ~10MB supported.`);
           return;
@@ -823,7 +812,7 @@ class SessionManager {
         const sent = await sock.sendMessage(replyJid, { text: kitzReply(response) });
         if (sent?.key?.id) trackKitzSent(sent.key.id);
       } catch (err) {
-        console.error(`[session:${userId}] Image download failed:`, (err as Error).message);
+        log.error('image download failed', { userId, err });
         await typeThenReply('Could not download that image. Try again.');
       }
       return;
@@ -837,7 +826,7 @@ class SessionManager {
         const buffer = await downloadMediaMessage(msg, 'buffer', {});
         const base64 = (buffer as Buffer).toString('base64');
         const rawSizeKB = Math.round(buffer.length / 1024);
-        console.log(`[session:${userId}] Document received: ${rawSizeKB}KB raw, ${Math.round(base64.length / 1024)}KB base64`);
+        log.info('document received', { userId, rawSizeKB, base64SizeKB: Math.round(base64.length / 1024) });
         if (base64.length > MAX_MEDIA_SIZE) {
           await typeThenReply(`Doc too large (${rawSizeKB}KB) — max ~10MB supported.`);
           return;
@@ -850,7 +839,7 @@ class SessionManager {
         const sent = await sock.sendMessage(replyJid, { text: kitzReply(response) });
         if (sent?.key?.id) trackKitzSent(sent.key.id);
       } catch (err) {
-        console.error(`[session:${userId}] Document download failed:`, (err as Error).message);
+        log.error('document download failed', { userId, err });
         await typeThenReply('Could not download that document.');
       }
       return;
@@ -864,7 +853,7 @@ class SessionManager {
         const buffer = await downloadMediaMessage(msg, 'buffer', {});
         const base64 = (buffer as Buffer).toString('base64');
         const rawSizeKB = Math.round(buffer.length / 1024);
-        console.log(`[session:${userId}] Audio received: ${rawSizeKB}KB raw`);
+        log.info('audio received', { userId, rawSizeKB });
         const mimeType = audioMsg.mimetype || 'audio/ogg; codecs=opus';
         const response = await forwardMediaToKitzOs(
           base64, mimeType,
@@ -876,7 +865,7 @@ class SessionManager {
         const sent = await sock.sendMessage(replyJid, { text: kitzReply(response) });
         if (sent?.key?.id) trackKitzSent(sent.key.id);
       } catch (err) {
-        console.error(`[session:${userId}] Audio download failed:`, (err as Error).message);
+        log.error('audio download failed', { userId, err });
         await typeThenReply('Could not process that voice note.');
       }
       return;
@@ -901,7 +890,7 @@ class SessionManager {
     // Check config — auto-reply may be disabled
     const config = getAutoReplyConfig(userId);
     if (!config.enabled) {
-      console.log(`[session:${userId}] Auto-reply disabled — message logged`);
+      log.info('auto-reply disabled — message logged', { userId });
       return;
     }
 
@@ -909,7 +898,7 @@ class SessionManager {
     const key = `${userId}:${senderJid}`;
     const lastSent = this.autoReplySent.get(key);
     if (lastSent && Date.now() - lastSent < config.cooldownMs) {
-      console.log(`[session:${userId}] Skipping auto-reply to ${senderJid} (cooldown) — message logged`);
+      log.info('skipping auto-reply (cooldown) — message logged', { userId, senderJid });
       return;
     }
 
@@ -920,9 +909,9 @@ class SessionManager {
       });
       if (sent?.key?.id) trackKitzSent(sent.key.id);
       this.autoReplySent.set(key, Date.now());
-      console.log(`[session:${userId}] Auto-reply sent to ${senderJid}`);
+      log.info('auto-reply sent', { userId, senderJid });
     } catch (err) {
-      console.error(`[session:${userId}] Auto-reply failed to ${senderJid}:`, (err as Error).message);
+      log.error('auto-reply failed', { userId, senderJid, err });
     }
   }
 
@@ -941,9 +930,9 @@ class SessionManager {
         }),
         signal: AbortSignal.timeout(15_000),
       });
-      console.log(`[session:${userId}] Missed message from +${senderPhone} logged to workspace`);
+      log.info('missed message logged to workspace', { userId, senderPhone });
     } catch (err) {
-      console.error(`[session:${userId}] Failed to log missed message:`, (err as Error).message);
+      log.error('failed to log missed message', { userId, err });
     }
   }
 
@@ -1002,7 +991,7 @@ class SessionManager {
     this.emit(session, 'disconnected', '');
     session.listeners.clear();
     this.sessions.delete(userId);
-    console.log(`[session:${userId}] Stopped and cleaned up`);
+    log.info('stopped and cleaned up', { userId });
     return true;
   }
 
@@ -1153,26 +1142,26 @@ class SessionManager {
           const credsRaw = await readFile(credsPath, 'utf-8');
           const creds = JSON.parse(credsRaw);
           if (!creds.me?.id) {
-            console.log(`[sessions] Skipping ${userId} — creds.json exists but auth incomplete (no me.id)`);
+            log.info('skipping — creds.json exists but auth incomplete (no me.id)', { userId });
             await rm(join(AUTH_ROOT, userId), { recursive: true, force: true });
             continue;
           }
         } catch {
-          console.log(`[sessions] Skipping ${userId} — no valid creds, removing stale auth dir`);
+          log.info('skipping — no valid creds, removing stale auth dir', { userId });
           await rm(join(AUTH_ROOT, userId), { recursive: true, force: true });
           continue;
         }
-        console.log(`[sessions] Restoring session: ${userId}`);
+        log.info('restoring session', { userId });
         try {
           await this.startSession(userId);
           restored++;
         } catch (err) {
-          console.error(`[sessions] Failed to restore ${userId}:`, (err as Error).message);
+          log.error('failed to restore session', { userId, err });
         }
       }
-      console.log(`[sessions] Restored ${restored} session(s)`);
+      log.info('session restore complete', { restored });
     } catch {
-      console.log('[sessions] No previous sessions to restore');
+      log.info('no previous sessions to restore');
     }
   }
 }

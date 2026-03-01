@@ -16,6 +16,22 @@ import { callDeepSeek } from './providers/deepseek.js';
 
 const app = Fastify({ logger: true });
 
+// ── Auth hook (validates x-service-secret for inter-service calls) ──
+const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
+
+app.addHook('onRequest', async (req, reply) => {
+  const path = req.url.split('?')[0];
+  if (path === '/health' || path === '/models') return;
+
+  if (SERVICE_SECRET) {
+    const secret = req.headers['x-service-secret'] as string | undefined;
+    const devSecret = req.headers['x-dev-secret'] as string | undefined;
+    if (secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
+      return reply.code(401).send({ error: 'Unauthorized: missing or invalid service secret' });
+    }
+  }
+});
+
 type ProviderFn = (req: LLMCompletionRequest, route: ReturnType<typeof routeRequest>) => Promise<LLMCompletionResponse>;
 
 const PROVIDERS: Record<string, ProviderFn> = {

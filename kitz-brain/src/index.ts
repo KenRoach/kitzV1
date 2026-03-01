@@ -15,10 +15,14 @@ import {
   shouldRequestFunds
 } from './policy.js';
 
+import { createSubsystemLogger } from 'kitz-schemas';
+
 export const health = { status: 'ok' };
 
+const log = createSubsystemLogger('brain');
+
 const logRun = (phase: string, traceId: string, details: unknown) => {
-  console.log(JSON.stringify({ ts: new Date().toISOString(), phase, traceId, details }));
+  log.info({ phase, traceId, details });
 };
 
 const enforcePolicy = async (action: string, traceId: string): Promise<void> => {
@@ -219,11 +223,27 @@ cron.schedule('0 7 * * *', triggerLaunchReview);  // AOS launch review: 7am dail
 cron.schedule('0 */4 * * *', fetchCtoDigest);     // CTO digest: every 4 hours
 cron.schedule('0 6 * * *', triggerSwarmRun);      // Swarm run: 6am daily
 
-console.log('kitz-brain scheduler started', { financePolicy, growthExecutionPolicy, aosIntegration: true, swarmEnabled: true });
+log.info({ financePolicy, growthExecutionPolicy, aosIntegration: true, swarmEnabled: true }, 'kitz-brain scheduler started');
 
 // ── HTTP Server (real-time classification service) ──
 const PORT = Number(process.env.PORT) || 3015;
-const server = Fastify({ logger: false });
+const server = Fastify({ logger: true });
+
+// ── Auth hook (validates x-service-secret for inter-service calls) ──
+const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
+
+server.addHook('onRequest', async (req, reply) => {
+  const path = req.url.split('?')[0];
+  if (path === '/health') return;
+
+  if (SERVICE_SECRET) {
+    const secret = req.headers['x-service-secret'] as string | undefined;
+    const devSecret = req.headers['x-dev-secret'] as string | undefined;
+    if (secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
+      return reply.code(401).send({ error: 'Unauthorized: missing or invalid service secret' });
+    }
+  }
+});
 
 server.get('/health', async () => ({ status: 'ok', service: 'kitz-brain' }));
 
@@ -255,8 +275,8 @@ server.post<{ Body: ClassifyRequest }>('/decide', async (req, reply) => {
 });
 
 server.listen({ port: PORT, host: '0.0.0.0' }).then(() => {
-  console.log(`kitz-brain HTTP server listening on port ${PORT}`);
+  log.info({ port: PORT }, 'kitz-brain HTTP server listening');
 }).catch((err) => {
-  console.error('kitz-brain HTTP server failed to start:', err);
+  log.error({ err }, 'kitz-brain HTTP server failed to start');
   process.exit(1);
 });
