@@ -38,6 +38,7 @@ import fastifyStatic from '@fastify/static';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { existsSync } from 'fs';
+import { createHmac } from 'node:crypto';
 import type { KitzKernel } from './kernel.js';
 import { parseWhatsAppCommand } from './interfaces/whatsapp/commandParser.js';
 import { routeWithAI, brainFirstRoute, getDraftQueue, approveDraft, rejectDraft } from './interfaces/whatsapp/semanticRouter.js';
@@ -177,8 +178,24 @@ export async function createServer(kernel: KitzKernel) {
     console.warn('[server] Memory init failed (non-fatal):', (err as Error).message);
   }
 
-  // ── Service auth — inter-service requests must provide a shared secret ──
+  // ── Service auth — accepts x-service-secret, x-dev-secret, or Bearer JWT ──
   const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
+  const JWT_SECRET = process.env.JWT_SECRET || process.env.DEV_TOKEN_SECRET || '';
+
+  /** Verify a JWT token and return the payload, or null if invalid */
+  function verifyBearerJwt(token: string): { sub: string; org_id?: string } | null {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3 || !JWT_SECRET) return null;
+      const sigCheck = Buffer.from(createHmac('sha256', JWT_SECRET).update(`${parts[0]}.${parts[1]}`).digest())
+        .toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+      if (sigCheck !== parts[2]) return null;
+      const payload = JSON.parse(Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString());
+      if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
+      return payload;
+    } catch { return null; }
+  }
+
   app.addHook('onRequest', async (req, reply) => {
     // Skip auth for health, status, OAuth callbacks, webhook endpoints, and static SPA assets
     const path = req.url.split('?')[0];
@@ -192,10 +209,22 @@ export async function createServer(kernel: KitzKernel) {
       path.startsWith('/api/kitz/artifact/');
     if (skipAuth) return;
 
+    // 1. Service-to-service auth (x-service-secret or x-dev-secret)
     const secret = req.headers['x-service-secret'] as string | undefined;
     const devSecret = req.headers['x-dev-secret'] as string | undefined;
-    if (SERVICE_SECRET && secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
-      return reply.code(401).send({ error: 'Unauthorized: missing or invalid service secret' });
+    if (secret === SERVICE_SECRET || devSecret === process.env.DEV_TOKEN_SECRET) return;
+
+    // 2. Bearer JWT from UI (same JWT_SECRET as gateway)
+    const authHeader = req.headers.authorization as string | undefined;
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.slice(7);
+      const payload = verifyBearerJwt(token);
+      if (payload?.sub) return; // Valid JWT — allow through
+    }
+
+    // No valid auth found
+    if (SERVICE_SECRET) {
+      return reply.code(401).send({ error: 'Unauthorized: missing or invalid credentials' });
     }
   });
 
