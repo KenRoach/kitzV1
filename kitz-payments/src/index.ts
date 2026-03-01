@@ -57,6 +57,22 @@ interface SubscriptionRecord {
   traceId: string;
 }
 
+// ── Auth hook (validates x-service-secret; skips health + webhooks) ──
+const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
+
+app.addHook('onRequest', async (req, reply) => {
+  const path = req.url.split('?')[0];
+  if (path === '/health' || path.startsWith('/webhooks/')) return;
+
+  if (SERVICE_SECRET) {
+    const secret = req.headers['x-service-secret'] as string | undefined;
+    const devSecret = req.headers['x-dev-secret'] as string | undefined;
+    if (secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
+      return reply.code(401).send({ error: 'Unauthorized: missing or invalid service secret' });
+    }
+  }
+});
+
 const ledger: AIBatteryLedgerEntry[] = [];
 const subscriptions = new Map<string, SubscriptionRecord>();
 const allowedReceiveProviders = new Set(['stripe', 'paypal', 'yappy', 'bac']);

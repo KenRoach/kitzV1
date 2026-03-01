@@ -37,7 +37,7 @@ async function deliverNotification(job: NotificationJob): Promise<boolean> {
     });
     return res.ok;
   } catch (err) {
-    console.warn(`[queue] Delivery failed (${job.channel}):`, (err as Error).message);
+    app.log.warn({ channel: job.channel, error: (err as Error).message }, 'Delivery failed');
     return false;
   }
 }
@@ -54,6 +54,23 @@ interface NotificationJob {
 }
 
 const app = Fastify({ logger: true });
+
+// ── Auth hook (validates x-service-secret for inter-service calls) ──
+const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
+
+app.addHook('onRequest', async (req, reply) => {
+  const path = req.url.split('?')[0];
+  if (path === '/health') return;
+
+  if (SERVICE_SECRET) {
+    const secret = req.headers['x-service-secret'] as string | undefined;
+    const devSecret = req.headers['x-dev-secret'] as string | undefined;
+    if (secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
+      return reply.code(401).send({ error: 'Unauthorized: missing or invalid service secret' });
+    }
+  }
+});
+
 const queue: NotificationJob[] = [];
 const deadLetter: NotificationJob[] = [];
 const seenKeys = new Set<string>();

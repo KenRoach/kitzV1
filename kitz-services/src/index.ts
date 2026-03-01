@@ -27,6 +27,22 @@ const complianceHtml = (countryMarkdown: string, latestAt: string): string => `<
 export const createApp = () => {
   const app = Fastify({ logger: true });
 
+  // ── Auth hook (validates x-service-secret; skips health + public content) ──
+  const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
+
+  app.addHook('onRequest', async (req, reply) => {
+    const path = req.url.split('?')[0];
+    if (path === '/health' || path === '/' || path === '/content/free-guides') return;
+
+    if (SERVICE_SECRET) {
+      const secret = req.headers['x-service-secret'] as string | undefined;
+      const devSecret = req.headers['x-dev-secret'] as string | undefined;
+      if (secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
+        return reply.code(401).send({ error: 'Unauthorized: missing or invalid service secret' });
+      }
+    }
+  });
+
   app.get('/', async () => ({
     service: 'kitz-services',
     hub: 'marketing + free AI business content'
