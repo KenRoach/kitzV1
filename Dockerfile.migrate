@@ -1,0 +1,16 @@
+# Dockerfile.migrate — Runs database migrations
+FROM node:20-alpine
+WORKDIR /app
+
+# Copy migration SQL files
+COPY database/migrations/ database/migrations/
+
+# Copy migration runner + deps
+COPY kitz-schemas/package.json kitz-schemas/
+RUN cd kitz-schemas && npm install
+COPY kitz-schemas/migrations/ kitz-schemas/migrations/
+COPY kitz-schemas/src/ kitz-schemas/src/
+
+WORKDIR /app/kitz-schemas
+
+CMD ["node", "--import", "tsx", "migrations/run.ts"]
