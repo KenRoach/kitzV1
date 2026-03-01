@@ -199,8 +199,20 @@ export async function createServer(kernel: KitzKernel) {
     }
   });
 
-  // ── Health check ──
-  app.get('/health', async () => ({ status: 'ok', service: 'kitz-os' }));
+  // ── Health check — verifies downstream connectivity ──
+  app.get('/health', async () => {
+    const checks: Record<string, string> = { 'kitz-os': 'ok' };
+    // Verify workspace REST API
+    try {
+      const res = await fetch(`${process.env.WORKSPACE_API_URL || 'http://localhost:3001'}/health`, { signal: AbortSignal.timeout(3000) });
+      checks.workspace = res.ok ? 'ok' : 'degraded';
+    } catch { checks.workspace = 'unreachable'; }
+    // Verify kernel status
+    const s = kernel.getStatus();
+    checks.kernel = s.status === 'online' ? 'ok' : s.status;
+    const allOk = Object.values(checks).every(v => v === 'ok');
+    return { status: allOk ? 'ok' : 'degraded', service: 'kitz-os', checks };
+  });
 
   // ── System status ──
   app.get('/api/kitz/status', async () => {

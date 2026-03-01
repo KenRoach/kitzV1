@@ -1,8 +1,18 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import app, { health } from './index.js';
+import app from './index.js';
 
 describe('health', () => {
-  it('ok', () => expect(health.status).toBe('ok'));
+  beforeAll(async () => { await app.ready(); });
+  afterAll(async () => { await app.close(); });
+
+  it('returns status ok with checks', async () => {
+    const res = await app.inject({ method: 'GET', url: '/health' });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.status).toMatch(/ok|degraded/);
+    expect(body.checks).toBeDefined();
+    expect(body.checks.workspace).toBe('ok');
+  });
 });
 
 describe('ops metrics', () => {

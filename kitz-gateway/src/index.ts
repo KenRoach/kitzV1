@@ -81,8 +81,17 @@ app.addHook('onRequest', async (req) => {
 app.addHook('preHandler', requireAuth);
 app.addHook('preHandler', requireOrg);
 
-// Health check (public — no auth required)
-app.get('/health', async () => ({ status: 'ok', service: 'kitz-gateway' }));
+// Health check (public — no auth required) — verifies downstream connectivity
+app.get('/health', async () => {
+  const checks: Record<string, string> = { gateway: 'ok' };
+  // Verify database (user lookup)
+  try {
+    await listUsers();
+    checks.database = 'ok';
+  } catch { checks.database = 'unreachable'; }
+  const allOk = Object.values(checks).every(v => v === 'ok');
+  return { status: allOk ? 'ok' : 'degraded', service: 'kitz-gateway', checks };
+});
 
 app.post('/events', { preHandler: requireScope('events:write') }, async (req) => {
   const body = req.body as EventEnvelope;

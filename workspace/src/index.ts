@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import formbody from '@fastify/formbody';
 import { randomUUID, createHash, createHmac } from 'node:crypto';
+import { createTraceId, type StandardError } from 'kitz-schemas';
 import {
   listLeads as dbListLeads, createLead as dbCreateLead, updateLead as dbUpdateLead, deleteLead as dbDeleteLead,
   listOrders as dbListOrders, createOrder as dbCreateOrder, updateOrder as dbUpdateOrder,
@@ -13,10 +14,19 @@ import {
   type DbLead, type DbOrder, type DbTask, type DbCheckoutLink, type DbProduct, type DbPayment,
 } from './db.js';
 
-export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
 const gatewayUrl = process.env.GATEWAY_URL || 'http://localhost:4000';
 const waConnectorUrl = process.env.WA_CONNECTOR_URL || 'http://localhost:3006';
+
+/** Extract traceId from request header or generate one */
+function getTraceId(req: any): string {
+  return (req.headers?.['x-trace-id'] as string) || createTraceId();
+}
+
+/** Build StandardError response */
+function buildStdError(code: string, message: string, traceId: string): StandardError {
+  return { code, message, traceId };
+}
 const COOKIE_NAME = 'kitz_session';
 const JWT_SECRET = process.env.JWT_SECRET || process.env.DEV_TOKEN_SECRET || '';
 if (!JWT_SECRET) {
@@ -1515,7 +1525,8 @@ function getApiUser(req: any): { userId: string; orgId: string } | null {
 function requireApiAuth(req: any, reply: any): { userId: string; orgId: string } | null {
   const user = getApiUser(req);
   if (!user) {
-    reply.code(401).send({ error: 'AUTH_REQUIRED', message: 'Bearer token or session cookie required' });
+    const traceId = getTraceId(req);
+    reply.code(401).send(buildStdError('AUTH_REQUIRED', 'Bearer token or session cookie required', traceId));
     return null;
   }
   return user;
@@ -1733,7 +1744,20 @@ app.post('/api/workspace/payments', async (req: any, reply: any) => {
   return reply.code(201).send(dbPaymentToPayment(row));
 });
 
-app.get('/health', async () => health);
+app.get('/health', async () => {
+  const checks: Record<string, string> = { workspace: 'ok' };
+  // Check Supabase connectivity
+  if (hasDB) {
+    try {
+      const leads = await dbListLeads('__health_check__');
+      checks.database = Array.isArray(leads) ? 'ok' : 'degraded';
+    } catch { checks.database = 'unreachable'; }
+  } else {
+    checks.database = 'in-memory';
+  }
+  const allOk = Object.values(checks).every(v => v === 'ok' || v === 'in-memory');
+  return { status: allOk ? 'ok' : 'degraded', checks };
+});
 
 /* ── 404 catch-all — redirect unknown routes to /start ── */
 app.setNotFoundHandler(async (_req: any, reply: any) => {
