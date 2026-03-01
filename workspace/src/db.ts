@@ -5,6 +5,8 @@
  * go to Supabase PostgreSQL. Otherwise, falls back to in-memory Maps (lost on restart).
  */
 
+import { randomUUID } from 'node:crypto';
+
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.WORKSPACE_SUPABASE_URL || '';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.WORKSPACE_SUPABASE_SERVICE_KEY || '';
 
@@ -49,10 +51,15 @@ async function supaInsert<T>(table: string, row: T & object): Promise<T | null> 
       body: JSON.stringify(row),
       signal: AbortSignal.timeout(10_000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const errText = await res.text().catch(() => 'unknown');
+      console.error(`[workspace/db] INSERT ${table} failed: ${res.status} ${errText.slice(0, 200)}`);
+      return null;
+    }
     const rows = await res.json() as T[];
     return rows[0] ?? null;
-  } catch {
+  } catch (err) {
+    console.error(`[workspace/db] INSERT ${table} error:`, (err as Error).message);
     return null;
   }
 }
@@ -153,7 +160,7 @@ export async function listLeads(userId: string): Promise<DbLead[]> {
 export async function createLead(userId: string, data: Partial<DbLead>): Promise<DbLead> {
   const now = new Date().toISOString();
   const lead: DbLead = {
-    id: data.id || `lead_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    id: data.id || randomUUID(),
     user_id: userId,
     name: data.name || '',
     phone: data.phone || '',
@@ -212,7 +219,7 @@ export async function listOrders(userId: string): Promise<DbOrder[]> {
 export async function createOrder(userId: string, data: Partial<DbOrder>): Promise<DbOrder> {
   const now = new Date().toISOString();
   const order: DbOrder = {
-    id: `ord_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    id: randomUUID(),
     user_id: userId,
     lead_id: data.lead_id || null,
     description: data.description || '',
@@ -254,7 +261,7 @@ export async function listTasks(userId: string): Promise<DbTask[]> {
 export async function createTask(userId: string, title: string): Promise<DbTask> {
   const now = new Date().toISOString();
   const task: DbTask = {
-    id: `task_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    id: randomUUID(),
     user_id: userId,
     title,
     done: false,
@@ -293,7 +300,7 @@ export async function listCheckoutLinks(userId: string): Promise<DbCheckoutLink[
 
 export async function createCheckoutLink(userId: string, data: Partial<DbCheckoutLink>): Promise<DbCheckoutLink> {
   const link: DbCheckoutLink = {
-    id: `chk_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    id: randomUUID(),
     user_id: userId,
     slug: data.slug || `pay-${Math.random().toString(36).slice(2, 8)}`,
     amount: data.amount || 0,
@@ -323,7 +330,7 @@ export async function listProducts(userId: string): Promise<DbProduct[]> {
 export async function createProduct(userId: string, data: Partial<DbProduct>): Promise<DbProduct> {
   const now = new Date().toISOString();
   const product: DbProduct = {
-    id: `prod_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    id: randomUUID(),
     user_id: userId,
     name: data.name || '',
     description: data.description || '',
@@ -382,7 +389,7 @@ export async function listPayments(userId: string): Promise<DbPayment[]> {
 
 export async function createPayment(userId: string, data: Partial<DbPayment>): Promise<DbPayment> {
   const payment: DbPayment = {
-    id: `pay_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    id: randomUUID(),
     user_id: userId,
     type: data.type || 'incoming',
     description: data.description || '',

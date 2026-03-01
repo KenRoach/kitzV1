@@ -623,15 +623,39 @@ app.post('/auth/register', async (req: any, reply: any) => {
   }
 
   const key = email.toLowerCase();
-  if (registeredUsers.has(key)) {
-    return reply.redirect('/register?error=exists');
+
+  // Register via gateway (persists to DB) — fallback to local if gateway unreachable
+  let userId: string;
+  let orgId: string;
+  let token: string;
+  try {
+    const gwRes = await fetch(`${gatewayUrl}/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: key, password, name }),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (gwRes.ok) {
+      const data = await gwRes.json() as { token: string; userId: string; orgId: string };
+      userId = data.userId;
+      orgId = data.orgId;
+      token = data.token;
+    } else if (gwRes.status === 409) {
+      return reply.redirect('/register?error=exists');
+    } else {
+      throw new Error(`Gateway ${gwRes.status}`);
+    }
+  } catch {
+    // Gateway unreachable — fallback to local auth
+    if (registeredUsers.has(key)) {
+      return reply.redirect('/register?error=exists');
+    }
+    userId = randomUUID();
+    orgId = randomUUID();
+    token = mintJwt(userId, orgId);
   }
 
-  const userId = randomUUID();
-  const orgId = randomUUID();
   registeredUsers.set(key, { id: userId, email: key, name, passwordHash: hashPw(password), orgId });
-
-  const token = mintJwt(userId, orgId);
   const sessionId = randomUUID();
   sessions.set(sessionId, { userId, email: key, name, token, orgId });
   funnel.signup += 1;
@@ -646,15 +670,45 @@ app.post('/auth/login', async (req: any, reply: any) => {
     return reply.redirect('/login?error=invalid');
   }
 
-  const user = registeredUsers.get(email.toLowerCase());
-  if (!user || user.passwordHash !== hashPw(password)) {
-    authFailures += 1;
-    return reply.redirect('/login?error=invalid');
+  const key = email.toLowerCase();
+
+  // Authenticate via gateway (checks DB) — fallback to local if unreachable
+  let userId: string;
+  let orgId: string;
+  let token: string;
+  let userName: string = '';
+  try {
+    const gwRes = await fetch(`${gatewayUrl}/auth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: key, password }),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (gwRes.ok) {
+      const data = await gwRes.json() as { token: string; userId: string; orgId: string; name?: string };
+      userId = data.userId;
+      orgId = data.orgId;
+      token = data.token;
+      userName = data.name || '';
+    } else {
+      throw new Error(`Gateway ${gwRes.status}`);
+    }
+  } catch {
+    // Gateway unreachable — fallback to local auth
+    const user = registeredUsers.get(key);
+    if (!user || user.passwordHash !== hashPw(password)) {
+      authFailures += 1;
+      return reply.redirect('/login?error=invalid');
+    }
+    userId = user.id;
+    orgId = user.orgId;
+    userName = user.name;
+    token = mintJwt(userId, orgId);
   }
 
-  const token = mintJwt(user.id, user.orgId);
+  registeredUsers.set(key, { id: userId, email: key, name: userName, passwordHash: hashPw(password), orgId });
   const sessionId = randomUUID();
-  sessions.set(sessionId, { userId: user.id, email: user.email, name: user.name, token, orgId: user.orgId });
+  sessions.set(sessionId, { userId, email: key, name: userName, token, orgId });
 
   reply.setCookie(COOKIE_NAME, sessionId, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
   return reply.redirect('/leads');
