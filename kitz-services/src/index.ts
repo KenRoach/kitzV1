@@ -43,6 +43,8 @@ export const createApp = () => {
     }
   });
 
+  app.get('/health', async () => health);
+
   app.get('/', async () => ({
     service: 'kitz-services',
     hub: 'marketing + free AI business content'
