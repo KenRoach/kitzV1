@@ -12,5 +12,6 @@ COPY kitz-schemas/migrations/ kitz-schemas/migrations/
 COPY kitz-schemas/src/ kitz-schemas/src/
 
 WORKDIR /app/kitz-schemas
+RUN npm install tsx
 
-CMD ["node", "--import", "tsx", "migrations/run.ts"]
+CMD ["npx", "tsx", "migrations/run.ts"]

@@ -2,6 +2,7 @@
 ARG SERVICE_DIR
 
 FROM node:20-alpine AS builder
+RUN apk add --no-cache git
 ARG SERVICE_DIR
 WORKDIR /app
 
@@ -11,7 +12,7 @@ COPY kitz-schemas/src/ kitz-schemas/src/
 
 # Copy service
 COPY ${SERVICE_DIR}/package.json ${SERVICE_DIR}/
-RUN cd ${SERVICE_DIR} && npm install --production
+RUN cd ${SERVICE_DIR} && npm install --production && npm install tsx
 
 COPY ${SERVICE_DIR}/ ${SERVICE_DIR}/
 

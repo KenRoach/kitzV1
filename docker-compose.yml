@@ -69,6 +69,8 @@ services:
   kitz-gateway:
     <<: *service-defaults
     build:
+      context: .
+      dockerfile: Dockerfile.service
       args:
         SERVICE_DIR: kitz-gateway
     ports:
@@ -84,10 +86,11 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GOOGLE_LOGIN_REDIRECT_URI: ${GOOGLE_LOGIN_REDIRECT_URI:-http://localhost:5173/login}
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:4000/health"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:4000/health"]
       interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
+      start_period: 15s
     deploy:
       resources:
         limits:
@@ -100,6 +103,8 @@ services:
   kitz-llm-hub:
     <<: *service-defaults
     build:
+      context: .
+      dockerfile: Dockerfile.service
       args:
         SERVICE_DIR: kitz-llm-hub
     ports:
@@ -116,7 +121,7 @@ services:
       PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY:-}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:4010/health"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:4010/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -129,6 +134,8 @@ services:
   kitz-payments:
     <<: *service-defaults
     build:
+      context: .
+      dockerfile: Dockerfile.service
       args:
         SERVICE_DIR: kitz-payments
     ports:
@@ -141,7 +148,7 @@ services:
       YAPPY_WEBHOOK_SECRET: ${YAPPY_WEBHOOK_SECRET:-}
       BAC_WEBHOOK_SECRET: ${BAC_WEBHOOK_SECRET:-}
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:3005/health"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3005/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -157,6 +164,8 @@ services:
   kitz-whatsapp-connector:
     <<: *service-defaults
     build:
+      context: .
+      dockerfile: Dockerfile.service
       args:
         SERVICE_DIR: kitz-whatsapp-connector
     ports:
@@ -168,7 +177,7 @@ services:
       DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET}
       SERVICE_SECRET: ${DEV_TOKEN_SECRET}
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:3006/health"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3006/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -184,6 +193,8 @@ services:
   kitz-email-connector:
     <<: *service-defaults
     build:
+      context: .
+      dockerfile: Dockerfile.service
       args:
         SERVICE_DIR: kitz-email-connector
     ports:
@@ -198,7 +209,7 @@ services:
       SERVICE_SECRET: ${DEV_TOKEN_SECRET}
       KITZ_OS_URL: http://kitz-os:3012
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:3007/health"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3007/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -214,6 +225,8 @@ services:
   kitz-notifications-queue:
     <<: *service-defaults
     build:
+      context: .
+      dockerfile: Dockerfile.service
       args:
         SERVICE_DIR: kitz-notifications-queue
     ports:
@@ -225,7 +238,7 @@ services:
       EMAIL_CONNECTOR_URL: http://kitz-email-connector:3007
       COMMS_API_URL: http://comms-api:3013
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:3008/health"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3008/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -241,6 +254,8 @@ services:
   kitz-services:
     <<: *service-defaults
     build:
+      context: .
+      dockerfile: Dockerfile.service
       args:
         SERVICE_DIR: kitz-services
     ports:
@@ -251,7 +266,7 @@ services:
       LLM_HUB_URL: http://kitz-llm-hub:4010
       ELEVENLABS_AGENT_ID: ${ELEVENLABS_AGENT_ID:-}
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:3010/health"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3010/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -264,12 +279,14 @@ services:
   admin-kitz-services:
     <<: *service-defaults
     build:
+      context: .
+      dockerfile: Dockerfile.service
       args:
         SERVICE_DIR: admin-kitz-services
     ports:
       - "3011:3011"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:3011/health"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3011/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -307,7 +324,7 @@ services:
     ports:
       - "3012:3012"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:3012/health"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3012/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -362,12 +379,14 @@ services:
   workspace:
     <<: *service-defaults
     build:
+      context: .
+      dockerfile: Dockerfile.service
       args:
         SERVICE_DIR: workspace
     ports:
       - "3001:3001"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:3001/health"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3001/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -399,6 +418,8 @@ services:
   comms-api:
     <<: *service-defaults
     build:
+      context: .
+      dockerfile: Dockerfile.service
       args:
         SERVICE_DIR: engine/comms-api
     ports:
@@ -411,7 +432,7 @@ services:
       TWILIO_PHONE_FROM: ${TWILIO_PHONE_FROM:-}
       EMAIL_CONNECTOR_URL: http://kitz-email-connector:3007
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:3013/health"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3013/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -424,6 +445,8 @@ services:
   logs-api:
     <<: *service-defaults
     build:
+      context: .
+      dockerfile: Dockerfile.service
       args:
         SERVICE_DIR: engine/logs-api
     ports:
@@ -432,7 +455,7 @@ services:
       <<: *env-common
       PORT: 3014
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:3014/health"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3014/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -450,7 +473,7 @@ services:
     ports:
       - "5678:5678"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:5678/healthz"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:5678/healthz"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -497,7 +520,7 @@ services:
     ports:
       - "3015:3015"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:3015/health"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3015/health"]
       interval: 10s
       timeout: 5s
       retries: 3
