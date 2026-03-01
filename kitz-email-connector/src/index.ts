@@ -5,7 +5,7 @@ import type { EventEnvelope } from 'kitz-schemas';
 import { sendEmail } from './providers/resend.js';
 import { processInboundEmail, callWorkspaceMcp } from './inbound.js';
 import type { InboundPayload } from './inbound.js';
-import { approveDraft, getPendingDraft, getConfirmationPageHtml, getErrorPageHtml } from './drafts.js';
+import { approveDraft, getPendingDraft, getConfirmationPageHtml, getErrorPageHtml, getFeedbackPageHtml } from './drafts.js';
 import {
   upsertTemplate, getTemplate, listTemplates,
   setConsent, hasConsent,
@@ -20,7 +20,7 @@ const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRE
 
 app.addHook('onRequest', async (req, reply) => {
   const path = req.url.split('?')[0];
-  const skipAuth = path === '/health' || path === '/webhooks/inbound';
+  const skipAuth = path === '/health' || path === '/webhooks/inbound' || path.startsWith('/approve/') || path === '/feedback';
   if (skipAuth) return;
 
   if (SERVICE_SECRET) {
@@ -238,6 +238,27 @@ app.get('/approve/:token', async (req: any, reply) => {
 
   reply.type('text/html');
   return getConfirmationPageHtml(draft.caseNumber, draft.originalFrom);
+});
+
+// ── Feedback ──
+app.get('/feedback', async (req: any, reply) => {
+  const query = req.query as Record<string, string>;
+  const rating = String(query.rating || 'unknown');
+  const caseNumber = String(query.case || 'unknown');
+  const traceId = randomUUID();
+
+  app.log.info(audit('email.feedback', { rating, caseNumber }, traceId));
+
+  // Store feedback in workspace (fire-and-forget)
+  callWorkspaceMcp('tasks_create', {
+    title: `[Feedback] ${rating} — ${caseNumber}`,
+    description: `Admin rated KITZ draft as "${rating}" for case ${caseNumber}.`,
+    status: 'done',
+    priority: 'low',
+  }).catch(() => {});
+
+  reply.type('text/html');
+  return getFeedbackPageHtml(rating);
 });
 
 app.get('/drafts/:token', async (req: any, reply) => {

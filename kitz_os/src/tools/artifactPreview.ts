@@ -268,8 +268,8 @@ export function wrapInArtifact(innerHtml: string, options: {
   </main>
 
   <footer class="kitz-artifact-footer">
-    This content was created by AI. Please review thoroughly before taking action.<br>
-    <a href="${baseUrl}">Powered by KITZ</a> — Your business deserves infrastructure.
+    Este contenido fue creado por IA. Revisar antes de aceptar.<br>
+    <a href="${baseUrl}">Powered by KITZ</a> — Tu negocio merece infraestructura.
   </footer>
 
   <div id="kitz-toast" class="kitz-toast"></div>

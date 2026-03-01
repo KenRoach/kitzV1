@@ -185,7 +185,7 @@ function buildPreviewIndex(): string {
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>KITZ Artifacts</title>
 <meta http-equiv="refresh" content="5">
 <style>body{font-family:monospace;background:#0d0d0d;color:#e0e0e0;padding:2rem}
-h1{color:#a855f7}a{color:#06b6d4}li{margin:0.3rem 0}</style></head>
+h1{color:#a855f7}a{color:#a855f7}li{margin:0.3rem 0}</style></head>
 <body><h1>KITZ Artifacts</h1><ul>${files || '<li>No artifacts yet</li>'}</ul></body></html>`
 }
 

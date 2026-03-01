@@ -292,16 +292,22 @@ function wrapInBrandedHtml(body: string, caseNumber: string, senderName: string,
   const bodyHtml = body.replace(/\n/g, '<br>');
   const caseLabel = language === 'fr' ? 'Dossier' : language === 'en' ? 'Case' : 'Caso';
   const disclaimer: Record<SupportedLanguage, string> = {
-    en: 'This content was created by AI. Please review carefully.',
-    es: 'Este contenido fue creado por IA, revisar con calma.',
-    pt: 'Este conteúdo foi criado por IA. Revise com calma.',
-    fr: "Ce contenu a été créé par l'IA. Veuillez vérifier avec soin.",
+    en: 'This content was created by AI. Review before accepting.',
+    es: 'Este contenido fue creado por IA. Revisar antes de aceptar.',
+    pt: 'Este conteúdo foi criado por IA. Revise antes de aceitar.',
+    fr: "Ce contenu a été créé par l'IA. Vérifiez avant d'accepter.",
+  };
+  const tagline: Record<SupportedLanguage, string> = {
+    en: 'Your hustle deserves infrastructure.',
+    es: 'Tu negocio merece infraestructura.',
+    pt: 'Seu negócio merece infraestrutura.',
+    fr: 'Votre business mérite une infrastructure.',
   };
 
-  return `<div style="max-width:600px;margin:0 auto;font-family:'Inter',-apple-system,Arial,sans-serif;background:#f8f7ff;border-radius:16px;overflow:hidden">
+  return `<div style="max-width:600px;margin:0 auto;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:#f8f7ff;border-radius:16px;overflow:hidden">
 <div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:20px 16px">
 <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-<td><span style="color:#fff;font-size:20px;font-weight:700;letter-spacing:0.5px">KITZ</span><br><span style="color:rgba(255,255,255,0.7);font-size:11px">Your business, handled.</span></td>
+<td><table cellpadding="0" cellspacing="0" border="0"><tr><td style="vertical-align:middle;padding-right:10px"><img src="https://kitz.services/kitz-logo.png" alt="KITZ" width="32" height="32" style="display:block;border:0"></td><td style="vertical-align:middle"><span style="color:#fff;font-size:20px;font-weight:700;letter-spacing:0.5px">KITZ</span><br><span style="color:rgba(255,255,255,0.7);font-size:11px">Your business, handled.</span></td></tr></table></td>
 <td style="text-align:right"><span style="background:rgba(255,255,255,0.2);color:#fff;font-size:11px;padding:4px 12px;border-radius:20px;font-weight:600">${caseLabel} ${caseNumber}</span></td>
 </tr></table>
 </div>
@@ -310,7 +316,7 @@ function wrapInBrandedHtml(body: string, caseNumber: string, senderName: string,
 </div>
 <div style="padding:14px 16px 16px;text-align:center;background:#faf9ff">
 <p style="color:#aaa;font-size:11px;line-height:1.5;margin:0 0 6px">${disclaimer[language]}</p>
-<p style="color:#ccc;font-size:11px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none;font-weight:600">KITZ</a></p>
+<p style="color:#ccc;font-size:11px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none;font-weight:600">KITZ</a> — ${tagline[language]}</p>
 </div>
 </div>`;
 }
@@ -326,10 +332,10 @@ export function getApprovalEmailHtml(
   const draftBodyHtml = draft.draftBody.replace(/\n/g, '<br>');
   const langName = LANGUAGE_NAMES[draft.language];
 
-  return `<div style="max-width:600px;margin:0 auto;font-family:'Inter',-apple-system,Arial,sans-serif;background:#f8f7ff;border-radius:16px;overflow:hidden">
+  return `<div style="max-width:600px;margin:0 auto;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:#f8f7ff;border-radius:16px;overflow:hidden">
 <div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:20px 16px">
 <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-<td><span style="color:#fff;font-size:20px;font-weight:700;letter-spacing:0.5px">KITZ</span><br><span style="color:rgba(255,255,255,0.7);font-size:11px">Draft Review</span></td>
+<td><table cellpadding="0" cellspacing="0" border="0"><tr><td style="vertical-align:middle;padding-right:10px"><img src="https://kitz.services/kitz-logo.png" alt="KITZ" width="32" height="32" style="display:block;border:0"></td><td style="vertical-align:middle"><span style="color:#fff;font-size:20px;font-weight:700;letter-spacing:0.5px">KITZ</span><br><span style="color:rgba(255,255,255,0.7);font-size:11px">Draft Review</span></td></tr></table></td>
 <td style="text-align:right"><span style="background:rgba(255,255,255,0.2);color:#fff;font-size:11px;padding:4px 12px;border-radius:20px;font-weight:600">${draft.caseNumber}</span></td>
 </tr></table>
 </div>
@@ -364,9 +370,9 @@ export function getApprovalEmailHtml(
 </div>
 
 <div style="padding:14px 16px 16px;text-align:center;background:#faf9ff">
-<p style="color:#aaa;font-size:11px;line-height:1.5;margin:0 0 4px">Final AI draft — ready to send. Review before approving.</p>
+<p style="color:#aaa;font-size:11px;line-height:1.5;margin:0 0 4px">Este contenido fue creado por IA. Revisar antes de aceptar.</p>
 <p style="color:#ccc;font-size:11px;margin:0 0 4px">This link expires in 72 hours.</p>
-<p style="color:#ccc;font-size:11px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none;font-weight:600">KITZ</a></p>
+<p style="color:#ccc;font-size:11px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none;font-weight:600">KITZ</a> — Tu negocio merece infraestructura.</p>
 </div>
 </div>`;
 }
@@ -374,11 +380,13 @@ export function getApprovalEmailHtml(
 // ── Confirmation Page (shown after approve click) ──
 
 export function getConfirmationPageHtml(caseNumber: string, recipientEmail: string): string {
+  const serviceUrl = process.env.SERVICE_URL || `http://localhost:${process.env.PORT || 3007}`;
+  const feedbackUrl = `${serviceUrl}/feedback?case=${encodeURIComponent(caseNumber)}`;
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Approved — KITZ</title></head>
-<body style="margin:0;padding:40px 16px;background:#f8f7ff;font-family:'Inter',Arial,Helvetica,sans-serif">
+<body style="margin:0;padding:40px 16px;background:#f8f7ff;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif">
 <div style="max-width:480px;margin:0 auto;text-align:center;border-radius:16px;overflow:hidden">
 <div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:24px">
-<span style="color:#fff;font-size:22px;font-weight:700;letter-spacing:0.5px">KITZ</span>
+<img src="https://kitz.services/kitz-logo.png" alt="KITZ" width="36" height="36" style="display:inline-block;vertical-align:middle;margin-right:10px;border:0"><span style="color:#fff;font-size:22px;font-weight:700;letter-spacing:0.5px;vertical-align:middle">KITZ</span>
 </div>
 <div style="background:#fff;padding:40px 24px">
 <div style="width:56px;height:56px;background:#e8f5e9;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center">
@@ -386,9 +394,17 @@ export function getConfirmationPageHtml(caseNumber: string, recipientEmail: stri
 </div>
 <h2 style="color:#1a1a2e;margin:0 0 8px;font-size:20px">Response Sent</h2>
 <p style="color:#555;font-size:14px;line-height:1.6;margin:0">${caseNumber} response delivered to<br><strong>${recipientEmail}</strong></p>
+<div style="margin-top:28px;padding-top:24px;border-top:1px solid #e8e5f0">
+<p style="color:#666;font-size:14px;margin:0 0 14px">How did KITZ do?</p>
+<table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto"><tr>
+<td style="padding:0 6px"><a href="${feedbackUrl}&rating=great" style="display:inline-block;background:#7C3AED;color:#fff;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600">Great</a></td>
+<td style="padding:0 6px"><a href="${feedbackUrl}&rating=ok" style="display:inline-block;background:#f3e8ff;color:#7C3AED;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid #e9d5ff">OK</a></td>
+<td style="padding:0 6px"><a href="${feedbackUrl}&rating=bad" style="display:inline-block;background:#fff;color:#888;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid #ddd">Needs work</a></td>
+</tr></table>
+</div>
 </div>
 <div style="padding:16px 24px 20px;background:#faf9ff">
-<p style="color:#ccc;font-size:10px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none;font-weight:600">KITZ</a></p>
+<p style="color:#ccc;font-size:10px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none;font-weight:600">KITZ</a> — Tu negocio merece infraestructura.</p>
 </div>
 </div>
 </body></html>`;
@@ -398,10 +414,10 @@ export function getConfirmationPageHtml(caseNumber: string, recipientEmail: stri
 
 export function getErrorPageHtml(message: string): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Error — KITZ</title></head>
-<body style="margin:0;padding:40px 16px;background:#f8f7ff;font-family:'Inter',Arial,Helvetica,sans-serif">
+<body style="margin:0;padding:40px 16px;background:#f8f7ff;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif">
 <div style="max-width:480px;margin:0 auto;text-align:center;border-radius:16px;overflow:hidden">
 <div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:24px">
-<span style="color:#fff;font-size:22px;font-weight:700;letter-spacing:0.5px">KITZ</span>
+<img src="https://kitz.services/kitz-logo.png" alt="KITZ" width="36" height="36" style="display:inline-block;vertical-align:middle;margin-right:10px;border:0"><span style="color:#fff;font-size:22px;font-weight:700;letter-spacing:0.5px;vertical-align:middle">KITZ</span>
 </div>
 <div style="background:#fff;padding:40px 24px">
 <div style="width:56px;height:56px;background:#fce4ec;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center">
@@ -412,7 +428,30 @@ export function getErrorPageHtml(message: string): string {
 <p style="color:#aaa;font-size:12px;margin:24px 0 0">If you need to respond, do so manually via email.</p>
 </div>
 <div style="padding:16px 24px 20px;background:#faf9ff">
-<p style="color:#ccc;font-size:10px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none;font-weight:600">KITZ</a></p>
+<p style="color:#ccc;font-size:10px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none;font-weight:600">KITZ</a> — Tu negocio merece infraestructura.</p>
+</div>
+</div>
+</body></html>`;
+}
+
+// ── Feedback Page (shown after clicking feedback rating) ──
+
+export function getFeedbackPageHtml(rating: string): string {
+  const emoji = rating === 'great' ? '&#128588;' : rating === 'ok' ? '&#128077;' : '&#128221;';
+  const message = rating === 'great' ? 'Glad to hear it!' : rating === 'ok' ? 'Thanks for the feedback.' : 'We\'ll do better next time.';
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Thanks — KITZ</title></head>
+<body style="margin:0;padding:40px 16px;background:#f8f7ff;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif">
+<div style="max-width:480px;margin:0 auto;text-align:center;border-radius:16px;overflow:hidden">
+<div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:24px">
+<img src="https://kitz.services/kitz-logo.png" alt="KITZ" width="36" height="36" style="display:inline-block;vertical-align:middle;margin-right:10px;border:0"><span style="color:#fff;font-size:22px;font-weight:700;letter-spacing:0.5px;vertical-align:middle">KITZ</span>
+</div>
+<div style="background:#fff;padding:40px 24px">
+<p style="font-size:36px;margin:0 0 12px">${emoji}</p>
+<h2 style="color:#1a1a2e;margin:0 0 8px;font-size:20px">Thanks for the feedback!</h2>
+<p style="color:#555;font-size:14px;line-height:1.6;margin:0">${message}</p>
+</div>
+<div style="padding:16px 24px 20px;background:#faf9ff">
+<p style="color:#ccc;font-size:10px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none;font-weight:600">KITZ</a> — Tu negocio merece infraestructura.</p>
 </div>
 </div>
 </body></html>`;

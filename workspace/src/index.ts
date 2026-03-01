@@ -149,7 +149,7 @@ const shell = (title: string, body: string, session: Session | null, script = ''
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       background: #0a0a0a;
       color: #fff;
       min-height: 100vh;
@@ -169,7 +169,7 @@ const shell = (title: string, body: string, session: Session | null, script = ''
       font-size: 24px;
       font-weight: 800;
       letter-spacing: -1px;
-      background: linear-gradient(135deg, #00d4aa, #00b4d8);
+      background: linear-gradient(135deg, #A855F7, #7C3AED);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -216,7 +216,7 @@ const shell = (title: string, body: string, session: Session | null, script = ''
       transition: all 0.15s;
     }
     nav a:hover { color: #ccc; background: #111; }
-    nav a.active { color: #00d4aa; background: #00d4aa12; }
+    nav a.active { color: #A855F7; background: #A855F712; }
     .main {
       max-width: 720px;
       margin: 0 auto;
@@ -257,8 +257,8 @@ const shell = (title: string, body: string, session: Session | null, script = ''
       border-radius: 4px;
       font-weight: 600;
     }
-    .badge-free { background: #00d4aa22; color: #00d4aa; }
-    .badge-ai { background: #00b4d822; color: #00b4d8; }
+    .badge-free { background: #A855F722; color: #A855F7; }
+    .badge-ai { background: #7C3AED22; color: #7C3AED; }
     .empty-state {
       text-align: center;
       padding: 40px 20px;
@@ -279,10 +279,10 @@ const shell = (title: string, body: string, session: Session | null, script = ''
       transition: all 0.2s;
     }
     .btn-primary {
-      background: #00d4aa;
-      color: #000;
+      background: #A855F7;
+      color: #fff;
     }
-    .btn-primary:hover { background: #00e8bb; }
+    .btn-primary:hover { background: #9333EA; color: #fff; }
     .btn-secondary {
       background: #1a1a1a;
       color: #ccc;
@@ -309,7 +309,7 @@ const shell = (title: string, body: string, session: Session | null, script = ''
     }
     input:focus, select:focus, textarea:focus {
       outline: none;
-      border-color: #00d4aa;
+      border-color: #A855F7;
     }
     input::placeholder { color: #444; }
     .form-row {
@@ -343,7 +343,7 @@ const shell = (title: string, body: string, session: Session | null, script = ''
     .stat-value {
       font-size: 24px;
       font-weight: 700;
-      color: #00d4aa;
+      color: #A855F7;
     }
     .stat-label {
       font-size: 11px;
@@ -358,7 +358,7 @@ const shell = (title: string, body: string, session: Session | null, script = ''
       font-size: 13px;
       margin-bottom: 16px;
     }
-    .alert-info { background: #00d4aa12; color: #00d4aa; border: 1px solid #00d4aa22; }
+    .alert-info { background: #A855F712; color: #A855F7; border: 1px solid #A855F722; }
     .alert-warn { background: #ff6b6b12; color: #ff6b6b; border: 1px solid #ff6b6b22; }
     .list-item {
       display: flex;
@@ -377,7 +377,7 @@ const shell = (title: string, body: string, session: Session | null, script = ''
       background: #1a1a1a;
       color: #888;
     }
-    .list-item-badge.open { background: #00d4aa22; color: #00d4aa; }
+    .list-item-badge.open { background: #A855F722; color: #A855F7; }
     .list-item-badge.done { background: #66666622; color: #666; }
     .toast {
       position: fixed;
@@ -393,7 +393,7 @@ const shell = (title: string, body: string, session: Session | null, script = ''
       animation: slideUp 0.3s ease;
     }
     .toast.show { display: block; }
-    .toast.success { border-color: #00d4aa44; }
+    .toast.success { border-color: #A855F744; }
     .toast.error { border-color: #ff6b6b44; }
     @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     @media (max-width: 480px) {
@@ -405,7 +405,7 @@ const shell = (title: string, body: string, session: Session | null, script = ''
 </head>
 <body>
   <div class="topbar">
-    <div class="logo">KITZ</div>
+    <div style="display:flex;align-items:center;gap:8px"><img src="https://kitz.services/kitz-logo.png" alt="" width="28" height="28" style="display:block"><span class="logo">KITZ</span></div>
     ${session
       ? `<div class="user-info"><span class="user-name">${session.name}</span><a href="/auth/logout" class="btn-logout">Log out</a></div>`
       : `<div class="label">Workspace</div>`
@@ -448,34 +448,34 @@ const startPage = (formHtml: string, bottomLink: string, error = '') => `<!DOCTY
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0a;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
     .url-bar{display:inline-flex;align-items:center;gap:6px;background:#111;border:1px solid #1a1a1a;border-radius:20px;padding:6px 16px;margin-bottom:24px;font-size:13px;color:#555;font-family:'SF Mono',Monaco,'Cascadia Code',monospace}
-    .url-bar .lock{color:#00d4aa;font-size:11px}
+    .url-bar .lock{color:#A855F7;font-size:11px}
     .url-bar .domain{color:#999}
-    .url-bar .path{color:#00d4aa;font-weight:600}
+    .url-bar .path{color:#A855F7;font-weight:600}
     .brand{text-align:center;margin-bottom:32px}
-    .brand-logo{font-size:48px;font-weight:900;letter-spacing:-2px;background:linear-gradient(135deg,#00d4aa,#00b4d8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .brand-logo{font-size:48px;font-weight:900;letter-spacing:-2px;background:linear-gradient(135deg,#A855F7,#7C3AED);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
     .brand-sub{font-size:14px;color:#555;margin-top:4px;letter-spacing:2px;text-transform:uppercase}
     .brand-tagline{font-size:16px;color:#888;margin-top:12px;line-height:1.5}
-    .brand-tagline strong{color:#00d4aa}
+    .brand-tagline strong{color:#A855F7}
     .card{background:#111;border:1px solid #1a1a1a;border-radius:16px;padding:28px;max-width:380px;width:100%}
     .wa-badge{display:inline-flex;align-items:center;gap:8px;background:#25d36622;color:#25d366;font-size:13px;font-weight:600;padding:6px 14px;border-radius:20px;margin-bottom:20px}
     .wa-badge svg{width:18px;height:18px;fill:#25d366}
     .form-group{margin-bottom:14px}
     .form-label{display:block;font-size:12px;color:#666;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px}
     input{width:100%;padding:12px 14px;background:#0a0a0a;border:1px solid #222;border-radius:10px;color:#fff;font-size:15px;font-family:inherit}
-    input:focus{outline:none;border-color:#00d4aa}
+    input:focus{outline:none;border-color:#A855F7}
     input::placeholder{color:#444}
     .btn{display:block;width:100%;padding:14px;border-radius:10px;border:none;font-size:15px;font-weight:700;cursor:pointer;text-align:center;transition:all 0.2s}
-    .btn-primary{background:linear-gradient(135deg,#00d4aa,#00b4d8);color:#000}
+    .btn-primary{background:linear-gradient(135deg,#A855F7,#7C3AED);color:#fff}
     .btn-primary:hover{opacity:0.9;transform:translateY(-1px)}
     .bottom{text-align:center;font-size:13px;color:#555;margin-top:20px}
-    .bottom a{color:#00d4aa;text-decoration:none}
+    .bottom a{color:#A855F7;text-decoration:none}
     .alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;background:#ff6b6b12;color:#ff6b6b;border:1px solid #ff6b6b22}
     .steps{display:flex;gap:8px;margin-bottom:20px;justify-content:center}
     .step{font-size:11px;color:#444;padding:4px 10px;border-radius:12px;border:1px solid #1a1a1a}
-    .step.active{color:#00d4aa;border-color:#00d4aa44;background:#00d4aa08}
+    .step.active{color:#A855F7;border-color:#A855F744;background:#A855F708}
     .footer{margin-top:32px;text-align:center;font-size:12px;color:#333}
     .footer a{color:#444;text-decoration:none}
-    .footer a:hover{color:#00d4aa}
+    .footer a:hover{color:#A855F7}
   </style>
 </head>
 <body>
@@ -485,6 +485,7 @@ const startPage = (formHtml: string, bottomLink: string, error = '') => `<!DOCTY
     <span class="path">/start</span>
   </div>
   <div class="brand">
+    <div style="margin-bottom:8px"><img src="https://kitz.services/kitz-logo.png" alt="KITZ" width="48" height="48" style="display:inline-block"></div>
     <div class="brand-logo">KITZ</div>
     <div class="brand-sub">workspace</div>
     <div class="brand-tagline">Your hustle deserves <strong>infrastructure</strong>.</div>
@@ -527,7 +528,7 @@ app.get('/start', async (req: any, reply: any) => {
   if (session) return reply.redirect('/whatsapp');
   const error = (req.query as any)?.error;
   const errorHtml = error === 'exists'
-    ? `<div class="alert">That email is already registered. <a href="/start?mode=login" style="color:#00d4aa">Log in instead</a></div>`
+    ? `<div class="alert">That email is already registered. <a href="/start?mode=login" style="color:#A855F7">Log in instead</a></div>`
     : error === 'validation'
     ? `<div class="alert">All fields are required. Password min 6 chars.</div>`
     : error === 'invalid'
@@ -598,14 +599,14 @@ app.get('/login', async (req: any, reply: any) => {
       <div class="form-group"><label class="form-label">Password</label><input name="password" type="password" placeholder="Min 6 characters" required/></div>
       <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">Log In</button>
     </form>
-  `, `Don't have an account? <a href="/register" style="color:#00d4aa">Sign up free</a>`);
+  `, `Don't have an account? <a href="/register" style="color:#A855F7">Sign up free</a>`);
 });
 
 app.get('/register', async (req: any, reply: any) => {
   if (getSession(req)) return reply.redirect('/leads');
   const error = (req.query as any)?.error;
   return authPage('Sign Up', `
-    ${error === 'exists' ? `<div class="alert alert-warn" style="margin-bottom:12px">That email is already registered. <a href="/login" style="color:#00d4aa">Log in instead?</a></div>` : ''}
+    ${error === 'exists' ? `<div class="alert alert-warn" style="margin-bottom:12px">That email is already registered. <a href="/login" style="color:#A855F7">Log in instead?</a></div>` : ''}
     ${error === 'validation' ? `<div class="alert alert-warn" style="margin-bottom:12px">All fields are required. Password min 6 chars.</div>` : ''}
     <form method="POST" action="/auth/register">
       <div class="form-group"><label class="form-label">Name</label><input name="name" placeholder="Maria Garcia" required/></div>
@@ -613,7 +614,7 @@ app.get('/register', async (req: any, reply: any) => {
       <div class="form-group"><label class="form-label">Password</label><input name="password" type="password" placeholder="Min 6 characters" minlength="6" required/></div>
       <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">Create Free Account</button>
     </form>
-  `, `Already have an account? <a href="/login" style="color:#00d4aa">Log in</a>`);
+  `, `Already have an account? <a href="/login" style="color:#A855F7">Log in</a>`);
 });
 
 app.post('/auth/register', async (req: any, reply: any) => {
@@ -1036,7 +1037,7 @@ app.get('/products', async (req: any, reply: any) => {
 
   const listHtml = products.length
     ? products.map(p => {
-        const stockColor = !p.is_active ? '#666' : p.stock_qty === 0 ? '#ff6b6b' : p.stock_qty <= p.low_stock_threshold ? '#ffb347' : '#00d4aa';
+        const stockColor = !p.is_active ? '#666' : p.stock_qty === 0 ? '#ff6b6b' : p.stock_qty <= p.low_stock_threshold ? '#ffb347' : '#A855F7';
         return `<div class="list-item">
         <div>
           <div class="list-item-title" style="${!p.is_active ? 'color:#666' : ''}">${esc(p.name)}${!p.is_active ? ' <span class="list-item-badge done">Inactive</span>' : ''}${p.sku ? ` <span style="color:#555;font-size:12px">SKU: ${esc(p.sku)}</span>` : ''}</div>
@@ -1052,8 +1053,8 @@ app.get('/products', async (req: any, reply: any) => {
     <p class="page-desc">Manage your product catalog and inventory.${hasDB ? '' : ' <span style="color:#555">(local mode)</span>'}</p>
     <div class="stats-row">
       <div class="stat"><div class="stat-value">${activeProducts}</div><div class="stat-label">Active Products</div></div>
-      <div class="stat"><div class="stat-value" style="color:${lowStock > 0 ? '#ffb347' : '#00d4aa'}">${lowStock}</div><div class="stat-label">Low Stock</div></div>
-      <div class="stat"><div class="stat-value" style="color:${outOfStock > 0 ? '#ff6b6b' : '#00d4aa'}">${outOfStock}</div><div class="stat-label">Out of Stock</div></div>
+      <div class="stat"><div class="stat-value" style="color:${lowStock > 0 ? '#ffb347' : '#A855F7'}">${lowStock}</div><div class="stat-label">Low Stock</div></div>
+      <div class="stat"><div class="stat-value" style="color:${outOfStock > 0 ? '#ff6b6b' : '#A855F7'}">${outOfStock}</div><div class="stat-label">Out of Stock</div></div>
     </div>
     <div class="card">
       <div class="card-header">
@@ -1150,7 +1151,7 @@ app.get('/whatsapp', async (req: any, reply: any) => {
 
     <div class="stats-row">
       <div class="stat">
-        <div class="stat-value" style="color:${waStatus.isConnected ? '#00d4aa' : '#ff6b6b'}" id="wa-status-dot">${waStatus.isConnected ? 'Connected' : 'Offline'}</div>
+        <div class="stat-value" style="color:${waStatus.isConnected ? '#A855F7' : '#ff6b6b'}" id="wa-status-dot">${waStatus.isConnected ? 'Connected' : 'Offline'}</div>
         <div class="stat-label">Status</div>
       </div>
       <div class="stat">
@@ -1163,7 +1164,7 @@ app.get('/whatsapp', async (req: any, reply: any) => {
       <div class="card">
         <div class="card-header">
           <span class="card-title">WhatsApp Connected</span>
-          <span class="card-badge" style="background:#00d4aa22;color:#00d4aa">LIVE</span>
+          <span class="card-badge" style="background:#A855F722;color:#A855F7">LIVE</span>
         </div>
         <p style="color:#888;font-size:14px;line-height:1.6;margin-bottom:16px;">
           Your WhatsApp is connected to KITZ. Open WhatsApp and send a message to yourself (your own chat) to interact with your AI business assistant.
@@ -1181,15 +1182,15 @@ app.get('/whatsapp', async (req: any, reply: any) => {
         <div id="qr-wrapper" style="position:relative;display:inline-block;margin:16px 0">
           <svg id="countdown-ring" width="292" height="292" viewBox="0 0 292 292" style="position:absolute;top:-6px;left:-6px;pointer-events:none;display:none;">
             <circle fill="none" stroke-width="4" stroke="#222" cx="146" cy="146" r="143"/>
-            <circle fill="none" stroke-width="4" stroke="#00d4aa" stroke-linecap="round" id="ring-progress" cx="146" cy="146" r="143"
+            <circle fill="none" stroke-width="4" stroke="#A855F7" stroke-linecap="round" id="ring-progress" cx="146" cy="146" r="143"
               stroke-dasharray="898.5" stroke-dashoffset="0" transform="rotate(-90 146 146)"/>
           </svg>
           <div id="qr-container" style="background:#fff;border-radius:16px;padding:24px;display:inline-block;min-width:280px;min-height:280px;">
-            <div id="spinner" style="width:48px;height:48px;border:3px solid #333;border-top-color:#00d4aa;border-radius:50%;animation:spin 0.8s linear infinite;margin:100px auto;"></div>
+            <div id="spinner" style="width:48px;height:48px;border:3px solid #333;border-top-color:#A855F7;border-radius:50%;animation:spin 0.8s linear infinite;margin:100px auto;"></div>
             <canvas id="qr-canvas"></canvas>
           </div>
         </div>
-        <div id="qr-status" style="font-size:16px;color:#00d4aa;margin-bottom:4px;min-height:24px;">Connecting...</div>
+        <div id="qr-status" style="font-size:16px;color:#A855F7;margin-bottom:4px;min-height:24px;">Connecting...</div>
         <div id="countdown-text" style="font-size:13px;color:#555;margin-bottom:16px;min-height:20px;font-variant-numeric:tabular-nums;"></div>
         <div style="color:#666;font-size:13px;line-height:1.6;text-align:left;max-width:320px;margin:0 auto;">
           <strong style="color:#aaa">1.</strong> Open WhatsApp on your phone<br>
@@ -1243,7 +1244,7 @@ app.get('/whatsapp', async (req: any, reply: any) => {
       ringProgress.style.strokeDashoffset = (pct * CIRCUMFERENCE).toFixed(1);
       if (secondsLeft > 10) {
         countdownText.textContent = secondsLeft + 's remaining';
-        ringProgress.style.stroke = '#00d4aa';
+        ringProgress.style.stroke = '#A855F7';
       } else {
         countdownText.textContent = secondsLeft + 's — scan now!';
         ringProgress.style.stroke = '#ff6b6b';
@@ -1257,14 +1258,14 @@ app.get('/whatsapp', async (req: any, reply: any) => {
       spinner.style.display = 'block';
       canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
       qrStatus.textContent = 'Connecting...';
-      qrStatus.style.color = '#00d4aa';
+      qrStatus.style.color = '#A855F7';
 
       evtSource = new EventSource('/whatsapp/proxy-connect');
 
       evtSource.addEventListener('qr', function(e) {
         spinner.style.display = 'none';
         qrStatus.textContent = 'Scan with WhatsApp';
-        qrStatus.style.color = '#00d4aa';
+        qrStatus.style.color = '#A855F7';
         QRCode.toCanvas(canvas, e.data, { width: 256, margin: 0, color: { dark: '#000', light: '#fff' } });
         startCountdown();
       });
@@ -1275,7 +1276,7 @@ app.get('/whatsapp', async (req: any, reply: any) => {
         scanView.style.display = 'none';
         connView.style.display = 'block';
         statusDot.textContent = 'Connected';
-        statusDot.style.color = '#00d4aa';
+        statusDot.style.color = '#A855F7';
         phoneEl.textContent = '+' + (data.phone || 'Connected');
         evtSource.close();
         showToast('WhatsApp connected!');

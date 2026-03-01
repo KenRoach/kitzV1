@@ -373,7 +373,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       background: #0a0a0a;
       color: #fff;
       min-height: 100vh;
@@ -391,7 +391,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
       font-weight: 800;
       letter-spacing: -2px;
       margin-bottom: 8px;
-      background: linear-gradient(135deg, #00d4aa, #00b4d8);
+      background: linear-gradient(135deg, #A855F7, #7C3AED);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -417,7 +417,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
     }
     #countdown-ring .track { stroke: #222; }
     #countdown-ring .progress {
-      stroke: #00d4aa;
+      stroke: #A855F7;
       stroke-linecap: round;
       transition: stroke-dashoffset 1s linear;
     }
@@ -436,7 +436,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
     }
     #status {
       font-size: 16px;
-      color: #00d4aa;
+      color: #A855F7;
       margin-bottom: 4px;
       min-height: 24px;
     }
@@ -464,14 +464,14 @@ const LOGIN_HTML = `<!DOCTYPE html>
     .connected .phone {
       font-size: 20px;
       font-weight: 600;
-      color: #00d4aa;
+      color: #A855F7;
       margin-bottom: 8px;
     }
     .spinner {
       width: 48px;
       height: 48px;
       border: 3px solid #333;
-      border-top-color: #00d4aa;
+      border-top-color: #A855F7;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
       margin: 100px auto;
@@ -482,6 +482,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
 </head>
 <body>
   <div class="container">
+    <div style="margin-bottom:8px"><img src="https://kitz.services/kitz-logo.png" alt="KITZ" width="48" height="48" style="display:inline-block"></div>
     <div class="logo">KITZ</div>
     <div class="subtitle">Connect your WhatsApp to your AI Business OS</div>
 
@@ -512,7 +513,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
     <div class="connected" id="connected-view">
       <div class="check">\u2705</div>
       <div class="phone" id="phone-number"></div>
-      <div id="status2" style="color:#00d4aa;font-size:16px;margin-bottom:16px;">WhatsApp connected to KITZ</div>
+      <div id="status2" style="color:#A855F7;font-size:16px;margin-bottom:16px;">WhatsApp connected to KITZ</div>
       <div class="instructions" style="margin-bottom:24px;">
         Messages to your number are now powered by KITZ AI.<br>
         Try sending "hola" to yourself to test it.
@@ -563,7 +564,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
 
       if (secondsLeft > 10) {
         countdownText.textContent = secondsLeft + 's remaining';
-        ringProgress.style.stroke = '#00d4aa';
+        ringProgress.style.stroke = '#A855F7';
       } else {
         countdownText.textContent = secondsLeft + 's \u2014 scan now!';
         ringProgress.style.stroke = '#ff6b6b';

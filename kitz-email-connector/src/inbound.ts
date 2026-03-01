@@ -162,7 +162,7 @@ const TEMPLATES: Record<SupportedLanguage, {
     greeting: (name) => `Hey ${name},`,
     body: (cn) => `Got your message. Your case number is <strong>${cn}</strong>.\n\nWe're on it. Expect a response within <strong>24 hours</strong>. Reply here to add details.`,
     replyHint: 'Reply to this email to add more details.',
-    aiDisclaimer: 'This content was created by AI. Please review carefully.',
+    aiDisclaimer: 'This content was created by AI. Review before accepting.',
   },
   es: {
     subjectPrefix: 'Re:',
@@ -170,7 +170,7 @@ const TEMPLATES: Record<SupportedLanguage, {
     greeting: (name) => `Hola ${name},`,
     body: (cn) => `Recibimos tu mensaje. Tu numero de caso es <strong>${cn}</strong>.\n\nEstamos en ello. Espera una respuesta dentro de <strong>24 horas</strong>. Responde a este correo para agregar mas detalles.`,
     replyHint: 'Responde a este correo para agregar mas detalles.',
-    aiDisclaimer: 'Este contenido fue creado por IA, revisar con calma.',
+    aiDisclaimer: 'Este contenido fue creado por IA. Revisar antes de aceptar.',
   },
   pt: {
     subjectPrefix: 'Re:',
@@ -178,7 +178,7 @@ const TEMPLATES: Record<SupportedLanguage, {
     greeting: (name) => `Ola ${name},`,
     body: (cn) => `Recebemos sua mensagem. Seu numero de caso e <strong>${cn}</strong>.\n\nEstamos cuidando disso. Espere uma resposta dentro de <strong>24 horas</strong>. Responda este email para adicionar mais detalhes.`,
     replyHint: 'Responda este email para adicionar mais detalhes.',
-    aiDisclaimer: 'Este conteúdo foi criado por IA. Revise com calma.',
+    aiDisclaimer: 'Este conteúdo foi criado por IA. Revise antes de aceitar.',
   },
   fr: {
     subjectPrefix: 'Re:',
@@ -186,7 +186,7 @@ const TEMPLATES: Record<SupportedLanguage, {
     greeting: (name) => `Bonjour ${name},`,
     body: (cn) => `Nous avons recu votre message. Votre numero de dossier est <strong>${cn}</strong>.\n\nOn s'en occupe. Attendez une reponse dans <strong>24 heures</strong>. Repondez a cet email pour ajouter des details.`,
     replyHint: 'Repondez a cet email pour ajouter des details.',
-    aiDisclaimer: "Ce contenu a été créé par l'IA. Veuillez vérifier avec soin.",
+    aiDisclaimer: "Ce contenu a été créé par l'IA. Vérifiez avant d'accepter.",
   },
 };
 
@@ -200,10 +200,17 @@ export function getAutoReplyHtml(
   const t = TEMPLATES[language];
   const bodyHtml = t.body(caseNumber).replace(/\n/g, '<br>');
 
-  return `<div style="max-width:600px;margin:0 auto;font-family:'Inter',-apple-system,Arial,sans-serif;background:#f8f7ff;border-radius:16px;overflow:hidden">
+  const tagline: Record<SupportedLanguage, string> = {
+    en: 'Your hustle deserves infrastructure.',
+    es: 'Tu negocio merece infraestructura.',
+    pt: 'Seu negócio merece infraestrutura.',
+    fr: 'Votre business mérite une infrastructure.',
+  };
+
+  return `<div style="max-width:600px;margin:0 auto;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:#f8f7ff;border-radius:16px;overflow:hidden">
 <div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:20px 16px">
 <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-<td><span style="color:#fff;font-size:20px;font-weight:700;letter-spacing:0.5px">KITZ</span><br><span style="color:rgba(255,255,255,0.7);font-size:11px">Your business, handled.</span></td>
+<td><table cellpadding="0" cellspacing="0" border="0"><tr><td style="vertical-align:middle;padding-right:10px"><img src="https://kitz.services/kitz-logo.png" alt="KITZ" width="32" height="32" style="display:block;border:0"></td><td style="vertical-align:middle"><span style="color:#fff;font-size:20px;font-weight:700;letter-spacing:0.5px">KITZ</span><br><span style="color:rgba(255,255,255,0.7);font-size:11px">Your business, handled.</span></td></tr></table></td>
 <td style="text-align:right"><span style="background:rgba(255,255,255,0.2);color:#fff;font-size:11px;padding:4px 12px;border-radius:20px;font-weight:600">${t.caseLabel} ${caseNumber}</span></td>
 </tr></table>
 </div>
@@ -213,7 +220,7 @@ export function getAutoReplyHtml(
 </div>
 <div style="padding:14px 16px 16px;text-align:center;background:#faf9ff">
 <p style="color:#aaa;font-size:11px;line-height:1.5;margin:0 0 6px">${t.aiDisclaimer}</p>
-<p style="color:#ccc;font-size:11px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none;font-weight:600">KITZ</a></p>
+<p style="color:#ccc;font-size:11px;margin:0">Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none;font-weight:600">KITZ</a> — ${tagline[language]}</p>
 </div>
 </div>`;
 }
