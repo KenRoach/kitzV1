@@ -2,7 +2,6 @@ import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import formbody from '@fastify/formbody';
 import { randomUUID, createHash, createHmac } from 'node:crypto';
-import { callMcp, mcpConfigured } from './mcp.js';
 import {
   listLeads as dbListLeads, createLead as dbCreateLead, updateLead as dbUpdateLead, deleteLead as dbDeleteLead,
   listOrders as dbListOrders, createOrder as dbCreateOrder, updateOrder as dbUpdateOrder,
