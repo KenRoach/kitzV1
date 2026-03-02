@@ -334,11 +334,105 @@ export function search(
     .slice(0, limit);
 }
 
+// ── Semantic Memory (Embeddings) ──
+
+import { generateEmbedding, semanticSearch, storeEmbedding, getVectorCount } from './embeddings.js';
+
+/**
+ * Store a conversation turn and embed it for future semantic retrieval.
+ * Called after each AI response to build semantic memory.
+ */
+export async function storeAndEmbedConversation(
+  userId: string,
+  senderJid: string,
+  userMessage: string,
+  assistantResponse: string,
+  traceId?: string,
+): Promise<void> {
+  // Store both messages
+  const userMsg = storeMessage({
+    userId,
+    senderJid,
+    channel: 'whatsapp',
+    role: 'user',
+    content: userMessage,
+    traceId,
+  });
+
+  storeMessage({
+    userId,
+    senderJid,
+    channel: 'whatsapp',
+    role: 'assistant',
+    content: assistantResponse,
+    traceId,
+  });
+
+  // Create a summary for embedding (more efficient than embedding raw messages)
+  const summary = `User asked: ${userMessage.slice(0, 200)}. KITZ responded: ${assistantResponse.slice(0, 300)}`;
+
+  // Embed asynchronously — don't block the response
+  storeEmbedding(userMsg.id, summary, 'conversation', userId).catch(() => {
+    // Non-blocking — keyword search still works without embeddings
+  });
+}
+
+/**
+ * Semantic search across past interactions.
+ * Returns top-5 most relevant past interactions for context injection.
+ */
+export async function semanticMemorySearch(
+  query: string,
+  userId?: string,
+  limit = 5,
+): Promise<Array<{ text: string; similarity: number }>> {
+  // Try semantic search first
+  const results = await semanticSearch(query, {
+    userId,
+    limit,
+    minSimilarity: 0.35,
+  });
+
+  if (results.length > 0) {
+    return results.map(r => ({ text: r.text, similarity: r.similarity }));
+  }
+
+  // Fall back to keyword search if no embeddings available
+  const keywordResults = search(query, userId, limit);
+  return keywordResults.map(r => ({
+    text: r.content,
+    similarity: r.score / 5, // Normalize keyword score to 0-1 range
+  }));
+}
+
+/**
+ * Build an enriched context window with semantic memory.
+ * Injects top-5 relevant past interactions into the context.
+ */
+export async function buildSemanticContext(
+  userId: string,
+  senderJid: string,
+  currentMessage: string,
+): Promise<{ messages: ConversationMessage[]; relevantMemory: string[]; relevantKnowledge: string[] }> {
+  const base = buildContextWindow(userId, senderJid, currentMessage);
+
+  // Semantic retrieval of relevant past interactions
+  const memories = await semanticMemorySearch(currentMessage, userId, 5);
+  const relevantMemory = memories.map(m => m.text);
+
+  return {
+    messages: base.messages,
+    relevantMemory,
+    relevantKnowledge: base.relevantKnowledge,
+  };
+}
+
 // ── Stats ──
 
 export function getMemoryStats(): {
   totalMessages: number;
   totalKnowledge: number;
+  totalVectors: number;
   uniqueUsers: number;
   oldestMessageAge: number | null;
 } {
@@ -351,6 +445,7 @@ export function getMemoryStats(): {
   return {
     totalMessages: conversations.length,
     totalKnowledge: knowledge.length,
+    totalVectors: getVectorCount(),
     uniqueUsers: users.size,
     oldestMessageAge: oldest,
   };

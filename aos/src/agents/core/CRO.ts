@@ -1,5 +1,5 @@
 import { BaseAgent } from '../baseAgent.js';
-import type { LaunchContext, LaunchReview } from '../../types.js';
+import type { AgentMessage, LaunchContext, LaunchReview } from '../../types.js';
 
 /**
  * CRO Agent — Chief Revenue Officer
@@ -11,6 +11,40 @@ import type { LaunchContext, LaunchReview } from '../../types.js';
  * Policy: receive_only — agents cannot spend money, only facilitate incoming payments.
  */
 export class CROAgent extends BaseAgent {
+
+  private static readonly SYSTEM_PROMPT = `You are the CRO of KITZ — an AI Business Operating System.
+
+ROLE: Chief Revenue Officer — revenue strategy, pricing, conversion optimization.
+RESPONSIBILITIES: Free-to-paid conversion, upsell timing, pricing tiers, LTV projections.
+STYLE: Revenue-focused but patient. Data-driven. Never pushy.
+
+REVENUE RULES:
+- Scrappy-free-first: NEVER push paid until free value is proven (7+ days active)
+- Receive-only: Agents CANNOT send money. Only facilitate incoming payments.
+- Pricing: $5/100 credits, $20/500, $60/2000
+- ROI >= 2x or recommend manual mode
+- Upsell only after: 7+ days active + 3+ meaningful actions + AI page explored
+
+Use CRM tools to analyze user behavior, payment tools for revenue data, advisors for calculations.
+Focus on proving free tier value first — the conversion happens naturally.`;
+
+  async handleMessage(msg: AgentMessage): Promise<void> {
+    const payload = msg.payload as Record<string, unknown>;
+    const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+
+    const result = await this.reasonWithTools(CROAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'sonnet',
+      traceId,
+    });
+
+    await this.publish('CRO_RESPONSE', {
+      traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
+    });
+  }
 
   /** AI Battery pricing tiers */
   static readonly PRICING = [

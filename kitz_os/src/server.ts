@@ -47,7 +47,8 @@ import { getBatteryStatus, recordRecharge, getLedger, hasBudget } from './aiBatt
 import { initMemory, storeMessage, buildContextWindow } from './memory/manager.js';
 import { verifyStripeSignature, verifyHmacSha256, verifyPayPalHeaders } from './webhookVerify.js';
 import { isGoogleOAuthConfigured, getAuthUrl, exchangeCode, hasStoredTokens, revokeTokens } from './auth/googleOAuth.js';
-import { dispatchMultiChannel } from './channels/dispatcher.js';
+import { dispatchMultiChannel, getChannelHealth } from './channels/dispatcher.js';
+import { registerWSGateway, getClientCount } from './gateway/wsGateway.js';
 import { getUserPreferences, setUserPreferences } from './channels/preferences.js';
 import * as orchestrator from './orchestrator/channelOrchestrator.js';
 import { APPROVAL_MATRIX, getMatrixByRisk, getMatrixByCategory } from './approvals/approvalMatrix.js';
@@ -173,6 +174,9 @@ export async function createServer(kernel: KitzKernel) {
     log.info('SPA static hosting enabled', { root: spaRoot });
   }
 
+  // WebSocket gateway for real-time streaming
+  await registerWSGateway(app);
+
   // Initialize memory system
   try { initMemory(); } catch (err) {
     log.warn('Memory init failed (non-fatal):', { detail: (err as Error).message });
@@ -246,6 +250,12 @@ export async function createServer(kernel: KitzKernel) {
   // ── System status ──
   app.get('/api/kitz/status', async () => {
     return kernel.getStatus();
+  });
+
+  // ── Channel health ──
+  app.get('/api/kitz/channels/health', async () => {
+    const health = await getChannelHealth();
+    return { channels: health };
   });
 
   // ── Main WhatsApp webhook ──

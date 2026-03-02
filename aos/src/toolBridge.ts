@@ -16,6 +16,7 @@
 interface OsToolRegistry {
   has(name: string): boolean;
   invoke(name: string, args: Record<string, unknown>, traceId?: string): Promise<unknown>;
+  get(name: string): { name: string; description: string; parameters: Record<string, unknown> } | undefined;
 }
 
 import type { AgentTier, TeamName } from './types.js';
@@ -378,5 +379,30 @@ export class AgentToolBridge {
   listAllowed(agentName: string, tier: AgentTier, team?: TeamName): string[] {
     return getAllowedTools(agentName, tier, team)
       .filter(t => this.registry.has(t));
+  }
+
+  /** Get Claude API-format tool schemas for an agent's allowed tools */
+  getToolSchemas(
+    agentName: string,
+    tier: AgentTier,
+    team?: TeamName,
+  ): Array<{ name: string; description: string; input_schema: Record<string, unknown> }> {
+    const allowed = this.listAllowed(agentName, tier, team);
+    const schemas: Array<{ name: string; description: string; input_schema: Record<string, unknown> }> = [];
+
+    for (const toolName of allowed) {
+      const tool = this.registry.get(toolName);
+      if (tool) {
+        schemas.push({
+          name: tool.name,
+          description: tool.description,
+          input_schema: tool.parameters && Object.keys(tool.parameters).length > 0
+            ? tool.parameters
+            : { type: 'object', properties: {} },
+        });
+      }
+    }
+
+    return schemas;
   }
 }

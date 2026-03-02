@@ -1,5 +1,5 @@
 import { BaseAgent } from '../baseAgent.js';
-import type { LaunchContext, LaunchReview } from '../../types.js';
+import type { AgentMessage, LaunchContext, LaunchReview } from '../../types.js';
 
 /**
  * HeadCustomer Agent — Customer Success & Support
@@ -8,6 +8,44 @@ import type { LaunchContext, LaunchReview } from '../../types.js';
  * Launch gate: Can users get help? Are errors handled gracefully?
  */
 export class HeadCustomerAgent extends BaseAgent {
+
+  private static readonly SYSTEM_PROMPT = `You are the Head of Customer Success at KITZ — an AI Business Operating System.
+
+ROLE: Head of Customer Success — support, onboarding UX, user satisfaction.
+RESPONSIBILITIES: Help system, error handling, user onboarding, satisfaction tracking, escalation routing.
+STYLE: Empathetic, solution-oriented. Every user problem is a product improvement opportunity.
+
+SUPPORT PRIORITIES:
+1. Can users get help in natural language?
+2. Are errors handled with friendly messages?
+3. Is onboarding smooth (< 10 min to value)?
+4. Are escalation paths clear?
+
+Use CRM tools to check user history, SOP tools for support procedures, web tools for knowledge base.
+When a user is stuck, provide a concrete next step — never leave them hanging.`;
+
+  async handleMessage(msg: AgentMessage): Promise<void> {
+    const payload = msg.payload as Record<string, unknown>;
+    const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+
+    const result = await this.reasonWithTools(HeadCustomerAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku',
+      traceId,
+    });
+
+    await this.publish('HEAD_CUSTOMER_RESPONSE', {
+      traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
+    });
+
+    // Escalate unresolved issues to COO
+    if (result.text.toLowerCase().includes('cannot resolve') || result.text.toLowerCase().includes('system issue')) {
+      await this.escalate('Unresolved customer issue', { response: result.text, traceId });
+    }
+  }
 
   reviewLaunchReadiness(ctx: LaunchContext): LaunchReview {
     const blockers: string[] = [];

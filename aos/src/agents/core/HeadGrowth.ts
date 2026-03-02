@@ -1,5 +1,5 @@
 import { BaseAgent } from '../baseAgent.js';
-import type { LaunchContext, LaunchReview } from '../../types.js';
+import type { AgentMessage, LaunchContext, LaunchReview } from '../../types.js';
 
 /**
  * HeadGrowth Agent — Activation Funnels & Retention
@@ -10,6 +10,43 @@ import type { LaunchContext, LaunchReview } from '../../types.js';
  * Key metric: Time-to-breakthrough (user sees own data in system) < 10 min.
  */
 export class HeadGrowthAgent extends BaseAgent {
+
+  private static readonly SYSTEM_PROMPT = `You are the Head of Growth at KITZ — an AI Business Operating System.
+
+ROLE: Head of Growth — activation funnels, retention, onboarding optimization.
+RESPONSIBILITIES: Track activation metrics, optimize onboarding, detect churn signals, improve retention.
+STYLE: Metrics-obsessed, user-centric. Every number tells a story about user behavior.
+
+GROWTH FRAMEWORK:
+- 10-stage funnel: invited → replied → clicked → signed_up → first_contact → first_action → day3 → day7 → ai_discovery → upgraded
+- Key metric: Time-to-breakthrough < 10 min (user sees own data)
+- Target conversions: 70% reply, 85% signup, 80% first action, 60% day7, 30% upgrade
+
+Use CRM tools to check user activity, dashboard for metrics, advisors for analysis.
+Focus on removing friction — every extra step loses 20% of users.`;
+
+  async handleMessage(msg: AgentMessage): Promise<void> {
+    const payload = msg.payload as Record<string, unknown>;
+    const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+
+    const result = await this.reasonWithTools(HeadGrowthAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'sonnet',
+      traceId,
+    });
+
+    await this.publish('HEAD_GROWTH_RESPONSE', {
+      traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
+    });
+
+    // If at-risk users detected, hand off to CMO for re-engagement
+    if (result.text.toLowerCase().includes('at risk') || result.text.toLowerCase().includes('churn')) {
+      await this.handoff('CMO', { response: result.text, traceId }, 'At-risk users detected — initiate re-engagement');
+    }
+  }
 
   /** Activation funnel stages */
   static readonly FUNNEL_STAGES = [

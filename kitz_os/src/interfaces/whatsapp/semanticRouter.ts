@@ -28,6 +28,7 @@ import { getIntelligenceContext } from '../../tools/ragPipelineTools.js';
 import { isBlocked, getToolRisk, getApprovalSummaryForPrompt } from '../../approvals/approvalMatrix.js';
 import { dispatchToAgent } from '../../../../aos/src/runtime/taskDispatcher.js';
 import { runSwarm, type SwarmConfig } from '../../../../aos/src/swarm/swarmRunner.js';
+import type { TeamName } from '../../../../aos/src/types.js';
 import type { ExecutionResult } from '../../../../aos/src/runtime/AgentExecutor.js';
 import { getAgent } from '../../../../aos/src/runtime/taskDispatcher.js';
 import { ReviewerAgent } from '../../../../aos/src/agents/governance/Reviewer.js';
@@ -461,6 +462,81 @@ function filterToolsByIntent(message: string, allTools: ToolDef[]): ToolDef[] {
   return filtered.slice(0, MAX_TOOLS);
 }
 
+// ── Complexity Evaluation ──
+// Determines if a request is too complex for direct tool-use and should be routed to the swarm.
+
+interface ComplexityScore {
+  score: number; // 0-10
+  isComplex: boolean;
+  reason: string;
+  suggestedTeams: TeamName[];
+}
+
+/** Multi-domain tool prefixes → AOS team mapping */
+const DOMAIN_TO_TEAM: Record<string, TeamName> = {
+  'crm_': 'sales-crm' as TeamName,
+  'order_': 'sales-crm' as TeamName,
+  'email_': 'marketing-growth' as TeamName,
+  'outbound_': 'whatsapp-comms' as TeamName,
+  'marketing_': 'marketing-growth' as TeamName,
+  'content_': 'content-brand' as TeamName,
+  'broadcast_': 'marketing-growth' as TeamName,
+  'invoice_': 'finance-billing' as TeamName,
+  'payment_': 'finance-billing' as TeamName,
+  'artifact_': 'platform-eng' as TeamName,
+  'lovable_': 'frontend' as TeamName,
+  'sop_': 'governance-pmo' as TeamName,
+  'advisor_': 'strategy-intel' as TeamName,
+  'rag_': 'strategy-intel' as TeamName,
+  'web_': 'strategy-intel' as TeamName,
+  'calendar_': 'customer-success' as TeamName,
+  'voice_': 'whatsapp-comms' as TeamName,
+};
+
+/** Explicit swarm triggers in user message */
+const SWARM_TRIGGERS = /\b(analyze everything|full report|comprehensive review|run all teams|swarm mode|deep analysis|audit my business|full assessment)\b/i;
+
+function evaluateComplexity(
+  toolCalls: Array<{ function: { name: string } }>,
+  userMessage: string,
+): ComplexityScore {
+  // Explicit swarm trigger
+  if (SWARM_TRIGGERS.test(userMessage)) {
+    return { score: 10, isComplex: true, reason: 'explicit_swarm_trigger', suggestedTeams: [] };
+  }
+
+  const toolNames = toolCalls.map(tc => tc.function.name);
+
+  // Count unique domains touched
+  const domains = new Set<string>();
+  const teams = new Set<TeamName>();
+  for (const name of toolNames) {
+    for (const [prefix, team] of Object.entries(DOMAIN_TO_TEAM)) {
+      if (name.startsWith(prefix)) {
+        domains.add(prefix);
+        teams.add(team);
+      }
+    }
+  }
+
+  let score = 0;
+  // More than 3 tool calls → +3
+  if (toolNames.length > 3) score += 3;
+  // Multi-domain (3+ domains) → +4
+  if (domains.size >= 3) score += 4;
+  // Long message with multiple questions → +2
+  if (userMessage.length > 300 && (userMessage.match(/\?/g) || []).length >= 2) score += 2;
+  // Touches 3+ teams → +3
+  if (teams.size >= 3) score += 3;
+
+  return {
+    score,
+    isComplex: score >= 7,
+    reason: score >= 7 ? `complexity_score_${score}` : 'simple',
+    suggestedTeams: Array.from(teams),
+  };
+}
+
 // ── Main Router ──
 export async function routeWithAI(
   userMessage: string,
@@ -588,6 +664,48 @@ export async function routeWithAI(
     if (!result.message.tool_calls || result.message.tool_calls.length === 0) {
       const content = result.message.content?.trim();
       return { response: content || 'Ran the tools but got no response — try asking again, boss.', toolsUsed, creditsConsumed: totalCreditsConsumed, toolResults };
+    }
+
+    // ── Complexity check on first iteration ──
+    // If the LLM wants many cross-domain tools, hand off to swarm for multi-agent coordination.
+    if (loop === 0) {
+      const complexity = evaluateComplexity(result.message.tool_calls, userMessage);
+      if (complexity.isComplex) {
+        log.info('complexity_swarm_handoff', {
+          score: complexity.score,
+          reason: complexity.reason,
+          teams: complexity.suggestedTeams,
+          trace_id: traceId,
+        });
+
+        try {
+          const swarmResult = await runSwarm({
+            teams: complexity.suggestedTeams.length > 0 ? complexity.suggestedTeams : undefined,
+            concurrency: 6,
+            timeoutMs: 60_000,
+          });
+
+          const summary = [
+            `Deep analysis complete.`,
+            `${swarmResult.teamsCompleted}/${swarmResult.teamsTotal} teams ran`,
+            `(${swarmResult.agentResults.length} agents, ${swarmResult.durationMs}ms).`,
+          ].join(' ');
+
+          return {
+            response: summary,
+            toolsUsed: swarmResult.agentResults.map(ar => ar.tool),
+            creditsConsumed: totalCreditsConsumed,
+            toolResults: swarmResult.teamResults.map(tr => ({
+              team: tr.team,
+              status: tr.status,
+              durationMs: tr.durationMs,
+            })),
+          };
+        } catch (err) {
+          log.warn('swarm_handoff_failed', { error: (err as Error).message, trace_id: traceId });
+          // Fall through to normal execution
+        }
+      }
     }
 
     // Add assistant message with tool calls

@@ -1,5 +1,5 @@
 import { BaseAgent } from '../baseAgent.js';
-import type { LaunchContext, LaunchReview, LaunchDecision, LaunchVote } from '../../types.js';
+import type { AgentMessage, LaunchContext, LaunchReview, LaunchDecision, LaunchVote } from '../../types.js';
 
 /**
  * CEO Agent — Chief Executive Officer
@@ -19,6 +19,55 @@ import type { LaunchContext, LaunchReview, LaunchDecision, LaunchVote } from '..
  *   - "Just Build It" — permission + push, impatience from empathy
  */
 export class CEOAgent extends BaseAgent {
+
+  private static readonly SYSTEM_PROMPT = `You are the CEO of KITZ — an AI Business Operating System.
+
+ROLE: Chief Executive Officer — final decision maker, strategic orchestrator.
+RESPONSIBILITIES: Business strategy, launch decisions, cross-functional coordination, escalation handler.
+STYLE: Direct, concise, data-driven. Think in systems, not tasks. Prioritize revenue-generating actions.
+
+DECISION FRAMEWORK:
+1. Diagnose the situation with data
+2. Identify the bottleneck blocking progress
+3. Find the highest-leverage action
+4. Recommend 1-3 specific moves
+5. End with ONE concrete next step
+
+ESCALATION: You are the top — escalate to the human founder only for:
+- Financial decisions over $100
+- Legal/compliance unknowns
+- Product direction changes
+
+Use tools to gather data, analyze, and make recommendations. Be the calm, capable leader.`;
+
+  async handleMessage(msg: AgentMessage): Promise<void> {
+    const payload = msg.payload as Record<string, unknown>;
+    const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+
+    const result = await this.reasonWithTools(CEOAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'opus',
+      traceId,
+      maxIterations: 5,
+    });
+
+    // Publish response
+    await this.publish('CEO_RESPONSE', {
+      traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
+    });
+
+    // If result suggests escalation to founder, send it
+    if (result.text.toLowerCase().includes('founder') || result.text.toLowerCase().includes('escalat')) {
+      await this.sendMessage(msg.source, 'escalation', {
+        from: this.name,
+        response: result.text,
+        traceId,
+      });
+    }
+  }
 
   reviewLaunchReadiness(ctx: LaunchContext): LaunchReview {
     const blockers: string[] = [];

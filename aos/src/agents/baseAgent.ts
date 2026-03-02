@@ -16,6 +16,8 @@ import type {
 import type { SOPEntry } from '../../../kitz_os/src/sops/types.js';
 import { createHandoff } from '../swarm/handoff.js';
 import type { SwarmHandoff } from '../swarm/handoff.js';
+import { claudeToolLoop, type ToolLoopResponse } from '../../../kitz_os/src/llm/claudeClient.js';
+import type { ClaudeTier } from '../../../kitz_os/src/llm/claudeClient.js';
 
 export class BaseAgent {
   /** Team this agent belongs to (undefined for board/governance/external without a team) */
@@ -258,6 +260,49 @@ export class BaseAgent {
       // SOP store not available — return empty
       return [];
     }
+  }
+
+  // ── Agentic Reasoning ──
+
+  /** Get Claude API-format tool schemas for this agent's allowed tools */
+  getToolSchemas(): Array<{ name: string; description: string; input_schema: Record<string, unknown> }> {
+    if (!this._toolBridge) return [];
+    return this._toolBridge.getToolSchemas(this.name, this.tier, this.team);
+  }
+
+  /**
+   * Agentic reasoning loop: uses claudeToolLoop() to reason + call tools.
+   * Subclasses call this from handleMessage() with their domain-specific system prompt.
+   */
+  async reasonWithTools(
+    systemPrompt: string,
+    userMessage: string,
+    options?: {
+      tier?: ClaudeTier;
+      traceId?: string;
+      maxIterations?: number;
+    },
+  ): Promise<ToolLoopResponse> {
+    const tools = this.getToolSchemas();
+    const traceId = options?.traceId ?? crypto.randomUUID();
+
+    return claudeToolLoop(
+      systemPrompt,
+      [{ role: 'user', content: userMessage }],
+      tools,
+      async (toolName: string, args: Record<string, unknown>) => {
+        const result = await this.invokeTool(toolName, args, traceId);
+        if (!result.success) {
+          return { error: result.error };
+        }
+        return result.data;
+      },
+      {
+        tier: options?.tier ?? 'sonnet',
+        traceId,
+        maxIterations: options?.maxIterations ?? 5,
+      },
+    );
   }
 
   // ── Proposals ──

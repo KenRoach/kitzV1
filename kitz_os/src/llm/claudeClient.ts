@@ -361,3 +361,178 @@ export function isClaudeConfigured(): boolean {
 export function getClaudeModel(tier: ClaudeTier): string {
   return TIER_MODELS[tier];
 }
+
+// ── Tool-Use Loop Types ──
+
+export interface ToolCallLog {
+  toolName: string;
+  toolArgs: Record<string, unknown>;
+  result: unknown;
+}
+
+export interface ToolLoopResponse {
+  text: string;
+  toolCalls: ToolCallLog[];
+  iterations: number;
+}
+
+// ── Native Tool-Use Loop ──
+
+/**
+ * Agentic tool-use loop using Claude's native tool_use API.
+ *
+ * Sends a request to Claude with tool definitions. When Claude responds with
+ * tool_use blocks, executes each tool and feeds results back. Loops until
+ * Claude returns end_turn or max iterations reached.
+ *
+ * @param systemPrompt - System context for the conversation
+ * @param messages - Conversation history
+ * @param tools - Tool schemas in Claude API format
+ * @param executeTool - Function to execute a tool by name
+ * @param options - Tier, max iterations, callbacks
+ */
+export async function claudeToolLoop(
+  systemPrompt: string,
+  messages: ClaudeMessage[],
+  tools: Array<{ name: string; description: string; input_schema: Record<string, unknown> }>,
+  executeTool: (name: string, args: Record<string, unknown>) => Promise<unknown>,
+  options?: {
+    tier?: ClaudeTier;
+    traceId?: string;
+    maxIterations?: number;
+    onToolCall?: (name: string, args: Record<string, unknown>) => void;
+    onToolResult?: (name: string, result: unknown) => void;
+    onTextDelta?: (text: string) => void;
+  },
+): Promise<ToolLoopResponse> {
+  const tier = options?.tier ?? 'sonnet';
+  const traceId = options?.traceId;
+  const maxIterations = options?.maxIterations ?? 10;
+
+  if (!CLAUDE_API_KEY) {
+    log.warn('No CLAUDE_API_KEY — falling back to text-only');
+    const text = await openaiChatFallback(messages, tier, traceId, systemPrompt);
+    return { text, toolCalls: [], iterations: 0 };
+  }
+
+  const model = TIER_MODELS[tier];
+  const maxTokens = TIER_MAX_TOKENS[tier];
+  const temperature = TIER_TEMPERATURE[tier];
+  const toolCalls: ToolCallLog[] = [];
+
+  // Build mutable message array — start with user messages
+  const loopMessages: Array<Record<string, unknown>> = messages.map(m => ({
+    role: m.role,
+    content: m.content,
+  }));
+
+  for (let iteration = 0; iteration < maxIterations; iteration++) {
+    log.info('tool_loop_iter', { iteration, tier, trace_id: traceId });
+
+    let res: Response;
+    try {
+      res = await fetch(CLAUDE_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': CLAUDE_API_KEY,
+          'anthropic-version': CLAUDE_API_VERSION,
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: maxTokens,
+          temperature,
+          system: systemPrompt,
+          messages: loopMessages,
+          ...(tools.length > 0 ? { tools } : {}),
+        }),
+        signal: AbortSignal.timeout(tier === 'opus' ? 120_000 : 60_000),
+      });
+    } catch (err) {
+      log.error('tool_loop_fetch_error', { error: (err as Error).message, trace_id: traceId });
+      return { text: `[Network error: ${(err as Error).message}]`, toolCalls, iterations: iteration + 1 };
+    }
+
+    if (!res.ok) {
+      // On rate limit, try OpenAI fallback for the final text
+      if (res.status === 429 || res.status === 529) {
+        log.warn('tool_loop_rate_limited', { status: res.status, trace_id: traceId });
+        const fallbackText = await openaiChatFallback(messages, tier, traceId, systemPrompt);
+        return { text: fallbackText, toolCalls, iterations: iteration + 1 };
+      }
+      const errText = await res.text().catch(() => 'unknown');
+      log.error('tool_loop_api_error', { status: res.status, detail: errText.slice(0, 300), trace_id: traceId });
+      return { text: `[Claude API error: ${res.status}]`, toolCalls, iterations: iteration + 1 };
+    }
+
+    const data = await res.json() as {
+      content: Array<{ type: string; text?: string; id?: string; name?: string; input?: Record<string, unknown> }>;
+      stop_reason: string;
+      usage?: { input_tokens: number; output_tokens: number };
+    };
+
+    log.info('tool_loop_response', {
+      stop_reason: data.stop_reason,
+      content_blocks: data.content?.length,
+      usage: data.usage,
+      trace_id: traceId,
+    });
+
+    // Extract any text from this response
+    const textBlocks = data.content?.filter(c => c.type === 'text' && c.text) || [];
+    for (const tb of textBlocks) {
+      options?.onTextDelta?.(tb.text!);
+    }
+
+    // End turn — return final text
+    if (data.stop_reason === 'end_turn' || data.stop_reason === 'max_tokens') {
+      const text = textBlocks.map(c => c.text).join('\n');
+      return { text, toolCalls, iterations: iteration + 1 };
+    }
+
+    // Tool use — execute tools and loop
+    if (data.stop_reason === 'tool_use') {
+      // Push the full assistant response (text + tool_use blocks) into messages
+      loopMessages.push({ role: 'assistant', content: data.content });
+
+      const toolUseBlocks = data.content.filter(c => c.type === 'tool_use');
+      const toolResults: Array<{ type: 'tool_result'; tool_use_id: string; content: string }> = [];
+
+      for (const block of toolUseBlocks) {
+        const toolName = block.name!;
+        const toolArgs = (block.input || {}) as Record<string, unknown>;
+        const toolUseId = block.id!;
+
+        options?.onToolCall?.(toolName, toolArgs);
+        log.info('executing_tool', { tool: toolName, iteration, trace_id: traceId });
+
+        let result: unknown;
+        try {
+          result = await executeTool(toolName, toolArgs);
+        } catch (err) {
+          result = { error: `Tool "${toolName}" failed: ${(err as Error).message}` };
+        }
+
+        options?.onToolResult?.(toolName, result);
+        toolCalls.push({ toolName, toolArgs, result });
+
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: toolUseId,
+          content: typeof result === 'string' ? result : JSON.stringify(result),
+        });
+      }
+
+      // Push tool results back
+      loopMessages.push({ role: 'user', content: toolResults });
+      continue;
+    }
+
+    // Unexpected stop_reason — return what we have
+    const text = textBlocks.map(c => c.text).join('\n');
+    return { text, toolCalls, iterations: iteration + 1 };
+  }
+
+  log.warn('tool_loop_max_iters', { maxIterations, trace_id: traceId });
+  return { text: '[Reached maximum tool loop iterations]', toolCalls, iterations: maxIterations };
+}

@@ -62,6 +62,22 @@ export class OsToolRegistry {
     }));
   }
 
+  /** Export tools in Claude API format for native tool_use */
+  toClaudeTools(filterNames?: string[]): Array<{ name: string; description: string; input_schema: Record<string, unknown> }> {
+    let tools = this.list();
+    if (filterNames?.length) {
+      const allowed = new Set(filterNames);
+      tools = tools.filter(t => allowed.has(t.name));
+    }
+    return tools.map(t => ({
+      name: t.name,
+      description: t.description,
+      input_schema: t.parameters && Object.keys(t.parameters).length > 0
+        ? t.parameters
+        : { type: 'object' as const, properties: {} },
+    }));
+  }
+
   async registerDefaults(): Promise<void> {
     const modules = await Promise.allSettled([
       import('./crmTools.js'),
