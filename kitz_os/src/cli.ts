@@ -3,7 +3,7 @@
  * ╔═══════════════════════════════════════════════════════╗
  * ║  KITZ Command Center — Terminal Intelligence System   ║
  * ║                                                       ║
- * ║  "Your hustle deserves infrastructure"                ║
+ * ║  "Your Business Handled"                ║
  * ║  Channels: WhatsApp · Web · Terminal · (future multi)  ║
  * ║  Engine: kitz_os kernel · 155+ tools · 107 agents     ║
  * ╚═══════════════════════════════════════════════════════╝
@@ -289,7 +289,7 @@ function renderBootScreen(): string {
   const lines = [
     '',
     ...KITZ_WORDMARK.map(l => `  ${l}`),
-    `  ${dim('"Your hustle deserves infrastructure"')}`,
+    `  ${dim('"Your Business Handled"')}`,
     `  ${dim(`v${VERSION} · Updated ${lastUpdate}`)}`,
     '',
     `  ${purpleBold('What')}  ${chalk.white('AI-powered Business OS for small businesses')}`,
