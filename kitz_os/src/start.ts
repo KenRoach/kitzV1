@@ -38,15 +38,13 @@ async function isServerRunning(): Promise<boolean> {
 }
 
 async function main() {
+  // Clear screen + scrollback immediately so npm header disappears
+  process.stdout.write('\x1b[2J\x1b[3J\x1b[H');
+
   const alreadyRunning = await isServerRunning();
   let serverProc: ReturnType<typeof spawn> | null = null;
 
-  if (alreadyRunning) {
-    process.stdout.write('\x1b[38;5;240m  kitz_os already running\x1b[0m\n');
-  } else {
-    // Start kitz_os in the background
-    process.stdout.write('\x1b[38;5;240m  Starting kitz_os...\x1b[0m\n');
-
+  if (!alreadyRunning) {
     serverProc = spawn('npx', ['tsx', 'src/index.ts'], {
       cwd: KITZ_OS_DIR,
       stdio: ['ignore', 'pipe', 'pipe'],

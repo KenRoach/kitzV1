@@ -2455,17 +2455,28 @@ async function handleInput(input: string): Promise<string> {
 // ── Main Boot ──────────────────────────────────────────
 
 async function main() {
-  process.stdout.write('\x1B[2J\x1B[H') // clear screen
+  // Clear screen + scrollback — clean slate, nothing above
+  process.stdout.write('\x1B[2J\x1B[3J\x1B[H')
 
-  // Gather system info
-  process.stdout.write(dim('  ⚡ Booting KITZ...\n'))
+  // Boot animation — like Claude Code thinking
+  const bootFrames = ['⚡', '✦', '⚡', '✧', '⚡', '✦', '⚡']
+  const bootPurples = ['#A855F7', '#9333EA', '#7C3AED', '#6D28D9', '#8B5CF6', '#A78BFA', '#C084FC']
+  let frame = 0
+  const bootAnim = setInterval(() => {
+    const c = chalk.hex(bootPurples[frame % bootPurples.length])
+    process.stdout.write(`\r  ${c(bootFrames[frame % bootFrames.length])} ${c('KITZ')}`)
+    frame++
+  }, 100)
+
+  // Gather system info while animation plays
   await gatherBootInfo()
 
   // Auto-start preview server (silent)
   await startPreviewServer().catch(() => {})
 
-  // Show clean boot screen
-  process.stdout.write('\x1B[2J\x1B[H')
+  // Stop animation, pin boot screen to top
+  clearInterval(bootAnim)
+  process.stdout.write('\x1B[2J\x1B[3J\x1B[H')
   process.stdout.write(renderBootScreen())
 
   // Start REPL

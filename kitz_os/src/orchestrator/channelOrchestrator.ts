@@ -105,6 +105,7 @@ const ACK_MESSAGES: Record<OutputChannel, (task: BrainTask) => string> = {
   web: (t) => `Got it. Processing your request...\n\nI'll have a draft ready for your review shortly. Reference: ${t.id.slice(0, 8)}`,
   sms: (t) => `KITZ: Request received. Draft coming soon. Ref: ${t.id.slice(0, 8)}`,
   voice: (t) => `Request received. I'll prepare a draft for your review. Reference number: ${t.id.slice(0, 8)}.`,
+  terminal: (t) => `On it. Ref: ${t.id.slice(0, 8)}`,
 };
 
 const CLARIFICATION_MESSAGES: Record<OutputChannel, (question: string, taskRef: string) => string> = {
@@ -113,6 +114,7 @@ const CLARIFICATION_MESSAGES: Record<OutputChannel, (question: string, taskRef: 
   web: (q, ref) => `I need some additional information to complete this task:\n\n${q}\n\nPlease provide the details and I'll continue. Ref: ${ref}`,
   sms: (q, ref) => `KITZ needs more info: ${q} Reply with details. Ref: ${ref}`,
   voice: (q, ref) => `I need more information. ${q}. Please provide the details. Reference: ${ref}.`,
+  terminal: (q, ref) => `Need more info: ${q}\nRef: ${ref}`,
 };
 
 const DRAFT_READY_MESSAGES: Record<OutputChannel, (draft: string, taskRef: string) => string> = {
@@ -121,6 +123,7 @@ const DRAFT_READY_MESSAGES: Record<OutputChannel, (draft: string, taskRef: strin
   web: (d, ref) => `**Draft Ready for Review**\n\n${d}\n\nClick "Approve" to execute or "Reject" to cancel. Ref: ${ref}`,
   sms: (d, ref) => `KITZ Draft: ${d.slice(0, 100)}... Reply APPROVE or REJECT. Ref: ${ref}`,
   voice: (d, ref) => `Your draft is ready. ${d.slice(0, 200)}. Say approve to send, or reject to cancel. Reference: ${ref}.`,
+  terminal: (d, ref) => `Draft ready:\n\n${d}\n\nType "approve" or "reject". Ref: ${ref}`,
 };
 
 // ── Core Orchestration Functions ──

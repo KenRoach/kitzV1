@@ -300,7 +300,7 @@ export interface LogEntry {
 
 // ── Multi-Channel Output Contracts ──
 
-export type OutputChannel = 'whatsapp' | 'email' | 'sms' | 'voice' | 'web';
+export type OutputChannel = 'whatsapp' | 'email' | 'sms' | 'voice' | 'web' | 'terminal';
 
 export interface ChannelFormattedOutput {
   channel: OutputChannel;
