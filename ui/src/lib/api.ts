@@ -26,11 +26,10 @@ export async function apiFetch<T>(
       localStorage.removeItem(AUTH_TOKEN_KEY)
       localStorage.removeItem(AUTH_USER_KEY)
       window.dispatchEvent(new CustomEvent('kitz:auth-expired'))
+      throw new Error('Session expired — please log in again.')
     }
-    throw new Error('Session expired — please log in again.')
-  }
-
-  if (token) {
+    // skipAuthRedirect: don't throw — proceed without the expired token
+  } else if (token) {
     headers.set('Authorization', `Bearer ${token}`)
   }
   headers.set('x-dev-secret', import.meta.env.VITE_SERVICE_SECRET || '')
@@ -56,12 +55,10 @@ export async function apiFetch<T>(
   clearTimeout(timeoutId)
 
   // Handle 401 — clear auth and notify (unless caller handles it)
-  if (res.status === 401) {
-    if (!skipAuthRedirect) {
-      localStorage.removeItem(AUTH_TOKEN_KEY)
-      localStorage.removeItem(AUTH_USER_KEY)
-      window.dispatchEvent(new CustomEvent('kitz:auth-expired'))
-    }
+  if (res.status === 401 && !skipAuthRedirect) {
+    localStorage.removeItem(AUTH_TOKEN_KEY)
+    localStorage.removeItem(AUTH_USER_KEY)
+    window.dispatchEvent(new CustomEvent('kitz:auth-expired'))
     throw new Error('Session expired — please log in again.')
   }
 
