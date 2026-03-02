@@ -46,6 +46,10 @@ async function main() {
       version: '0.1.0',
     });
 
+    // Clear "ready" line so operator knows server is up
+    const port = process.env.PORT || '3012';
+    process.stdout.write(`\n  \x1b[32m●\x1b[0m KITZ OS ready on http://localhost:${port}\n\n`);
+
     if (bootWarnings.length > 0) {
       log.warn(`${bootWarnings.length} warning(s) during boot — run with LOG_LEVEL=debug to see details`);
     }

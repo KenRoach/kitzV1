@@ -11,6 +11,7 @@
     "kitz": "tsx kitz_os/src/tui.ts",
     "tui": "tsx kitz_os/src/tui.ts",
     "cli": "tsx kitz_os/src/cli.ts",
+    "start": "tsx kitz_os/src/start.ts",
     "dev:os": "cd kitz_os && npm run dev",
     "dev:wa": "cd kitz-whatsapp-connector && npm run dev",
     "dev:ui": "cd ui && npm run dev"
