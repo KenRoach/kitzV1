@@ -273,6 +273,8 @@ export function getBatteryStatus(): BatteryStatus {
  * Returns false if daily limit would be exceeded.
  */
 export function hasBudget(estimatedCredits = 1): boolean {
+  // Feature-flagged: battery enforcement disabled until AI_BATTERY_ENABLED=true
+  if (process.env.AI_BATTERY_ENABLED !== 'true') return true;
   const status = getBatteryStatus();
   return status.remaining >= estimatedCredits;
 }

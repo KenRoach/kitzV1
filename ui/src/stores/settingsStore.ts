@@ -1,6 +1,13 @@
 import { create } from 'zustand'
+import { setLocale, type Locale } from '@/lib/i18n'
 
 export type Language = 'English' | 'Español' | 'Português'
+
+const langToLocale: Record<Language, Locale> = {
+  'English': 'en',
+  'Español': 'es',
+  'Português': 'pt',
+}
 
 interface SettingsState {
   /* Language */
@@ -60,7 +67,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   draftFirst: loadPersisted('draftFirst', true),
   auditTrail: loadPersisted('auditTrail', true),
 
-  setInterfaceLang: (lang) => { persist('interfaceLang', lang); set({ interfaceLang: lang }) },
+  setInterfaceLang: (lang) => { persist('interfaceLang', lang); setLocale(langToLocale[lang]); set({ interfaceLang: lang }) },
   setBotLang: (lang) => { persist('botLang', lang); set({ botLang: lang }) },
   setEmailNotifications: (on) => { persist('emailNotifications', on); set({ emailNotifications: on }) },
   setWhatsappAlerts: (on) => { persist('whatsappAlerts', on); set({ whatsappAlerts: on }) },

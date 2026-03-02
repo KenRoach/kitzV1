@@ -153,14 +153,16 @@ export async function textToSpeech(options: TTSOptions): Promise<TTSResult> {
     modelId,
   };
 
-  // ── Track ElevenLabs spend in AI Battery ──
-  recordTTSSpend({
-    characterCount: ttsResult.characterCount,
-    voiceId: ttsResult.voiceId,
-    modelId: ttsResult.modelId,
-    traceId: crypto.randomUUID(), // TTS calls may not have a traceId
-    toolContext: 'textToSpeech',
-  }).catch(() => { /* non-blocking */ });
+  // ── Track ElevenLabs spend in AI Battery (only when enabled) ──
+  if (process.env.AI_BATTERY_ENABLED === 'true') {
+    recordTTSSpend({
+      characterCount: ttsResult.characterCount,
+      voiceId: ttsResult.voiceId,
+      modelId: ttsResult.modelId,
+      traceId: crypto.randomUUID(),
+      toolContext: 'textToSpeech',
+    }).catch(() => { /* non-blocking */ });
+  }
 
   return ttsResult;
 }

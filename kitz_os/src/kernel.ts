@@ -68,10 +68,12 @@ export class KitzKernel {
       return;
     }
 
-    // 2. Restore AI Battery ledger from persistent storage
-    await initBattery().catch(err => {
-      log.warn('Battery restore failed', { error: (err as Error).message });
-    });
+    // 2. Restore AI Battery ledger from persistent storage (if enabled)
+    if (process.env.AI_BATTERY_ENABLED === 'true') {
+      await initBattery().catch(err => {
+        log.warn('Battery restore failed', { error: (err as Error).message });
+      });
+    }
 
     // 2.5. Initialize SOP store and load starter SOPs
     await initSOPStore().catch(err => {

@@ -634,8 +634,8 @@ export async function routeWithAI(
   for (let loop = 0; loop < MAX_LOOPS; loop++) {
     const result = await chatCompletion(messages, toolDefs, traceId);
 
-    // ── Track LLM token spend ──
-    if (result.usage && result.finishReason !== 'error') {
+    // ── Track LLM token spend (only when battery is enabled) ──
+    if (process.env.AI_BATTERY_ENABLED === 'true' && result.usage && result.finishReason !== 'error') {
       const entry = await recordLLMSpend({
         provider: aiProvider,
         model: aiModel,

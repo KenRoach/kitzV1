@@ -8,6 +8,7 @@
 import 'dotenv/config';
 import { createSubsystemLogger } from 'kitz-schemas';
 import { KitzKernel } from './kernel.js';
+import { printBanner } from './boot/banner.js';
 
 const log = createSubsystemLogger('kitz-os');
 const kernel = new KitzKernel();
@@ -15,10 +16,18 @@ const kernel = new KitzKernel();
 async function main() {
   try {
     await kernel.boot();
+    const status = kernel.getStatus();
     log.info('boot_complete', {
-      status: kernel.getStatus().status,
-      tools: kernel.getStatus().toolCount,
-      port: process.env.PORT || 3012,
+      status: status.status,
+      tools: status.toolCount,
+      port: process.env.PORT || '3012',
+    });
+
+    printBanner({
+      tools: status.toolCount,
+      agents: 33,
+      port: process.env.PORT || '3012',
+      version: '0.1.0',
     });
   } catch (err) {
     log.fatal('boot failed', { error: (err as Error).message });

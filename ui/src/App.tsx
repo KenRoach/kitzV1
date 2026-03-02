@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { lazy, Suspense, useEffect } from 'react'
 import { useAuthStore } from '@/stores/authStore'
+import { useSettingsStore } from '@/stores/settingsStore'
+import { setLocale } from '@/lib/i18n'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { LoginPage } from '@/pages/LoginPage'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
@@ -15,10 +17,17 @@ const UIPreviewPage = lazy(() => import('@/pages/UIPreviewPage'))
 
 export default function App() {
   const hydrate = useAuthStore((s) => s.hydrate)
+  const interfaceLang = useSettingsStore((s) => s.interfaceLang)
 
   useEffect(() => {
     hydrate()
   }, [hydrate])
+
+  // Sync i18n locale on mount and when language changes
+  useEffect(() => {
+    const code = interfaceLang === 'English' ? 'en' : interfaceLang === 'Español' ? 'es' : 'pt'
+    setLocale(code)
+  }, [interfaceLang])
 
   return (
     <ErrorBoundary>

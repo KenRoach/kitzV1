@@ -241,7 +241,7 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
     const welcomeMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'assistant',
-      content: `${timeGreet} boss 👋\n\nKITZ is locked in. ${tools} tools loaded — CRM, orders, storefronts, payments, the works.\n\n⚡ Battery: ${dailyLimit} credits/day · 🤖 ${totalAgents} agents ready\n🟢 Connecting...\n\nWhat are we building today?`,
+      content: `${timeGreet} boss 👋\n\nKITZ is locked in. ${tools} tools loaded — CRM, orders, storefronts, payments, the works.\n\n🤖 ${totalAgents} agents ready\n🟢 Connecting...\n\nWhat are we building today?`,
       timestamp: Date.now(),
     }
 
@@ -260,7 +260,7 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
       const batteryUsed = status.battery?.todayCredits ?? 0
       const batteryLimit = status.battery?.dailyLimit ?? dailyLimit
 
-      const updatedContent = `${timeGreet} boss 👋\n\nKITZ is locked in. ${liveTools} tools loaded — CRM, orders, storefronts, payments, the works.\n\n⚡ Battery: ${batteryUsed}/${batteryLimit} credits used · 🤖 ${totalAgents} agents ready\n🟢 All systems go\n\nWhat are we building today?`
+      const updatedContent = `${timeGreet} boss 👋\n\nKITZ is locked in. ${liveTools} tools loaded — CRM, orders, storefronts, payments, the works.\n\n🤖 ${totalAgents} agents ready\n🟢 All systems go\n\nWhat are we building today?`
 
       set((s) => ({
         messages: s.messages.map((m) =>
@@ -270,7 +270,7 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
       }))
     }).catch(() => {
       // If backend is down, update status to reflect that
-      const offlineContent = `${timeGreet} boss 👋\n\nKITZ is warming up. ${tools} tools available — CRM, orders, storefronts, payments, the works.\n\n⚡ Battery: ${dailyLimit} credits/day · 🤖 ${totalAgents} agents ready\n🟡 Backend connecting — hang tight\n\nWhat are we building today?`
+      const offlineContent = `${timeGreet} boss 👋\n\nKITZ is warming up. ${tools} tools available — CRM, orders, storefronts, payments, the works.\n\n🤖 ${totalAgents} agents ready\n🟡 Backend connecting — hang tight\n\nWhat are we building today?`
 
       set((s) => ({
         messages: s.messages.map((m) =>
