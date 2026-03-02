@@ -7,22 +7,26 @@ function isTokenExpired(token: string): boolean {
     const payload = JSON.parse(atob(token.split('.')[1] ?? ''))
     return payload.exp ? payload.exp * 1000 < Date.now() - 60_000 : false
   } catch {
-    return true
+    // Token is not a standard JWT (dev token, opaque token) — let the backend decide
+    return false
   }
 }
 
 export async function apiFetch<T>(
   url: string,
-  options: RequestInit = {},
+  options: RequestInit & { skipAuthRedirect?: boolean } = {},
 ): Promise<T> {
+  const { skipAuthRedirect, ...fetchOptions } = options
   const token = localStorage.getItem(AUTH_TOKEN_KEY)
-  const headers = new Headers(options.headers)
+  const headers = new Headers(fetchOptions.headers)
 
   // Check token expiry before making the request
   if (token && isTokenExpired(token)) {
-    localStorage.removeItem(AUTH_TOKEN_KEY)
-    localStorage.removeItem(AUTH_USER_KEY)
-    window.dispatchEvent(new CustomEvent('kitz:auth-expired'))
+    if (!skipAuthRedirect) {
+      localStorage.removeItem(AUTH_TOKEN_KEY)
+      localStorage.removeItem(AUTH_USER_KEY)
+      window.dispatchEvent(new CustomEvent('kitz:auth-expired'))
+    }
     throw new Error('Session expired — please log in again.')
   }
 
@@ -41,7 +45,7 @@ export async function apiFetch<T>(
 
   let res: Response
   try {
-    res = await fetch(url, { ...options, headers, signal: controller.signal })
+    res = await fetch(url, { ...fetchOptions, headers, signal: controller.signal })
   } catch (err) {
     clearTimeout(timeoutId)
     if (err instanceof DOMException && err.name === 'AbortError') {
@@ -51,11 +55,13 @@ export async function apiFetch<T>(
   }
   clearTimeout(timeoutId)
 
-  // Handle 401 — clear auth and notify
+  // Handle 401 — clear auth and notify (unless caller handles it)
   if (res.status === 401) {
-    localStorage.removeItem(AUTH_TOKEN_KEY)
-    localStorage.removeItem(AUTH_USER_KEY)
-    window.dispatchEvent(new CustomEvent('kitz:auth-expired'))
+    if (!skipAuthRedirect) {
+      localStorage.removeItem(AUTH_TOKEN_KEY)
+      localStorage.removeItem(AUTH_USER_KEY)
+      window.dispatchEvent(new CustomEvent('kitz:auth-expired'))
+    }
     throw new Error('Session expired — please log in again.')
   }
 

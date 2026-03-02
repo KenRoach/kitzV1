@@ -254,6 +254,7 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
     // Fetch live status from backend and update welcome message
     apiFetch<{ status?: string; tools_registered?: number; battery?: { todayCredits?: number; dailyLimit?: number } }>(
       `${API.KITZ_OS}/status`,
+      { skipAuthRedirect: true },
     ).then((status) => {
       const liveTools = status.tools_registered ?? tools
       const batteryUsed = status.battery?.todayCredits ?? 0
@@ -380,6 +381,7 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
         {
           method: 'POST',
           body: JSON.stringify({ message: content, channel: 'web', user_id: userId, chat_history: chatHistory, echo_channels: echoChannels }),
+          skipAuthRedirect: true, // Show errors in chat, don't kick to login
         },
       )
 
