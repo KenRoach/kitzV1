@@ -61,46 +61,17 @@ function findRepoRoot(): string {
   return process.cwd()
 }
 
-// ── Orb ASCII Art ──────────────────────────────────────
+// ── KITZ Wordmark ─────────────────────────────────────
 
-const KITZ_FACE = {
-  idle: `    ${chalk.hex('#A855F7')('██')}${chalk.red('████')}${chalk.hex('#A855F7')('██')}
-  ${chalk.hex('#A855F7')('██')}${chalk.red('██  ██')}${chalk.hex('#A855F7')('██')}
-  ${chalk.red('█')} ${chalk.white('·')}    ${chalk.white('·')} ${chalk.red('█')}
-  ${chalk.red('█')}  ${chalk.white(' ── ')}  ${chalk.red('█')}
-  ${chalk.hex('#A855F7')('██')}${chalk.red('██  ██')}${chalk.hex('#A855F7')('██')}
-    ${chalk.hex('#A855F7')('██')}${chalk.red('████')}${chalk.hex('#A855F7')('██')}`,
-
-  thinking: `    ${chalk.yellow('██')}${chalk.hex('#F59E0B')('████')}${chalk.yellow('██')}
-  ${chalk.yellow('██')}${chalk.hex('#F59E0B')('██  ██')}${chalk.yellow('██')}
-  ${chalk.hex('#F59E0B')('█')} ${chalk.white('◉')}    ${chalk.white('◉')} ${chalk.hex('#F59E0B')('█')}
-  ${chalk.hex('#F59E0B')('█')}  ${chalk.white(' ~~ ')}  ${chalk.hex('#F59E0B')('█')}
-  ${chalk.yellow('██')}${chalk.hex('#F59E0B')('██  ██')}${chalk.yellow('██')}
-    ${chalk.yellow('██')}${chalk.hex('#F59E0B')('████')}${chalk.yellow('██')}`,
-
-  success: `    ${chalk.green('██')}${chalk.hex('#22C55E')('████')}${chalk.green('██')}
-  ${chalk.green('██')}${chalk.hex('#22C55E')('██  ██')}${chalk.green('██')}
-  ${chalk.hex('#22C55E')('█')} ${chalk.white('◕')}    ${chalk.white('◕')} ${chalk.hex('#22C55E')('█')}
-  ${chalk.hex('#22C55E')('█')}  ${chalk.white(' ◡◡ ')}  ${chalk.hex('#22C55E')('█')}
-  ${chalk.green('██')}${chalk.hex('#22C55E')('██  ██')}${chalk.green('██')}
-    ${chalk.green('██')}${chalk.hex('#22C55E')('████')}${chalk.green('██')}`,
-
-  error: `    ${chalk.red('██')}${chalk.hex('#EF4444')('████')}${chalk.red('██')}
-  ${chalk.red('██')}${chalk.hex('#EF4444')('██  ██')}${chalk.red('██')}
-  ${chalk.hex('#EF4444')('█')} ${chalk.white('✖')}    ${chalk.white('✖')} ${chalk.hex('#EF4444')('█')}
-  ${chalk.hex('#EF4444')('█')}  ${chalk.white(' ── ')}  ${chalk.hex('#EF4444')('█')}
-  ${chalk.red('██')}${chalk.hex('#EF4444')('██  ██')}${chalk.red('██')}
-    ${chalk.red('██')}${chalk.hex('#EF4444')('████')}${chalk.red('██')}`,
-
-  swarm: `    ${chalk.cyan('██')}${chalk.hex('#06B6D4')('████')}${chalk.cyan('██')}
-  ${chalk.cyan('██')}${chalk.hex('#06B6D4')('██  ██')}${chalk.cyan('██')}
-  ${chalk.hex('#06B6D4')('█')} ${chalk.white('≋')}    ${chalk.white('≋')} ${chalk.hex('#06B6D4')('█')}
-  ${chalk.hex('#06B6D4')('█')}  ${chalk.white(' ≈≈ ')}  ${chalk.hex('#06B6D4')('█')}
-  ${chalk.cyan('██')}${chalk.hex('#06B6D4')('██  ██')}${chalk.cyan('██')}
-    ${chalk.cyan('██')}${chalk.hex('#06B6D4')('████')}${chalk.cyan('██')}`,
-}
-
-type OrbMood = keyof typeof KITZ_FACE
+const p = chalk.hex('#A855F7')
+const KITZ_WORDMARK = [
+  p('  ██╗  ██╗██╗████████╗███████╗'),
+  p('  ██║ ██╔╝██║╚══██╔══╝╚══███╔╝'),
+  p('  █████╔╝ ██║   ██║     ███╔╝ '),
+  p('  ██╔═██╗ ██║   ██║    ███╔╝  '),
+  p('  ██║  ██╗██║   ██║   ███████╗'),
+  p('  ╚═╝  ╚═╝╚═╝   ╚═╝   ╚══════╝'),
+]
 
 // ── Execution Modes ────────────────────────────────────
 
@@ -133,7 +104,7 @@ const MODE_INFO: Record<KitzMode, { label: string; color: (s: string) => string;
 // ── State ──────────────────────────────────────────────
 
 let currentMode: KitzMode = 'go'
-let orbMood: OrbMood = 'idle'
+let orbMood: 'idle' | 'thinking' | 'success' | 'error' | 'swarm' = 'idle'
 let chatHistory: ChatMessage[] = []
 let lastSwarm: SwarmResult | null = null
 let lastDraftToken: string | null = null
@@ -306,12 +277,10 @@ function renderBootScreen(): string {
     '',
     `  ${dim('┌─')} ${purpleBold('KITZ Command Center')} ${dim(`v${VERSION}`)}`,
     `  ${dim('│')}`,
-    `  ${dim('│')}  ${KITZ_FACE[orbMood].split('\n')[0]}`,
-    `  ${dim('│')}  ${KITZ_FACE[orbMood].split('\n')[1]}`,
-    `  ${dim('│')}  ${KITZ_FACE[orbMood].split('\n')[2]}        ${purpleBold(`${greeting}, ${b.user}!`)}`,
-    `  ${dim('│')}  ${KITZ_FACE[orbMood].split('\n')[3]}        ${dim('"Your hustle deserves infrastructure"')}`,
-    `  ${dim('│')}  ${KITZ_FACE[orbMood].split('\n')[4]}`,
-    `  ${dim('│')}  ${KITZ_FACE[orbMood].split('\n')[5]}`,
+    ...KITZ_WORDMARK.map(l => `  ${dim('│')}  ${l}`),
+    `  ${dim('│')}`,
+    `  ${dim('│')}  ${purpleBold(`${greeting}, ${b.user}!`)}`,
+    `  ${dim('│')}  ${dim('"Your hustle deserves infrastructure"')}`,
     `  ${dim('│')}`,
     `  ${dim('├─')} ${chalk.bold('System')}`,
     `  ${dim('│')}  ${kernelIcon} kitz_os    ${dim(b.kernelStatus)} ${b.uptime > 0 ? dim(`· up ${timeAgo(b.uptime)}`) : ''} ${activeBaseUrl !== KITZ_OS_URL ? dim(`· ${activeBaseUrl}`) : ''}`,
