@@ -275,6 +275,13 @@ function renderTopBar(): string {
 /** Boot screen — wordmark + what we do + how + tagline */
 function renderBootScreen(): string {
   const b = bootInfo
+
+  // Last update date from git
+  let lastUpdate = ''
+  try {
+    lastUpdate = execSync('git log -1 --format=%cd --date=short', { cwd: REPO_ROOT, timeout: 3000 }).toString().trim()
+  } catch { lastUpdate = '—' }
+
   const waStatus = b.waConnected
     ? `${chalk.green('●')} WhatsApp linked${b.waPhone ? ` (+${b.waPhone})` : ''}`
     : `${chalk.red('○')} WhatsApp not linked — type ${chalk.cyan('wa')} to scan QR`
@@ -283,6 +290,7 @@ function renderBootScreen(): string {
     '',
     ...KITZ_WORDMARK.map(l => `  ${l}`),
     `  ${dim('"Your hustle deserves infrastructure"')}`,
+    `  ${dim(`v${VERSION} · Updated ${lastUpdate}`)}`,
     '',
     `  ${purpleBold('What')}  ${chalk.white('AI-powered Business OS for small businesses')}`,
     `  ${purpleBold('How')}   ${chalk.white('Chat on WhatsApp or here — KITZ runs your ops with 267 AI tools')}`,
