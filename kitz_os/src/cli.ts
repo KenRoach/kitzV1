@@ -272,32 +272,26 @@ function renderTopBar(): string {
   return `${line1}\n${line2}`
 }
 
-/** Full boot screen — shown once on startup, then replaced by top bar */
+/** Boot screen — clean, minimal: wordmark + what to do */
 function renderBootScreen(): string {
   const b = bootInfo
-  const now = new Date()
-  const hour = now.getHours()
-  const greeting = hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening'
-
-  const kernelIcon = b.kernelStatus === 'online' ? chalk.green('●') :
-                     b.kernelStatus === 'degraded' ? chalk.yellow('●') : chalk.red('●')
-  const waIcon = b.waConnected ? chalk.green('●') : chalk.red('○')
-  const waLabel = b.waConnected ? (b.waPhone ? `+${b.waPhone}` : 'Connected') : 'Disconnected'
-  const gitDirty = b.gitDirty ? chalk.yellow(' *') : ''
+  const waStatus = b.waConnected
+    ? `${chalk.green('●')} WhatsApp linked${b.waPhone ? ` (+${b.waPhone})` : ''}`
+    : `${chalk.red('○')} WhatsApp not linked — type ${chalk.cyan('wa')} to scan QR`
 
   const lines = [
     '',
     ...KITZ_WORDMARK.map(l => `  ${l}`),
     '',
-    `  ${purpleBold(`${greeting}, ${b.user}!`)}  ${dim('"Your hustle deserves infrastructure"')}`,
+    `  ${waStatus}`,
     '',
-    `  ${kernelIcon} ${dim('kitz_os')} ${dim(b.kernelStatus)}${b.uptime > 0 ? dim(` · up ${timeAgo(b.uptime)}`) : ''}  ${waIcon} ${dim('WhatsApp')} ${dim(waLabel)}`,
-    `  🔧 ${chalk.white(String(b.toolCount))} tools  🤖 ${chalk.white(String(b.agentCount))} agents  📊 ${chalk.white(String(b.teamCount))} teams  📦 ${chalk.white(String(b.serviceCount))} services`,
-    `  📂 ${dim(b.repoPath)}  🌿 ${chalk.cyan(b.gitBranch || '?')}${gitDirty} ${dim(`@ ${b.gitCommit || '?'}`)}`,
+    `  ${dim('Type anything to chat with KITZ AI, or try:')}`,
+    `  ${chalk.cyan('wa')}        ${dim('Link WhatsApp (QR in terminal)')}`,
+    `  ${chalk.cyan('help')}      ${dim('All commands')}`,
     '',
-    `  ${dim('─'.repeat(72))}`,
+    `  ${dim('─'.repeat(50))}`,
     '',
-  ].filter(Boolean)
+  ]
 
   return lines.join('\n')
 }
@@ -2463,10 +2457,10 @@ async function main() {
   process.stdout.write(dim('  ⚡ Booting KITZ...\n'))
   await gatherBootInfo()
 
-  // Auto-start preview server
-  await startPreviewServer().catch(() => {}) // non-fatal
+  // Auto-start preview server (silent)
+  await startPreviewServer().catch(() => {})
 
-  // Show full boot screen briefly, then switch to compact view
+  // Show clean boot screen
   process.stdout.write('\x1B[2J\x1B[H')
   process.stdout.write(renderBootScreen())
 
@@ -2484,8 +2478,168 @@ async function main() {
     terminal: true,
   })
 
-  rl.prompt()
+  // Auto-show WhatsApp QR if not connected and connector is reachable
+  if (!bootInfo.waConnected) {
+    const waReachable = await probeService(WA_URL, 2000)
+    if (waReachable) {
+      process.stdout.write(`  ${chalk.hex('#A855F7')('⚡')} ${chalk.white.bold('Scan to link WhatsApp')}\n\n`)
+      await showBootQR(rl, getPrompt)
+      return // showBootQR starts the REPL loop
+    }
+  }
 
+  rl.prompt()
+  wireRepl(rl, getPrompt)
+}
+
+/** Show QR code at boot, then drop into REPL */
+async function showBootQR(rl: readline.Interface, getPrompt: () => string): Promise<void> {
+  const zap = chalk.hex('#A855F7')
+
+  bootInfo.waLinking = true
+  bootInfo.waCountdown = 60
+
+  const url = `${WA_URL}/whatsapp/connect?userId=cli-${Date.now()}`
+
+  try {
+    const res = await fetch(url)
+    if (!res.ok || !res.body) {
+      bootInfo.waLinking = false
+      rl.prompt()
+      wireRepl(rl, getPrompt)
+      return
+    }
+
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    let resolved = false
+
+    const countdownTimer = setInterval(() => {
+      bootInfo.waCountdown--
+      if (bootInfo.waCountdown <= 0) clearInterval(countdownTimer)
+    }, 1000)
+
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        resolved = true
+        clearInterval(countdownTimer)
+        bootInfo.waLinking = false
+        reader.cancel()
+        process.stdout.write(chalk.yellow('\n  ⏱ QR expired. Type `wa` to try again.\n\n'))
+        rl.prompt()
+        wireRepl(rl, getPrompt)
+      }
+    }, 65000)
+
+    const processStream = async () => {
+      try {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done || resolved) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const sseLines = buffer.split('\n')
+          buffer = sseLines.pop() || ''
+
+          let currentEvent = ''
+          for (const l of sseLines) {
+            if (l.startsWith('event: ')) {
+              currentEvent = l.slice(7).trim()
+            } else if (l.startsWith('data: ') && currentEvent) {
+              const rawData = l.slice(6)
+
+              if (currentEvent === 'qr') {
+                try {
+                  const qrcode = await import('qrcode-terminal')
+
+                  // Redraw: clean screen → wordmark → QR
+                  process.stdout.write('\x1B[2J\x1B[H')
+                  process.stdout.write(renderTopBar() + '\n\n')
+                  process.stdout.write(`  ${zap('⚡')} ${chalk.white.bold('Scan to link WhatsApp')}  ${chalk.yellow(`⏱ ${bootInfo.waCountdown}s`)}\n\n`)
+
+                  qrcode.default.generate(rawData, { small: true }, (qr: string) => {
+                    const qrLines = qr.split('\n').map(ql => `    ${ql}`)
+                    process.stdout.write(qrLines.join('\n') + '\n\n')
+                  })
+
+                  process.stdout.write(`  ${dim('WhatsApp → Settings → Linked Devices → Scan')}\n`)
+                  process.stdout.write(`  ${dim('Press Enter to skip')}\n\n`)
+                } catch {
+                  process.stdout.write(dim(`  QR: ${rawData.slice(0, 50)}...\n`))
+                }
+              } else if (currentEvent === 'connected') {
+                resolved = true
+                clearInterval(countdownTimer)
+                clearTimeout(timeout)
+                reader.cancel()
+                bootInfo.waLinking = false
+                try {
+                  const d = JSON.parse(rawData)
+                  bootInfo.waConnected = true
+                  bootInfo.waPhone = d.phone || ''
+                  process.stdout.write(`\n  ${chalk.green('⚡')} ${chalk.green.bold('WhatsApp linked!')}  ${chalk.white(`+${d.phone || 'unknown'}`)}\n\n`)
+                } catch {
+                  bootInfo.waConnected = true
+                  process.stdout.write(`\n  ${chalk.green('⚡')} ${chalk.green.bold('WhatsApp linked!')}\n\n`)
+                }
+                rl.prompt()
+                wireRepl(rl, getPrompt)
+                return
+              } else if (currentEvent === 'error') {
+                resolved = true
+                clearInterval(countdownTimer)
+                clearTimeout(timeout)
+                reader.cancel()
+                bootInfo.waLinking = false
+                process.stdout.write(chalk.red(`\n  ❌ Connection error: ${rawData}\n\n`))
+                rl.prompt()
+                wireRepl(rl, getPrompt)
+                return
+              }
+              currentEvent = ''
+            }
+          }
+        }
+      } catch {
+        // Stream ended
+      }
+
+      if (!resolved) {
+        resolved = true
+        clearInterval(countdownTimer)
+        clearTimeout(timeout)
+        bootInfo.waLinking = false
+        rl.prompt()
+        wireRepl(rl, getPrompt)
+      }
+    }
+
+    // Allow Enter to skip QR and drop into REPL
+    rl.once('line', () => {
+      if (!resolved) {
+        resolved = true
+        clearInterval(countdownTimer)
+        clearTimeout(timeout)
+        bootInfo.waLinking = false
+        reader.cancel()
+        process.stdout.write('\x1B[2J\x1B[H')
+        process.stdout.write(renderTopBar() + '\n')
+        rl.prompt()
+        wireRepl(rl, getPrompt)
+      }
+    })
+
+    processStream()
+  } catch {
+    bootInfo.waLinking = false
+    rl.prompt()
+    wireRepl(rl, getPrompt)
+  }
+}
+
+/** Wire up the standard REPL event handlers */
+function wireRepl(rl: readline.Interface, getPrompt: () => string) {
   rl.on('line', async (input) => {
     const output = await handleInput(input)
     if (output) {
