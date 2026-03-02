@@ -453,12 +453,24 @@ export async function chatCompletion(
 ): Promise<ChatCompletionResult> {
   // Prefer OpenAI for transactional tool-routing (cheapest)
   if (OPENAI_API_KEY) {
-    return openaiCompletion(messages, tools, traceId);
+    const result = await openaiCompletion(messages, tools, traceId);
+    // If OpenAI failed and Claude is available, try Claude
+    if (result.finishReason === 'error' && CLAUDE_API_KEY) {
+      log.warn('openai_failed_trying_claude', { trace_id: traceId });
+      return claudeCompletion(messages, tools, traceId);
+    }
+    return result;
   }
 
   // Fallback to Claude Haiku
   if (CLAUDE_API_KEY) {
-    return claudeCompletion(messages, tools, traceId);
+    const result = await claudeCompletion(messages, tools, traceId);
+    // If Claude failed and OpenAI is available, try OpenAI
+    if (result.finishReason === 'error' && OPENAI_API_KEY) {
+      log.warn('claude_failed_trying_openai', { trace_id: traceId });
+      return openaiCompletion(messages, tools, traceId);
+    }
+    return result;
   }
 
   return {
