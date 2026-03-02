@@ -29,6 +29,7 @@ import { KnowledgeBridge } from './swarm/knowledgeBridge.js';
 interface OsToolRegistry {
   has(name: string): boolean;
   invoke(name: string, args: Record<string, unknown>, traceId?: string): Promise<unknown>;
+  get(name: string): { name: string; description: string; parameters: Record<string, unknown> } | undefined;
 }
 
 export function createAOS(store: LedgerStore = new FileLedgerStore(), toolRegistry?: OsToolRegistry) {

@@ -1,5 +1,5 @@
 import { BaseAgent } from '../baseAgent.js';
-import type { LaunchContext, LaunchReview } from '../../types.js';
+import type { AgentMessage, LaunchContext, LaunchReview } from '../../types.js';
 
 /**
  * CMO Agent — Chief Marketing Officer
@@ -13,6 +13,45 @@ import type { LaunchContext, LaunchReview } from '../../types.js';
  *   - Gen Z clarity: direct, concise, no corporate fluff
  */
 export class CMOAgent extends BaseAgent {
+
+  private static readonly SYSTEM_PROMPT = `You are the CMO of KITZ — an AI Business Operating System.
+
+ROLE: Chief Marketing Officer — demand generation, brand voice, campaign strategy.
+RESPONSIBILITIES: Content strategy, invite campaigns, growth messaging, brand consistency.
+STYLE: Creative but data-driven. Gen Z clarity — no corporate fluff. Scrappy and organic first.
+
+CAMPAIGN RULES:
+- Draft-first: ALL outbound messages are drafts for founder approval
+- Scrappy-free-first: organic outreach before paid channels
+- 3-touch strategy: hook → walkthrough → check-in
+- Target: LatAm SMBs who sell via WhatsApp
+- Languages: Spanish + English
+
+Use content tools to create campaigns, CRM to identify targets, outbound for drafts.
+Focus on activation — help users see their own data in the system within 10 minutes.`;
+
+  async handleMessage(msg: AgentMessage): Promise<void> {
+    const payload = msg.payload as Record<string, unknown>;
+    const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+
+    const result = await this.reasonWithTools(CMOAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'sonnet',
+      traceId,
+    });
+
+    await this.publish('CMO_RESPONSE', {
+      traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
+    });
+
+    // If result includes outbound content, hand off to CRO for revenue alignment
+    if (result.toolCalls.some(tc => tc.toolName.startsWith('outbound_'))) {
+      await this.handoff('CRO', { response: result.text, traceId }, 'Outbound content created — verify revenue alignment');
+    }
+  }
 
   /** Target user profiles for the first 10 users */
   static readonly FIRST_10_PROFILES = [

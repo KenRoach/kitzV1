@@ -26,6 +26,10 @@ interface AgentThinkingStore {
   startThinking: (userInput: string) => void
   /** Called when backend response arrives — resolves remaining steps with real tools */
   resolveThinking: (toolsUsed?: string[]) => void
+  /** Add a real-time thinking step from WebSocket event */
+  addLiveStep: (agentName: string, action: string, tool?: string, traceId?: string) => void
+  /** Mark a live step as completed by tool name */
+  completeLiveStep: (tool: string) => void
   reset: () => void
 }
 
@@ -93,6 +97,43 @@ export const useAgentThinkingStore = create<AgentThinkingStore>((set, get) => ({
       }, doneDelay)
       _stepTimers.push(doneTimer)
     })
+  },
+
+  addLiveStep: (agentName, action, tool, _traceId) => {
+    const now = Date.now()
+    // If there's an active step with the same tool, skip duplicate
+    const { steps } = get()
+    if (tool && steps.some((s) => s.tool === tool && s.status === 'active')) return
+
+    const step: ThinkingStep = {
+      id: `live_${now}_${Math.random().toString(36).slice(2, 6)}`,
+      agentName,
+      action,
+      tool,
+      status: 'active',
+      startedAt: now,
+    }
+    set((s) => ({
+      steps: [...s.steps, step],
+      isThinking: true,
+      collapsed: false,
+    }))
+  },
+
+  completeLiveStep: (tool) => {
+    const now = Date.now()
+    set((s) => ({
+      steps: s.steps.map((step) =>
+        step.tool === tool && step.status === 'active'
+          ? {
+              ...step,
+              status: 'done' as StepStatus,
+              completedAt: now,
+              durationStr: `${((now - step.startedAt) / 1000).toFixed(1)}s`,
+            }
+          : step,
+      ),
+    }))
   },
 
   resolveThinking: (toolsUsed?: string[]) => {

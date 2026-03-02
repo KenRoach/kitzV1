@@ -24,6 +24,14 @@ interface ChatMessage {
 
 type OrbState = 'idle' | 'thinking' | 'success' | 'error'
 
+/** NDJSON event from WebSocket gateway */
+interface WSEvent {
+  type: 'agent.thinking' | 'tool.call' | 'tool.result' | 'text.delta' | 'text.done' | 'error' | 'connected'
+  traceId?: string
+  timestamp: string
+  data: Record<string, unknown>
+}
+
 interface OrbStore {
   /* Voice modal (TalkToKitzModal) */
   isOpen: boolean
@@ -43,6 +51,8 @@ interface OrbStore {
   echoToWhatsApp: boolean
   /** AI Battery remaining credits (fetched from backend) */
   batteryRemaining: number
+  /** WebSocket connection status */
+  wsConnected: boolean
 
   state: OrbState
   messages: ChatMessage[]
@@ -61,9 +71,129 @@ interface OrbStore {
   setSpeaking: (val: boolean) => void
   setEchoToWhatsApp: (val: boolean) => void
   sendMessage: (content: string, userId: string) => Promise<void>
+  /** Connect to WebSocket gateway for real-time streaming */
+  connectWebSocket: () => void
+  /** Disconnect WebSocket */
+  disconnectWebSocket: () => void
 }
 
 let _glowTimer: ReturnType<typeof setTimeout> | null = null
+let _ws: WebSocket | null = null
+let _wsReconnectTimer: ReturnType<typeof setTimeout> | null = null
+/** ID of the streaming assistant message currently being built from text.delta events */
+let _streamingMsgId: string | null = null
+
+/** Derive WebSocket URL from the kitz_os base URL */
+function getWSUrl(): string {
+  const kitzOsUrl = import.meta.env.VITE_KITZ_OS_URL as string | undefined
+  if (kitzOsUrl) {
+    // Replace http(s) with ws(s)
+    return kitzOsUrl.replace(/^http/, 'ws') + '/ws'
+  }
+  // Same-origin: derive from current page location
+  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${proto}//${window.location.host}/ws`
+}
+
+function handleWSEvent(event: WSEvent): void {
+  const thinkingStore = useAgentThinkingStore.getState()
+
+  switch (event.type) {
+    case 'agent.thinking': {
+      const { phase, agent } = event.data as { phase?: string; agent?: string }
+      // Add a real-time thinking step from the backend
+      thinkingStore.addLiveStep(
+        agent || 'KITZ Engine',
+        phase || 'Processing',
+        undefined,
+        event.traceId,
+      )
+      break
+    }
+
+    case 'tool.call': {
+      const { tool } = event.data as { tool?: string; args?: Record<string, unknown> }
+      if (tool) {
+        thinkingStore.addLiveStep('KITZ Engine', `Calling ${tool}`, tool, event.traceId)
+      }
+      break
+    }
+
+    case 'tool.result': {
+      const { tool } = event.data as { tool?: string }
+      if (tool) {
+        thinkingStore.completeLiveStep(tool)
+      }
+      break
+    }
+
+    case 'text.delta': {
+      const { text } = event.data as { text?: string }
+      if (!text) break
+
+      // Append delta to the current streaming message
+      if (!_streamingMsgId) {
+        _streamingMsgId = crypto.randomUUID()
+        const streamMsg: ChatMessage = {
+          id: _streamingMsgId,
+          role: 'assistant',
+          content: text,
+          timestamp: Date.now(),
+        }
+        useOrbStore.setState((s) => ({
+          messages: [...s.messages, streamMsg],
+          state: 'thinking',
+        }))
+      } else {
+        const msgId = _streamingMsgId
+        useOrbStore.setState((s) => ({
+          messages: s.messages.map((m) =>
+            m.id === msgId ? { ...m, content: m.content + text } : m,
+          ),
+        }))
+      }
+      break
+    }
+
+    case 'text.done': {
+      const { text, toolsUsed } = event.data as { text?: string; toolsUsed?: string[] }
+      // Finalize the streaming message or create one if we missed deltas
+      if (_streamingMsgId) {
+        const msgId = _streamingMsgId
+        useOrbStore.setState((s) => ({
+          messages: s.messages.map((m) =>
+            m.id === msgId
+              ? { ...m, content: text || m.content, toolsUsed: toolsUsed }
+              : m,
+          ),
+          state: 'success',
+        }))
+      }
+      _streamingMsgId = null
+      // Resolve thinking with real tools
+      if (toolsUsed) {
+        thinkingStore.resolveThinking(toolsUsed)
+        useAgentThinkingStore.setState({ collapsed: true })
+      }
+      setTimeout(() => {
+        if (useOrbStore.getState().state === 'success') {
+          useOrbStore.setState({ state: 'idle' })
+        }
+      }, 2000)
+      break
+    }
+
+    case 'error': {
+      const { message } = event.data as { message?: string }
+      console.warn('[WS] Server error:', message)
+      break
+    }
+
+    case 'connected':
+      // Server confirmed connection
+      break
+  }
+}
 
 export const useOrbStore = create<OrbStore>((set, get) => ({
   isOpen: false,
@@ -75,6 +205,7 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
   teleportSeq: 0,
   echoToWhatsApp: false,
   batteryRemaining: KITZ_MANIFEST.governance.aiBatteryDailyLimit,
+  wsConnected: false,
   state: 'idle',
   messages: [],
 
@@ -150,6 +281,69 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
   setSpeaking: (val) => set({ speaking: val }),
   setEchoToWhatsApp: (val) => set({ echoToWhatsApp: val }),
 
+  connectWebSocket: () => {
+    if (_ws && (_ws.readyState === WebSocket.OPEN || _ws.readyState === WebSocket.CONNECTING)) {
+      return // Already connected or connecting
+    }
+
+    const url = getWSUrl()
+    try {
+      _ws = new WebSocket(url)
+    } catch {
+      console.warn('[WS] Failed to create WebSocket connection')
+      return
+    }
+
+    _ws.onopen = () => {
+      set({ wsConnected: true })
+      if (_wsReconnectTimer) {
+        clearTimeout(_wsReconnectTimer)
+        _wsReconnectTimer = null
+      }
+    }
+
+    _ws.onmessage = (raw) => {
+      // NDJSON — each line is a separate JSON event
+      const lines = raw.data.split('\n').filter(Boolean)
+      for (const line of lines) {
+        try {
+          const event = JSON.parse(line) as WSEvent
+          handleWSEvent(event)
+        } catch {
+          // Ignore malformed events
+        }
+      }
+    }
+
+    _ws.onclose = () => {
+      set({ wsConnected: false })
+      _ws = null
+      // Auto-reconnect after 3 seconds
+      if (!_wsReconnectTimer) {
+        _wsReconnectTimer = setTimeout(() => {
+          _wsReconnectTimer = null
+          get().connectWebSocket()
+        }, 3000)
+      }
+    }
+
+    _ws.onerror = () => {
+      // onclose will fire after onerror — reconnect handled there
+    }
+  },
+
+  disconnectWebSocket: () => {
+    if (_wsReconnectTimer) {
+      clearTimeout(_wsReconnectTimer)
+      _wsReconnectTimer = null
+    }
+    if (_ws) {
+      _ws.close()
+      _ws = null
+    }
+    set({ wsConnected: false })
+  },
+
   sendMessage: async (content, userId) => {
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
@@ -158,6 +352,9 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
       timestamp: Date.now(),
     }
     set((s) => ({ messages: [...s.messages, userMsg], state: 'thinking' }))
+
+    // Reset streaming message ID for this request
+    _streamingMsgId = null
 
     // Show agent chain while waiting for backend
     useAgentThinkingStore.getState().startThinking(content)
@@ -185,23 +382,50 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
           body: JSON.stringify({ message: content, channel: 'web', user_id: userId, chat_history: chatHistory, echo_channels: echoChannels }),
         },
       )
-      const assistantMsg: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: res.reply ?? res.response ?? res.message ?? 'Done.',
-        timestamp: Date.now(),
-        imageUrl: res.image_url,
-        toolsUsed: res.tools_used,
-        attachments: res.attachments,
+
+      // If WS already streamed the response via text.done, skip adding a duplicate
+      if (_streamingMsgId) {
+        // WS handled it — just ensure final content/metadata is correct
+        const msgId = _streamingMsgId
+        _streamingMsgId = null
+        set((s) => ({
+          messages: s.messages.map((m) =>
+            m.id === msgId
+              ? {
+                  ...m,
+                  content: res.reply ?? res.response ?? res.message ?? m.content,
+                  imageUrl: res.image_url,
+                  toolsUsed: res.tools_used,
+                  attachments: res.attachments,
+                }
+              : m,
+          ),
+          state: 'success',
+        }))
+      } else {
+        // No WS stream — add the full response as before
+        const assistantMsg: ChatMessage = {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: res.reply ?? res.response ?? res.message ?? 'Done.',
+          timestamp: Date.now(),
+          imageUrl: res.image_url,
+          toolsUsed: res.tools_used,
+          attachments: res.attachments,
+        }
+        set((s) => ({ messages: [...s.messages, assistantMsg], state: 'success' }))
       }
-      set((s) => ({ messages: [...s.messages, assistantMsg], state: 'success' }))
+
       // Resolve thinking steps with real tools used from backend
       useAgentThinkingStore.getState().resolveThinking(res.tools_used)
       useAgentThinkingStore.setState({ collapsed: true })
       // Detect navigation hints in the response and guide the Orb
-      const navHint = detectNavHint(assistantMsg.content)
-      if (navHint) {
-        useOrbNavigatorStore.getState().navigateTo(navHint.navId, navHint.label)
+      const lastMsg = get().messages[get().messages.length - 1]
+      if (lastMsg) {
+        const navHint = detectNavHint(lastMsg.content)
+        if (navHint) {
+          useOrbNavigatorStore.getState().navigateTo(navHint.navId, navHint.label)
+        }
       }
       setTimeout(() => {
         if (get().state === 'success') set({ state: 'idle' })

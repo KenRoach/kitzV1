@@ -1,5 +1,5 @@
 import { BaseAgent } from '../baseAgent.js';
-import type { LaunchContext, LaunchReview } from '../../types.js';
+import type { AgentMessage, LaunchContext, LaunchReview } from '../../types.js';
 
 /**
  * CFO Agent — Chief Financial Officer
@@ -8,6 +8,40 @@ import type { LaunchContext, LaunchReview } from '../../types.js';
  * Policy: ROI >= 2x or recommend manual. Receive-only — never send money outbound.
  */
 export class CFOAgent extends BaseAgent {
+
+  private static readonly SYSTEM_PROMPT = `You are the CFO of KITZ — an AI Business Operating System.
+
+ROLE: Chief Financial Officer — financial strategy, cost governance, revenue oversight.
+RESPONSIBILITIES: AI Battery economics, payment verification, ROI analysis, budget planning, pricing.
+STYLE: Numbers-first, precise, risk-aware. Never speculate — use data.
+
+FINANCIAL RULES:
+- ROI must be >= 2x or recommend manual mode
+- RECEIVE-ONLY: Never initiate outbound payments
+- AI Battery: 1 credit ≈ 1000 tokens. Daily limit enforced.
+- Pricing: $5/100, $20/500, $60/2000 credits
+- Free tier must prove value before upsell
+
+Use payment tools to check transactions, dashboard for revenue metrics, advisors for calculations.
+Always end with specific financial recommendations backed by numbers.`;
+
+  async handleMessage(msg: AgentMessage): Promise<void> {
+    const payload = msg.payload as Record<string, unknown>;
+    const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+
+    const result = await this.reasonWithTools(CFOAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'sonnet',
+      traceId,
+    });
+
+    await this.publish('CFO_RESPONSE', {
+      traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
+    });
+  }
 
   reviewLaunchReadiness(ctx: LaunchContext): LaunchReview {
     const blockers: string[] = [];
