@@ -272,7 +272,7 @@ function renderTopBar(): string {
   return `${line1}\n${line2}`
 }
 
-/** Boot screen — clean, minimal: wordmark + what to do */
+/** Boot screen — wordmark + what we do + how + tagline */
 function renderBootScreen(): string {
   const b = bootInfo
   const waStatus = b.waConnected
@@ -282,12 +282,16 @@ function renderBootScreen(): string {
   const lines = [
     '',
     ...KITZ_WORDMARK.map(l => `  ${l}`),
+    `  ${dim('"Your hustle deserves infrastructure"')}`,
+    '',
+    `  ${purpleBold('What')}  ${chalk.white('AI-powered Business OS for small businesses')}`,
+    `  ${purpleBold('How')}   ${chalk.white('Chat on WhatsApp or here — KITZ runs your ops with 267 AI tools')}`,
     '',
     `  ${waStatus}`,
     '',
-    `  ${dim('Type anything to chat with KITZ AI, or try:')}`,
     `  ${chalk.cyan('wa')}        ${dim('Link WhatsApp (QR in terminal)')}`,
     `  ${chalk.cyan('help')}      ${dim('All commands')}`,
+    `  ${dim('Or just type a message to get started.')}`,
     '',
     `  ${dim('─'.repeat(50))}`,
     '',
@@ -2492,7 +2496,7 @@ async function main() {
   wireRepl(rl, getPrompt)
 }
 
-/** Show QR code at boot, then drop into REPL */
+/** Show QR code at boot — renders once, stays static until scanned or skipped */
 async function showBootQR(rl: readline.Interface, getPrompt: () => string): Promise<void> {
   const zap = chalk.hex('#A855F7')
 
@@ -2500,6 +2504,7 @@ async function showBootQR(rl: readline.Interface, getPrompt: () => string): Prom
   bootInfo.waCountdown = 60
 
   const url = `${WA_URL}/whatsapp/connect?userId=cli-${Date.now()}`
+  let qrRendered = false // only render QR once — keep it static
 
   try {
     const res = await fetch(url)
@@ -2549,14 +2554,16 @@ async function showBootQR(rl: readline.Interface, getPrompt: () => string): Prom
             } else if (l.startsWith('data: ') && currentEvent) {
               const rawData = l.slice(6)
 
-              if (currentEvent === 'qr') {
+              if (currentEvent === 'qr' && !qrRendered) {
+                // Render QR exactly once — it stays on screen
                 try {
                   const qrcode = await import('qrcode-terminal')
 
-                  // Redraw: clean screen → wordmark → QR
                   process.stdout.write('\x1B[2J\x1B[H')
-                  process.stdout.write(renderTopBar() + '\n\n')
-                  process.stdout.write(`  ${zap('⚡')} ${chalk.white.bold('Scan to link WhatsApp')}  ${chalk.yellow(`⏱ ${bootInfo.waCountdown}s`)}\n\n`)
+                  // Wordmark at top
+                  for (const wl of KITZ_WORDMARK) process.stdout.write(`  ${wl}\n`)
+                  process.stdout.write('\n')
+                  process.stdout.write(`  ${zap('⚡')} ${chalk.white.bold('Scan to link WhatsApp')}\n\n`)
 
                   qrcode.default.generate(rawData, { small: true }, (qr: string) => {
                     const qrLines = qr.split('\n').map(ql => `    ${ql}`)
@@ -2564,7 +2571,9 @@ async function showBootQR(rl: readline.Interface, getPrompt: () => string): Prom
                   })
 
                   process.stdout.write(`  ${dim('WhatsApp → Settings → Linked Devices → Scan')}\n`)
-                  process.stdout.write(`  ${dim('Press Enter to skip')}\n\n`)
+                  process.stdout.write(`  ${dim('Press Enter to skip')}\n`)
+
+                  qrRendered = true
                 } catch {
                   process.stdout.write(dim(`  QR: ${rawData.slice(0, 50)}...\n`))
                 }
@@ -2578,10 +2587,10 @@ async function showBootQR(rl: readline.Interface, getPrompt: () => string): Prom
                   const d = JSON.parse(rawData)
                   bootInfo.waConnected = true
                   bootInfo.waPhone = d.phone || ''
-                  process.stdout.write(`\n  ${chalk.green('⚡')} ${chalk.green.bold('WhatsApp linked!')}  ${chalk.white(`+${d.phone || 'unknown'}`)}\n\n`)
+                  process.stdout.write(`\n\n  ${chalk.green('⚡')} ${chalk.green.bold('WhatsApp linked!')}  ${chalk.white(`+${d.phone || 'unknown'}`)}\n\n`)
                 } catch {
                   bootInfo.waConnected = true
-                  process.stdout.write(`\n  ${chalk.green('⚡')} ${chalk.green.bold('WhatsApp linked!')}\n\n`)
+                  process.stdout.write(`\n\n  ${chalk.green('⚡')} ${chalk.green.bold('WhatsApp linked!')}\n\n`)
                 }
                 rl.prompt()
                 wireRepl(rl, getPrompt)
