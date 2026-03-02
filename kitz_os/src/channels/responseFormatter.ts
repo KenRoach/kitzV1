@@ -17,6 +17,7 @@ const CHANNEL_LIMITS: Record<OutputChannel, number> = {
   sms: 155,
   voice: 5000,
   web: 8192,
+  terminal: 8192,
 };
 
 /** Convert markdown bold to WhatsApp bold */

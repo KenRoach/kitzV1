@@ -224,6 +224,13 @@ function buildSystemPrompt(toolCount: number, channel: OutputChannel = 'whatsapp
 
   // Channel-specific formatting instructions
   const formatRulesMap: Record<OutputChannel, string> = {
+    terminal: `RESPONSE FORMAT (Terminal CLI):
+- You are running inside the KITZ Command Center terminal.
+- You CAN see system status: kitz_os health, WhatsApp connection, AI Battery, tools loaded, agents online.
+- You have full access to ${toolCount} tools, 140 agents across 19 teams, and the entire KITZ monorepo.
+- Keep responses concise — 1-3 sentences for simple queries, structured sections for complex ones.
+- No markdown images — use plain text URLs for links.
+- You are the terminal. You are the system. You know what's running.`,
     web: `RESPONSE FORMAT (Web Dashboard):
 - You can be slightly longer than WhatsApp — but still concise.
 - Default: 1-2 short sentences. Tight.
@@ -264,6 +271,7 @@ function buildSystemPrompt(toolCount: number, channel: OutputChannel = 'whatsapp
 
   const formatRules = formatRulesMap[channel] || formatRulesMap.whatsapp;
   const channelLabel: Record<OutputChannel, string> = {
+    terminal: 'KITZ Command Center terminal',
     web: 'web dashboard',
     whatsapp: 'WhatsApp',
     email: 'email',

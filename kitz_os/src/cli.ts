@@ -3,7 +3,7 @@
  * ╔═══════════════════════════════════════════════════════╗
  * ║  KITZ Command Center — Terminal Intelligence System   ║
  * ║                                                       ║
- * ║  Inspired by: Claude Code boot · OpenClaw gateway     ║
+ * ║  "Your Business Handled"                ║
  * ║  Channels: WhatsApp · Web · Terminal · (future multi)  ║
  * ║  Engine: kitz_os kernel · 155+ tools · 107 agents     ║
  * ╚═══════════════════════════════════════════════════════╝
@@ -120,6 +120,7 @@ let bootInfo = {
   batteryUsed: 0, batteryLimit: 5, batteryRemaining: 5,
   kernelStatus: 'offline' as string,
   waConnected: false, waPhone: '',
+  waLinking: false, waCountdown: 0,
   uptime: 0, nodeVersion: process.version,
   platform: `${os.platform()} ${os.arch()}`,
   hostname: os.hostname(),
@@ -243,82 +244,126 @@ function timeAgo(seconds: number): string {
   return `${Math.floor(seconds / 86400)}d`
 }
 
-// ── Boot Screen (Claude Code inspired) ─────────────────
+// ── Top Bar (compact, always visible) ───────────────────
 
+function renderTopBar(): string {
+  const b = bootInfo
+  const kernelDot = b.kernelStatus === 'online' ? chalk.green('●') :
+                    b.kernelStatus === 'degraded' ? chalk.yellow('●') : chalk.red('●')
+
+  // WhatsApp status — shows linking progress when active
+  let waStatus: string
+  if (b.waLinking) {
+    waStatus = `${chalk.yellow('◉')} ${chalk.yellow(`Linking ${b.waCountdown}s`)}`
+  } else if (b.waConnected) {
+    waStatus = `${chalk.green('●')} ${dim('WA')}${b.waPhone ? dim(` +${b.waPhone}`) : ''}`
+  } else {
+    waStatus = `${chalk.red('○')} ${dim('WA')}`
+  }
+
+  const mInfo = MODE_INFO[currentMode]
+  const modeTag = mInfo.color(`[${mInfo.label}]`)
+
+  // Line 1: Brand + status
+  const line1 = `  ${purpleBold('KITZ')} ${dim(`v${VERSION}`)}  ${kernelDot} ${dim('OS')}  ${waStatus}  ${chalk.hex('#A855F7')('⚡')} ${dim(b.batteryLimit > 0 ? 'Unlimited' : '—')}  ${modeTag}  ${dim(`${b.toolCount} tools · ${b.agentCount} agents`)}`
+  // Line 2: Separator
+  const line2 = `  ${dim('─'.repeat(72))}`
+
+  return `${line1}\n${line2}`
+}
+
+/** Boot screen — wordmark + what we do + how + tagline */
 function renderBootScreen(): string {
   const b = bootInfo
-  const now = new Date()
-  const hour = now.getHours()
-  const greeting = hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening'
 
-  // Status indicators
-  const kernelIcon = b.kernelStatus === 'online' ? chalk.green('●') :
-                     b.kernelStatus === 'degraded' ? chalk.yellow('●') : chalk.red('●')
-  const waIcon = b.waConnected ? chalk.green('●') : chalk.red('○')
-  const waLabel = b.waConnected ? (b.waPhone ? `+${b.waPhone}` : 'Connected') : 'Disconnected'
-  const gitDirty = b.gitDirty ? chalk.yellow(' *') : ''
-  const batteryBar = bar(b.batteryUsed, b.batteryLimit, 15)
-  const batteryPct = ((b.batteryUsed / Math.max(b.batteryLimit, 1)) * 100).toFixed(0)
-
-  // OpenClaw integration status
-  let openclawLine = ''
+  // Last update date from git
+  let lastUpdate = ''
   try {
-    const ocConfig = path.join(os.homedir(), '.openclaw', 'openclaw.json')
-    if (fs.existsSync(ocConfig)) {
-      const oc = JSON.parse(fs.readFileSync(ocConfig, 'utf-8'))
-      const ocVersion = oc.meta?.lastTouchedVersion || '?'
-      const ocModel = oc.agents?.defaults?.model?.primary?.split('/').pop() || '?'
-      const waPhone = oc.channels?.whatsapp?.allowFrom?.[0] || ''
-      openclawLine = `  ${dim('│')}  ${chalk.cyan('●')} OpenClaw   ${dim(`v${ocVersion} · ${ocModel}`)}${waPhone ? dim(` · WA: ${waPhone}`) : ''}`
-    }
-  } catch {}
+    lastUpdate = execSync('git log -1 --format=%cd --date=short', { cwd: REPO_ROOT, timeout: 3000 }).toString().trim()
+  } catch { lastUpdate = '—' }
+
+  const waStatus = b.waConnected
+    ? `${chalk.green('●')} WhatsApp linked${b.waPhone ? ` (+${b.waPhone})` : ''}`
+    : `${chalk.red('○')} WhatsApp not linked — type ${chalk.cyan('wa')} to scan QR`
 
   const lines = [
     '',
-    `  ${dim('┌─')} ${purpleBold('KITZ Command Center')} ${dim(`v${VERSION}`)}`,
-    `  ${dim('│')}`,
-    ...KITZ_WORDMARK.map(l => `  ${dim('│')}  ${l}`),
-    `  ${dim('│')}`,
-    `  ${dim('│')}  ${purpleBold(`${greeting}, ${b.user}!`)}`,
-    `  ${dim('│')}  ${dim('"Your hustle deserves infrastructure"')}`,
-    `  ${dim('│')}`,
-    `  ${dim('├─')} ${chalk.bold('System')}`,
-    `  ${dim('│')}  ${kernelIcon} kitz_os    ${dim(b.kernelStatus)} ${b.uptime > 0 ? dim(`· up ${timeAgo(b.uptime)}`) : ''} ${activeBaseUrl !== KITZ_OS_URL ? dim(`· ${activeBaseUrl}`) : ''}`,
-    `  ${dim('│')}  ${waIcon} WhatsApp   ${dim(waLabel)}`,
-    openclawLine ? `${openclawLine}` : '',
-    `  ${dim('│')}`,
-    `  ${dim('├─')} ${chalk.bold('Infrastructure')}`,
-    `  ${dim('│')}  🔧 ${chalk.white(String(b.toolCount))} tools   🤖 ${chalk.white(String(b.agentCount))} agents   📊 ${chalk.white(String(b.teamCount))} teams`,
-    `  ${dim('│')}  📦 ${chalk.white(String(b.serviceCount))} services in monorepo`,
-    `  ${dim('│')}`,
-    ...(process.env.AI_BATTERY_ENABLED === 'true' ? [
-      `  ${dim('├─')} ${chalk.bold('AI Battery')}`,
-      `  ${dim('│')}  [${batteryBar}] ${chalk.white(`${b.batteryUsed.toFixed(1)}/${b.batteryLimit}`)} credits ${dim(`(${batteryPct}%)`)}`,
-      `  ${dim('│')}`,
-    ] : []),
-    `  ${dim('├─')} ${chalk.bold('Environment')}`,
-    `  ${dim('│')}  📂 ${dim(b.repoPath)}`,
-    `  ${dim('│')}  🌿 ${chalk.cyan(b.gitBranch || '?')}${gitDirty} ${dim(`@ ${b.gitCommit || '?'}`)}`,
-    `  ${dim('│')}  ⬡  ${dim(`Node ${b.nodeVersion} · ${b.platform}`)}`,
-    `  ${dim('│')}  🖥  ${dim(b.hostname)}`,
-    `  ${dim('│')}`,
-    `  ${dim('└─')} ${dim('Type a message to chat · ')}${chalk.cyan('help')}${dim(' for commands · ')}${chalk.cyan('quit')}${dim(' to exit')}`,
+    ...KITZ_WORDMARK.map(l => `  ${l}`),
+    `  ${dim('"Your Business Handled"')}`,
+    `  ${dim(`v${VERSION} · Updated ${lastUpdate}`)}`,
     '',
-  ].filter(Boolean)
+    `  ${purpleBold('What')}  ${chalk.white('AI-powered Business OS for small businesses')}`,
+    `  ${purpleBold('How')}   ${chalk.white('Chat on WhatsApp or here — KITZ runs your ops with 267 AI tools')}`,
+    '',
+    `  ${waStatus}`,
+    '',
+    `  ${chalk.cyan('wa')}        ${dim('Link WhatsApp (QR in terminal)')}`,
+    `  ${chalk.cyan('help')}      ${dim('All commands')}`,
+    `  ${dim('Or just type a message to get started.')}`,
+    '',
+    `  ${dim('─'.repeat(50))}`,
+    '',
+  ]
 
   return lines.join('\n')
 }
 
-// ── Thinking Display (Claude Code style) ───────────────
+/** Last response stored so we can redraw the screen */
+let lastOutput = ''
+
+/** Clear screen, draw top bar, then show content below it */
+function redrawScreen(content?: string) {
+  process.stdout.write('\x1B[2J\x1B[H') // clear
+  process.stdout.write(renderTopBar() + '\n')
+  if (content) {
+    process.stdout.write(content + '\n')
+  } else if (lastOutput) {
+    process.stdout.write(lastOutput + '\n')
+  }
+}
+
+// ── Thinking Display (Kitz electric style) ─────────────
+
+/** Kitz-flavored synonyms for "thinking" — rotates each run */
+const KITZ_THINK_LABELS = [
+  'Wiring the play',
+  'Mapping the hustle',
+  'Routing the signal',
+  'Locking in',
+  'Running the playbook',
+  'Charging up',
+  'Building the blueprint',
+  'Cooking',
+  'Processing the drop',
+  'Calibrating',
+]
+let thinkLabelIdx = 0
+
+/** Phase verbs — Kitz-style action words instead of generic labels */
+const PHASE_VERBS: Record<string, string> = {
+  READ: 'Scanned',
+  COMPREHEND: 'Classified',
+  BRAINSTORM: 'Strategized',
+  EXECUTE: 'Deployed',
+  VOICE: 'Delivered',
+}
 
 function showThinking(steps: ThinkingStep[]): string {
   if (steps.length === 0) return ''
-  const lines = [dim('  ┌ Thought process:')]
+  const label = KITZ_THINK_LABELS[thinkLabelIdx++ % KITZ_THINK_LABELS.length]
+  const zap = chalk.hex('#A855F7')  // kitz purple
+  const bolt = chalk.hex('#7C3AED') // kitz deep
+
+  const lines = [
+    `  ${bolt('┌')} ${zap('⚡')} ${chalk.hex('#A855F7').bold(label)}`,
+  ]
   for (const step of steps) {
-    const dur = step.durationMs ? dim(` (${step.durationMs}ms)`) : ''
-    lines.push(`  ${dim('│')} ${chalk.yellow('⟳')} ${chalk.bold(step.phase)} ${dim('→')} ${step.detail}${dur}`)
+    const dur = step.durationMs ? dim(` ${step.durationMs}ms`) : ''
+    const verb = PHASE_VERBS[step.phase] || step.phase
+    const phaseColor = step.phase === 'EXECUTE' ? chalk.hex('#22C55E') : zap
+    lines.push(`  ${bolt('│')} ${phaseColor('⚡')} ${chalk.white.bold(verb)} ${dim('—')} ${step.detail}${dur}`)
   }
-  lines.push(dim('  └'))
+  lines.push(`  ${bolt('└')}`)
   return lines.join('\n')
 }
 
@@ -370,9 +415,11 @@ async function cmdChat(message: string): Promise<string> {
       thinking.push({ phase: 'VOICE', detail: 'Formatted response' })
     }
 
+    const displayReply = formatReplyForTerminal(reply)
+
     let out = ''
     if (thinking.length > 0) out += showThinking(thinking) + '\n'
-    out += `\n  ${purpleBold('Kitz')}: ${chalk.white(reply)}\n`
+    out += `\n  ${purpleBold('Kitz')}: ${chalk.white(displayReply)}\n`
     if (tools.length > 0) out += `  ${chalk.cyan('🔧 ' + tools.join(', '))}\n`
 
     // Detect and save artifacts (code blocks) from response
@@ -612,6 +659,53 @@ function registerArtifact(file: string, lang: string): void {
     sizeKB: stat.size / 1024,
     url: `/${filename}`,
   })
+}
+
+// ── Terminal Reply Formatting ─────────────────────────
+
+/** Convert markdown image links to clean terminal output with clickable URLs */
+function formatReplyForTerminal(reply: string): string {
+  const captured: { imageUrl?: string; previewUrl?: string } = {}
+
+  // Replace ![alt](url) with a clean image card
+  let formatted = reply.replace(
+    /!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g,
+    (_match, alt, url) => {
+      const label = alt || 'Generated Image'
+      captured.imageUrl = url as string
+      return `\n  🖼️  ${chalk.bold(label as string)}\n`
+    }
+  )
+
+  // Extract and clean up Preview: URL lines
+  formatted = formatted.replace(
+    /Preview:\s*(https?:\/\/[^\s]+)/g,
+    (_match, url) => {
+      captured.previewUrl = url as string
+      return ''
+    }
+  )
+
+  // Strip markdown bold **text** → text (terminal uses chalk instead)
+  formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '$1')
+
+  // Strip markdown italic *text* → text
+  formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '$1')
+
+  // Clean up excessive blank lines
+  formatted = formatted.replace(/\n{3,}/g, '\n\n').trim()
+
+  // Append clean links at the bottom
+  if (captured.previewUrl) {
+    formatted += `\n\n  ${chalk.cyan('🌐')} ${chalk.cyan.underline(captured.previewUrl)}`
+    // Auto-open the preview in browser
+    try { execSync(`open "${captured.previewUrl}"`, { timeout: 3000 }) } catch {}
+  } else if (captured.imageUrl) {
+    const shortUrl = captured.imageUrl.length > 80 ? captured.imageUrl.slice(0, 77) + '...' : captured.imageUrl
+    formatted += `\n\n  ${chalk.cyan('🔗')} ${chalk.cyan.underline(shortUrl)}`
+  }
+
+  return formatted
 }
 
 // ── Artifact Extraction & Saving ──────────────────────
@@ -1015,16 +1109,36 @@ async function cmdLaunch(): Promise<string> {
 }
 
 async function cmdWhatsApp(): Promise<string> {
-  process.stdout.write(chalk.green('\n  📱 Connecting to WhatsApp (OpenClaw Baileys engine)...\n'))
-  process.stdout.write(dim('  Waiting for QR code...\n\n'))
+  const zap = chalk.hex('#A855F7')
+
+  // Check if already connected
+  if (bootInfo.waConnected && bootInfo.waPhone) {
+    return `\n  ${chalk.green('●')} WhatsApp already linked: ${chalk.white(`+${bootInfo.waPhone}`)}\n  ${dim('To reconnect, restart the WhatsApp connector first.')}\n`
+  }
+
+  // Set linking state — top bar will show it
+  bootInfo.waLinking = true
+  bootInfo.waCountdown = 60
+
+  process.stdout.write('\x1B[2J\x1B[H') // clear
+  process.stdout.write(renderTopBar() + '\n\n')
+  process.stdout.write(`  ${zap('⚡')} ${chalk.white.bold('WhatsApp Link')}\n`)
+  process.stdout.write(`  ${dim('─'.repeat(40))}\n`)
+  process.stdout.write(dim('  Connecting to Baileys engine...\n\n'))
 
   return new Promise((resolve) => {
     const url = `${WA_URL}/whatsapp/connect?userId=cli-${Date.now()}`
     let timeout: ReturnType<typeof setTimeout>
     let resolved = false
 
+    const cleanup = () => {
+      bootInfo.waLinking = false
+      bootInfo.waCountdown = 0
+    }
+
     fetch(url).then(async (res) => {
       if (!res.ok || !res.body) {
+        cleanup()
         resolve(chalk.red(`  ❌ WhatsApp connector not reachable at ${WA_URL}\n  ${dim('Start: cd kitz-whatsapp-connector && npm run dev')}\n`))
         return
       }
@@ -1032,19 +1146,19 @@ async function cmdWhatsApp(): Promise<string> {
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
-      let countdown = 60
 
       const countdownTimer = setInterval(() => {
-        countdown--
-        if (countdown <= 0) clearInterval(countdownTimer)
+        bootInfo.waCountdown--
+        if (bootInfo.waCountdown <= 0) clearInterval(countdownTimer)
       }, 1000)
 
       timeout = setTimeout(() => {
         if (!resolved) {
           resolved = true
           clearInterval(countdownTimer)
+          cleanup()
           reader.cancel()
-          resolve(chalk.yellow('\n  ⏱ QR timeout. Type `wa` to try again.\n'))
+          resolve(chalk.yellow('\n  ⏱ QR expired. Type `wa` to try again.\n'))
         }
       }, 65000)
 
@@ -1054,11 +1168,11 @@ async function cmdWhatsApp(): Promise<string> {
           if (done || resolved) break
 
           buffer += decoder.decode(value, { stream: true })
-          const lines = buffer.split('\n')
-          buffer = lines.pop() || ''
+          const sseLines = buffer.split('\n')
+          buffer = sseLines.pop() || ''
 
           let currentEvent = ''
-          for (const l of lines) {
+          for (const l of sseLines) {
             if (l.startsWith('event: ')) {
               currentEvent = l.slice(7).trim()
             } else if (l.startsWith('data: ') && currentEvent) {
@@ -1067,14 +1181,21 @@ async function cmdWhatsApp(): Promise<string> {
               if (currentEvent === 'qr') {
                 try {
                   const qrcode = await import('qrcode-terminal')
-                  process.stdout.write('\x1B[2J\x1B[H') // clear
-                  process.stdout.write(purpleBold('\n  📱 KITZ — WhatsApp Connect (OpenClaw Baileys)\n'))
-                  process.stdout.write(`  ${line(50)}\n\n`)
+
+                  // Persistent redraw: top bar (shows linking + countdown) → QR
+                  process.stdout.write('\x1B[2J\x1B[H')
+                  process.stdout.write(renderTopBar() + '\n\n')
+                  process.stdout.write(`  ${zap('⚡')} ${chalk.white.bold('WhatsApp Link')}  ${chalk.yellow(`⏱ ${bootInfo.waCountdown}s`)}\n`)
+                  process.stdout.write(`  ${dim('─'.repeat(40))}\n\n`)
+
+                  // Render QR code
                   qrcode.default.generate(rawData, { small: true }, (qr: string) => {
-                    process.stdout.write(qr.split('\n').map(l => '    ' + l).join('\n') + '\n\n')
+                    const qrLines = qr.split('\n').map(ql => `    ${ql}`)
+                    process.stdout.write(qrLines.join('\n') + '\n\n')
                   })
-                  process.stdout.write(chalk.yellow(`  ⏱ ${countdown}s remaining\n`))
-                  process.stdout.write(dim('  Open WhatsApp → Settings → Linked Devices → Scan\n'))
+
+                  process.stdout.write(`  ${dim('Open WhatsApp → Settings → Linked Devices → Scan')}\n`)
+                  process.stdout.write(`  ${dim('Ctrl+C to cancel')}\n`)
                 } catch {
                   process.stdout.write(dim(`  QR: ${rawData.slice(0, 50)}...\n`))
                 }
@@ -1083,13 +1204,15 @@ async function cmdWhatsApp(): Promise<string> {
                 clearInterval(countdownTimer)
                 clearTimeout(timeout)
                 reader.cancel()
+                cleanup()
                 try {
                   const d = JSON.parse(rawData)
                   bootInfo.waConnected = true
                   bootInfo.waPhone = d.phone || ''
-                  resolve(chalk.green(`\n  ✅ WhatsApp connected! Phone: +${d.phone || 'unknown'}\n`))
+                  resolve(`\n  ${chalk.green('⚡')} ${chalk.green.bold('WhatsApp linked!')}  ${chalk.white(`+${d.phone || 'unknown'}`)}\n  ${dim('Messages will flow through KITZ.')}\n`)
                 } catch {
-                  resolve(chalk.green('\n  ✅ WhatsApp connected!\n'))
+                  bootInfo.waConnected = true
+                  resolve(`\n  ${chalk.green('⚡')} ${chalk.green.bold('WhatsApp linked!')}\n`)
                 }
                 return
               } else if (currentEvent === 'error') {
@@ -1097,6 +1220,7 @@ async function cmdWhatsApp(): Promise<string> {
                 clearInterval(countdownTimer)
                 clearTimeout(timeout)
                 reader.cancel()
+                cleanup()
                 resolve(chalk.red(`\n  ❌ Connection error: ${rawData}\n`))
                 return
               }
@@ -1109,12 +1233,14 @@ async function cmdWhatsApp(): Promise<string> {
           resolved = true
           clearInterval(countdownTimer)
           clearTimeout(timeout)
+          cleanup()
           resolve(chalk.red(`\n  ❌ SSE error: ${err instanceof Error ? err.message : String(err)}\n`))
         }
       }
     }).catch(() => {
       if (!resolved) {
         resolved = true
+        cleanup()
         resolve(chalk.red(`\n  ❌ Cannot reach WhatsApp connector at ${WA_URL}\n  ${dim('Start: cd kitz-whatsapp-connector && npm run dev')}\n`))
       }
     })
@@ -1137,15 +1263,6 @@ async function cmdStatus(): Promise<string> {
   // WhatsApp
   const waIcon = b.waConnected ? chalk.green('●') : chalk.red('○')
   lines.push(`  ${waIcon} WhatsApp       ${b.waConnected ? chalk.green('connected') : chalk.red('disconnected')} ${b.waPhone ? dim(`+${b.waPhone}`) : ''}`)
-
-  // OpenClaw
-  try {
-    const ocConfig = path.join(os.homedir(), '.openclaw', 'openclaw.json')
-    if (fs.existsSync(ocConfig)) {
-      const oc = JSON.parse(fs.readFileSync(ocConfig, 'utf-8'))
-      lines.push(`  ${chalk.cyan('●')} OpenClaw       ${dim(`v${oc.version || '?'} · agent: ${oc.agent?.identity?.name || '?'}`)}`)
-    }
-  } catch {}
 
   // Battery
   lines.push('')
@@ -1450,7 +1567,7 @@ async function cmdCoaching(): Promise<string> {
   }
 }
 
-// ── Claude Code Superpowers ────────────────────────────
+// ── KITZ Code Intelligence ─────────────────────────────
 
 function cmdSearch(query: string): string {
   if (!query) return chalk.yellow('\n  Usage: search <pattern>\n  Searches all code in the KITZ monorepo.\n')
@@ -1716,7 +1833,7 @@ function cmdRead(filePath?: string): string {
   }
 }
 
-// ── Claude Code Deep Superpowers ───────────────────────
+// ── KITZ Deep Code Intelligence ────────────────────────
 
 /** explain <file> — AI-powered file analysis via kitz_os */
 async function cmdExplain(filePath?: string): Promise<string> {
@@ -1844,22 +1961,6 @@ async function cmdAudit(service?: string): Promise<string> {
         const short = t.replace(servicePath + '/', '').slice(0, 80)
         lines.push(`      ${dim(short)}`)
       }
-    }
-  } catch {}
-
-  // OpenClaw patterns check
-  lines.push('')
-  lines.push(chalk.bold('  OpenClaw Patterns:'))
-  try {
-    const ocRefs = execSync(
-      `grep -rn "OpenClaw\\|openclaw" "${servicePath}/src" --include="*.ts" 2>/dev/null | wc -l`,
-      { timeout: 5000 }
-    ).toString().trim()
-    const ocCount = parseInt(ocRefs) || 0
-    if (ocCount > 0) {
-      lines.push(`    ${chalk.cyan('●')} ${ocCount} OpenClaw reference${ocCount > 1 ? 's' : ''} (ported patterns)`)
-    } else {
-      lines.push(`    ${dim('○ No OpenClaw patterns in this service')}`)
     }
   } catch {}
 
@@ -1997,7 +2098,6 @@ function cmdMap(): string {
     `  ${dim('Gemini')}              ${dim('Yappy')}    ${dim('Events')}`,
     '',
     `  ${chalk.bold('External Integrations')}`,
-    `  ${chalk.cyan('●')} OpenClaw v${(() => { try { const c = JSON.parse(fs.readFileSync(path.join(os.homedir(), '.openclaw', 'openclaw.json'), 'utf-8')); return c.meta?.lastTouchedVersion || '?' } catch { return '?' } })()}  ${dim('Multi-channel gateway · Baileys patterns')}`,
     `  ${chalk.green('●')} Railway         ${dim('Production deploy · kitz-whatsapp-connector')}`,
     `  ${chalk.yellow('●')} GitHub Pages    ${dim('workspace.kitz.services · SPA hosting')}`,
     `  ${chalk.hex('#A855F7')('●')} Supabase        ${dim('Database · Edge functions · Auth')}`,
@@ -2099,12 +2199,30 @@ function cmdDiffService(service?: string): string {
 
 // ── Spinner Helper ─────────────────────────────────────
 
-function showSpinner(label: string): ReturnType<typeof setInterval> {
-  const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+/** Electric spinner — Kitz branded zap animation */
+function showSpinner(_label: string): ReturnType<typeof setInterval> {
+  // Electric bolt frames cycling through purple shades
+  const bolts = ['⚡', '⚡', '✦', '⚡', '✧', '⚡', '⚡', '✦']
+  const purples = ['#A855F7', '#9333EA', '#7C3AED', '#6D28D9', '#8B5CF6', '#A78BFA', '#C084FC', '#7C3AED']
+  // Kitz-flavored "processing" labels that rotate
+  const labels = [
+    'Locking in...',
+    'Routing signal...',
+    'Wiring the play...',
+    'Charging up...',
+    'Cooking...',
+    'Building...',
+    'Processing...',
+    'Deploying...',
+  ]
   let i = 0
+  const labelPick = labels[Math.floor(Math.random() * labels.length)]
   return setInterval(() => {
-    process.stdout.write(`\r  ${chalk.yellow(frames[i++ % frames.length])} ${label}`)
-  }, 80)
+    const frame = bolts[i % bolts.length]
+    const color = purples[i % purples.length]
+    process.stdout.write(`\r  ${chalk.hex(color)(frame)} ${chalk.hex(color)(labelPick)}`)
+    i++
+  }, 120)
 }
 
 function stopSpinner(interval: ReturnType<typeof setInterval>): void {
@@ -2112,99 +2230,7 @@ function stopSpinner(interval: ReturnType<typeof setInterval>): void {
   process.stdout.write('\r' + ' '.repeat(40) + '\r')
 }
 
-// ── OpenClaw Integration ───────────────────────────────
-
-function cmdOpenClaw(): string {
-  try {
-    const configPath = path.join(os.homedir(), '.openclaw', 'openclaw.json')
-    if (!fs.existsSync(configPath)) {
-      return chalk.yellow('\n  ⚠ OpenClaw not configured. Install: npm i -g openclaw\n')
-    }
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'))
-    const meta = config.meta || {}
-    const agents = config.agents?.defaults || {}
-    const gw = config.gateway || {}
-    const channels = config.channels || {}
-    const hooks = config.hooks || {}
-
-    const lines = [
-      '', purpleBold('  🐾 OPENCLAW GATEWAY'), `  ${line(50)}`, '',
-      `  Version:    ${chalk.white(`v${meta.lastTouchedVersion || '?'}`)}`,
-      `  Model:      ${chalk.cyan(agents.model?.primary || '?')}`,
-      `  Workspace:  ${dim(agents.workspace || '~/.openclaw/workspace')}`,
-      `  Gateway:    ${dim(`${gw.bind === 'loopback' ? '127.0.0.1' : '0.0.0.0'}:${gw.port || '?'} (${gw.mode || '?'})`)}`,
-      `  Auth:       ${dim(gw.auth?.mode || 'none')}`,
-      '',
-    ]
-
-    // Channels
-    lines.push('  Channels:')
-    if (channels.whatsapp) {
-      const phones = channels.whatsapp.allowFrom || []
-      const policy = channels.whatsapp.dmPolicy || 'open'
-      lines.push(`    ${chalk.green('●')} WhatsApp  ${dim(`policy: ${policy}`)} ${phones.length ? dim(`· ${phones.join(', ')}`) : ''}`)
-    }
-    for (const [name, ch] of Object.entries(channels)) {
-      if (name === 'whatsapp') continue
-      lines.push(`    ${chalk.cyan('●')} ${chalk.white(name)} ${dim(JSON.stringify(ch).slice(0, 40))}`)
-    }
-    if (Object.keys(channels).length === 0) lines.push(dim('    No channels configured'))
-
-    // Skills
-    const skillsDir = path.join(os.homedir(), '.openclaw', 'workspace', 'skills')
-    if (fs.existsSync(skillsDir)) {
-      const skills = fs.readdirSync(skillsDir).filter(f => !f.startsWith('.'))
-      if (skills.length > 0) {
-        lines.push('')
-        lines.push('  Skills:')
-        for (const s of skills) lines.push(`    ${chalk.cyan('⚡')} ${s}`)
-      }
-    }
-
-    // Memory
-    const memDir = path.join(os.homedir(), '.openclaw', 'workspace', 'memory')
-    if (fs.existsSync(memDir)) {
-      const mems = fs.readdirSync(memDir).filter(f => f.endsWith('.md'))
-      lines.push('')
-      lines.push(`  Memory:     ${chalk.white(String(mems.length))} entries`)
-    }
-
-    // Hooks
-    const internalHooks = hooks.internal?.entries || {}
-    const hookNames = Object.keys(internalHooks)
-    if (hookNames.length > 0) {
-      lines.push('')
-      lines.push('  Hooks:')
-      for (const h of hookNames) {
-        const enabled = internalHooks[h]?.enabled
-        lines.push(`    ${enabled ? chalk.green('●') : chalk.red('○')} ${h}`)
-      }
-    }
-
-    // Denied commands
-    const denied = gw.nodes?.denyCommands || []
-    if (denied.length > 0) {
-      lines.push('')
-      lines.push(`  Blocked:    ${dim(denied.join(', '))}`)
-    }
-
-    // Integration with KITZ
-    lines.push('')
-    lines.push(dim('  ─'.repeat(25)))
-    lines.push(`  ${dim('KITZ ported from OpenClaw:')}`)
-    lines.push(`    ${chalk.green('✔')} Baileys session management (creds backup, backoff, watchdog)`)
-    lines.push(`    ${chalk.green('✔')} Message dedup + debounce`)
-    lines.push(`    ${chalk.green('✔')} Access control (allowlist/open)`)
-    lines.push(`    ${chalk.green('✔')} Media understanding tools`)
-    lines.push(`    ${chalk.green('✔')} Memory manager pattern`)
-    lines.push(`    ${chalk.green('✔')} Structured logging with PII redaction`)
-
-    lines.push('')
-    return lines.join('\n')
-  } catch (err) {
-    return chalk.red(`\n  ❌ ${err instanceof Error ? err.message : 'OpenClaw read failed'}\n`)
-  }
-}
+// ── KITZ Integrations ──────────────────────────────────
 
 // ── Mode Commands ──────────────────────────────────────
 
@@ -2295,9 +2321,8 @@ function cmdHelp(): string {
     '',
     chalk.bold('  📱 Channels'),
     `    ${chalk.cyan('wa / whatsapp')}        Connect WhatsApp (QR in terminal)`,
-    `    ${chalk.cyan('openclaw')}             OpenClaw gateway status`,
     '',
-    chalk.bold('  🔍 Code Intelligence (Claude Code style)'),
+    chalk.bold('  🔍 Code Intelligence'),
     `    ${chalk.cyan('search <pattern>')}     Search entire codebase`,
     `    ${chalk.cyan('files [path]')}         List source files`,
     `    ${chalk.cyan('read <path>')}          Read a file (relative to repo)`,
@@ -2405,9 +2430,8 @@ async function handleInput(input: string): Promise<string> {
 
     // Channels
     case 'whatsapp': case 'wa': return cmdWhatsApp()
-    case 'openclaw': case 'oc': return cmdOpenClaw()
 
-    // Claude Code superpowers
+    // KITZ code intelligence
     case 'search': case 'grep': case 'find': return cmdSearch(arg)
     case 'files': case 'ls': return cmdFiles(arg || undefined)
     case 'read': case 'cat': return cmdRead(arg || undefined)
@@ -2439,24 +2463,29 @@ async function handleInput(input: string): Promise<string> {
 // ── Main Boot ──────────────────────────────────────────
 
 async function main() {
-  process.stdout.write('\x1B[2J\x1B[H') // clear screen
+  // Clear screen + scrollback — clean slate, nothing above
+  process.stdout.write('\x1B[2J\x1B[3J\x1B[H')
 
-  // Gather system info
-  process.stdout.write(dim('  Booting KITZ...\n'))
+  // Boot animation — like Claude Code thinking
+  const bootFrames = ['⚡', '✦', '⚡', '✧', '⚡', '✦', '⚡']
+  const bootPurples = ['#A855F7', '#9333EA', '#7C3AED', '#6D28D9', '#8B5CF6', '#A78BFA', '#C084FC']
+  let frame = 0
+  const bootAnim = setInterval(() => {
+    const c = chalk.hex(bootPurples[frame % bootPurples.length])
+    process.stdout.write(`\r  ${c(bootFrames[frame % bootFrames.length])} ${c('KITZ')}`)
+    frame++
+  }, 100)
+
+  // Gather system info while animation plays
   await gatherBootInfo()
 
-  // Auto-start preview server
-  process.stdout.write(dim('  Starting preview server...\n'))
-  await startPreviewServer().catch(() => {}) // non-fatal
+  // Auto-start preview server (silent)
+  await startPreviewServer().catch(() => {})
 
-  // Clear and show boot screen
-  process.stdout.write('\x1B[2J\x1B[H')
-  process.stdout.write(renderBootScreen() + '\n')
-
-  // Show preview server status in boot
-  if (previewRunning) {
-    process.stdout.write(`  ${chalk.green('●')} Preview server: ${chalk.cyan.underline(`http://localhost:${PREVIEW_PORT}`)}\n\n`)
-  }
+  // Stop animation, pin boot screen to top
+  clearInterval(bootAnim)
+  process.stdout.write('\x1B[2J\x1B[3J\x1B[H')
+  process.stdout.write(renderBootScreen())
 
   // Start REPL
   function getPrompt(): string {
@@ -2472,12 +2501,180 @@ async function main() {
     terminal: true,
   })
 
-  rl.prompt()
+  // Auto-show WhatsApp QR if not connected and connector is reachable
+  if (!bootInfo.waConnected) {
+    const waReachable = await probeService(WA_URL, 2000)
+    if (waReachable) {
+      process.stdout.write(`  ${chalk.hex('#A855F7')('⚡')} ${chalk.white.bold('Scan to link WhatsApp')}\n\n`)
+      await showBootQR(rl, getPrompt)
+      return // showBootQR starts the REPL loop
+    }
+  }
 
+  rl.prompt()
+  wireRepl(rl, getPrompt)
+}
+
+/** Show QR code at boot — renders once, stays static until scanned or skipped */
+async function showBootQR(rl: readline.Interface, getPrompt: () => string): Promise<void> {
+  const zap = chalk.hex('#A855F7')
+
+  bootInfo.waLinking = true
+  bootInfo.waCountdown = 60
+
+  const url = `${WA_URL}/whatsapp/connect?userId=cli-${Date.now()}`
+  let qrRendered = false // only render QR once — keep it static
+
+  try {
+    const res = await fetch(url)
+    if (!res.ok || !res.body) {
+      bootInfo.waLinking = false
+      rl.prompt()
+      wireRepl(rl, getPrompt)
+      return
+    }
+
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    let resolved = false
+
+    const countdownTimer = setInterval(() => {
+      bootInfo.waCountdown--
+      if (bootInfo.waCountdown <= 0) clearInterval(countdownTimer)
+    }, 1000)
+
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        resolved = true
+        clearInterval(countdownTimer)
+        bootInfo.waLinking = false
+        reader.cancel()
+        process.stdout.write(chalk.yellow('\n  ⏱ QR expired. Type `wa` to try again.\n\n'))
+        rl.prompt()
+        wireRepl(rl, getPrompt)
+      }
+    }, 65000)
+
+    const processStream = async () => {
+      try {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done || resolved) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const sseLines = buffer.split('\n')
+          buffer = sseLines.pop() || ''
+
+          let currentEvent = ''
+          for (const l of sseLines) {
+            if (l.startsWith('event: ')) {
+              currentEvent = l.slice(7).trim()
+            } else if (l.startsWith('data: ') && currentEvent) {
+              const rawData = l.slice(6)
+
+              if (currentEvent === 'qr' && !qrRendered) {
+                // Render QR exactly once — it stays on screen
+                try {
+                  const qrcode = await import('qrcode-terminal')
+
+                  process.stdout.write('\x1B[2J\x1B[H')
+                  // Wordmark at top
+                  for (const wl of KITZ_WORDMARK) process.stdout.write(`  ${wl}\n`)
+                  process.stdout.write('\n')
+                  process.stdout.write(`  ${zap('⚡')} ${chalk.white.bold('Scan to link WhatsApp')}\n\n`)
+
+                  qrcode.default.generate(rawData, { small: true }, (qr: string) => {
+                    const qrLines = qr.split('\n').map(ql => `    ${ql}`)
+                    process.stdout.write(qrLines.join('\n') + '\n\n')
+                  })
+
+                  process.stdout.write(`  ${dim('WhatsApp → Settings → Linked Devices → Scan')}\n`)
+                  process.stdout.write(`  ${dim('Press Enter to skip')}\n`)
+
+                  qrRendered = true
+                } catch {
+                  process.stdout.write(dim(`  QR: ${rawData.slice(0, 50)}...\n`))
+                }
+              } else if (currentEvent === 'connected') {
+                resolved = true
+                clearInterval(countdownTimer)
+                clearTimeout(timeout)
+                reader.cancel()
+                bootInfo.waLinking = false
+                try {
+                  const d = JSON.parse(rawData)
+                  bootInfo.waConnected = true
+                  bootInfo.waPhone = d.phone || ''
+                  process.stdout.write(`\n\n  ${chalk.green('⚡')} ${chalk.green.bold('WhatsApp linked!')}  ${chalk.white(`+${d.phone || 'unknown'}`)}\n\n`)
+                } catch {
+                  bootInfo.waConnected = true
+                  process.stdout.write(`\n\n  ${chalk.green('⚡')} ${chalk.green.bold('WhatsApp linked!')}\n\n`)
+                }
+                rl.prompt()
+                wireRepl(rl, getPrompt)
+                return
+              } else if (currentEvent === 'error') {
+                resolved = true
+                clearInterval(countdownTimer)
+                clearTimeout(timeout)
+                reader.cancel()
+                bootInfo.waLinking = false
+                process.stdout.write(chalk.red(`\n  ❌ Connection error: ${rawData}\n\n`))
+                rl.prompt()
+                wireRepl(rl, getPrompt)
+                return
+              }
+              currentEvent = ''
+            }
+          }
+        }
+      } catch {
+        // Stream ended
+      }
+
+      if (!resolved) {
+        resolved = true
+        clearInterval(countdownTimer)
+        clearTimeout(timeout)
+        bootInfo.waLinking = false
+        rl.prompt()
+        wireRepl(rl, getPrompt)
+      }
+    }
+
+    // Allow Enter to skip QR and drop into REPL
+    rl.once('line', () => {
+      if (!resolved) {
+        resolved = true
+        clearInterval(countdownTimer)
+        clearTimeout(timeout)
+        bootInfo.waLinking = false
+        reader.cancel()
+        process.stdout.write('\x1B[2J\x1B[H')
+        process.stdout.write(renderTopBar() + '\n')
+        rl.prompt()
+        wireRepl(rl, getPrompt)
+      }
+    })
+
+    processStream()
+  } catch {
+    bootInfo.waLinking = false
+    rl.prompt()
+    wireRepl(rl, getPrompt)
+  }
+}
+
+/** Wire up the standard REPL event handlers */
+function wireRepl(rl: readline.Interface, getPrompt: () => string) {
   rl.on('line', async (input) => {
     const output = await handleInput(input)
-    if (output) process.stdout.write(output + '\n')
-    rl.setPrompt(getPrompt()) // update prompt in case mode changed
+    if (output) {
+      lastOutput = output
+      redrawScreen(output)
+    }
+    rl.setPrompt(getPrompt())
     rl.prompt()
   })
 
