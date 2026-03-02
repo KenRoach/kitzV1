@@ -37,6 +37,7 @@ interface ThinkingStep { phase: string; detail: string; durationMs?: number }
 const VERSION = '0.1.0'
 const CODENAME = 'Lumen'
 const KITZ_OS_URL = process.env.KITZ_OS_URL || 'http://localhost:3012'
+const KITZ_CLOUD_URL = 'https://kitz.services'
 const WA_URL = process.env.WA_CONNECTOR_URL || 'http://localhost:3006'
 const DEV_SECRET = process.env.DEV_TOKEN_SECRET || ''
 const REPO_ROOT = findRepoRoot()
@@ -144,7 +145,7 @@ let previewServer: http.Server | null = null
 let previewRunning = false
 const artifactRegistry: Array<{ file: string; lang: string; created: Date; sizeKB: number; url: string }> = []
 let bootInfo = {
-  toolCount: 155, agentCount: 107, teamCount: 19,
+  toolCount: 267, agentCount: 140, teamCount: 19,
   batteryUsed: 0, batteryLimit: 5, batteryRemaining: 5,
   kernelStatus: 'offline' as string,
   waConnected: false, waPhone: '',
@@ -159,13 +160,15 @@ let bootInfo = {
 
 // ── HTTP Helpers ───────────────────────────────────────
 
-async function kitzFetch<T>(path: string, opts: RequestInit = {}): Promise<T> {
+let activeBaseUrl = KITZ_OS_URL
+
+async function kitzFetch<T>(urlPath: string, opts: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'x-dev-secret': DEV_SECRET,
     ...(opts.headers as Record<string, string> || {}),
   }
-  const res = await fetch(`${KITZ_OS_URL}${path}`, { ...opts, headers, signal: AbortSignal.timeout(30000) })
+  const res = await fetch(`${activeBaseUrl}${urlPath}`, { ...opts, headers, signal: AbortSignal.timeout(30000) })
   if (!res.ok) throw new Error(`API ${res.status}: ${await res.text().catch(() => 'no body')}`)
   return res.json() as Promise<T>
 }
@@ -196,18 +199,30 @@ async function gatherBootInfo(): Promise<void> {
     ).length
   } catch {}
 
-  // Probe services (async)
+  // Probe services (async) — try localhost first, then kitz.services
   const [kitzOk, waOk] = await Promise.all([
     probeService(KITZ_OS_URL),
     probeService(WA_URL),
   ])
 
-  connectionMode = kitzOk ? 'http' : 'local'
-  bootInfo.kernelStatus = kitzOk ? 'online' : 'offline'
+  let kitzReachable = kitzOk
+  if (kitzOk) {
+    activeBaseUrl = KITZ_OS_URL
+  } else {
+    // Fallback to kitz.services cloud
+    const cloudOk = await probeService(KITZ_CLOUD_URL)
+    if (cloudOk) {
+      activeBaseUrl = KITZ_CLOUD_URL
+      kitzReachable = true
+    }
+  }
+
+  connectionMode = kitzReachable ? 'http' : 'local'
+  bootInfo.kernelStatus = kitzReachable ? 'online' : 'offline'
   bootInfo.waConnected = waOk
 
   // Fetch live data from kitz_os
-  if (kitzOk) {
+  if (kitzReachable) {
     try {
       const status = await kitzFetch<{
         tools_registered?: number
@@ -215,7 +230,7 @@ async function gatherBootInfo(): Promise<void> {
         uptime?: number
         status?: string
       }>('/api/kitz/status')
-      bootInfo.toolCount = status.tools_registered ?? 155
+      bootInfo.toolCount = status.tools_registered ?? 267
       bootInfo.batteryUsed = status.battery?.todayCredits ?? 0
       bootInfo.batteryLimit = status.battery?.dailyLimit ?? 5
       bootInfo.batteryRemaining = status.battery?.remaining ?? (bootInfo.batteryLimit - bootInfo.batteryUsed)
@@ -299,7 +314,7 @@ function renderBootScreen(): string {
     `  ${dim('│')}  ${KITZ_FACE[orbMood].split('\n')[5]}`,
     `  ${dim('│')}`,
     `  ${dim('├─')} ${chalk.bold('System')}`,
-    `  ${dim('│')}  ${kernelIcon} kitz_os    ${dim(b.kernelStatus)} ${b.uptime > 0 ? dim(`· up ${timeAgo(b.uptime)}`) : ''}`,
+    `  ${dim('│')}  ${kernelIcon} kitz_os    ${dim(b.kernelStatus)} ${b.uptime > 0 ? dim(`· up ${timeAgo(b.uptime)}`) : ''} ${activeBaseUrl !== KITZ_OS_URL ? dim(`· ${activeBaseUrl}`) : ''}`,
     `  ${dim('│')}  ${waIcon} WhatsApp   ${dim(waLabel)}`,
     openclawLine ? `${openclawLine}` : '',
     `  ${dim('│')}`,
@@ -307,9 +322,11 @@ function renderBootScreen(): string {
     `  ${dim('│')}  🔧 ${chalk.white(String(b.toolCount))} tools   🤖 ${chalk.white(String(b.agentCount))} agents   📊 ${chalk.white(String(b.teamCount))} teams`,
     `  ${dim('│')}  📦 ${chalk.white(String(b.serviceCount))} services in monorepo`,
     `  ${dim('│')}`,
-    `  ${dim('├─')} ${chalk.bold('AI Battery')}`,
-    `  ${dim('│')}  [${batteryBar}] ${chalk.white(`${b.batteryUsed.toFixed(1)}/${b.batteryLimit}`)} credits ${dim(`(${batteryPct}%)`)}`,
-    `  ${dim('│')}`,
+    ...(process.env.AI_BATTERY_ENABLED === 'true' ? [
+      `  ${dim('├─')} ${chalk.bold('AI Battery')}`,
+      `  ${dim('│')}  [${batteryBar}] ${chalk.white(`${b.batteryUsed.toFixed(1)}/${b.batteryLimit}`)} credits ${dim(`(${batteryPct}%)`)}`,
+      `  ${dim('│')}`,
+    ] : []),
     `  ${dim('├─')} ${chalk.bold('Environment')}`,
     `  ${dim('│')}  📂 ${dim(b.repoPath)}`,
     `  ${dim('│')}  🌿 ${chalk.cyan(b.gitBranch || '?')}${gitDirty} ${dim(`@ ${b.gitCommit || '?'}`)}`,

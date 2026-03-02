@@ -1,6 +1,6 @@
 /**
  * KITZ OS — Terminal boot banner
- * Displays ASCII mascot + system info on startup.
+ * Displays KITZ wordmark + system info on startup.
  */
 
 const P = '\x1b[38;5;135m'; // Purple (brand color)
@@ -26,19 +26,6 @@ export function printBanner(opts: BannerOpts): void {
   const r = noColor ? '' : R;
   const b = noColor ? '' : B;
 
-  const mascot = [
-    `${p}              ██              ${r}`,
-    `${p}           ████████           ${r}`,
-    `${p}         ████████████         ${r}`,
-    `${p}        ██████████████        ${r}`,
-    `${p}        ██${r} ██  ██ ${p} ██        ${r}`,
-    `${p}        ██████████████        ${r}`,
-    `${p}        ███ ${r}╰────╯${p} ███        ${r}`,
-    `${p}         ████████████         ${r}`,
-    `${p}          ██████████          ${r}`,
-    `${p}          ██      ██          ${r}`,
-  ];
-
   const wordmark = [
     `${p}   ██╗  ██╗██╗████████╗███████╗${r}`,
     `${p}   ██║ ██╔╝██║╚══██╔══╝╚══███╔╝${r}`,
@@ -54,12 +41,10 @@ export function printBanner(opts: BannerOpts): void {
   const empty = `${d}│${r}${' '.repeat(W_BOX)}${d}│${r}`;
 
   const pad = (line: string, raw: string) => {
-    // raw = line stripped of ANSI for width calc
     const padding = W_BOX - raw.length;
     return `${d}│${r}${line}${' '.repeat(Math.max(0, padding))}${d}│${r}`;
   };
 
-  // Strip ANSI for width calculation
   const strip = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, '');
 
   const lines: string[] = [
@@ -67,12 +52,6 @@ export function printBanner(opts: BannerOpts): void {
     tl,
     empty,
   ];
-
-  // Mascot
-  for (const m of mascot) {
-    lines.push(pad(m, strip(m)));
-  }
-  lines.push(empty);
 
   // Wordmark
   for (const wl of wordmark) {
