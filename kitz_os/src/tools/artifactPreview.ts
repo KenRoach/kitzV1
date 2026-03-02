@@ -249,7 +249,7 @@ export function wrapInArtifact(innerHtml: string, options: {
 <body>
   <header class="kitz-artifact-header">
     <div class="brand">
-      <img class="logo" src="${baseUrl}/kitz-logo.png" alt="KITZ">
+      <div class="logo" style="display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.2);font-weight:800;font-size:14px;color:#fff;letter-spacing:-0.5px">K</div>
       <div class="title-group">
         <h1>${title}</h1>
         <div class="subtitle">${brandKit.businessName}${brandKit.tagline ? ` — ${brandKit.tagline}` : ''}</div>
@@ -362,9 +362,9 @@ export function createArtifactFromToolResult(
     innerHtml = wrapTextAsHtml(responseText, brandKit);
   }
 
-  // Build slug and public URL (kitz.services/Artifact-Name-xyz.html)
+  // Build slug and public URL
   const slug = generateSlug(title, contentId);
-  const previewUrl = `${baseUrl}/${slug}`;
+  const previewUrl = `${baseUrl}/api/kitz/artifact/${contentId}`;
 
   // Build actions
   const actions = getActionsForCategory(category, contentId, baseUrl);

@@ -44,6 +44,10 @@ export default defineConfig({
           })
         },
       },
+      '/ws': {
+        target: 'ws://localhost:3012',
+        ws: true,
+      },
       '/api/comms': {
         target: 'http://localhost:3013',
         rewrite: (p) => p.replace(/^\/api\/comms/, ''),
