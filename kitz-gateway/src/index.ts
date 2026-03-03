@@ -16,6 +16,18 @@ import { findUserByEmail, createUser, updateUser, verifyPassword, listUsers } fr
 export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
 
+// ── Launch safety checks ──
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT === 'production';
+if (!process.env.DATABASE_URL && !process.env.SUPABASE_URL) {
+  app.log.warn('⚠ DATABASE_URL and SUPABASE_URL not set — user data will use in-memory storage (lost on restart)');
+  if (isProduction) {
+    app.log.error('⛔ PRODUCTION without DATABASE_URL is dangerous. Set DATABASE_URL or SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY.');
+  }
+}
+if (!process.env.JWT_SECRET && !process.env.DEV_TOKEN_SECRET) {
+  app.log.warn('⚠ JWT_SECRET not set — auth tokens cannot be verified');
+}
+
 await app.register(rateLimit, { max: 120, timeWindow: '1 minute', store: FileBackedRateLimitStore });
 
 // Security headers
