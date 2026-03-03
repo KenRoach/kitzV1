@@ -82,27 +82,99 @@ const MODE_INFO: Record<KitzMode, { label: string; color: (s: string) => string;
     label: 'PLAN',
     color: chalk.hex('#F59E0B'),
     emoji: '📋',
-    desc: 'Kitz explains what it would do, step by step, before acting. You approve.',
+    desc: 'Kitz explica lo que haría, paso a paso, antes de actuar. Tú apruebas.',
     chatPrefix: '[MODE: PLAN — Think step-by-step. Outline what you would do, which tools you would call, and what the expected outcome is. Do NOT execute any tools yet. Present as a numbered plan and ask for approval.]',
   },
   ask: {
     label: 'ASK',
     color: chalk.hex('#3B82F6'),
     emoji: '🤔',
-    desc: 'Kitz asks before each action. Safe mode — nothing happens without your OK.',
+    desc: 'Kitz pregunta antes de cada acción. Modo seguro — nada pasa sin tu OK.',
     chatPrefix: '[MODE: ASK — Before performing any action or calling any tool, explain what you want to do and ask for explicit permission. Be concise.]',
   },
   go: {
     label: 'GO',
     color: chalk.hex('#22C55E'),
     emoji: '🚀',
-    desc: 'Kitz just does it. Full autonomy — execute tools, make decisions, ship.',
+    desc: 'Kitz lo hace. Autonomía total — ejecuta herramientas, decide, y lanza.',
     chatPrefix: '',
   },
 }
 
+// ── Slash Command Registry ────────────────────────────
+
+interface SlashCommand {
+  name: string
+  aliases: string[]
+  category: 'mode' | 'draft' | 'chat' | 'agents' | 'system' | 'code' | 'preview' | 'channel' | 'content' | 'util'
+  description: string
+  takesArg?: boolean
+  argHint?: string
+}
+
+const SLASH_COMMANDS: SlashCommand[] = [
+  // Modes
+  { name: 'plan', aliases: ['p'], category: 'mode', description: 'Plan mode — outlines before acting' },
+  { name: 'ask', aliases: ['a', 'safe'], category: 'mode', description: 'Ask mode — confirms each action' },
+  { name: 'go', aliases: ['vibe', 'yolo', 'ship'], category: 'mode', description: 'Go mode — full autonomy' },
+  { name: 'mode', aliases: [], category: 'mode', description: 'Show/switch execution mode', takesArg: true, argHint: '[plan|ask|go]' },
+  { name: 'auto', aliases: ['autoaccept', 'auto-accept'], category: 'mode', description: 'Toggle auto-accept drafts (GO mode)' },
+  // Drafts
+  { name: 'approve', aliases: ['yes', 'confirm'], category: 'draft', description: 'Approve pending draft' },
+  { name: 'reject', aliases: ['deny', 'cancel'], category: 'draft', description: 'Reject pending draft' },
+  // Chat & AI
+  { name: 'daily', aliases: [], category: 'chat', description: 'Daily ops brief' },
+  { name: 'weekly', aliases: [], category: 'chat', description: 'Weekly board packet' },
+  // Agents & Swarm
+  { name: 'swarm', aliases: [], category: 'agents', description: 'Full 19-team swarm run', takesArg: true, argHint: '[teams]' },
+  { name: 'agents', aliases: [], category: 'agents', description: 'All agents with status' },
+  { name: 'teams', aliases: [], category: 'agents', description: 'Team dashboard' },
+  { name: 'launch', aliases: [], category: 'agents', description: '33-agent launch review' },
+  { name: 'digest', aliases: [], category: 'agents', description: 'CTO digest' },
+  { name: 'warroom', aliases: ['warrooms', 'war'], category: 'agents', description: 'Active war rooms' },
+  { name: 'coaching', aliases: ['coach', 'training'], category: 'agents', description: 'Agent training & performance' },
+  // Content & Workflows
+  { name: 'content', aliases: ['pipeline'], category: 'content', description: 'Content creation pipeline' },
+  { name: 'workflows', aliases: ['workflow', 'n8n'], category: 'content', description: 'n8n workflow status' },
+  // System
+  { name: 'status', aliases: [], category: 'system', description: 'Full system status' },
+  { name: 'battery', aliases: [], category: 'system', description: 'AI Battery breakdown' },
+  { name: 'services', aliases: [], category: 'system', description: 'List all monorepo services' },
+  { name: 'tools', aliases: [], category: 'system', description: 'List tool modules' },
+  { name: 'health', aliases: ['ping'], category: 'system', description: 'Probe all services' },
+  { name: 'env', aliases: [], category: 'system', description: 'Environment variables (redacted)' },
+  // Channels
+  { name: 'wa', aliases: ['whatsapp'], category: 'channel', description: 'Connect WhatsApp (QR in terminal)' },
+  // Code Intelligence
+  { name: 'search', aliases: ['grep', 'find'], category: 'code', description: 'Search entire codebase', takesArg: true, argHint: '<pattern>' },
+  { name: 'files', aliases: ['ls'], category: 'code', description: 'List source files', takesArg: true, argHint: '[path]' },
+  { name: 'read', aliases: ['cat'], category: 'code', description: 'Read a file', takesArg: true, argHint: '<path>' },
+  { name: 'explain', aliases: [], category: 'code', description: 'AI-powered file analysis', takesArg: true, argHint: '<path>' },
+  { name: 'audit', aliases: [], category: 'code', description: 'Code health check', takesArg: true, argHint: '[service]' },
+  { name: 'deps', aliases: [], category: 'code', description: 'Dependency graph', takesArg: true, argHint: '[service]' },
+  { name: 'diff', aliases: [], category: 'code', description: 'Uncommitted changes', takesArg: true, argHint: '[service]' },
+  { name: 'map', aliases: ['arch', 'architecture'], category: 'code', description: 'Architecture diagram' },
+  { name: 'git', aliases: [], category: 'code', description: 'Git status & sub-commands', takesArg: true, argHint: '[log|diff|branches]' },
+  // Preview
+  { name: 'preview', aliases: ['render', 'server'], category: 'preview', description: 'Start artifact render server', takesArg: true, argHint: '[stop]' },
+  { name: 'open', aliases: [], category: 'preview', description: 'Open last artifact in browser' },
+  { name: 'artifact', aliases: ['artifacts'], category: 'preview', description: 'Show last artifact path' },
+  // Utilities
+  { name: 'clear', aliases: [], category: 'util', description: 'Clear screen' },
+  { name: 'help', aliases: [], category: 'util', description: 'Full command reference' },
+  { name: 'quit', aliases: ['exit', 'q'], category: 'util', description: 'Exit KITZ' },
+]
+
+// Build a fast lookup set of all known command names + aliases
+const KNOWN_COMMANDS = new Set<string>()
+for (const cmd of SLASH_COMMANDS) {
+  KNOWN_COMMANDS.add(cmd.name)
+  for (const a of cmd.aliases) KNOWN_COMMANDS.add(a)
+}
+
 // ── State ──────────────────────────────────────────────
 
+let autoAccept = false
 let currentMode: KitzMode = 'go'
 let orbMood: 'idle' | 'thinking' | 'success' | 'error' | 'swarm' = 'idle'
 let chatHistory: ChatMessage[] = []
@@ -263,16 +335,17 @@ function renderTopBar(): string {
 
   const mInfo = MODE_INFO[currentMode]
   const modeTag = mInfo.color(`[${mInfo.label}]`)
+  const autoTag = autoAccept ? chalk.green(' [AUTO]') : ''
 
   // Line 1: Brand + status
-  const line1 = `  ${purpleBold('KITZ')} ${dim(`v${VERSION}`)}  ${kernelDot} ${dim('OS')}  ${waStatus}  ${chalk.hex('#A855F7')('⚡')} ${dim(b.batteryLimit > 0 ? 'Unlimited' : '—')}  ${modeTag}  ${dim(`${b.toolCount} tools · ${b.agentCount} agents`)}`
+  const line1 = `  ${purpleBold('KITZ')} ${dim(`v${VERSION}`)}  ${kernelDot} ${dim('OS')}  ${waStatus}  ${chalk.hex('#A855F7')('⚡')} ${dim(b.batteryLimit > 0 ? 'Ilimitado' : '—')}  ${modeTag}${autoTag}  ${dim(`${b.toolCount} herramientas · ${b.agentCount} agentes`)}`
   // Line 2: Separator
   const line2 = `  ${dim('─'.repeat(72))}`
 
   return `${line1}\n${line2}`
 }
 
-/** Boot screen — wordmark + what we do + how + tagline */
+/** Boot screen — wordmark + que hacemos + como + tagline */
 function renderBootScreen(): string {
   const b = bootInfo
 
@@ -283,23 +356,25 @@ function renderBootScreen(): string {
   } catch { lastUpdate = '—' }
 
   const waStatus = b.waConnected
-    ? `${chalk.green('●')} WhatsApp linked${b.waPhone ? ` (+${b.waPhone})` : ''}`
-    : `${chalk.red('○')} WhatsApp not linked — type ${chalk.cyan('wa')} to scan QR`
+    ? `${chalk.green('●')} WhatsApp conectado${b.waPhone ? ` (+${b.waPhone})` : ''}`
+    : `${chalk.red('○')} WhatsApp sin vincular — escribe ${chalk.cyan('/wa')} para escanear QR`
 
   const lines = [
     '',
     ...KITZ_WORDMARK.map(l => `  ${l}`),
-    `  ${dim('"Your Business Handled"')}`,
-    `  ${dim(`v${VERSION} · Updated ${lastUpdate}`)}`,
+    `  ${dim('"Tu Negocio, Handled"')}`,
+    `  ${dim(`v${VERSION} · Actualizado ${lastUpdate}`)}`,
     '',
-    `  ${purpleBold('What')}  ${chalk.white('AI-powered Business OS for small businesses')}`,
-    `  ${purpleBold('How')}   ${chalk.white('Chat on WhatsApp or here — KITZ runs your ops with 267 AI tools')}`,
+    `  ${purpleBold('Qué')}    ${chalk.white('Sistema operativo de negocios con IA para pequeñas empresas')}`,
+    `  ${purpleBold('Cómo')}   ${chalk.white('Chatea en WhatsApp o aquí — KITZ maneja tus operaciones con 267 herramientas IA')}`,
     '',
     `  ${waStatus}`,
     '',
-    `  ${chalk.cyan('wa')}        ${dim('Link WhatsApp (QR in terminal)')}`,
-    `  ${chalk.cyan('help')}      ${dim('All commands')}`,
-    `  ${dim('Or just type a message to get started.')}`,
+    `  ${chalk.cyan('/status')}    ${dim('Panel del sistema')}`,
+    `  ${chalk.cyan('/wa')}        ${dim('Vincular WhatsApp (QR en terminal)')}`,
+    `  ${chalk.cyan('/auto')}      ${dim('Auto-aprobar borradores (modo GO)')}`,
+    `  ${chalk.cyan('/')}          ${dim('Todos los comandos')}`,
+    `  ${dim('O escribe un mensaje para empezar.')}`,
     '',
     `  ${dim('─'.repeat(50))}`,
     '',
@@ -326,26 +401,26 @@ function redrawScreen(content?: string) {
 
 /** Kitz-flavored synonyms for "thinking" — rotates each run */
 const KITZ_THINK_LABELS = [
-  'Wiring the play',
-  'Mapping the hustle',
-  'Routing the signal',
-  'Locking in',
-  'Running the playbook',
-  'Charging up',
-  'Building the blueprint',
-  'Cooking',
-  'Processing the drop',
-  'Calibrating',
+  'Armando la jugada',
+  'Mapeando el hustle',
+  'Ruteando la señal',
+  'Conectando',
+  'Ejecutando el plan',
+  'Cargando energía',
+  'Construyendo el plano',
+  'Cocinando',
+  'Procesando',
+  'Calibrando',
 ]
 let thinkLabelIdx = 0
 
 /** Phase verbs — Kitz-style action words instead of generic labels */
 const PHASE_VERBS: Record<string, string> = {
-  READ: 'Scanned',
-  COMPREHEND: 'Classified',
-  BRAINSTORM: 'Strategized',
-  EXECUTE: 'Deployed',
-  VOICE: 'Delivered',
+  READ: 'Escaneado',
+  COMPREHEND: 'Clasificado',
+  BRAINSTORM: 'Estrategia',
+  EXECUTE: 'Ejecutado',
+  VOICE: 'Entregado',
 }
 
 function showThinking(steps: ThinkingStep[]): string {
@@ -426,10 +501,22 @@ async function cmdChat(message: string): Promise<string> {
     const artifactInfo = extractAndSaveArtifacts(reply)
     if (artifactInfo) out += artifactInfo
 
-    // Show draft approval hint
-    if (res.draft_token || /\bdraft\b/i.test(reply) || /\bapproval\b/i.test(reply) || /\bapprove\b/i.test(reply)) {
+    // Auto-approve drafts in GO + auto-accept mode
+    if (res.draft_token && autoAccept && currentMode === 'go') {
+      try {
+        await kitzFetch<Record<string, unknown>>('/api/kitz/approve', {
+          method: 'POST',
+          body: JSON.stringify({ token: lastDraftToken, action: 'approve', user_id: `cli:${bootInfo.user}` }),
+        })
+        lastDraftToken = null
+        out += `\n  ${chalk.green('⚡ Auto-approved')} ${dim('(go + auto-accept)')}\n`
+      } catch {
+        out += `\n  ${chalk.yellow('📋 Draft pending')} — auto-approve failed, type ${chalk.cyan('/approve')} manually.\n`
+      }
+    } else if (res.draft_token || /\bdraft\b/i.test(reply) || /\bapproval\b/i.test(reply) || /\bapprove\b/i.test(reply)) {
+      // Show draft approval hint
       if (res.draft_token) {
-        out += `\n  ${chalk.yellow('📋 Draft pending')} — type ${chalk.cyan('approve')} or ${chalk.cyan('reject')}\n`
+        out += `\n  ${chalk.yellow('📋 Draft pending')} — type ${chalk.cyan('/approve')} or ${chalk.cyan('/reject')}\n`
       }
     }
 
@@ -446,7 +533,7 @@ async function cmdChat(message: string): Promise<string> {
     setTimeout(() => { orbMood = 'idle' }, 3000)
     const errMsg = err instanceof Error ? err.message : 'Failed to reach KITZ'
     if (errMsg.includes('API 404') || errMsg.includes('fetch')) {
-      return chalk.yellow(`\n  ⚠ kitz_os not reachable at ${KITZ_OS_URL}\n  Start it with: ${dim('cd kitz_os && npm run dev')}\n`)
+      return chalk.yellow(`\n  ⚠ kitz_os no alcanzable en ${KITZ_OS_URL}\n  Inicia con: ${dim('cd kitz_os && npm run dev')}\n`)
     }
     return chalk.red(`\n  ❌ ${errMsg}\n`)
   }
@@ -914,10 +1001,10 @@ function wrapDocumentAsHtml(content: string): string {
 
 async function cmdApprove(): Promise<string> {
   if (!lastDraftToken) {
-    return chalk.yellow('\n  ⚠ No pending draft to approve. Send a message first.\n')
+    return chalk.yellow('\n  ⚠ No hay borrador pendiente. Envía un mensaje primero.\n')
   }
 
-  const spinner = showSpinner('Approving draft...')
+  const spinner = showSpinner('Aprobando borrador...')
   try {
     const res = await kitzFetch<{ response?: string; message?: string; status?: string }>('/api/kitz/approve', {
       method: 'POST',
@@ -925,19 +1012,19 @@ async function cmdApprove(): Promise<string> {
     })
     stopSpinner(spinner)
     lastDraftToken = null
-    const reply = res.response ?? res.message ?? 'Draft approved and executed.'
+    const reply = res.response ?? res.message ?? 'Borrador aprobado y ejecutado.'
     orbMood = 'success'
     setTimeout(() => { orbMood = 'idle' }, 3000)
-    return `\n  ${chalk.green('✅ Approved')}: ${chalk.white(reply)}\n`
+    return `\n  ${chalk.green('✅ Aprobado')}: ${chalk.white(reply)}\n`
   } catch (err) {
     stopSpinner(spinner)
-    return chalk.red(`\n  ❌ Approval failed: ${err instanceof Error ? err.message : String(err)}\n`)
+    return chalk.red(`\n  ❌ Aprobación falló: ${err instanceof Error ? err.message : String(err)}\n`)
   }
 }
 
 async function cmdReject(): Promise<string> {
   if (!lastDraftToken) {
-    return chalk.yellow('\n  ⚠ No pending draft to reject.\n')
+    return chalk.yellow('\n  ⚠ No hay borrador pendiente para rechazar.\n')
   }
 
   try {
@@ -946,7 +1033,7 @@ async function cmdReject(): Promise<string> {
       body: JSON.stringify({ token: lastDraftToken, action: 'reject', user_id: `cli:${bootInfo.user}` }),
     })
     lastDraftToken = null
-    return `\n  ${chalk.yellow('❌ Draft rejected.')}\n`
+    return `\n  ${chalk.yellow('❌ Borrador rechazado.')}\n`
   } catch (err) {
     return chalk.red(`\n  ❌ Reject failed: ${err instanceof Error ? err.message : String(err)}\n`)
   }
@@ -1113,7 +1200,7 @@ async function cmdWhatsApp(): Promise<string> {
 
   // Check if already connected
   if (bootInfo.waConnected && bootInfo.waPhone) {
-    return `\n  ${chalk.green('●')} WhatsApp already linked: ${chalk.white(`+${bootInfo.waPhone}`)}\n  ${dim('To reconnect, restart the WhatsApp connector first.')}\n`
+    return `\n  ${chalk.green('●')} WhatsApp ya vinculado: ${chalk.white(`+${bootInfo.waPhone}`)}\n  ${dim('Para reconectar, reinicia el conector de WhatsApp primero.')}\n`
   }
 
   // Set linking state — top bar will show it
@@ -1122,9 +1209,9 @@ async function cmdWhatsApp(): Promise<string> {
 
   process.stdout.write('\x1B[2J\x1B[H') // clear
   process.stdout.write(renderTopBar() + '\n\n')
-  process.stdout.write(`  ${zap('⚡')} ${chalk.white.bold('WhatsApp Link')}\n`)
+  process.stdout.write(`  ${zap('⚡')} ${chalk.white.bold('Vincular WhatsApp')}\n`)
   process.stdout.write(`  ${dim('─'.repeat(40))}\n`)
-  process.stdout.write(dim('  Connecting to Baileys engine...\n\n'))
+  process.stdout.write(dim('  Conectando al motor Baileys...\n\n'))
 
   return new Promise((resolve) => {
     const url = `${WA_URL}/whatsapp/connect?userId=cli-${Date.now()}`
@@ -1158,7 +1245,7 @@ async function cmdWhatsApp(): Promise<string> {
           clearInterval(countdownTimer)
           cleanup()
           reader.cancel()
-          resolve(chalk.yellow('\n  ⏱ QR expired. Type `wa` to try again.\n'))
+          resolve(chalk.yellow('\n  ⏱ QR expirado. Escribe `/wa` para intentar de nuevo.\n'))
         }
       }, 65000)
 
@@ -1185,7 +1272,7 @@ async function cmdWhatsApp(): Promise<string> {
                   // Persistent redraw: top bar (shows linking + countdown) → QR
                   process.stdout.write('\x1B[2J\x1B[H')
                   process.stdout.write(renderTopBar() + '\n\n')
-                  process.stdout.write(`  ${zap('⚡')} ${chalk.white.bold('WhatsApp Link')}  ${chalk.yellow(`⏱ ${bootInfo.waCountdown}s`)}\n`)
+                  process.stdout.write(`  ${zap('⚡')} ${chalk.white.bold('Vincular WhatsApp')}  ${chalk.yellow(`⏱ ${bootInfo.waCountdown}s`)}\n`)
                   process.stdout.write(`  ${dim('─'.repeat(40))}\n\n`)
 
                   // Render QR code
@@ -1194,8 +1281,8 @@ async function cmdWhatsApp(): Promise<string> {
                     process.stdout.write(qrLines.join('\n') + '\n\n')
                   })
 
-                  process.stdout.write(`  ${dim('Open WhatsApp → Settings → Linked Devices → Scan')}\n`)
-                  process.stdout.write(`  ${dim('Ctrl+C to cancel')}\n`)
+                  process.stdout.write(`  ${dim('WhatsApp → Ajustes → Dispositivos vinculados → Escanear')}\n`)
+                  process.stdout.write(`  ${dim('Ctrl+C para cancelar')}\n`)
                 } catch {
                   process.stdout.write(dim(`  QR: ${rawData.slice(0, 50)}...\n`))
                 }
@@ -1209,10 +1296,10 @@ async function cmdWhatsApp(): Promise<string> {
                   const d = JSON.parse(rawData)
                   bootInfo.waConnected = true
                   bootInfo.waPhone = d.phone || ''
-                  resolve(`\n  ${chalk.green('⚡')} ${chalk.green.bold('WhatsApp linked!')}  ${chalk.white(`+${d.phone || 'unknown'}`)}\n  ${dim('Messages will flow through KITZ.')}\n`)
+                  resolve(`\n  ${chalk.green('⚡')} ${chalk.green.bold('WhatsApp vinculado!')}  ${chalk.white(`+${d.phone || 'unknown'}`)}\n  ${dim('Los mensajes fluirán por KITZ.')}\n`)
                 } catch {
                   bootInfo.waConnected = true
-                  resolve(`\n  ${chalk.green('⚡')} ${chalk.green.bold('WhatsApp linked!')}\n`)
+                  resolve(`\n  ${chalk.green('⚡')} ${chalk.green.bold('WhatsApp vinculado!')}\n`)
                 }
                 return
               } else if (currentEvent === 'error') {
@@ -2206,14 +2293,14 @@ function showSpinner(_label: string): ReturnType<typeof setInterval> {
   const purples = ['#A855F7', '#9333EA', '#7C3AED', '#6D28D9', '#8B5CF6', '#A78BFA', '#C084FC', '#7C3AED']
   // Kitz-flavored "processing" labels that rotate
   const labels = [
-    'Locking in...',
-    'Routing signal...',
-    'Wiring the play...',
-    'Charging up...',
-    'Cooking...',
-    'Building...',
-    'Processing...',
-    'Deploying...',
+    'Conectando...',
+    'Ruteando señal...',
+    'Armando la jugada...',
+    'Cargando...',
+    'Cocinando...',
+    'Construyendo...',
+    'Procesando...',
+    'Desplegando...',
   ]
   let i = 0
   const labelPick = labels[Math.floor(Math.random() * labels.length)]
@@ -2237,14 +2324,14 @@ function stopSpinner(interval: ReturnType<typeof setInterval>): void {
 function cmdMode(arg?: string): string {
   if (!arg) {
     // Show current mode + all options
-    const lines = ['', purpleBold('  🎛  EXECUTION MODE'), `  ${line(50)}`, '']
+    const lines = ['', purpleBold('  🎛  MODO DE EJECUCIÓN'), `  ${line(50)}`, '']
     for (const [key, info] of Object.entries(MODE_INFO)) {
       const active = key === currentMode
-      const marker = active ? chalk.green(' ◀ active') : ''
+      const marker = active ? chalk.green(' ◀ activo') : ''
       lines.push(`  ${info.emoji} ${info.color(info.label.padEnd(6))} ${dim(info.desc)}${marker}`)
     }
     lines.push('')
-    lines.push(dim('  Switch: plan, ask, go (or vibe)'))
+    lines.push(dim('  Cambiar: /plan, /ask, /go (o /vibe)'))
     lines.push('')
     return lines.join('\n')
   }
@@ -2258,7 +2345,7 @@ function cmdMode(arg?: string): string {
 
   const newMode = modeMap[normalized]
   if (!newMode) {
-    return chalk.yellow(`\n  ⚠ Unknown mode: "${arg}". Options: plan, ask, go (vibe)\n`)
+    return chalk.yellow(`\n  ⚠ Modo desconocido: "${arg}". Opciones: /plan, /ask, /go (/vibe)\n`)
   }
 
   const prev = currentMode
@@ -2266,10 +2353,26 @@ function cmdMode(arg?: string): string {
   const info = MODE_INFO[newMode]
 
   if (prev === newMode) {
-    return dim(`\n  Already in ${info.emoji} ${info.label} mode.\n`)
+    return dim(`\n  Ya estás en modo ${info.emoji} ${info.label}.\n`)
   }
 
-  return `\n  ${info.emoji} Switched to ${info.color(info.label)} mode\n  ${dim(info.desc)}\n`
+  // Reset auto-accept when leaving GO mode
+  if (newMode !== 'go' && autoAccept) {
+    autoAccept = false
+  }
+
+  return `\n  ${info.emoji} Cambiado a modo ${info.color(info.label)}\n  ${dim(info.desc)}\n`
+}
+
+function cmdAutoAccept(): string {
+  autoAccept = !autoAccept
+  if (autoAccept && currentMode !== 'go') {
+    autoAccept = false
+    return `\n  ${chalk.yellow('⚠')} Auto-accept solo funciona en modo ${chalk.green('GO')}.\n  Cambia primero: ${chalk.cyan('/go')}\n`
+  }
+  return autoAccept
+    ? `\n  ${chalk.green('⚡ Auto-accept ON')} — Borradores aprobados automáticamente en modo GO.\n  ${dim('Desactivar: /auto')}\n`
+    : `\n  ${chalk.yellow('⏸ Auto-accept OFF')} — Se te pedirá aprobar borradores.\n`
 }
 
 // ── Help ───────────────────────────────────────────────
@@ -2277,71 +2380,73 @@ function cmdMode(arg?: string): string {
 function cmdHelp(): string {
   return [
     '',
-    purpleBold('  KITZ Command Center'),
-    `  ${line(50)}`,
+    purpleBold('  Centro de Comando KITZ'),
+    `  ${line(55)}`,
     '',
-    chalk.bold('  🎛  Modes'),
-    `    ${chalk.cyan('plan')}                 📋 Plan mode — Kitz outlines before acting`,
-    `    ${chalk.cyan('ask')}                  🤔 Ask mode — Kitz confirms each action`,
-    `    ${chalk.cyan('go / vibe')}            🚀 Go mode — full autonomy, just ship`,
-    `    ${chalk.cyan('mode')}                 Show current mode`,
+    chalk.bold('  🎛  Modos'),
+    `    ${chalk.cyan('/plan')}                📋 Modo plan — Kitz planifica antes de actuar`,
+    `    ${chalk.cyan('/ask')}                 🤔 Modo preguntar — Kitz confirma cada acción`,
+    `    ${chalk.cyan('/go')}                  🚀 Modo go — autonomía total, solo ejecuta`,
+    `    ${chalk.cyan('/auto')}                ⚡ Auto-aprobar borradores (solo modo GO)`,
+    `    ${chalk.cyan('/mode')}                Mostrar/cambiar modo actual`,
     '',
     chalk.bold('  💬 Chat'),
-    `    ${chalk.cyan('<message>')}            Send to KITZ AI (5-phase router)`,
-    `    ${chalk.cyan('approve / reject')}     Approve or reject a pending draft`,
-    `    ${chalk.cyan('daily')}                Daily ops brief`,
-    `    ${chalk.cyan('weekly')}               Weekly board packet`,
+    `    ${chalk.cyan('<mensaje>')}            Enviar a KITZ AI (router semántico 5 fases)`,
+    `    ${chalk.cyan('/approve')}             Aprobar borrador pendiente`,
+    `    ${chalk.cyan('/reject')}              Rechazar borrador pendiente`,
+    `    ${chalk.cyan('/daily')}               Reporte diario de operaciones`,
+    `    ${chalk.cyan('/weekly')}              Paquete semanal para junta`,
     '',
-    chalk.bold('  🌐 Preview Server'),
-    `    ${chalk.cyan('preview')}              Start local artifact render server (:${PREVIEW_PORT})`,
-    `    ${chalk.cyan('preview stop')}         Stop the preview server`,
-    `    ${chalk.cyan('open')}                 Open last artifact in browser`,
-    `    ${chalk.cyan('artifact')}             Show last artifact path`,
-    `    ${dim('    Renders: HTML, invoices, quotes, orders, decks, reports, contracts')}`,
+    chalk.bold('  🌐 Preview'),
+    `    ${chalk.cyan('/preview')}             Iniciar servidor de artefactos (:${PREVIEW_PORT})`,
+    `    ${chalk.cyan('/preview stop')}        Detener servidor preview`,
+    `    ${chalk.cyan('/open')}                Abrir último artefacto en navegador`,
+    `    ${chalk.cyan('/artifact')}            Mostrar ruta del último artefacto`,
     '',
-    chalk.bold('  🤖 Agents & Swarm'),
-    `    ${chalk.cyan('swarm')}                Full 19-team swarm run`,
-    `    ${chalk.cyan('swarm <teams>')}        Targeted teams (comma-separated)`,
-    `    ${chalk.cyan('agents')}               All agents with status`,
-    `    ${chalk.cyan('teams')}                Team dashboard`,
-    `    ${chalk.cyan('launch')}               33-agent launch review`,
-    `    ${chalk.cyan('digest')}               CTO digest`,
-    `    ${chalk.cyan('warroom')}              Active war rooms`,
-    `    ${chalk.cyan('coaching')}             Agent training & performance`,
+    chalk.bold('  🤖 Agentes & Swarm'),
+    `    ${chalk.cyan('/swarm')}               Ejecución completa de 19 equipos`,
+    `    ${chalk.cyan('/swarm <equipos>')}     Equipos específicos (separados por coma)`,
+    `    ${chalk.cyan('/agents')}              Todos los agentes con estado`,
+    `    ${chalk.cyan('/teams')}               Panel de equipos`,
+    `    ${chalk.cyan('/launch')}              Revisión de lanzamiento (33 agentes)`,
+    `    ${chalk.cyan('/digest')}              Resumen del CTO`,
+    `    ${chalk.cyan('/warroom')}             Salas de guerra activas`,
+    `    ${chalk.cyan('/coaching')}            Entrenamiento y rendimiento de agentes`,
     '',
-    chalk.bold('  📣 Content & Workflows'),
-    `    ${chalk.cyan('content')}              Content creation pipeline`,
-    `    ${chalk.cyan('workflows')}            n8n workflow status`,
+    chalk.bold('  📣 Contenido & Workflows'),
+    `    ${chalk.cyan('/content')}             Pipeline de creación de contenido`,
+    `    ${chalk.cyan('/workflows')}           Estado de workflows n8n`,
     '',
-    chalk.bold('  ⚡ System'),
-    `    ${chalk.cyan('status')}               Full system health`,
-    `    ${chalk.cyan('battery')}              AI Battery breakdown`,
-    `    ${chalk.cyan('services')}             List all monorepo services`,
-    `    ${chalk.cyan('tools')}                List tool modules`,
+    chalk.bold('  ⚡ Sistema'),
+    `    ${chalk.cyan('/status')}              Estado completo del sistema`,
+    `    ${chalk.cyan('/battery')}             Desglose de AI Battery`,
+    `    ${chalk.cyan('/services')}            Listar servicios del monorepo`,
+    `    ${chalk.cyan('/tools')}               Listar módulos de herramientas`,
+    `    ${chalk.cyan('/health')}              Verificar todos los servicios`,
+    `    ${chalk.cyan('/env')}                 Variables de entorno (redactadas)`,
     '',
-    chalk.bold('  📱 Channels'),
-    `    ${chalk.cyan('wa / whatsapp')}        Connect WhatsApp (QR in terminal)`,
+    chalk.bold('  📱 Canales'),
+    `    ${chalk.cyan('/wa')}                  Conectar WhatsApp (QR en terminal)`,
     '',
-    chalk.bold('  🔍 Code Intelligence'),
-    `    ${chalk.cyan('search <pattern>')}     Search entire codebase`,
-    `    ${chalk.cyan('files [path]')}         List source files`,
-    `    ${chalk.cyan('read <path>')}          Read a file (relative to repo)`,
-    `    ${chalk.cyan('explain <path>')}       AI-powered file analysis`,
-    `    ${chalk.cyan('audit [service]')}      Code health check (types, TODOs, deps)`,
-    `    ${chalk.cyan('deps [service]')}       Dependency graph`,
-    `    ${chalk.cyan('diff [service]')}       Uncommitted changes`,
-    `    ${chalk.cyan('map')}                  Architecture diagram`,
-    `    ${chalk.cyan('health')}               Probe all services`,
-    `    ${chalk.cyan('env')}                  Environment variables (redacted)`,
-    `    ${chalk.cyan('git')}                  Git status + recent commits`,
-    `    ${chalk.cyan('git log/diff/branches')} Git sub-commands`,
+    chalk.bold('  🔍 Inteligencia de Código'),
+    `    ${chalk.cyan('/search <patrón>')}     Buscar en todo el código`,
+    `    ${chalk.cyan('/files [ruta]')}        Listar archivos fuente`,
+    `    ${chalk.cyan('/read <ruta>')}         Leer un archivo (relativo al repo)`,
+    `    ${chalk.cyan('/explain <ruta>')}      Análisis de archivo con IA`,
+    `    ${chalk.cyan('/audit [servicio]')}    Auditoría de código (tipos, TODOs, deps)`,
+    `    ${chalk.cyan('/deps [servicio]')}     Grafo de dependencias`,
+    `    ${chalk.cyan('/diff [servicio]')}     Cambios sin commit`,
+    `    ${chalk.cyan('/map')}                 Diagrama de arquitectura`,
+    `    ${chalk.cyan('/git')}                 Git status + commits recientes`,
     '',
-    chalk.bold('  🛠 Utilities'),
-    `    ${chalk.cyan('clear')}                Clear screen`,
-    `    ${chalk.cyan('help / ?')}             This menu`,
-    `    ${chalk.cyan('quit / exit')}          Exit`,
+    chalk.bold('  🛠 Utilidades'),
+    `    ${chalk.cyan('/clear')}               Limpiar pantalla`,
+    `    ${chalk.cyan('/')}                    Paleta rápida de comandos`,
+    `    ${chalk.cyan('/help')}                Este menú completo`,
+    `    ${chalk.cyan('!!')}                   Repetir último comando`,
+    `    ${chalk.cyan('/quit')}                Salir`,
     '',
-    dim('  Anything else is sent as a chat message to KITZ AI.'),
+    dim('  Tab para autocompletar · Todo lo demás se envía como chat a KITZ AI.'),
     '',
   ].join('\n')
 }
@@ -2369,15 +2474,37 @@ function detectCommandHint(message: string): string | null {
 
   for (const h of hints) {
     if (h.keywords.some(kw => lower.includes(kw))) {
-      return `\n  ${chalk.yellow('💡 Tip')}: Type ${chalk.cyan(h.command)} to ${h.desc} directly.\n`
+      return `\n  ${chalk.yellow('💡 Tip')}: Type ${chalk.cyan('/' + h.command)} to ${h.desc} directly.\n`
     }
   }
   return null
 }
 
+const cmdHistory: string[] = []
+
 async function handleInput(input: string): Promise<string> {
-  const trimmed = input.trim()
+  let trimmed = input.trim()
   if (!trimmed) return ''
+
+  // History recall: !! reruns last command
+  if (trimmed === '!!') {
+    if (cmdHistory.length === 0) return dim('\n  Sin historial de comandos.\n')
+    trimmed = cmdHistory[cmdHistory.length - 1]
+  }
+
+  // Slash command support: strip leading / if it's a known command
+  if (trimmed.startsWith('/')) {
+    const potentialCmd = trimmed.slice(1).split(/\s+/)[0].toLowerCase()
+    if (KNOWN_COMMANDS.has(potentialCmd) || trimmed === '/') {
+      trimmed = trimmed.slice(1)
+    }
+  }
+
+  // Record in history (skip empty after strip)
+  if (trimmed) cmdHistory.push(trimmed)
+
+  // Just "/" with nothing after = command palette
+  if (!trimmed) return cmdPalette()
 
   const [cmd, ...args] = trimmed.split(/\s+/)
   const arg = args.join(' ')
@@ -2388,6 +2515,7 @@ async function handleInput(input: string): Promise<string> {
     case 'plan': case 'p': return cmdMode('plan')
     case 'ask': case 'a': return cmdMode('ask')
     case 'go': case 'vibe': case 'yolo': case 'ship': return cmdMode('go')
+    case 'auto': case 'autoaccept': case 'auto-accept': return cmdAutoAccept()
 
     // Draft workflow
     case 'approve': case 'approved': case 'yes': case 'confirm': return cmdApprove()
@@ -2446,9 +2574,10 @@ async function handleInput(input: string): Promise<string> {
 
     // Utilities
     case 'clear': process.stdout.write('\x1B[2J\x1B[H'); return ''
-    case 'help': case '?': return cmdHelp()
+    case '?': return cmdPalette()
+    case 'help': return cmdHelp()
     case 'quit': case 'exit': case 'q':
-      process.stdout.write(dim('\n  👋 KITZ out. Keep building.\n') + '\n')
+      process.stdout.write(dim('\n  👋 KITZ fuera. Sigue construyendo.\n') + '\n')
       process.exit(0)
 
     // Default: chat with smart hints
@@ -2458,6 +2587,74 @@ async function handleInput(input: string): Promise<string> {
       return hint ? chatResult + hint : chatResult
     }
   }
+}
+
+// ── Command Palette ────────────────────────────────────
+
+function cmdPalette(): string {
+  const categories: Record<string, SlashCommand[]> = {}
+  for (const cmd of SLASH_COMMANDS) {
+    if (!categories[cmd.category]) categories[cmd.category] = []
+    categories[cmd.category].push(cmd)
+  }
+
+  const categoryLabels: Array<[string, string]> = [
+    ['mode', '🎛  Modos'],
+    ['draft', '📋 Borradores'],
+    ['chat', '💬 Chat'],
+    ['agents', '🤖 Agentes'],
+    ['system', '⚡ Sistema'],
+    ['code', '🔍 Código'],
+    ['preview', '🌐 Preview'],
+    ['channel', '📱 Canales'],
+    ['content', '📣 Contenido'],
+    ['util', '🛠  Utilidades'],
+  ]
+
+  const lines = ['', purpleBold('  Comandos KITZ'), `  ${line(60)}`, '']
+
+  for (const [cat, label] of categoryLabels) {
+    const cmds = categories[cat]
+    if (!cmds || cmds.length === 0) continue
+    const cmdStr = cmds.map(c => {
+      const hint = c.argHint ? ` ${dim(c.argHint)}` : ''
+      return chalk.cyan(`/${c.name}`) + hint
+    }).join('  ')
+    lines.push(`  ${label}  ${cmdStr}`)
+  }
+
+  lines.push('')
+  lines.push(dim('  Tab para completar · /help para detalles · Escribe para chatear'))
+  lines.push('')
+  return lines.join('\n')
+}
+
+// ── Tab Completion ────────────────────────────────────
+
+function kitzCompleter(line: string): [string[], string] {
+  const trimmed = line.trimStart()
+  const hasSlash = trimmed.startsWith('/')
+  const partial = hasSlash ? trimmed.slice(1) : trimmed
+
+  // Only complete the first word (command name)
+  if (partial.includes(' ')) return [[], line]
+
+  const primaryNames = SLASH_COMMANDS.map(c => c.name)
+  const prefix = hasSlash ? '/' : ''
+
+  if (partial === '' && hasSlash) {
+    // Show all commands when just "/" is typed
+    return [primaryNames.map(n => `${prefix}${n}`), line]
+  }
+
+  if (partial === '') return [[], line]
+
+  const allNames = SLASH_COMMANDS.flatMap(c => [c.name, ...c.aliases])
+  const matches = allNames
+    .filter(name => name.startsWith(partial.toLowerCase()))
+    .map(name => `${prefix}${name}`)
+
+  return [matches, line]
 }
 
 // ── Main Boot ──────────────────────────────────────────
@@ -2491,7 +2688,13 @@ async function main() {
   function getPrompt(): string {
     const mInfo = MODE_INFO[currentMode]
     const modeTag = currentMode === 'go' ? '' : ` ${mInfo.color(`[${mInfo.label}]`)}`
-    return `  ${purple('kitz')}${modeTag} ${dim('›')} `
+
+    const indicators: string[] = []
+    if (lastDraftToken) indicators.push(chalk.yellow('📋'))
+    if (autoAccept) indicators.push(chalk.green('⚡'))
+    const indicatorStr = indicators.length > 0 ? ` ${indicators.join('')}` : ''
+
+    return `  ${purple('kitz')}${modeTag}${indicatorStr} ${dim('›')} `
   }
 
   const rl = readline.createInterface({
@@ -2499,13 +2702,14 @@ async function main() {
     output: process.stdout,
     prompt: getPrompt(),
     terminal: true,
+    completer: kitzCompleter,
   })
 
   // Auto-show WhatsApp QR if not connected and connector is reachable
   if (!bootInfo.waConnected) {
     const waReachable = await probeService(WA_URL, 2000)
     if (waReachable) {
-      process.stdout.write(`  ${chalk.hex('#A855F7')('⚡')} ${chalk.white.bold('Scan to link WhatsApp')}\n\n`)
+      process.stdout.write(`  ${chalk.hex('#A855F7')('⚡')} ${chalk.white.bold('Escanea para vincular WhatsApp')}\n\n`)
       await showBootQR(rl, getPrompt)
       return // showBootQR starts the REPL loop
     }
@@ -2550,7 +2754,7 @@ async function showBootQR(rl: readline.Interface, getPrompt: () => string): Prom
         clearInterval(countdownTimer)
         bootInfo.waLinking = false
         reader.cancel()
-        process.stdout.write(chalk.yellow('\n  ⏱ QR expired. Type `wa` to try again.\n\n'))
+        process.stdout.write(chalk.yellow('\n  ⏱ QR expirado. Escribe `/wa` para intentar de nuevo.\n\n'))
         rl.prompt()
         wireRepl(rl, getPrompt)
       }
@@ -2589,8 +2793,8 @@ async function showBootQR(rl: readline.Interface, getPrompt: () => string): Prom
                     process.stdout.write(qrLines.join('\n') + '\n\n')
                   })
 
-                  process.stdout.write(`  ${dim('WhatsApp → Settings → Linked Devices → Scan')}\n`)
-                  process.stdout.write(`  ${dim('Press Enter to skip')}\n`)
+                  process.stdout.write(`  ${dim('WhatsApp → Ajustes → Dispositivos vinculados → Escanear')}\n`)
+                  process.stdout.write(`  ${dim('Presiona Enter para saltar')}\n`)
 
                   qrRendered = true
                 } catch {
@@ -2606,10 +2810,10 @@ async function showBootQR(rl: readline.Interface, getPrompt: () => string): Prom
                   const d = JSON.parse(rawData)
                   bootInfo.waConnected = true
                   bootInfo.waPhone = d.phone || ''
-                  process.stdout.write(`\n\n  ${chalk.green('⚡')} ${chalk.green.bold('WhatsApp linked!')}  ${chalk.white(`+${d.phone || 'unknown'}`)}\n\n`)
+                  process.stdout.write(`\n\n  ${chalk.green('⚡')} ${chalk.green.bold('WhatsApp vinculado!')}  ${chalk.white(`+${d.phone || 'unknown'}`)}\n\n`)
                 } catch {
                   bootInfo.waConnected = true
-                  process.stdout.write(`\n\n  ${chalk.green('⚡')} ${chalk.green.bold('WhatsApp linked!')}\n\n`)
+                  process.stdout.write(`\n\n  ${chalk.green('⚡')} ${chalk.green.bold('WhatsApp vinculado!')}\n\n`)
                 }
                 rl.prompt()
                 wireRepl(rl, getPrompt)
