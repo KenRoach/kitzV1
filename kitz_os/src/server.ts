@@ -1076,6 +1076,81 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
 </html>`;
   });
 
+  // ── Voice Transcription (Whisper STT) ──
+
+  // Speech-to-Text — transcribe audio using OpenAI Whisper
+  app.post<{ Body: { audio_base64: string; language?: string; format?: string } }>(
+    '/api/kitz/voice/transcribe',
+    async (req, reply) => {
+      const OPENAI_KEY = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
+      if (!OPENAI_KEY) {
+        return reply.code(503).send({ error: 'OpenAI API key not configured. Set OPENAI_API_KEY for speech-to-text.' });
+      }
+
+      const { audio_base64, language, format } = req.body || {};
+      if (!audio_base64) return reply.code(400).send({ error: 'audio_base64 required' });
+
+      try {
+        // Decode base64 to buffer
+        const audioBuffer = Buffer.from(audio_base64, 'base64');
+
+        // Build multipart form data for Whisper API
+        const boundary = '----KitzWhisperBoundary' + Date.now();
+        const ext = format || 'webm';
+        const mimeMap: Record<string, string> = {
+          webm: 'audio/webm', wav: 'audio/wav', mp3: 'audio/mpeg',
+          m4a: 'audio/m4a', ogg: 'audio/ogg', flac: 'audio/flac',
+        };
+        const mime = mimeMap[ext] || 'audio/webm';
+
+        const parts: Buffer[] = [];
+        // File part
+        parts.push(Buffer.from(
+          `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="audio.${ext}"\r\nContent-Type: ${mime}\r\n\r\n`
+        ));
+        parts.push(audioBuffer);
+        parts.push(Buffer.from('\r\n'));
+        // Model part
+        parts.push(Buffer.from(
+          `--${boundary}\r\nContent-Disposition: form-data; name="model"\r\n\r\nwhisper-1\r\n`
+        ));
+        // Language part (optional — helps accuracy)
+        if (language) {
+          parts.push(Buffer.from(
+            `--${boundary}\r\nContent-Disposition: form-data; name="language"\r\n\r\n${language}\r\n`
+          ));
+        }
+        // Response format
+        parts.push(Buffer.from(
+          `--${boundary}\r\nContent-Disposition: form-data; name="response_format"\r\n\r\njson\r\n`
+        ));
+        parts.push(Buffer.from(`--${boundary}--\r\n`));
+
+        const body = Buffer.concat(parts);
+
+        const whisperRes = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENAI_KEY}`,
+            'Content-Type': `multipart/form-data; boundary=${boundary}`,
+          },
+          body,
+          signal: AbortSignal.timeout(30_000),
+        });
+
+        if (!whisperRes.ok) {
+          const errText = await whisperRes.text().catch(() => '');
+          return reply.code(whisperRes.status).send({ error: `Whisper API error: ${errText.slice(0, 200)}` });
+        }
+
+        const data = await whisperRes.json() as { text: string };
+        return { transcript: data.text, language: language || 'auto' };
+      } catch (err) {
+        return reply.code(500).send({ error: `Transcription failed: ${(err as Error).message}` });
+      }
+    }
+  );
+
   // ── AI Battery Endpoints ──
 
   // Get current battery status
