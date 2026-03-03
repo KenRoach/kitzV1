@@ -212,6 +212,8 @@ export class OsToolRegistry {
       import('./argentinaBusinessAdvisorTools.js'),
       import('./costaRicaBusinessAdvisorTools.js'),
       import('./crossBorderTradeAdvisorTools.js'),
+      // Marketing Skills (32 tools from coreyhaines31/marketingskills)
+      import('./marketingSkillsTools.js'),
     ]);
 
     const getterNames = [
@@ -347,6 +349,8 @@ export class OsToolRegistry {
       'getAllArgentinaBusinessAdvisorTools',
       'getAllCostaRicaBusinessAdvisorTools',
       'getAllCrossBorderTradeAdvisorTools',
+      // Marketing Skills
+      'getAllMarketingSkillsTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {

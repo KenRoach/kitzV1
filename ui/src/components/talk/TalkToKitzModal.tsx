@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { PhoneOff, ArrowUp, Sparkles, Mic, MicOff } from 'lucide-react'
+import { PhoneOff, ArrowUp, Sparkles, Mic, MicOff, Globe } from 'lucide-react'
 import { useOrbStore } from '@/stores/orbStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useAgentThinkingStore } from '@/stores/agentThinkingStore'
@@ -8,7 +8,14 @@ import { MessageBubble } from '@/components/chat/MessageBubble'
 import { useKitzVoice } from '@/hooks/useKitzVoice'
 import { cn } from '@/lib/utils'
 
-type MicState = 'idle' | 'requesting' | 'listening' | 'denied' | 'unsupported'
+type MicState = 'idle' | 'requesting' | 'listening' | 'transcribing' | 'denied' | 'unsupported'
+
+const LANGUAGES = [
+  { code: 'es', label: 'Español' },
+  { code: 'en', label: 'English' },
+  { code: 'pt', label: 'Português' },
+  { code: 'auto', label: 'Auto-detect' },
+]
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function getSpeechRecognition(): (new () => any) | null {
@@ -16,6 +23,45 @@ function getSpeechRecognition(): (new () => any) | null {
   return (w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null) as (new () => any) | null
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
+
+/** Convert audio blob to base64 string */
+async function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      const dataUrl = reader.result as string
+      const base64 = dataUrl.split(',')[1] || ''
+      resolve(base64)
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
+/** Transcribe audio via Whisper API endpoint */
+async function transcribeAudio(audioBlob: Blob, language: string): Promise<string> {
+  const base64 = await blobToBase64(audioBlob)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const apiBase = (import.meta as any).env?.VITE_API_BASE_URL || ''
+  const res = await fetch(`${apiBase}/api/kitz/voice/transcribe`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-dev-secret': 'dev-secret-change-me',
+    },
+    body: JSON.stringify({
+      audio_base64: base64,
+      language: language === 'auto' ? undefined : language,
+      format: 'webm',
+    }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Unknown error' }))
+    throw new Error((err as { error?: string }).error || 'Transcription failed')
+  }
+  const data = await res.json() as { transcript: string }
+  return data.transcript
+}
 
 export function TalkToKitzModal() {
   const { isOpen, close, messages, state, sendMessage } = useOrbStore()
@@ -26,10 +72,16 @@ export function TalkToKitzModal() {
   const [input, setInput] = useState('')
   const [micState, setMicState] = useState<MicState>('idle')
   const [transcript, setTranscript] = useState('')
+  const [language, setLanguage] = useState('es')
+  const [showLangPicker, setShowLangPicker] = useState(false)
+  const [useWhisper, setUseWhisper] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
+  const streamRef = useRef<MediaStream | null>(null)
   const prevMsgCountRef = useRef(messages.length)
 
   // Auto-scroll on new messages
@@ -57,29 +109,97 @@ export function TalkToKitzModal() {
     prevMsgCountRef.current = messages.length
   }, [messages, isOpen, speak])
 
-  // Cleanup recognition on unmount or close
+  // Cleanup on unmount or close
   useEffect(() => {
-    if (!isOpen && recognitionRef.current) {
-      recognitionRef.current.stop()
-      recognitionRef.current = null
+    if (!isOpen) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop()
+        recognitionRef.current = null
+      }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop()
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop())
+        streamRef.current = null
+      }
       setMicState('idle')
       setTranscript('')
     }
   }, [isOpen])
 
-  const startListening = useCallback(async () => {
+  // ── Whisper-based recording (MediaRecorder → server-side STT) ──
+  const startWhisperRecording = useCallback(async () => {
+    setMicState('requesting')
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      streamRef.current = stream
+      audioChunksRef.current = []
+
+      const recorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+          ? 'audio/webm;codecs=opus'
+          : 'audio/webm',
+      })
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data)
+      }
+
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop())
+        streamRef.current = null
+
+        if (audioChunksRef.current.length === 0) {
+          setMicState('idle')
+          return
+        }
+
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        audioChunksRef.current = []
+
+        setMicState('transcribing')
+        setTranscript('Transcribing...')
+        try {
+          const text = await transcribeAudio(audioBlob, language)
+          setTranscript('')
+          if (text.trim()) {
+            void sendMessage(text.trim(), user?.id ?? 'default')
+          }
+        } catch (err) {
+          setTranscript(`Error: ${(err as Error).message}`)
+          setTimeout(() => setTranscript(''), 3000)
+        }
+        setMicState('idle')
+      }
+
+      mediaRecorderRef.current = recorder
+      recorder.start()
+      setMicState('listening')
+    } catch {
+      setMicState('denied')
+    }
+  }, [language, sendMessage, user?.id])
+
+  const stopWhisperRecording = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop()
+    }
+  }, [])
+
+  // ── Browser SpeechRecognition (fallback) ──
+  const startBrowserRecognition = useCallback(async () => {
     const SpeechRecognitionClass = getSpeechRecognition()
     if (!SpeechRecognitionClass) {
-      setMicState('unsupported')
+      setUseWhisper(true)
+      await startWhisperRecording()
       return
     }
 
     setMicState('requesting')
 
-    // Request mic permission
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      // Got permission — stop tracks immediately (SpeechRecognition manages its own stream)
       stream.getTracks().forEach((t) => t.stop())
     } catch {
       setMicState('denied')
@@ -89,7 +209,11 @@ export function TalkToKitzModal() {
     const recognition = new SpeechRecognitionClass()
     recognition.continuous = false
     recognition.interimResults = true
-    recognition.lang = 'en-US'
+
+    const langMap: Record<string, string> = {
+      es: 'es-419', en: 'en-US', pt: 'pt-BR', auto: 'es-419',
+    }
+    recognition.lang = langMap[language] || 'es-419'
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recognition.onresult = (event: any) => {
@@ -107,7 +231,6 @@ export function TalkToKitzModal() {
       if (final) {
         setTranscript('')
         setInput(final)
-        // Auto-send the final transcript
         void sendMessage(final, user?.id ?? 'default')
         setInput('')
         setMicState('idle')
@@ -131,16 +254,29 @@ export function TalkToKitzModal() {
     recognitionRef.current = recognition
     recognition.start()
     setMicState('listening')
-  }, [micState, sendMessage, user?.id])
+  }, [language, micState, sendMessage, startWhisperRecording, user?.id])
+
+  // ── Unified start/stop ──
+  const startListening = useCallback(async () => {
+    if (useWhisper) {
+      await startWhisperRecording()
+    } else {
+      await startBrowserRecognition()
+    }
+  }, [useWhisper, startWhisperRecording, startBrowserRecognition])
 
   const stopListening = useCallback(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop()
-      recognitionRef.current = null
+    if (useWhisper) {
+      stopWhisperRecording()
+    } else {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop()
+        recognitionRef.current = null
+      }
+      setMicState('idle')
+      setTranscript('')
     }
-    setMicState('idle')
-    setTranscript('')
-  }, [])
+  }, [useWhisper, stopWhisperRecording])
 
   if (!isOpen) return null
 
@@ -162,9 +298,12 @@ export function TalkToKitzModal() {
     idle: 'Tap to speak',
     requesting: 'Allowing microphone...',
     listening: 'Listening...',
+    transcribing: 'Transcribing with Whisper...',
     denied: 'Mic access denied — check browser settings',
     unsupported: 'Voice not supported in this browser',
   }
+
+  const currentLang = LANGUAGES.find((l) => l.code === language)
 
   return (
     <div
@@ -182,29 +321,79 @@ export function TalkToKitzModal() {
           <Sparkles className="h-4 w-4 text-purple-400" />
           <span className="text-sm font-medium text-white/80">Kitz AI</span>
         </div>
-        <span className="font-mono text-xs text-white/40">voice assistant</span>
+
+        <div className="flex items-center gap-3">
+          {/* Language picker */}
+          <div className="relative">
+            <button
+              onClick={() => setShowLangPicker(!showLangPicker)}
+              className="flex items-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs text-white/60 transition hover:bg-white/10"
+            >
+              <Globe className="h-3 w-3" />
+              {currentLang?.label}
+            </button>
+            {showLangPicker && (
+              <div className="absolute right-0 top-8 z-10 rounded-lg border border-white/20 bg-gray-900 py-1 shadow-xl">
+                {LANGUAGES.map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => {
+                      setLanguage(lang.code)
+                      setShowLangPicker(false)
+                    }}
+                    className={cn(
+                      'block w-full px-4 py-1.5 text-left text-xs transition hover:bg-white/10',
+                      language === lang.code ? 'text-purple-400' : 'text-white/60',
+                    )}
+                  >
+                    {lang.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Whisper toggle */}
+          <button
+            onClick={() => setUseWhisper(!useWhisper)}
+            className={cn(
+              'rounded-full border px-3 py-1 text-xs transition',
+              useWhisper
+                ? 'border-purple-500 bg-purple-500/20 text-purple-300'
+                : 'border-white/20 bg-white/5 text-white/40 hover:bg-white/10',
+            )}
+            title={useWhisper ? 'Using Whisper AI (more accurate)' : 'Using browser speech (faster)'}
+          >
+            {useWhisper ? 'Whisper AI' : 'Browser STT'}
+          </button>
+
+          <span className="font-mono text-xs text-white/40">voice assistant</span>
+        </div>
       </div>
 
       {/* Center orb + mic button */}
       <div className="flex flex-col items-center pt-8">
-        {/* Mic button — big, prominent */}
         <button
           onClick={micState === 'listening' ? stopListening : startListening}
-          disabled={state === 'thinking' || micState === 'unsupported'}
+          disabled={state === 'thinking' || micState === 'unsupported' || micState === 'transcribing'}
           className={cn(
             'flex h-28 w-28 items-center justify-center rounded-full transition-all duration-300',
             'shadow-[0_0_40px_rgba(168,85,247,0.4)]',
             micState === 'listening'
               ? 'bg-gradient-to-br from-red-500 to-red-600 shadow-[0_0_40px_rgba(239,68,68,0.5)] animate-[talk-pulse_1s_ease-in-out_infinite]'
-              : speaking
-                ? 'bg-gradient-to-br from-purple-500 to-purple-600 animate-[talk-pulse_1.5s_ease-in-out_infinite]'
-                : state === 'thinking'
+              : micState === 'transcribing'
+                ? 'bg-gradient-to-br from-yellow-500 to-orange-500 animate-[talk-pulse_0.8s_ease-in-out_infinite]'
+                : speaking
                   ? 'bg-gradient-to-br from-purple-500 to-purple-600 animate-[talk-pulse_1.5s_ease-in-out_infinite]'
-                  : 'bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-400 hover:to-purple-500 hover:shadow-[0_0_60px_rgba(168,85,247,0.6)]',
+                  : state === 'thinking'
+                    ? 'bg-gradient-to-br from-purple-500 to-purple-600 animate-[talk-pulse_1.5s_ease-in-out_infinite]'
+                    : 'bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-400 hover:to-purple-500 hover:shadow-[0_0_60px_rgba(168,85,247,0.6)]',
           )}
         >
           {micState === 'listening' ? (
             <MicOff className="h-10 w-10 text-white" />
+          ) : micState === 'transcribing' ? (
+            <Sparkles className="h-10 w-10 text-white animate-spin" />
           ) : speaking ? (
             <Sparkles className="h-10 w-10 text-white" />
           ) : (
@@ -222,6 +411,7 @@ export function TalkToKitzModal() {
           'mt-1 text-xs',
           micState === 'denied' || micState === 'unsupported' ? 'text-red-400' :
           micState === 'listening' ? 'text-green-400' :
+          micState === 'transcribing' ? 'text-yellow-400' :
           'text-white/40',
         )}>
           {micLabel[micState]}
