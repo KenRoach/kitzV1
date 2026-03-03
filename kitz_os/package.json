@@ -15,7 +15,10 @@
     "@fastify/rate-limit": "^9.1.0",
     "@fastify/static": "^7.0.4",
     "@fastify/websocket": "^10.0.1",
+    "@remotion/bundler": "^4.0.431",
+    "@remotion/renderer": "^4.0.431",
     "@supabase/supabase-js": "^2.39.0",
+    "@types/pdfkit": "^0.17.5",
     "blessed": "^0.1.81",
     "blessed-contrib": "^4.11.0",
     "chalk": "^5.6.2",
@@ -25,7 +28,9 @@
     "googleapis": "^171.4.0",
     "kitz-schemas": "file:../kitz-schemas",
     "node-cron": "^3.0.0",
-    "qrcode-terminal": "^0.12.0"
+    "pdfkit": "^0.17.2",
+    "qrcode-terminal": "^0.12.0",
+    "remotion": "^4.0.431"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
