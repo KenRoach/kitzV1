@@ -360,24 +360,15 @@ function renderBootScreen(): string {
     : `${chalk.red('○')} WhatsApp sin vincular — escribe ${chalk.cyan('/wa')} para escanear QR`
 
   const lines = [
-    '',
     ...KITZ_WORDMARK.map(l => `  ${l}`),
-    `  ${dim('"Tu Negocio, Handled"')}`,
-    `  ${dim(`v${VERSION} · Actualizado ${lastUpdate}`)}`,
+    `  ${dim('"Tu Negocio, Resuelto"')}  ${dim(`v${VERSION} · ${lastUpdate}`)}`,
     '',
-    `  ${purpleBold('Qué')}    ${chalk.white('Sistema operativo de negocios con IA para pequeñas empresas')}`,
-    `  ${purpleBold('Cómo')}   ${chalk.white('Chatea en WhatsApp o aquí — KITZ maneja tus operaciones con 267 herramientas IA')}`,
-    '',
+    `  ${purpleBold('Qué')}   ${chalk.white('Sistema operativo de negocios con IA')}`,
+    `  ${purpleBold('Cómo')}  ${chalk.white('Chatea aquí o en WhatsApp — KITZ maneja tus ops')}`,
     `  ${waStatus}`,
     '',
-    `  ${chalk.cyan('/status')}    ${dim('Panel del sistema')}`,
-    `  ${chalk.cyan('/wa')}        ${dim('Vincular WhatsApp (QR en terminal)')}`,
-    `  ${chalk.cyan('/auto')}      ${dim('Auto-aprobar borradores (modo GO)')}`,
-    `  ${chalk.cyan('/')}          ${dim('Todos los comandos')}`,
-    `  ${dim('O escribe un mensaje para empezar.')}`,
-    '',
-    `  ${dim('─'.repeat(50))}`,
-    '',
+    `  ${chalk.cyan('/status')}  ${dim('Sistema')}  ${chalk.cyan('/wa')}  ${dim('WhatsApp')}  ${chalk.cyan('/auto')}  ${dim('Auto-aprobar')}  ${chalk.cyan('/')}  ${dim('Comandos')}`,
+    `  ${dim('─'.repeat(55))}`,
   ]
 
   return lines.join('\n')

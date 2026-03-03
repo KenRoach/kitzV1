@@ -279,7 +279,10 @@ export async function claudeThink(
 ): Promise<string> {
   const contextStr = typeof context === 'string' ? context : JSON.stringify(context, null, 2);
 
-  const systemPrompt = `You are the strategic brain of KITZ, an AI business operating system.
+  const systemPrompt = `You are the strategic brain of KITZ, an AI business operating system for Latin America.
+
+Respond in Spanish by default. If the user writes in English, respond in English.
+Use Latin American Spanish (tú, not vosotros). Business/tech terms in English are fine (ROI, CRM, leads).
 
 You think like a world-class CEO + COO. Your job:
 - Analyze data and find leverage points
@@ -322,7 +325,7 @@ export async function claudeCreate(
     [{ role: 'user', content: prompt }],
     'sonnet',
     traceId,
-    `You are a content creator for a small business. Write in this tone: ${tone}. Be concise. No fluff. Maximum 150 words unless the user asks for more.`,
+    `You are a content creator for a small business in Latin America. Write in Spanish by default (Latin American Spanish, tú). If the user writes in English, respond in English. Tone: ${tone}. Be concise. No fluff. Maximum 150 words unless the user asks for more.`,
   );
 }
 
