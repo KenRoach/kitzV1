@@ -214,6 +214,8 @@ export class OsToolRegistry {
       import('./crossBorderTradeAdvisorTools.js'),
       // Marketing Skills (32 tools from coreyhaines31/marketingskills)
       import('./marketingSkillsTools.js'),
+      // Claude Skills (40 tools from alirezarezvani/claude-skills)
+      import('./claudeSkillsTools.js'),
     ]);
 
     const getterNames = [
@@ -351,6 +353,8 @@ export class OsToolRegistry {
       'getAllCrossBorderTradeAdvisorTools',
       // Marketing Skills
       'getAllMarketingSkillsTools',
+      // Claude Skills
+      'getAllClaudeSkillsTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {
