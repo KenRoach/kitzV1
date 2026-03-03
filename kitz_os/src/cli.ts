@@ -826,42 +826,10 @@ function extractAndSaveArtifacts(reply: string): string | null {
     } catch {}
   }
 
-  // Also detect inline document content (invoices, quotes, reports without code fences)
-  // If tools generated artifact content but it wasn't in code blocks, save the full response
-  if (artifacts.length === 0 && reply.length > 500) {
-    const docPatterns = [
-      /invoice|factura|receipt/i,
-      /quote|quotation|cotización|estimate/i,
-      /order|pedido|purchase order/i,
-      /proposal|propuesta/i,
-      /deck|presentation|pitch/i,
-      /report|reporte|informe/i,
-      /contract|contrato|agreement/i,
-      /certificate|certificado/i,
-      /letter|carta|memo/i,
-      /compliance|cumplimiento/i,
-    ]
-    const isDocument = docPatterns.some(p => p.test(reply))
-
-    if (isDocument) {
-      if (!fs.existsSync(ARTIFACT_DIR)) {
-        fs.mkdirSync(ARTIFACT_DIR, { recursive: true })
-      }
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-
-      // Wrap markdown content in a styled HTML document
-      const htmlContent = wrapDocumentAsHtml(reply)
-      const filename = `kitz-doc-${timestamp}.html`
-      const filepath = path.join(ARTIFACT_DIR, filename)
-
-      try {
-        fs.writeFileSync(filepath, htmlContent, 'utf-8')
-        artifacts.push({ lang: 'html', content: htmlContent, file: filepath })
-        lastArtifactPath = filepath
-        registerArtifact(filepath, 'document')
-      } catch {}
-    }
-  }
+  // NOTE: We do NOT auto-detect "document-like" keywords in plain replies.
+  // Artifacts are ONLY created from explicit code blocks (```lang ... ```).
+  // Conversational answers — even long ones — stay as terminal text.
+  // Artifacts = deliverables the user would create in PowerPoint/Word/Excel/Canva.
 
   if (artifacts.length === 0) return null
 
