@@ -18,6 +18,14 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
 const YAPPY_WEBHOOK_SECRET = process.env.YAPPY_WEBHOOK_SECRET || '';
 const BAC_WEBHOOK_SECRET = process.env.BAC_WEBHOOK_SECRET || '';
 
+// ── Launch safety checks ──
+if (!STRIPE_WEBHOOK_SECRET) {
+  app.log.warn('⚠ STRIPE_WEBHOOK_SECRET not set — Stripe webhooks will fail verification');
+}
+if (!process.env.STRIPE_SECRET_KEY) {
+  app.log.warn('⚠ STRIPE_SECRET_KEY not set — checkout link creation disabled');
+}
+
 // ── Cryptographic webhook verification ──
 function verifyHmac(rawBody: string, signature: string, secret: string): boolean {
   if (!signature || !secret) return false;
