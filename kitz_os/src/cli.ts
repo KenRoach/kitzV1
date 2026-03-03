@@ -366,8 +366,9 @@ function renderTopBar(): string {
 
   // Line 1: Brand + status
   const line1 = `  ${purpleBold('KITZ')} ${dim(`v${VERSION}`)}  ${kernelDot} ${dim('OS')}  ${waStatus}  ${chalk.hex('#A855F7')('⚡')} ${dim(b.batteryLimit > 0 ? 'Ilimitado' : '—')}  ${modeTag}${autoTag}  ${dim(`${b.toolCount} herramientas · ${b.agentCount} agentes`)}`
-  // Line 2: Separator
-  const line2 = `  ${dim('─'.repeat(72))}`
+  // Line 2: Separator (responsive to terminal width)
+  const barWidth = Math.max((process.stdout.columns || 80) - 4, 40)
+  const line2 = `  ${dim('─'.repeat(barWidth))}`
 
   return `${line1}\n${line2}`
 }
@@ -386,6 +387,9 @@ function renderBootScreen(): string {
     ? `${chalk.green('●')} WhatsApp conectado${b.waPhone ? ` (+${b.waPhone})` : ''}`
     : `${chalk.red('○')} WhatsApp sin vincular — escribe ${chalk.cyan('/wa')} para escanear QR`
 
+  const killSwitch = process.env.KILL_SWITCH === 'true'
+  const bootBarWidth = Math.max((process.stdout.columns || 80) - 4, 40)
+
   const lines = [
     ...KITZ_WORDMARK.map(l => `  ${l}`),
     `  ${dim('"Tu Negocio, Resuelto"')}  ${dim(`v${VERSION} · ${lastUpdate}`)}`,
@@ -393,10 +397,17 @@ function renderBootScreen(): string {
     `  ${purpleBold('Qué')}   ${chalk.white('Sistema operativo de negocios con IA')}`,
     `  ${purpleBold('Cómo')}  ${chalk.white('Chatea aquí o en WhatsApp — KITZ maneja tus ops')}`,
     `  ${waStatus}`,
+  ]
+
+  if (killSwitch) {
+    lines.push(`  ${chalk.bgRed.white.bold(' ⛔ KILL SWITCH ACTIVO ')} ${chalk.red('— Ejecución de IA detenida. Set KILL_SWITCH=false para reactivar.')}`)
+  }
+
+  lines.push(
     '',
     `  ${chalk.cyan('/status')}  ${dim('Sistema')}  ${chalk.cyan('/wa')}  ${dim('WhatsApp')}  ${chalk.cyan('/auto')}  ${dim('Auto-aprobar')}  ${chalk.cyan('/')}  ${dim('Comandos')}`,
-    `  ${dim('─'.repeat(55))}`,
-  ]
+    `  ${dim('─'.repeat(bootBarWidth))}`,
+  )
 
   return lines.join('\n')
 }
@@ -786,11 +797,20 @@ function formatReplyForTerminal(reply: string): string {
     }
   )
 
-  // Strip markdown bold **text** → text (terminal uses chalk instead)
-  formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '$1')
+  // Convert markdown bold **text** → chalk bold
+  formatted = formatted.replace(/\*\*([^*]+)\*\*/g, (_m, text) => chalk.bold(text as string))
 
-  // Strip markdown italic *text* → text
-  formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '$1')
+  // Convert markdown italic *text* → chalk dim/italic
+  formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, (_m, text) => chalk.italic(text as string))
+
+  // Convert markdown headers ## text → purple bold
+  formatted = formatted.replace(/^#{1,3}\s+(.+)$/gm, (_m, text) => chalk.hex('#A855F7').bold(text as string))
+
+  // Convert markdown inline code `code` → gray background
+  formatted = formatted.replace(/`([^`]+)`/g, (_m, text) => chalk.bgGray.white(` ${text as string} `))
+
+  // Convert markdown bullet lists - item → bullet
+  formatted = formatted.replace(/^(\s*)[-*]\s+/gm, '$1• ')
 
   // Clean up excessive blank lines
   formatted = formatted.replace(/\n{3,}/g, '\n\n').trim()
@@ -801,8 +821,11 @@ function formatReplyForTerminal(reply: string): string {
   // Append clean links at the bottom
   if (captured.previewUrl) {
     formatted += `\n\n    ${chalk.cyan('🌐')} ${chalk.cyan.underline(captured.previewUrl)}`
-    // Auto-open the preview in browser
-    try { execSync(`open "${captured.previewUrl}"`, { timeout: 3000 }) } catch {}
+    // Auto-open the preview in browser (cross-platform)
+    try {
+      const openCmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open'
+      execSync(`${openCmd} "${captured.previewUrl}"`, { timeout: 3000 })
+    } catch {}
   } else if (captured.imageUrl) {
     const shortUrl = captured.imageUrl.length > 80 ? captured.imageUrl.slice(0, 77) + '...' : captured.imageUrl
     formatted += `\n\n    ${chalk.cyan('🔗')} ${chalk.cyan.underline(shortUrl)}`
@@ -880,8 +903,9 @@ function extractAndSaveArtifacts(reply: string): string | null {
     if (firstHtml) {
       const url = `http://localhost:${PREVIEW_PORT}/${path.basename(firstHtml.file)}`
       try {
-        execSync(`open "${url}"`, { timeout: 3000 })
-        lines.push(`  ${dim('Opened in browser ↗')}`)
+        const openCmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open'
+        execSync(`${openCmd} "${url}"`, { timeout: 3000 })
+        lines.push(`  ${dim('Abierto en el navegador ↗')}`)
       } catch {}
     }
   }
@@ -1019,7 +1043,7 @@ async function cmdReject(): Promise<string> {
     lastDraftToken = null
     return `\n  ${chalk.yellow('❌ Borrador rechazado.')}\n`
   } catch (err) {
-    return chalk.red(`\n  ❌ Reject failed: ${err instanceof Error ? err.message : String(err)}\n`)
+    return chalk.red(`\n  ❌ Rechazo falló: ${err instanceof Error ? err.message : String(err)}\n`)
   }
 }
 
@@ -1030,10 +1054,11 @@ function cmdOpenArtifact(): string {
   }
 
   try {
-    execSync(`open "${lastArtifactPath}"`, { timeout: 5000 })
-    return `\n  ${chalk.green('📂 Opened:')} ${dim(lastArtifactPath)}\n`
+    const openCmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open'
+    execSync(`${openCmd} "${lastArtifactPath}"`, { timeout: 5000 })
+    return `\n  ${chalk.green('📂 Abierto:')} ${dim(lastArtifactPath)}\n`
   } catch {
-    return `\n  ${chalk.cyan('📂')} ${chalk.underline(`file://${lastArtifactPath}`)}\n  ${dim('Copy the path above to open manually.')}\n`
+    return `\n  ${chalk.cyan('📂')} ${chalk.underline(`file://${lastArtifactPath}`)}\n  ${dim('Copia la ruta para abrir manualmente.')}\n`
   }
 }
 
@@ -1643,9 +1668,13 @@ async function cmdCoaching(): Promise<string> {
 function cmdSearch(query: string): string {
   if (!query) return chalk.yellow('\n  Usage: search <pattern>\n  Searches all code in the KITZ monorepo.\n')
 
+  // Sanitize query for safe shell execution — only allow alphanumeric, spaces, common punctuation
+  const safeQuery = query.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ _.:\-\/*+(){}[\]@#$%^&=<>,?!']/g, '')
+  if (!safeQuery) return chalk.yellow('\n  ⚠ Patrón de búsqueda inválido.\n')
+
   try {
     const result = execSync(
-      `grep -rn --include="*.ts" --include="*.tsx" --include="*.md" --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.git --exclude-dir=.next "${query.replace(/"/g, '\\"')}" "${REPO_ROOT}" | head -30`,
+      `grep -rn --include="*.ts" --include="*.tsx" --include="*.md" --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.git --exclude-dir=.next -- "${safeQuery}" "${REPO_ROOT}" | head -30`,
       { timeout: 15000, maxBuffer: 1024 * 1024 }
     ).toString().trim()
 
@@ -2354,9 +2383,10 @@ function cmdAutoAccept(): string {
     autoAccept = false
     return `\n  ${chalk.yellow('⚠')} Auto-accept solo funciona en modo ${chalk.green('GO')}.\n  Cambia primero: ${chalk.cyan('/go')}\n`
   }
-  return autoAccept
-    ? `\n  ${chalk.green('⚡ Auto-accept ON')} — Borradores aprobados automáticamente en modo GO.\n  ${dim('Desactivar: /auto')}\n`
-    : `\n  ${chalk.yellow('⏸ Auto-accept OFF')} — Se te pedirá aprobar borradores.\n`
+  if (autoAccept) {
+    return `\n  ${chalk.green('⚡ Auto-accept ON')} — Borradores aprobados automáticamente en modo GO.\n  ${dim('Desactivar: /auto')}\n`
+  }
+  return `\n  ${chalk.yellow('⏸ Auto-accept OFF')} — Se te pedirá aprobar borradores.\n`
 }
 
 // ── Help ───────────────────────────────────────────────
