@@ -309,6 +309,33 @@ function purpleBold(s: string): string { return chalk.hex('#A855F7').bold(s) }
 
 function line(width = 60): string { return dim('─'.repeat(width)) }
 
+/** Word-wrap text to terminal width with indent, preserving existing line breaks */
+function wrapText(text: string, indent = 2, maxWidth?: number): string {
+  const cols = maxWidth || (process.stdout.columns || 80)
+  const pad = ' '.repeat(indent)
+  const lineWidth = cols - indent - 1 // leave 1 char margin
+
+  return text.split('\n').map(paragraph => {
+    if (paragraph.trim() === '') return ''
+    // Already short enough — just indent
+    if (paragraph.length <= lineWidth) return pad + paragraph
+    // Word wrap
+    const words = paragraph.split(/\s+/)
+    const wrapped: string[] = []
+    let current = ''
+    for (const word of words) {
+      if (current.length + word.length + 1 > lineWidth) {
+        if (current) wrapped.push(pad + current)
+        current = word
+      } else {
+        current = current ? current + ' ' + word : word
+      }
+    }
+    if (current) wrapped.push(pad + current)
+    return wrapped.join('\n')
+  }).join('\n')
+}
+
 function timeAgo(seconds: number): string {
   if (seconds < 60) return `${seconds}s`
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
@@ -374,18 +401,13 @@ function renderBootScreen(): string {
   return lines.join('\n')
 }
 
-/** Last response stored so we can redraw the screen */
+/** Last response stored for reference */
 let lastOutput = ''
 
-/** Clear screen, draw top bar, then show content below it */
-function redrawScreen(content?: string) {
-  process.stdout.write('\x1B[2J\x1B[H') // clear
-  process.stdout.write(renderTopBar() + '\n')
-  if (content) {
-    process.stdout.write(content + '\n')
-  } else if (lastOutput) {
-    process.stdout.write(lastOutput + '\n')
-  }
+/** Print response output in chat-flow style (no screen clearing) */
+function printOutput(content: string) {
+  if (!content) return
+  process.stdout.write(content + '\n')
 }
 
 // ── Thinking Display (Kitz electric style) ─────────────
@@ -483,10 +505,10 @@ async function cmdChat(message: string): Promise<string> {
 
     const displayReply = formatReplyForTerminal(reply)
 
-    let out = ''
+    let out = '\n'
     if (thinking.length > 0) out += showThinking(thinking) + '\n'
-    out += `\n  ${purpleBold('Kitz')}: ${chalk.white(displayReply)}\n`
-    if (tools.length > 0) out += `  ${chalk.cyan('🔧 ' + tools.join(', '))}\n`
+    out += `\n  ${purpleBold('Kitz:')}\n${chalk.white(displayReply)}\n`
+    if (tools.length > 0) out += `    ${chalk.cyan('🔧 ' + tools.join(', '))}\n`
 
     // Detect and save artifacts (code blocks) from response
     const artifactInfo = extractAndSaveArtifacts(reply)
@@ -751,7 +773,7 @@ function formatReplyForTerminal(reply: string): string {
     (_match, alt, url) => {
       const label = alt || 'Generated Image'
       captured.imageUrl = url as string
-      return `\n  🖼️  ${chalk.bold(label as string)}\n`
+      return `\n🖼️  ${chalk.bold(label as string)}\n`
     }
   )
 
@@ -773,14 +795,17 @@ function formatReplyForTerminal(reply: string): string {
   // Clean up excessive blank lines
   formatted = formatted.replace(/\n{3,}/g, '\n\n').trim()
 
+  // Word-wrap to terminal width
+  formatted = wrapText(formatted, 4)
+
   // Append clean links at the bottom
   if (captured.previewUrl) {
-    formatted += `\n\n  ${chalk.cyan('🌐')} ${chalk.cyan.underline(captured.previewUrl)}`
+    formatted += `\n\n    ${chalk.cyan('🌐')} ${chalk.cyan.underline(captured.previewUrl)}`
     // Auto-open the preview in browser
     try { execSync(`open "${captured.previewUrl}"`, { timeout: 3000 }) } catch {}
   } else if (captured.imageUrl) {
     const shortUrl = captured.imageUrl.length > 80 ? captured.imageUrl.slice(0, 77) + '...' : captured.imageUrl
-    formatted += `\n\n  ${chalk.cyan('🔗')} ${chalk.cyan.underline(shortUrl)}`
+    formatted += `\n\n    ${chalk.cyan('🔗')} ${chalk.cyan.underline(shortUrl)}`
   }
 
   return formatted
@@ -2835,7 +2860,7 @@ function wireRepl(rl: readline.Interface, getPrompt: () => string) {
     const output = await handleInput(input)
     if (output) {
       lastOutput = output
-      redrawScreen(output)
+      printOutput(output)
     }
     rl.setPrompt(getPrompt())
     rl.prompt()
