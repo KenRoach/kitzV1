@@ -643,13 +643,12 @@ class SessionManager {
       log.info('activated in group', { userId, groupJid: senderJid, isMentioned, kitzMentioned });
     }
 
-    // If it's NOT self-chat and NOT a group (i.e., a DM):
-    if (!isSelfChat && !isGroup) {
-      if (!msg.key.fromMe) {
-        // External person messaged us — polite auto-reply + log to workspace
-        await this.autoReplyToExternal(session, senderJid, earlyText);
-      }
-      // Either way, don't process — Kitz only lives in self-chat and groups when mentioned
+    // If it's NOT self-chat and NOT a group (i.e., an inbound DM):
+    // Route ALL inbound DMs through the full KITZ AI semantic router.
+    // This enables wa.me link testing — anyone who messages gets KITZ responses.
+    const isDmFromOther = !isSelfChat && !isGroup && !msg.key.fromMe;
+    if (!isSelfChat && !isGroup && msg.key.fromMe) {
+      // Outbound DMs we sent to others — ignore (don't echo our own messages)
       return;
     }
 
@@ -704,8 +703,10 @@ class SessionManager {
 
     const traceId = crypto.randomUUID();
 
-    // Always reply to canonical self-chat JID (not LID)
-    const replyJid = myNumber ? `${myNumber}@s.whatsapp.net` : senderJid;
+    // Reply to: the sender for inbound DMs, self-chat for self messages, group for groups
+    const replyJid = isDmFromOther ? senderJid
+      : isGroup ? senderJid
+      : myNumber ? `${myNumber}@s.whatsapp.net` : senderJid;
 
     // ── Extract reply context and location ──
     const replyContext = extractReplyContext(msg) ?? undefined;
@@ -735,7 +736,7 @@ class SessionManager {
       msgKeys: debugKeys,
     });
 
-    // Helper: type then reply in self-chat (tracks sent ID to prevent echo loops)
+    // Helper: type then reply (tracks sent ID to prevent echo loops)
     const typeThenReply = async (text: string) => {
       const prefixed = kitzReply(text);
       try { await sock.sendPresenceUpdate('composing', replyJid); } catch {}
@@ -744,9 +745,9 @@ class SessionManager {
       try {
         const sent = await sock.sendMessage(replyJid, { text: prefixed });
         if (sent?.key?.id) trackKitzSent(sent.key.id);
-        log.info('reply sent to self-chat', { userId });
+        log.info('reply sent', { userId, to: replyJid, isDm: isDmFromOther });
       } catch (err) {
-        log.error('reply failed', { userId, err });
+        log.error('reply failed', { userId, to: replyJid, err });
       }
     };
 
