@@ -10,8 +10,11 @@
  * Receive-only policy: amount must be positive. No outbound payments.
  */
 
+import { createSubsystemLogger } from 'kitz-schemas';
 import { callWorkspaceMcp } from './mcpClient.js';
 import type { ToolSchema } from './registry.js';
+
+const log = createSubsystemLogger('paymentTools');
 
 export function getAllPaymentTools(): ToolSchema[] {
   return [
@@ -221,6 +224,91 @@ export function getAllPaymentTools(): ToolSchema[] {
           currency: 'USD',
           recent: list.slice(0, 5),
         };
+      },
+    },
+
+    // ── 5. Create Stripe Checkout Link ──
+    {
+      name: 'payments_createCheckoutLink',
+      description:
+        'Create a Stripe Checkout payment link for a product or service. Returns a URL the customer can pay through.',
+      parameters: {
+        type: 'object',
+        properties: {
+          amount: { type: 'number', description: 'Amount in dollars (e.g., 50.00)' },
+          currency: { type: 'string', description: 'ISO currency code (default: usd)' },
+          description: { type: 'string', description: 'Product or service description' },
+          customer_email: { type: 'string', description: 'Pre-fill customer email (optional)' },
+          success_url: { type: 'string', description: 'Redirect URL after payment (optional)' },
+        },
+        required: ['amount', 'description'],
+      },
+      riskLevel: 'medium',
+      execute: async (args, traceId) => {
+        const stripeKey = process.env.STRIPE_SECRET_KEY || '';
+        if (!stripeKey) {
+          return {
+            error: 'Stripe not configured.',
+            fix: 'Set STRIPE_SECRET_KEY in your environment variables.',
+            source: 'advisory',
+          };
+        }
+
+        const amount = Math.round(Number(args.amount) * 100); // Stripe uses cents
+        if (!amount || amount <= 0) {
+          return { error: 'Amount must be positive.' };
+        }
+
+        const currency = String(args.currency || 'usd').toLowerCase();
+        const description = String(args.description || 'KITZ Payment');
+
+        try {
+          const body = new URLSearchParams();
+          body.append('payment_method_types[]', 'card');
+          body.append('line_items[0][price_data][currency]', currency);
+          body.append('line_items[0][price_data][product_data][name]', description);
+          body.append('line_items[0][price_data][unit_amount]', String(amount));
+          body.append('line_items[0][quantity]', '1');
+          body.append('mode', 'payment');
+          body.append('success_url', String(args.success_url || 'https://kitz.services/payment-success'));
+          body.append('cancel_url', 'https://kitz.services/payment-cancelled');
+          if (args.customer_email) {
+            body.append('customer_email', String(args.customer_email));
+          }
+
+          const res = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${stripeKey}`,
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: body.toString(),
+            signal: AbortSignal.timeout(15_000),
+          });
+
+          if (!res.ok) {
+            const errText = await res.text().catch(() => 'unknown error');
+            return { error: `Stripe error (${res.status}): ${errText.slice(0, 300)}` };
+          }
+
+          const session = await res.json() as { id: string; url: string };
+          log.info('checkout_created', { sessionId: session.id, amount, currency, trace_id: traceId });
+
+          return {
+            success: true,
+            checkout_url: session.url,
+            session_id: session.id,
+            amount: Number(args.amount),
+            currency,
+            description,
+            source: 'stripe',
+          };
+        } catch (err) {
+          if ((err as Error).name === 'AbortError') {
+            return { error: 'Stripe request timed out.' };
+          }
+          return { error: `Stripe failed: ${(err as Error).message}` };
+        }
       },
     },
   ];

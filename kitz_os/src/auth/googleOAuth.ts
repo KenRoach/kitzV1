@@ -11,7 +11,7 @@
  */
 
 import { createSubsystemLogger } from 'kitz-schemas';
-import { google, type calendar_v3 } from 'googleapis';
+import { google, type calendar_v3, type gmail_v1, type sheets_v4 } from 'googleapis';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -27,10 +27,15 @@ const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3012/api/kitz/oauth/google/callback';
 
-// Calendar scopes
+// Google API scopes — Calendar + Gmail + Sheets + Drive (read-only)
 const SCOPES = [
   'https://www.googleapis.com/auth/calendar',
   'https://www.googleapis.com/auth/calendar.events',
+  'https://www.googleapis.com/auth/gmail.send',
+  'https://www.googleapis.com/auth/gmail.readonly',
+  'https://www.googleapis.com/auth/gmail.compose',
+  'https://www.googleapis.com/auth/spreadsheets',
+  'https://www.googleapis.com/auth/drive.file',
 ];
 
 // ── Types ──
@@ -150,6 +155,68 @@ export async function getCalendarClient(): Promise<calendar_v3.Calendar> {
   });
 
   return google.calendar({ version: 'v3', auth: oauth2 });
+}
+
+/**
+ * Get an authenticated Gmail client. Auto-refreshes expired tokens.
+ */
+export async function getGmailClient(): Promise<gmail_v1.Gmail> {
+  const tokens = await loadTokens();
+  if (!tokens || !tokens.refresh_token) {
+    throw new Error('NOT_AUTHENTICATED');
+  }
+
+  const oauth2 = createOAuth2Client();
+  oauth2.setCredentials({
+    access_token: tokens.access_token,
+    refresh_token: tokens.refresh_token,
+    expiry_date: tokens.expiry_date,
+    token_type: tokens.token_type,
+  });
+
+  oauth2.on('tokens', async (newTokens) => {
+    const updated: StoredTokens = {
+      access_token: newTokens.access_token || tokens.access_token,
+      refresh_token: newTokens.refresh_token || tokens.refresh_token,
+      expiry_date: newTokens.expiry_date || tokens.expiry_date,
+      scope: newTokens.scope || tokens.scope,
+      token_type: newTokens.token_type || tokens.token_type,
+    };
+    await saveTokens(updated);
+  });
+
+  return google.gmail({ version: 'v1', auth: oauth2 });
+}
+
+/**
+ * Get an authenticated Google Sheets client. Auto-refreshes expired tokens.
+ */
+export async function getSheetsClient(): Promise<sheets_v4.Sheets> {
+  const tokens = await loadTokens();
+  if (!tokens || !tokens.refresh_token) {
+    throw new Error('NOT_AUTHENTICATED');
+  }
+
+  const oauth2 = createOAuth2Client();
+  oauth2.setCredentials({
+    access_token: tokens.access_token,
+    refresh_token: tokens.refresh_token,
+    expiry_date: tokens.expiry_date,
+    token_type: tokens.token_type,
+  });
+
+  oauth2.on('tokens', async (newTokens) => {
+    const updated: StoredTokens = {
+      access_token: newTokens.access_token || tokens.access_token,
+      refresh_token: newTokens.refresh_token || tokens.refresh_token,
+      expiry_date: newTokens.expiry_date || tokens.expiry_date,
+      scope: newTokens.scope || tokens.scope,
+      token_type: newTokens.token_type || tokens.token_type,
+    };
+    await saveTokens(updated);
+  });
+
+  return google.sheets({ version: 'v4', auth: oauth2 });
 }
 
 /**

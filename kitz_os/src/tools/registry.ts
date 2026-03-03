@@ -193,6 +193,7 @@ export class OsToolRegistry {
       import('./wooCommerceAdvisorTools.js'),
       import('./whatsappBusinessAdvisorTools.js'),
       import('./pixIntegrationAdvisorTools.js'),
+      import('./googleSheetsTools.js'),
       // Week 10: Advanced Content skills
       import('./blogPostAdvisorTools.js'),
       import('./personalBrandBuilderTools.js'),
@@ -327,6 +328,7 @@ export class OsToolRegistry {
       'getAllWooCommerceAdvisorTools',
       'getAllWhatsappBusinessAdvisorTools',
       'getAllPixIntegrationAdvisorTools',
+      'getAllGoogleSheetsTools',
       // Week 10
       'getAllBlogPostAdvisorTools',
       'getAllPersonalBrandBuilderTools',
