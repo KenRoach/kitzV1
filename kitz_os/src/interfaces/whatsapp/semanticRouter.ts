@@ -272,6 +272,23 @@ function buildSystemPrompt(toolCount: number, channel: OutputChannel = 'whatsapp
 - Spell out numbers and abbreviations (e.g., "quinientos dólares" not "$500").
 - Keep under 5000 characters (ElevenLabs limit).
 - Avoid lists — convert to flowing sentences.`,
+    instagram: `RESPONSE FORMAT (Instagram DM):
+- Respond in Spanish by default. Match user's language.
+- Keep it short: 1-2 sentences max. Instagram DMs are casual.
+- Max 1000 chars. No markdown — plain text only.
+- Emojis are fine, keep it Gen Z friendly.
+- If complex, say "Te mando más info por WhatsApp."`,
+    messenger: `RESPONSE FORMAT (Facebook Messenger):
+- Respond in Spanish by default. Match user's language.
+- Default: 1-3 sentences. Concise but friendly.
+- Max 2000 chars. Plain text, no markdown.
+- Emojis sparingly for visual clarity.`,
+    twitter: `RESPONSE FORMAT (X / Twitter DM):
+- Respond in Spanish by default. Match user's language.
+- Keep it concise: 1-3 sentences.
+- No markdown — plain text only.
+- Professional but approachable tone.
+- Max 10000 chars but aim for under 280.`,
   };
 
   const formatRules = formatRulesMap[channel] || formatRulesMap.whatsapp;
@@ -282,6 +299,9 @@ function buildSystemPrompt(toolCount: number, channel: OutputChannel = 'whatsapp
     email: 'email',
     sms: 'SMS',
     voice: 'voice call',
+    instagram: 'Instagram DM',
+    messenger: 'Facebook Messenger',
+    twitter: 'X / Twitter DM',
   };
 
   return `You are KITZ — an AI Business Operating System. You are an execution engine, not a chatbot.

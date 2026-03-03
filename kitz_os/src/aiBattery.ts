@@ -1,26 +1,20 @@
 /**
- * AI Battery — Unified Spend Tracking for KITZ OS
+ * AI Usage Tracking — Simple per-user free tier for KITZ OS
  *
- * Tracks ALL AI API consumption across providers:
- *   - OpenAI gpt-4o-mini (tool-routing loops in semantic router)
- *   - Claude Haiku (fallback tool-routing)
- *   - ElevenLabs (TTS voice generation — characters)
+ * Model: Each user gets 10 FREE AI uses. After that, they pay.
+ * 1 AI call = 1 use (regardless of tokens, TTS chars, etc.)
+ *
+ * Multi-user: Every use is scoped by orgId so different users
+ * get independent free-tier counters.
  *
  * Storage layers:
  *   1. In-memory ledger (always available, resets on restart)
  *   2. NDJSON file (append-only, survives restarts)
  *   3. Supabase agent_audit_log (when configured — persistent)
  *
- * Credit model:
- *   - 1 credit = ~1000 LLM tokens OR ~500 ElevenLabs characters
- *   - Read operations: 0 credits
- *   - Tool-routing loop: ~0.5–2 credits per request
- *   - Voice note (TTS): ~0.5–5 credits depending on text length
- *
- * Budget enforcement (from governance/ai_battery.md):
- *   - Daily: ≤ 5 credits
- *   - Weekly: ≤ 15 credits
- *   - Monthly: ≤ 30 credits
+ * Note: "Battery" references are kept in internal code for backwards
+ * compatibility with existing callers, but user-facing messages say
+ * "free uses" not "battery" or "credits".
  */
 
 import { appendFile, mkdir, readFile } from 'node:fs/promises';
@@ -28,7 +22,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createSubsystemLogger } from 'kitz-schemas';
 
-const log = createSubsystemLogger('aiBattery');
+const log = createSubsystemLogger('aiUsage');
 
 // ── Config ──────────────────────────────────────────────
 
@@ -36,17 +30,15 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, '..', 'data');
 const LEDGER_FILE = join(DATA_DIR, 'battery-ledger.ndjson');
 
-// Credit conversion rates
-const TOKENS_PER_CREDIT = 1000;       // ~1000 LLM tokens = 1 credit
-const TTS_CHARS_PER_CREDIT = 500;     // ~500 ElevenLabs chars = 1 credit
+// Free tier: 10 AI uses per user (configurable via env)
+const FREE_USES = Number(process.env.AI_FREE_USES) || 10;
 
-// Daily credit limit (configurable via env, default 5)
-const DAILY_LIMIT = Number(process.env.AI_BATTERY_DAILY_LIMIT) || 5;
+// Default org for backwards compatibility
+const DEFAULT_ORG = 'default';
 
 // Supabase config (optional — for persistent tracking)
 const SUPABASE_URL = process.env.SUPABASE_URL || '';
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const BUSINESS_ID = process.env.BUSINESS_ID || '134f52d0-90a3-4806-a1bd-c37ef31d4f6f';
 
 // ── Types ───────────────────────────────────────────────
 
@@ -56,11 +48,13 @@ export type SpendCategory = 'llm_tokens' | 'tts_characters' | 'voice_call' | 're
 export interface SpendEntry {
   id: string;
   ts: string;
+  /** Organization/user ID — isolates usage per user */
+  orgId: string;
   provider: SpendProvider;
   category: SpendCategory;
   /** Raw usage units (tokens or characters) */
   units: number;
-  /** Credits consumed (converted from units) */
+  /** Credits consumed (1 per AI call, kept for granular tracking) */
   credits: number;
   /** Model or voice used */
   model: string;
@@ -73,23 +67,25 @@ export interface SpendEntry {
 }
 
 export interface BatteryStatus {
-  /** Total credits consumed today */
+  /** Organization/user ID */
+  orgId: string;
+  /** Total AI uses today */
   todayCredits: number;
-  /** Total credits consumed all-time (since last restart) */
+  /** Total AI uses all-time (since last restart) */
   totalCredits: number;
-  /** Daily credit budget */
+  /** Free uses allowed */
   dailyLimit: number;
-  /** Credits remaining today */
+  /** Free uses remaining (0 = must pay) */
   remaining: number;
-  /** Whether budget is depleted */
+  /** Whether free tier is exhausted */
   depleted: boolean;
   /** Breakdown by provider */
   byProvider: Record<SpendProvider, number>;
-  /** Total LLM tokens consumed today */
+  /** Total LLM tokens consumed */
   todayTokens: number;
-  /** Total TTS characters consumed today */
+  /** Total TTS characters consumed */
   todayTtsChars: number;
-  /** Number of AI calls today */
+  /** Number of AI calls */
   todayCalls: number;
 }
 
@@ -111,6 +107,11 @@ async function ensureDataDir(): Promise<void> {
   }
 }
 
+/** Filter ledger entries for a specific org */
+function orgEntries(orgId: string): SpendEntry[] {
+  return ledger.filter(e => e.orgId === orgId);
+}
+
 // ── Core Functions ────────────────────────────────────────
 
 /**
@@ -120,6 +121,7 @@ async function ensureDataDir(): Promise<void> {
 export async function recordSpend(entry: Omit<SpendEntry, 'id' | 'ts'>): Promise<SpendEntry> {
   const fullEntry: SpendEntry = {
     ...entry,
+    orgId: entry.orgId || DEFAULT_ORG,
     id: crypto.randomUUID(),
     ts: new Date().toISOString(),
   };
@@ -141,7 +143,8 @@ export async function recordSpend(entry: Omit<SpendEntry, 'id' | 'ts'>): Promise
   }
 
   // Log spend
-  log.info('spend_recorded', {
+  log.info('use_recorded', {
+    orgId: fullEntry.orgId,
     provider: fullEntry.provider,
     category: fullEntry.category,
     units: fullEntry.units,
@@ -164,14 +167,15 @@ export async function recordLLMSpend(opts: {
   totalTokens: number;
   traceId: string;
   toolContext?: string;
+  orgId?: string;
 }): Promise<SpendEntry> {
-  const credits = opts.totalTokens / TOKENS_PER_CREDIT;
-
+  // 1 AI call = 1 use (simple model)
   return recordSpend({
+    orgId: opts.orgId || DEFAULT_ORG,
     provider: opts.provider,
     category: 'llm_tokens',
     units: opts.totalTokens,
-    credits: Math.round(credits * 1000) / 1000, // 3 decimal places
+    credits: 1, // 1 use per AI call
     model: opts.model,
     traceId: opts.traceId,
     toolContext: opts.toolContext,
@@ -191,14 +195,14 @@ export async function recordTTSSpend(opts: {
   modelId: string;
   traceId: string;
   toolContext?: string;
+  orgId?: string;
 }): Promise<SpendEntry> {
-  const credits = opts.characterCount / TTS_CHARS_PER_CREDIT;
-
   return recordSpend({
+    orgId: opts.orgId || DEFAULT_ORG,
     provider: 'elevenlabs',
     category: 'tts_characters',
     units: opts.characterCount,
-    credits: Math.round(credits * 1000) / 1000,
+    credits: 1, // 1 use per TTS call
     model: `${opts.modelId}/${opts.voiceId}`,
     traceId: opts.traceId,
     toolContext: opts.toolContext,
@@ -206,76 +210,85 @@ export async function recordTTSSpend(opts: {
 }
 
 /**
- * Record a manual credit recharge.
+ * Record a manual credit recharge (purchase).
  */
-export async function recordRecharge(credits: number, traceId: string): Promise<SpendEntry> {
+export async function recordRecharge(credits: number, traceId: string, orgId?: string): Promise<SpendEntry> {
   return recordSpend({
+    orgId: orgId || DEFAULT_ORG,
     provider: 'openai', // Placeholder — recharges aren't provider-specific
     category: 'recharge',
     units: 0,
-    credits: -credits, // Negative = credits added
+    credits: -credits, // Negative = uses added
     model: 'recharge',
     traceId,
   });
 }
 
 /**
- * Get current battery status.
+ * Get current usage status for a specific user/org.
+ * Counts TOTAL uses (not daily) — free tier is lifetime, not per-day.
  */
-export function getBatteryStatus(): BatteryStatus {
+export function getBatteryStatus(orgId?: string): BatteryStatus {
+  const effectiveOrgId = orgId || DEFAULT_ORG;
+
+  // Get entries for this org (or all entries if orgId is 'global')
+  const orgLedger = effectiveOrgId === 'global' ? ledger : orgEntries(effectiveOrgId);
+
+  // Total uses (exclude recharges)
+  const usageEntries = orgLedger.filter(e => e.category !== 'recharge');
+  const rechargeEntries = orgLedger.filter(e => e.category === 'recharge');
+
+  const totalUses = usageEntries.reduce((sum, e) => sum + e.credits, 0);
+  const totalRecharged = rechargeEntries.reduce((sum, e) => sum + Math.abs(e.credits), 0);
+
+  // Today's entries (for display)
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+  const todayEntries = usageEntries.filter(e => e.ts >= todayStart);
 
-  // Filter today's entries (exclude recharges from credit count)
-  const todayEntries = ledger.filter(e => e.ts >= todayStart && e.category !== 'recharge');
-  const todayRecharges = ledger.filter(e => e.ts >= todayStart && e.category === 'recharge');
-
-  const todayCredits = todayEntries.reduce((sum, e) => sum + e.credits, 0);
-  const todayRecharged = todayRecharges.reduce((sum, e) => sum + Math.abs(e.credits), 0);
-  const totalCredits = ledger.filter(e => e.category !== 'recharge').reduce((sum, e) => sum + e.credits, 0);
-
-  // By-provider breakdown (today)
+  // By-provider breakdown (total)
   const byProvider: Record<SpendProvider, number> = {
     openai: 0,
     claude: 0,
     elevenlabs: 0,
   };
-  for (const e of todayEntries) {
+  for (const e of usageEntries) {
     byProvider[e.provider] += e.credits;
   }
 
-  // Token/character counts
-  const todayTokens = todayEntries
+  // Token/character counts (total)
+  const todayTokens = usageEntries
     .filter(e => e.category === 'llm_tokens')
     .reduce((sum, e) => sum + e.units, 0);
-  const todayTtsChars = todayEntries
+  const todayTtsChars = usageEntries
     .filter(e => e.category === 'tts_characters')
     .reduce((sum, e) => sum + e.units, 0);
 
-  const effectiveSpend = Math.max(0, todayCredits - todayRecharged);
-  const remaining = Math.max(0, DAILY_LIMIT - effectiveSpend);
+  const effectiveUses = Math.max(0, totalUses - totalRecharged);
+  const remaining = Math.max(0, FREE_USES + totalRecharged - totalUses);
 
   return {
-    todayCredits: Math.round(effectiveSpend * 1000) / 1000,
-    totalCredits: Math.round(totalCredits * 1000) / 1000,
-    dailyLimit: DAILY_LIMIT,
-    remaining: Math.round(remaining * 1000) / 1000,
+    orgId: effectiveOrgId,
+    todayCredits: todayEntries.reduce((sum, e) => sum + e.credits, 0),
+    totalCredits: Math.round(effectiveUses),
+    dailyLimit: FREE_USES,
+    remaining: Math.round(remaining),
     depleted: remaining <= 0,
     byProvider,
     todayTokens,
     todayTtsChars,
-    todayCalls: todayEntries.length,
+    todayCalls: usageEntries.length,
   };
 }
 
 /**
- * Check if the user has enough credits for an AI operation.
- * Returns false if daily limit would be exceeded.
+ * Check if the user has free uses remaining.
+ * Returns false if free tier exhausted and no purchased credits.
  */
-export function hasBudget(estimatedCredits = 1): boolean {
-  // Feature-flagged: battery enforcement disabled until AI_BATTERY_ENABLED=true
-  if (process.env.AI_BATTERY_ENABLED !== 'true') return true;
-  const status = getBatteryStatus();
+export function hasBudget(estimatedCredits = 1, orgId?: string): boolean {
+  // Feature-flagged: usage enforcement disabled until AI_USAGE_ENABLED=true
+  if (process.env.AI_BATTERY_ENABLED !== 'true' && process.env.AI_USAGE_ENABLED !== 'true') return true;
+  const status = getBatteryStatus(orgId);
   return status.remaining >= estimatedCredits;
 }
 
@@ -299,8 +312,10 @@ export function checkROI(estimatedCost: number, estimatedValue: number): { appro
 
 /**
  * Get the full ledger (for debugging/audit).
+ * If orgId provided, returns only that org's entries.
  */
-export function getLedger(): SpendEntry[] {
+export function getLedger(orgId?: string): SpendEntry[] {
+  if (orgId) return [...orgEntries(orgId)];
   return [...ledger];
 }
 
@@ -333,6 +348,8 @@ async function restoreFromFile(): Promise<number> {
       try {
         const entry = JSON.parse(line) as SpendEntry;
         if (entry.id && entry.ts && entry.provider) {
+          // Migrate legacy entries without orgId
+          if (!entry.orgId) entry.orgId = DEFAULT_ORG;
           // Avoid duplicates
           if (!ledger.some(e => e.id === entry.id)) {
             ledger.push(entry);
@@ -352,12 +369,9 @@ async function restoreFromFile(): Promise<number> {
 
 async function restoreFromSupabase(): Promise<number> {
   try {
-    // Fetch today's spend entries from Supabase
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-
+    // Fetch all spend entries from Supabase (all orgs — for free tier lifetime count)
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/agent_audit_log?business_id=eq.${BUSINESS_ID}&action=like.spend.*&created_at=gte.${todayStart.toISOString()}&order=created_at.asc&limit=500`,
+      `${SUPABASE_URL}/rest/v1/agent_audit_log?action=like.spend.*&order=created_at.asc&limit=1000`,
       {
         headers: {
           'apikey': SUPABASE_SERVICE_ROLE_KEY,
@@ -370,10 +384,11 @@ async function restoreFromSupabase(): Promise<number> {
     if (!res.ok) return 0;
 
     const rows = await res.json() as Array<{
+      business_id: string;
       trace_id: string;
       action: string;
       credits_consumed: number;
-      args: { provider?: string; model?: string; units?: number };
+      args: { provider?: string; model?: string; units?: number; orgId?: string };
       created_at: string;
       tool_name: string;
     }>;
@@ -384,6 +399,7 @@ async function restoreFromSupabase(): Promise<number> {
       const entry: SpendEntry = {
         id: row.trace_id + '_' + count,
         ts: row.created_at,
+        orgId: row.args?.orgId || row.business_id || DEFAULT_ORG,
         provider: (row.args?.provider || 'openai') as SpendProvider,
         category,
         units: row.args?.units || 0,
@@ -414,7 +430,7 @@ async function persistToFile(entry: SpendEntry): Promise<void> {
 async function persistToSupabase(entry: SpendEntry): Promise<void> {
   // Insert into agent_audit_log as a spend event
   const auditRow = {
-    business_id: BUSINESS_ID,
+    business_id: entry.orgId || DEFAULT_ORG,
     agent_type: 'system',
     action: `spend.${entry.category}`,
     tool_name: entry.toolContext || entry.category,
@@ -422,8 +438,9 @@ async function persistToSupabase(entry: SpendEntry): Promise<void> {
       provider: entry.provider,
       model: entry.model,
       units: entry.units,
+      orgId: entry.orgId,
     },
-    result_summary: `${entry.credits} credits (${entry.units} ${entry.category === 'llm_tokens' ? 'tokens' : 'chars'})`,
+    result_summary: `${entry.credits} use(s) (${entry.units} ${entry.category === 'llm_tokens' ? 'tokens' : 'chars'})`,
     risk_level: 'low',
     trace_id: entry.traceId,
     credits_consumed: entry.credits,

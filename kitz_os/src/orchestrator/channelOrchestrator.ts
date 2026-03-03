@@ -106,6 +106,9 @@ const ACK_MESSAGES: Record<OutputChannel, (task: BrainTask) => string> = {
   sms: (t) => `KITZ: Request received. Draft coming soon. Ref: ${t.id.slice(0, 8)}`,
   voice: (t) => `Request received. I'll prepare a draft for your review. Reference number: ${t.id.slice(0, 8)}.`,
   terminal: (t) => `On it. Ref: ${t.id.slice(0, 8)}`,
+  instagram: (t) => `Recibido ✨ Trabajando en eso... Ref: ${t.id.slice(0, 8)}`,
+  messenger: (t) => `Recibido. Trabajando en esto... Ref: ${t.id.slice(0, 8)}`,
+  twitter: (t) => `Recibido. Trabajando en esto... Ref: ${t.id.slice(0, 8)}`,
 };
 
 const CLARIFICATION_MESSAGES: Record<OutputChannel, (question: string, taskRef: string) => string> = {
@@ -115,6 +118,9 @@ const CLARIFICATION_MESSAGES: Record<OutputChannel, (question: string, taskRef: 
   sms: (q, ref) => `KITZ needs more info: ${q} Reply with details. Ref: ${ref}`,
   voice: (q, ref) => `I need more information. ${q}. Please provide the details. Reference: ${ref}.`,
   terminal: (q, ref) => `Need more info: ${q}\nRef: ${ref}`,
+  instagram: (q, ref) => `Necesito más info: ${q}\nResponde aquí. Ref: ${ref}`,
+  messenger: (q, ref) => `Necesito más info:\n\n${q}\n\nResponde a este mensaje. Ref: ${ref}`,
+  twitter: (q, ref) => `Necesito más info: ${q}\nResponde aquí. Ref: ${ref}`,
 };
 
 const DRAFT_READY_MESSAGES: Record<OutputChannel, (draft: string, taskRef: string) => string> = {
@@ -124,6 +130,9 @@ const DRAFT_READY_MESSAGES: Record<OutputChannel, (draft: string, taskRef: strin
   sms: (d, ref) => `KITZ Draft: ${d.slice(0, 100)}... Reply APPROVE or REJECT. Ref: ${ref}`,
   voice: (d, ref) => `Your draft is ready. ${d.slice(0, 200)}. Say approve to send, or reject to cancel. Reference: ${ref}.`,
   terminal: (d, ref) => `Draft ready:\n\n${d}\n\nType "approve" or "reject". Ref: ${ref}`,
+  instagram: (d, ref) => `📋 Borrador listo:\n\n${d.slice(0, 800)}\n\nResponde "aprobar" o "rechazar". Ref: ${ref}`,
+  messenger: (d, ref) => `📋 Borrador listo:\n\n${d}\n\nResponde "aprobar" o "rechazar". Ref: ${ref}`,
+  twitter: (d, ref) => `Borrador listo:\n\n${d.slice(0, 800)}\n\nResponde "aprobar" o "rechazar". Ref: ${ref}`,
 };
 
 // ── Core Orchestration Functions ──

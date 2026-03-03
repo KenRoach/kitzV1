@@ -546,6 +546,42 @@ services:
       - kitz-llm-hub
       - kitz-os
 
+  # ── Social Connector (port 3016) ──
+  kitz-social-connector:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_DIR: kitz-social-connector
+    ports:
+      - "3016:3016"
+    environment:
+      <<: *env-common
+      PORT: 3016
+      KITZ_OS_URL: http://kitz-os:3012
+      DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET}
+      SERVICE_SECRET: ${DEV_TOKEN_SECRET}
+      META_VERIFY_TOKEN: ${META_VERIFY_TOKEN:-kitz-verify-2024}
+      META_PAGE_ACCESS_TOKEN: ${META_PAGE_ACCESS_TOKEN:-}
+      META_APP_SECRET: ${META_APP_SECRET:-}
+      X_API_KEY: ${X_API_KEY:-}
+      X_API_SECRET: ${X_API_SECRET:-}
+      X_ACCESS_TOKEN: ${X_ACCESS_TOKEN:-}
+      X_ACCESS_SECRET: ${X_ACCESS_SECRET:-}
+      X_BEARER_TOKEN: ${X_BEARER_TOKEN:-}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3016/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    depends_on:
+      - kitz-os
+
 networks:
   kitz-net:
     driver: bridge
