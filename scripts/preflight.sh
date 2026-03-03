@@ -149,9 +149,21 @@ else
 fi
 
 if [ -n "${META_PAGE_ACCESS_TOKEN:-}" ] && [ -n "${META_PAGE_ID:-}" ]; then
-  pass "Meta/Facebook configured"
+  pass "Meta/Facebook configured (posting + DMs)"
 else
   skip "Meta not configured — social media tools will be advisory"
+fi
+
+if [ -n "${META_APP_SECRET:-}" ]; then
+  pass "META_APP_SECRET is set (webhook signature verification)"
+else
+  skip "META_APP_SECRET not set — webhook signature skipped in dev mode"
+fi
+
+if [ -n "${X_BEARER_TOKEN:-}" ] || ([ -n "${X_API_KEY:-}" ] && [ -n "${X_ACCESS_TOKEN:-}" ]); then
+  pass "X/Twitter API configured (DMs)"
+else
+  skip "X/Twitter not configured — X DM connector inactive"
 fi
 
 if [ -n "${MELI_ACCESS_TOKEN:-}" ] && [ -n "${MELI_USER_ID:-}" ]; then
@@ -166,8 +178,10 @@ echo ""
 purple "  6. Service URLs"
 KITZ_OS="${KITZ_OS_URL:-http://localhost:3012}"
 WA="${WA_CONNECTOR_URL:-http://localhost:3006}"
+SOCIAL="${SOCIAL_CONNECTOR_URL:-http://localhost:3016}"
 pass "KITZ_OS_URL = $KITZ_OS"
 pass "WA_CONNECTOR_URL = $WA"
+pass "SOCIAL_CONNECTOR_URL = $SOCIAL"
 echo ""
 
 # ── 7. Build Check ─────────────────────────────────────

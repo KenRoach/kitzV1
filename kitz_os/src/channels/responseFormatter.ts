@@ -18,6 +18,9 @@ const CHANNEL_LIMITS: Record<OutputChannel, number> = {
   voice: 5000,
   web: 8192,
   terminal: 8192,
+  instagram: 1000,
+  messenger: 2000,
+  twitter: 10_000,
 };
 
 /** Convert markdown bold to WhatsApp bold */

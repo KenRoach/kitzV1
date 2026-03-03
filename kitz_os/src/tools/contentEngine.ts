@@ -192,6 +192,7 @@ export function getAllContentEngineTools(): ToolSchema[] {
       riskLevel: 'medium',
       execute: async (args, traceId) => {
         const businessName = String(args.businessName);
+        const orgId = String(args.orgId || 'default');
         if (args.brief) {
           try {
             const { claudeChat } = await import('../llm/claudeClient.js');
@@ -212,12 +213,12 @@ export function getAllContentEngineTools(): ToolSchema[] {
                 socialLinks: (args.socialLinks as Record<string, string>) || undefined,
                 contactInfo: (args.contactInfo as BrandKit['contactInfo']) || undefined,
               };
-              brandKits.set('default', kit);
+              brandKits.set(orgId, kit);
               return { brandKit: kit, message: `Brand kit created for "${businessName}" via AI.` };
             } catch { return { error: 'AI returned invalid JSON for brand kit.' }; }
           } catch (err) { return { error: `AI brand generation failed: ${(err as Error).message}` }; }
         }
-        const existing = brandKits.get('default');
+        const existing = brandKits.get(orgId) || brandKits.get('default');
         const colorsArg = args.colors as Record<string, string> | undefined;
         const fontsArg = args.fonts as Record<string, string> | undefined;
         const kit: BrandKit = {
@@ -231,7 +232,7 @@ export function getAllContentEngineTools(): ToolSchema[] {
           socialLinks: (args.socialLinks as Record<string, string>) || existing?.socialLinks || undefined,
           contactInfo: (args.contactInfo as BrandKit['contactInfo']) || existing?.contactInfo || undefined,
         };
-        brandKits.set('default', kit);
+        brandKits.set(orgId, kit);
         return { brandKit: kit, message: `Brand kit created for "${businessName}".` };
       },
     },

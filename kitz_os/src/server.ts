@@ -268,7 +268,7 @@ export async function createServer(kernel: KitzKernel) {
     async (req, reply) => {
       const { message, sender, user_id, trace_id, channel: reqChannel, echo_channels, chat_history } = req.body || {};
       if (!message) return reply.code(400).send({ error: 'message required' });
-      const validChannels: OutputChannel[] = ['whatsapp', 'web', 'email', 'sms', 'voice', 'terminal'];
+      const validChannels: OutputChannel[] = ['whatsapp', 'web', 'email', 'sms', 'voice', 'terminal', 'instagram', 'messenger', 'twitter'];
       const channel: OutputChannel = validChannels.includes(reqChannel as OutputChannel)
         ? (reqChannel as OutputChannel)
         : 'whatsapp';
