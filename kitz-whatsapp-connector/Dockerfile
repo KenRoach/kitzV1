@@ -1,8 +1,8 @@
 # Railway Dockerfile for kitz-whatsapp-connector
 # Build context must be the kitzV1 root (so kitz-schemas is accessible)
-FROM node:20-alpine
+FROM node:20-slim
 
-RUN apk add --no-cache git
+RUN apt-get update && apt-get install -y --no-install-recommends git wget && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
