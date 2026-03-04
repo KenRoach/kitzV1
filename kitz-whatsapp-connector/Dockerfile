@@ -2,11 +2,7 @@
 # Build context must be the kitzV1 root (so kitz-schemas is accessible)
 FROM node:20-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends git wget openssh-client && rm -rf /var/lib/apt/lists/* \
-    && mkdir -p /root/.ssh \
-    && ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts \
-    && git config --global url."https://github.com/".insteadOf ssh://git@github.com/ \
-    && git config --global url."https://github.com/".insteadOf git@github.com:
+RUN apt-get update && apt-get install -y --no-install-recommends git wget && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -19,8 +15,11 @@ COPY kitz-schemas/tsconfig.json kitz-schemas/
 COPY kitz-whatsapp-connector/package.json kitz-whatsapp-connector/
 COPY kitz-whatsapp-connector/tsconfig.json kitz-whatsapp-connector/
 
-# Install dependencies
-RUN cd kitz-whatsapp-connector && npm install
+# Install dependencies — git config + npm install in same RUN to ensure config is visible
+RUN git config --global url."https://github.com/".insteadOf "ssh://git@github.com/" \
+    && git config --global url."https://github.com/".insteadOf "git@github.com:" \
+    && git config --global --list \
+    && cd kitz-whatsapp-connector && npm install
 
 # Copy source
 COPY kitz-whatsapp-connector/src/ kitz-whatsapp-connector/src/
