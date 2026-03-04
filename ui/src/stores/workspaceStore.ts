@@ -75,10 +75,27 @@ export interface Product {
   updatedAt: string
 }
 
+export interface CalendarEvent {
+  id: string
+  title: string
+  description: string
+  startTime: string
+  endTime: string
+  allDay: boolean
+  location: string
+  type: 'call' | 'meeting' | 'task' | 'follow-up' | 'reminder' | 'other'
+  status: 'scheduled' | 'completed' | 'cancelled'
+  color: string
+  recurrence: string
+  source: string
+  createdAt: string
+}
+
 const toast = (msg: string) => useToastStore.getState().add(msg, 'error')
 
 interface WorkspaceState {
   leads: Lead[]; orders: Order[]; tasks: Task[]; checkoutLinks: CheckoutLink[]; payments: Payment[]; products: Product[]
+  calendarEvents: CalendarEvent[]
   isLoading: boolean
   // Leads / CRM
   fetchLeads: () => Promise<void>
@@ -104,12 +121,18 @@ interface WorkspaceState {
   addProduct: (data: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>
   updateProduct: (id: string, data: Partial<Product>) => Promise<void>
   deleteProduct: (id: string) => Promise<void>
+  // Calendar
+  fetchCalendarEvents: (from?: string, to?: string) => Promise<void>
+  addCalendarEvent: (data: Partial<CalendarEvent>) => Promise<void>
+  updateCalendarEvent: (id: string, data: Partial<CalendarEvent>) => Promise<void>
+  deleteCalendarEvent: (id: string) => Promise<void>
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   leads: [], orders: [], tasks: [], checkoutLinks: [],
   products: [],
   payments: [],
+  calendarEvents: [],
   isLoading: false,
 
   fetchLeads: async () => {
@@ -290,6 +313,44 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       await apiFetch(`${API.WORKSPACE}/products/${id}`, { method: 'DELETE' })
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Failed to delete product')
+    }
+  },
+
+  fetchCalendarEvents: async (from, to) => {
+    set({ isLoading: true })
+    try {
+      const params = new URLSearchParams()
+      if (from) params.set('from', from)
+      if (to) params.set('to', to)
+      const events = await apiFetch<CalendarEvent[]>(`${API.WORKSPACE}/calendar?${params}`)
+      set({ calendarEvents: events, isLoading: false })
+    } catch (err) {
+      set({ isLoading: false })
+      toast(err instanceof Error ? err.message : 'Failed to load calendar')
+    }
+  },
+  addCalendarEvent: async (data) => {
+    try {
+      await apiFetch(`${API.WORKSPACE}/calendar`, { method: 'POST', body: JSON.stringify(data) })
+      await get().fetchCalendarEvents()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to create event')
+    }
+  },
+  updateCalendarEvent: async (id, data) => {
+    try {
+      await apiFetch(`${API.WORKSPACE}/calendar/${id}`, { method: 'PATCH', body: JSON.stringify(data) })
+      await get().fetchCalendarEvents()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to update event')
+    }
+  },
+  deleteCalendarEvent: async (id) => {
+    set((s) => ({ calendarEvents: s.calendarEvents.filter((e) => e.id !== id) }))
+    try {
+      await apiFetch(`${API.WORKSPACE}/calendar/${id}`, { method: 'DELETE' })
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to delete event')
     }
   },
 }))

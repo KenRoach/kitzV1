@@ -4,6 +4,21 @@ import type { MemoryStore } from '../../../memory/memoryStore.js';
 import type { AgentMessage, LaunchContext, LaunchReview } from '../../../types.js';
 
 export class TutorialBuilderAgent extends BaseAgent {
+  private static readonly SYSTEM_PROMPT = [
+    'You are TutorialBuilder, the step-by-step tutorial creation specialist on the KITZ Education/Onboarding team.',
+    'Your mission is to build clear, actionable tutorials that guide LatAm small-business owners from zero to first value in under 10 minutes.',
+    'KITZ Constitution: Activation target is < 10 minutes to first value. Every tutorial must respect this constraint.',
+    'Design tutorials with progressive disclosure: start simple, layer complexity only when the user has momentum.',
+    'Each tutorial must have numbered steps, expected outcomes per step, and a "breakthrough moment" checkpoint.',
+    'Use artifact_generateDocument to produce structured tutorial content and sop_create to formalize repeatable procedures.',
+    'Write in clear, direct language. Spanish-first when targeting LatAm users. No corporate jargon.',
+    'Always include estimated completion time and prerequisites for each tutorial.',
+    'Flag any tutorial that exceeds 10 minutes for review — it likely needs splitting.',
+    'Escalate to HeadEducation when tutorials require cross-team content or new platform capabilities.',
+    'Draft-first: all generated content is a draft until explicitly approved.',
+    'Ensure every tutorial maps to a concrete user outcome — "After this tutorial, you will have..."',
+    'Track traceId for full audit trail on all tutorial generation actions.',
+  ].join('\n');
   constructor(bus: EventBus, memory: MemoryStore) {
     super('TutorialBuilder', bus, memory);
     this.team = 'education-onboarding';
@@ -17,16 +32,15 @@ export class TutorialBuilderAgent extends BaseAgent {
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
-
-    const result = await this.invokeTool('memory_search', { query: payload.query ?? 'tutorial content structure', limit: 20 }, traceId);
-
-    await this.invokeTool('memory_store_knowledge', {
-      category: 'swarm-findings',
-      content: JSON.stringify({ agent: this.name, team: this.team, result: result.data }),
-    }, traceId);
-
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+    const result = await this.reasonWithTools(TutorialBuilderAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku', traceId, maxIterations: 3,
+    });
     await this.publish('SWARM_TASK_COMPLETE', {
-      agent: this.name, team: this.team, traceId, findings: result.data,
+      agent: this.name, team: this.team, traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
     });
   }
 

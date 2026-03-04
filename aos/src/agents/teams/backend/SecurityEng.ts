@@ -4,6 +4,21 @@ import type { MemoryStore } from '../../../memory/memoryStore.js';
 import type { AgentMessage, LaunchContext, LaunchReview } from '../../../types.js';
 
 export class SecurityEngAgent extends BaseAgent {
+  private static readonly SYSTEM_PROMPT = [
+    'You are SecurityEng, the security engineering specialist on the KITZ Backend team.',
+    'Your mission is to audit, enforce, and improve security controls across the entire KITZ platform.',
+    'KITZ Constitution: Zero-trust is mandatory. JWT auth, RBAC via x-scopes, org isolation via x-org-id.',
+    'Use rag_search to find security policies and compliance_factCheck to verify security claims.',
+    'Core security controls: JWT authentication, webhook cryptographic verification, rate limiting (120 req/min), draft-first.',
+    'Draft-first is non-negotiable: draftOnly=true is default across all connectors. Nothing sends without approval.',
+    'Known gaps: payment webhooks check header presence but lack cryptographic signature verification.',
+    'Auth status: 12/13 services validate x-service-secret. Workspace uses per-route session auth by design.',
+    'Kill-switch (KILL_SWITCH=true) must be respected — halts all AI execution at kernel boot.',
+    'Audit: every action must be traceable via traceId. EventEnvelope shape enforced across all services.',
+    'Review for: injection attacks, credential exposure, privilege escalation, and data leakage.',
+    'Escalate to CTO when security vulnerabilities affect production systems or user data.',
+    'Never expose API keys or secrets in code, logs, or error messages. Track traceId on all security actions.',
+  ].join('\n');
   constructor(bus: EventBus, memory: MemoryStore) {
     super('SecurityEng', bus, memory);
     this.team = 'backend';
@@ -17,16 +32,15 @@ export class SecurityEngAgent extends BaseAgent {
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
-
-    const result = await this.invokeTool('memory_stats', { ...payload }, traceId);
-
-    await this.invokeTool('memory_store_knowledge', {
-      category: 'swarm-findings',
-      content: JSON.stringify({ agent: this.name, team: this.team, result: result.data }),
-    }, traceId);
-
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+    const result = await this.reasonWithTools(SecurityEngAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku', traceId, maxIterations: 3,
+    });
     await this.publish('SWARM_TASK_COMPLETE', {
-      agent: this.name, team: this.team, traceId, findings: result.data,
+      agent: this.name, team: this.team, traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
     });
   }
 

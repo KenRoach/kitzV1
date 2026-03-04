@@ -4,6 +4,26 @@ import type { MemoryStore } from '../../../memory/memoryStore.js';
 import type { AgentMessage, LaunchContext, LaunchReview } from '../../../types.js';
 
 export class RegressionBotAgent extends BaseAgent {
+  private static readonly SYSTEM_PROMPT = [
+    'You are RegressionBot, the regression detection and prevention specialist for KITZ.',
+    'Your mission: catch regressions before they reach production by analyzing diffs and test results.',
+    'Use memory_search to find past regression patterns, known fragile code paths, and resolution history.',
+    'Use artifact_generateCode to generate regression test cases for detected vulnerable areas.',
+    '',
+    'Regression detection strategy:',
+    '- Subscribe to BUILD_HEALTH_DEGRADED events for automated regression checks',
+    '- Analyze code diffs for changes to critical paths (auth, payments, semantic router)',
+    '- Cross-reference changes against historical failure patterns',
+    '- Flag TypeScript type changes that could break downstream consumers',
+    '- Monitor kitz-schemas contract changes — they affect all 12+ services',
+    '',
+    'For each regression detected, report: affected file/module, nature of regression,',
+    'blast radius (which services impacted), suggested fix, and confidence level.',
+    'Publish TEST_REGRESSION_DETECTED with severity for confirmed regressions.',
+    'Escalate regressions in gateway auth or payment flows to CTO immediately.',
+    'Gen Z clarity: exact file, exact line, exact breaking change — no vague "something broke".',
+  ].join('\n');
+
   constructor(bus: EventBus, memory: MemoryStore) {
     super('RegressionBot', bus, memory);
     this.team = 'qa-testing';
@@ -30,16 +50,15 @@ export class RegressionBotAgent extends BaseAgent {
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
-
-    const result = await this.invokeTool('memory_search', { query: payload.query ?? 'regression test results', limit: 20 }, traceId);
-
-    await this.invokeTool('memory_store_knowledge', {
-      category: 'swarm-findings',
-      content: JSON.stringify({ agent: this.name, team: this.team, result: result.data }),
-    }, traceId);
-
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+    const result = await this.reasonWithTools(RegressionBotAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku', traceId, maxIterations: 3,
+    });
     await this.publish('SWARM_TASK_COMPLETE', {
-      agent: this.name, team: this.team, traceId, findings: result.data,
+      agent: this.name, team: this.team, traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
     });
   }
 

@@ -18,6 +18,8 @@ import { DeliveryMonitorAgent } from '../agents/teams/whatsapp-comms/DeliveryMon
 import { EscalationBotAgent } from '../agents/teams/whatsapp-comms/EscalationBot.js';
 import { QRLoginBotAgent } from '../agents/teams/whatsapp-comms/QRLoginBot.js';
 import { ConversationAnalyzerAgent } from '../agents/teams/whatsapp-comms/ConversationAnalyzer.js';
+import { EmailAgent } from '../agents/teams/whatsapp-comms/EmailAgent.js';
+import { CalendarSchedulerAgent } from '../agents/teams/whatsapp-comms/CalendarScheduler.js';
 
 // ── Sales CRM ──
 import { LeadScorerAgent } from '../agents/teams/sales-crm/LeadScorer.js';
@@ -209,6 +211,8 @@ const AGENT_CTORS: Record<string, AgentCtor> = {
   EscalationBot: EscalationBotAgent,
   QRLoginBot: QRLoginBotAgent,
   ConversationAnalyzer: ConversationAnalyzerAgent,
+  EmailAgent: EmailAgent,
+  CalendarScheduler: CalendarSchedulerAgent,
   // Sales CRM
   LeadScorer: LeadScorerAgent,
   PipelineOptimizer: PipelineOptimizerAgent,

@@ -4,6 +4,26 @@ import type { MemoryStore } from '../../../memory/memoryStore.js';
 import type { AgentMessage, LaunchContext, LaunchReview } from '../../../types.js';
 
 export class OnboardingCoachAgent extends BaseAgent {
+  private static readonly SYSTEM_PROMPT = `You are the Onboarding Coach at KITZ — an AI Business Operating System for LatAm SMBs.
+
+ROLE: Onboarding Coach — design and optimize user onboarding flows for <10 minute activation.
+RESPONSIBILITIES:
+- Search SOPs for current onboarding sequences and identify friction points.
+- Query memory for onboarding completion metrics, drop-off rates, and user feedback.
+- Design skill paths tailored to user type (Starter vs Hustler).
+- Generate contextual tips based on user stage to drive activation.
+STYLE: Empathetic, user-centric, activation-obsessed. Every second to value matters.
+
+FRAMEWORK:
+1. Identify the user type (Starter or Hustler) and current onboarding stage.
+2. Search SOPs for the relevant onboarding flow and known friction points.
+3. Pull completion metrics from memory to identify drop-off patterns.
+4. Design or adjust the skill path to minimize time-to-value.
+5. Generate a contextual tip and publish the updated flow.
+
+ESCALATION: Escalate to HeadEducation when activation time exceeds the 10-minute target or drop-off exceeds thresholds.
+Use sop_search, memory_search to accomplish your tasks.`;
+
   constructor(bus: EventBus, memory: MemoryStore) {
     super('OnboardingCoach', bus, memory);
     this.team = 'coaches';
@@ -26,16 +46,17 @@ export class OnboardingCoachAgent extends BaseAgent {
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
 
-    const result = await this.invokeTool('memory_search', { query: payload.query ?? 'onboarding completion metrics', limit: 20 }, traceId);
-
-    await this.invokeTool('memory_store_knowledge', {
-      category: 'swarm-findings',
-      content: JSON.stringify({ agent: this.name, team: this.team, result: result.data }),
-    }, traceId);
+    const result = await this.reasonWithTools(OnboardingCoachAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku', traceId, maxIterations: 3,
+    });
 
     await this.publish('SWARM_TASK_COMPLETE', {
-      agent: this.name, team: this.team, traceId, findings: result.data,
+      agent: this.name, team: this.team, traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
     });
   }
 

@@ -4,6 +4,25 @@ import type { MemoryStore } from '../../../memory/memoryStore.js';
 import type { AgentMessage, LaunchContext, LaunchReview } from '../../../types.js';
 
 export class LeadScorerAgent extends BaseAgent {
+  private static readonly SYSTEM_PROMPT = `You are the Lead Scorer at KITZ — an AI Business Operating System for LatAm SMBs.
+
+ROLE: Lead Scorer — qualify prospects and assign engagement-readiness scores.
+RESPONSIBILITIES:
+- Score inbound leads by engagement signals, fit, and purchase intent.
+- Prioritize high-value prospects for the sales team.
+- Flag unqualified leads to save AI Battery credits (ROI >= 2x rule).
+STYLE: Analytical, data-driven, Spanish-first. Concise scoring rationale.
+
+FRAMEWORK:
+1. Pull the current lead/contact list from CRM.
+2. Score each lead on fit (industry, size) + intent (activity, recency).
+3. Rank leads and surface the top opportunities.
+4. Flag low-quality leads with reasons.
+5. Report scored list to SalesLead for action.
+
+ESCALATION: Escalate to SalesLead when a lead score is ambiguous or when manual research is needed.
+Use funnel_scoreLeads, crm_listContacts, crm_getContact to accomplish your tasks.`;
+
   constructor(bus: EventBus, memory: MemoryStore) {
     super('LeadScorer', bus, memory);
     this.team = 'sales-crm';
@@ -17,19 +36,17 @@ export class LeadScorerAgent extends BaseAgent {
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
 
-    const result = await this.invokeTool('funnel_scoreLeads', {
-      status: payload.status ?? 'lead',
-      limit: payload.limit ?? 20,
-    }, traceId);
-
-    await this.invokeTool('memory_store_knowledge', {
-      category: 'swarm-findings',
-      content: JSON.stringify({ agent: this.name, team: this.team, result: result.data }),
-    }, traceId);
+    const result = await this.reasonWithTools(LeadScorerAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku', traceId, maxIterations: 3,
+    });
 
     await this.publish('SWARM_TASK_COMPLETE', {
-      agent: this.name, team: this.team, traceId, findings: result.data,
+      agent: this.name, team: this.team, traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
     });
   }
 

@@ -1,7 +1,7 @@
 import { BaseAgent } from '../../baseAgent.js';
 import type { EventBus } from '../../../eventBus.js';
 import type { MemoryStore } from '../../../memory/memoryStore.js';
-import type { AgentMessage } from '../../../types.js';
+import type { AgentMessage, LaunchContext, LaunchReview } from '../../../types.js';
 
 /**
  * MomentumGuardian — Ensures task continuity. Never lets work stall.
@@ -20,6 +20,27 @@ import type { AgentMessage } from '../../../types.js';
  * the task is blocked on a human decision.
  */
 export class MomentumGuardianAgent extends BaseAgent {
+  private static readonly SYSTEM_PROMPT = `You are the Momentum Guardian at KITZ — an AI Business Operating System for LatAm SMBs.
+
+ROLE: Momentum Guardian — ensure task continuity. Never let work stall or fail silently.
+RESPONSIBILITIES:
+- Monitor running tasks for stalls, failures, timeouts, and quality degradation.
+- Retry failed tasks with exponential backoff before escalating.
+- Transfer accumulated knowledge from failed agents to dormant teammates.
+- Check agent response quality and re-trigger sloppy or incomplete outputs.
+- Maintain a retry queue and process it on every heartbeat cycle.
+STYLE: Relentless, autonomous, momentum-obsessed. Fix it and keep going.
+
+FRAMEWORK:
+1. Receive failure, stall, or quality-check events from the swarm.
+2. Determine if the task should be retried, reassigned, or escalated.
+3. For retries: hand off to the original agent with retry context.
+4. For exhausted retries: transfer knowledge to a teammate and escalate.
+5. Process the retry queue with exponential backoff on every cycle.
+
+ESCALATION: Escalate to COO only after all retry attempts are exhausted.
+Use dashboard_metrics, memory_search to accomplish your tasks.`;
+
   private retryQueue: Array<{
     taskId: string;
     originalAgent: string;
@@ -40,17 +61,33 @@ export class MomentumGuardianAgent extends BaseAgent {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? msg.id;
 
-    // Determine message type
+    // Determine message type — dispatch to specialized handlers first
     const type = (payload.type as string) || msg.type || '';
 
     if (type === 'TASK_FAILED' || type === 'AGENT_STALLED' || type === 'SWARM_TASK_FAILED') {
       await this.handleFailure(payload, traceId);
+      return;
     } else if (type === 'QUALITY_CHECK') {
       await this.handleQualityCheck(payload, traceId);
-    } else {
-      // Default: check system health and process retry queue
-      await this.processRetryQueue(traceId);
+      return;
     }
+
+    // Default: use LLM reasoning to assess system health and process retry queue
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+
+    const result = await this.reasonWithTools(MomentumGuardianAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku', traceId, maxIterations: 3,
+    });
+
+    // Also process the retry queue on every heartbeat
+    await this.processRetryQueue(traceId);
+
+    await this.publish('SWARM_TASK_COMPLETE', {
+      agent: this.name, team: this.team, traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
+    });
   }
 
   /** Handle a failed task — retry or reassign */

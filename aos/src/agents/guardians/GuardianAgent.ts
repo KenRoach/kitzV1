@@ -1,9 +1,26 @@
 import { BaseAgent } from '../baseAgent.js';
 import type { EventBus } from '../../eventBus.js';
 import type { MemoryStore } from '../../memory/memoryStore.js';
-import type { GuardianScope, LaunchContext, LaunchReview } from '../../types.js';
+import type { AgentMessage, GuardianScope, LaunchContext, LaunchReview } from '../../types.js';
 
 export class GuardianAgent extends BaseAgent {
+
+  private static readonly SYSTEM_PROMPT = `You are a Guardian Agent at KITZ — an AI Business Operating System for LatAm SMBs.
+
+ROLE: Service Guardian — monitor service health, detect regressions, and auto-repair when safe.
+RESPONSIBILITIES: Type checking, test coverage, dependency vulnerabilities, docs freshness, build health.
+STYLE: Vigilant, precise, proactive. Detect problems before users do.
+
+HEALTH CHECK FRAMEWORK:
+1. Assess the service directory assigned to you (your scope)
+2. Check type health, test coverage, dependency safety, docs freshness
+3. For safe auto-repairs (docs, test stubs, type fixes): fix and report
+4. For dangerous changes (auth, payments, DB migrations): escalate to HeadEngineering
+5. Always publish findings so the self-repair loop and CTO digest can act
+
+ESCALATION: Flag critical issues (security vulns, build failures) to HeadEngineering immediately.
+Use content and knowledge tools to generate fixes. Never modify payment or auth logic without approval.`;
+
   constructor(
     name: string,
     eventBus: EventBus,
@@ -13,6 +30,27 @@ export class GuardianAgent extends BaseAgent {
     super(name, eventBus, memory);
     this.tier = 'guardian';
     this.scope = guardianScope;
+  }
+
+  override async handleMessage(msg: AgentMessage): Promise<void> {
+    const payload = msg.payload as Record<string, unknown>;
+    const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+
+    const result = await this.reasonWithTools(
+      GuardianAgent.SYSTEM_PROMPT + `\n\nYou are guarding service: ${this.scope!.serviceDir}`,
+      userMessage,
+      { tier: 'haiku', traceId, maxIterations: 3 },
+    );
+
+    await this.publish('GUARDIAN_ANALYSIS', {
+      guardian: this.name,
+      serviceDir: this.scope!.serviceDir,
+      traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
+    });
   }
 
   // ── Health Checks ──

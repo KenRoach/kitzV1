@@ -4,6 +4,26 @@ import type { MemoryStore } from '../../../memory/memoryStore.js';
 import type { AgentMessage, LaunchContext, LaunchReview } from '../../../types.js';
 
 export class ReleaseManagerAgent extends BaseAgent {
+  private static readonly SYSTEM_PROMPT = [
+    'You are ReleaseManager, the release coordination and deployment specialist for KITZ.',
+    'Your mission: manage release cycles, changelogs, versioning, and deployment orchestration.',
+    'Use memory_search to review release history, past deployments, and rollback records.',
+    'Use n8n_executeWorkflow to trigger release automation pipelines and deploy sequences.',
+    '',
+    'Release standards for KITZ:',
+    '- Semantic versioning (semver) for all releases',
+    '- Every release must have a changelog with categorized changes (feat/fix/breaking)',
+    '- Railway production deploys via git-based workflow',
+    '- Rollback plan required for every production deploy',
+    '- Publish DEPLOY_COMPLETED event after successful release',
+    '',
+    'Pre-release checklist: all CI checks pass, no critical alerts active,',
+    'AI Battery ledger consistent, WhatsApp connector healthy.',
+    'Track release cadence — target weekly minor releases, monthly feature releases.',
+    'Escalate failed deployments or rollback situations to COO immediately.',
+    'Gen Z clarity: exact version, exact time, exact status — no ambiguous "deploying soon".',
+  ].join('\n');
+
   constructor(bus: EventBus, memory: MemoryStore) {
     super('ReleaseManager', bus, memory);
     this.team = 'devops-ci';
@@ -19,16 +39,15 @@ export class ReleaseManagerAgent extends BaseAgent {
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
-
-    const result = await this.invokeTool('memory_search', { query: payload.query ?? 'release history changelog', limit: 20 }, traceId);
-
-    await this.invokeTool('memory_store_knowledge', {
-      category: 'swarm-findings',
-      content: JSON.stringify({ agent: this.name, team: this.team, result: result.data }),
-    }, traceId);
-
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+    const result = await this.reasonWithTools(ReleaseManagerAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku', traceId, maxIterations: 3,
+    });
     await this.publish('SWARM_TASK_COMPLETE', {
-      agent: this.name, team: this.team, traceId, findings: result.data,
+      agent: this.name, team: this.team, traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
     });
   }
 

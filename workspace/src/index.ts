@@ -10,9 +10,10 @@ import {
   listCheckoutLinks as dbListCheckoutLinks, createCheckoutLink as dbCreateCheckoutLink, updateCheckoutLink as dbUpdateCheckoutLink, deleteCheckoutLink as dbDeleteCheckoutLink,
   listProducts as dbListProducts, createProduct as dbCreateProduct, updateProduct as dbUpdateProduct, deleteProduct as dbDeleteProduct,
   listPayments as dbListPayments, createPayment as dbCreatePayment, deletePayment as dbDeletePayment,
+  listCalendarEvents as dbListCalendarEvents, createCalendarEvent as dbCreateCalendarEvent, updateCalendarEvent as dbUpdateCalendarEvent, deleteCalendarEvent as dbDeleteCalendarEvent,
   getDashboardMetrics,
   hasDB,
-  type DbLead, type DbOrder, type DbTask, type DbCheckoutLink, type DbProduct, type DbPayment,
+  type DbLead, type DbOrder, type DbTask, type DbCheckoutLink, type DbProduct, type DbPayment, type DbCalendarEvent,
 } from './db.js';
 
 const app = Fastify({ logger: true });
@@ -88,6 +89,8 @@ interface Product { id: string; name: string; description: string; price: number
 
 interface Payment { id: string; type: 'incoming' | 'outgoing'; description: string; amount: number; status: 'completed' | 'pending' | 'failed'; date: string; method: string; }
 
+interface CalendarEvent { id: string; title: string; description: string; startTime: string; endTime: string; allDay: boolean; location: string; type: string; status: string; color: string; recurrence: string; source: string; googleEventId: string; createdAt: string; updatedAt: string; }
+
 /* ── DB → UI Shape Mappers ── */
 function dbLeadToLead(d: DbLead): Lead { return { id: d.id, name: d.name, phone: d.phone, email: d.email, notes: d.notes?.join('\n') || '', createdAt: d.created_at }; }
 function dbOrderToOrder(d: DbOrder): Order { return { id: d.id, customer: d.description, amount: d.total, description: d.description, status: d.status, createdAt: d.created_at }; }
@@ -95,6 +98,7 @@ function dbTaskToTask(d: DbTask): Task { return { id: d.id, title: d.title, stat
 function dbCheckoutToLink(d: DbCheckoutLink): CheckoutLink { return { id: d.id, orderId: d.label, amount: d.amount, url: `https://workspace.kitz.services/pay/${d.slug}`, createdAt: d.created_at }; }
 function dbProductToProduct(d: DbProduct): Product { return { id: d.id, name: d.name, description: d.description, price: d.price, cost: d.cost, sku: d.sku, stock_qty: d.stock_qty, low_stock_threshold: d.low_stock_threshold, category: d.category, image_url: d.image_url, is_active: d.is_active, createdAt: d.created_at, updatedAt: d.updated_at }; }
 function dbPaymentToPayment(d: DbPayment): Payment { return { id: d.id, type: d.type as Payment['type'], description: d.description, amount: d.amount, status: d.status as Payment['status'], date: d.date, method: d.method }; }
+function dbCalendarEventToEvent(d: DbCalendarEvent): CalendarEvent { return { id: d.id, title: d.title, description: d.description, startTime: d.start_time, endTime: d.end_time, allDay: d.all_day, location: d.location, type: d.type, status: d.status, color: d.color, recurrence: d.recurrence, source: d.source, googleEventId: d.google_event_id, createdAt: d.created_at, updatedAt: d.updated_at }; }
 
 /* ── Analytics ── */
 type RouteStats = { count: number; errors: number; latencies: number[] };
@@ -1851,6 +1855,72 @@ app.delete('/api/workspace/payments/:id', async (req: any, reply: any) => {
   if (!user) return;
   await dbDeletePayment(user.userId, req.params.id);
   return { ok: true };
+});
+
+/* ── Calendar Events ── */
+
+app.get('/api/workspace/calendar', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  const { from, to } = (req.query || {}) as { from?: string; to?: string };
+  const rows = await dbListCalendarEvents(user.userId, from, to);
+  return rows.map(dbCalendarEventToEvent);
+});
+
+app.post('/api/workspace/calendar', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  const body = req.body || {};
+  if (!body.title) return reply.code(400).send({ error: 'title is required' });
+  const row = await dbCreateCalendarEvent(user.userId, {
+    title: body.title,
+    description: body.description || '',
+    start_time: body.startTime || body.start_time,
+    end_time: body.endTime || body.end_time,
+    all_day: body.allDay ?? body.all_day ?? false,
+    location: body.location || '',
+    type: body.type || 'other',
+    status: body.status || 'scheduled',
+    color: body.color || '#A855F7',
+    recurrence: body.recurrence || '',
+    source: body.source || 'manual',
+    google_event_id: body.googleEventId || body.google_event_id || '',
+  });
+  trackUsage('api.calendar.create');
+  return reply.code(201).send(dbCalendarEventToEvent(row));
+});
+
+app.patch('/api/workspace/calendar/:id', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  const body = req.body || {};
+  const updates: Record<string, unknown> = {};
+  if (body.title !== undefined) updates.title = body.title;
+  if (body.description !== undefined) updates.description = body.description;
+  if (body.startTime !== undefined) updates.start_time = body.startTime;
+  if (body.start_time !== undefined) updates.start_time = body.start_time;
+  if (body.endTime !== undefined) updates.end_time = body.endTime;
+  if (body.end_time !== undefined) updates.end_time = body.end_time;
+  if (body.allDay !== undefined) updates.all_day = body.allDay;
+  if (body.all_day !== undefined) updates.all_day = body.all_day;
+  if (body.location !== undefined) updates.location = body.location;
+  if (body.type !== undefined) updates.type = body.type;
+  if (body.status !== undefined) updates.status = body.status;
+  if (body.color !== undefined) updates.color = body.color;
+  if (body.recurrence !== undefined) updates.recurrence = body.recurrence;
+  if (body.source !== undefined) updates.source = body.source;
+  if (body.googleEventId !== undefined) updates.google_event_id = body.googleEventId;
+  if (body.google_event_id !== undefined) updates.google_event_id = body.google_event_id;
+  const row = await dbUpdateCalendarEvent(user.userId, req.params.id, updates);
+  if (!row) return reply.code(404).send({ error: 'NOT_FOUND' });
+  return dbCalendarEventToEvent(row);
+});
+
+app.delete('/api/workspace/calendar/:id', async (req: any, reply: any) => {
+  const user = requireApiAuth(req, reply);
+  if (!user) return;
+  await dbDeleteCalendarEvent(user.userId, req.params.id);
+  return { deleted: true };
 });
 
 /* ── Dashboard Metrics ── */

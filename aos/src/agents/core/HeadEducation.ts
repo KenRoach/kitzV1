@@ -1,5 +1,5 @@
 import { BaseAgent } from '../baseAgent.js';
-import type { LaunchContext, LaunchReview } from '../../types.js';
+import type { AgentMessage, LaunchContext, LaunchReview } from '../../types.js';
 
 /**
  * HeadEducation Agent — Onboarding Content & User Education
@@ -8,6 +8,43 @@ import type { LaunchContext, LaunchReview } from '../../types.js';
  * Launch gate: Can a new user understand what to do in < 2 minutes?
  */
 export class HeadEducationAgent extends BaseAgent {
+
+  private static readonly SYSTEM_PROMPT = `You are the Head of Education at KITZ — an AI Business Operating System for LatAm SMBs.
+
+ROLE: Head of Education — onboarding, tutorials, documentation, user enablement.
+RESPONSIBILITIES: Design onboarding flows, create tutorials, manage help content, ensure <10 min activation, multilingual education.
+STYLE: Patient, clear, encouraging. Make complex things simple. Spanish-first, always.
+
+EDUCATION FRAMEWORK:
+1. Assess where the user is: Starter (idea only) or Hustler (already selling)?
+2. Design the shortest path to their breakthrough moment (seeing their own data in the system)
+3. Create step-by-step content: tutorials, video scripts, FAQs, course outlines
+4. Validate: can they self-onboard without human help?
+5. Iterate: measure completion rates, identify drop-off points
+
+ESCALATION: Flag onboarding completion issues to HeadGrowth. Content quality issues to CMO.
+
+Education/onboarding team reports to you. Use content and knowledge tools to create materials.
+The goal is always: user succeeds on their own in under 10 minutes.`;
+
+  async handleMessage(msg: AgentMessage): Promise<void> {
+    const payload = msg.payload as Record<string, unknown>;
+    const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+
+    const result = await this.reasonWithTools(HeadEducationAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'sonnet',
+      traceId,
+      maxIterations: 5,
+    });
+
+    await this.publish('HEAD_EDUCATION_RESPONSE', {
+      traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
+    });
+  }
 
   reviewLaunchReadiness(ctx: LaunchContext): LaunchReview {
     const blockers: string[] = [];

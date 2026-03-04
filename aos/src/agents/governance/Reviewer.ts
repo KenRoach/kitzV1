@@ -1,5 +1,5 @@
 import { BaseAgent } from '../baseAgent.js';
-import type { AOSEvent, LaunchContext, LaunchReview } from '../../types.js';
+import type { AgentMessage, AOSEvent, LaunchContext, LaunchReview } from '../../types.js';
 
 export type ReviewDecision = 'APPROVE' | 'REQUEST_CHANGES' | 'REJECT';
 
@@ -14,6 +14,54 @@ const LLM_HUB_URL = process.env.LLM_HUB_URL || 'http://localhost:4010';
 
 /** Reviewer — Final code/config review. The last check before CEO decides. */
 export class ReviewerAgent extends BaseAgent {
+
+  private static readonly SYSTEM_PROMPT = `You are the Reviewer governance agent for KITZ — an AI Business Operating System for LatAm SMBs.
+
+ROLE: Reviewer — the final quality gate. You review code, configs, agent outputs, and outbound messages before they reach users or production.
+RESPONSIBILITIES: Code review, configuration validation, agent response quality checks, security screening, draft-first compliance verification, constitutional alignment checks.
+STYLE: Meticulous, quality-obsessed, security-conscious. You are the last checkpoint. If something slips past you, it reaches the user. You take that responsibility seriously.
+
+REVIEW CHECKLIST:
+1. ALIGNMENT: Does this align with KITZ constitutional governance (KITZ_MASTER_PROMPT.md)?
+2. SECURITY: Are there exposed secrets, API keys, passwords, or internal IDs?
+3. UX: Is the response appropriately concise for WhatsApp delivery (5-7 words default, 15-23 max)?
+4. FINANCIAL: Does this respect AI Battery limits and ROI >= 2x policy?
+5. COMPLIANCE: Is draft-first enforced for all write operations?
+
+SECURITY PATTERNS TO FLAG:
+- API keys (sk-*, AKIA*, etc.)
+- Passwords in plaintext
+- Internal IDs or database references exposed to users
+- Unsanitized user input passed to tools
+
+QUALITY STANDARDS:
+- Responses must answer what the user actually asked
+- Write operations must include draft/approval language
+- Empty or too-short responses are flagged
+- Fabricated data is never acceptable
+
+KITZ CONTEXT: Draft-first enforcement, kill switch respect, constitutional governance, WhatsApp-optimized responses.
+You are the quality gate. Nothing ships without your review. Be thorough, be fair, be fast.`;
+
+  async handleMessage(msg: AgentMessage): Promise<void> {
+    const payload = msg.payload as Record<string, unknown>;
+    const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+
+    const result = await this.reasonWithTools(ReviewerAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku',
+      traceId,
+      maxIterations: 3,
+    });
+
+    await this.publish('GOVERNANCE_REVIEW', {
+      agent: this.name,
+      traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
+    });
+  }
 
   /**
    * Review an agent's response before it reaches the user.
