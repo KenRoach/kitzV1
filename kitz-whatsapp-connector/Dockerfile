@@ -2,7 +2,9 @@
 # Build context must be the kitzV1 root (so kitz-schemas is accessible)
 FROM node:20-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends git wget && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends git wget && rm -rf /var/lib/apt/lists/* \
+    && git config --global url."https://github.com/".insteadOf ssh://git@github.com/ \
+    && git config --global url."https://github.com/".insteadOf git@github.com:
 
 WORKDIR /app
 
