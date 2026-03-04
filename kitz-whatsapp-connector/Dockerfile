@@ -28,4 +28,8 @@ WORKDIR /app/kitz-whatsapp-connector
 
 EXPOSE 3006
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3006/health || exit 1
+
 CMD ["npx", "tsx", "src/index.ts"]
