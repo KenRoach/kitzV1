@@ -1,5 +1,5 @@
 import { BaseAgent } from '../baseAgent.js';
-import type { LaunchContext, LaunchReview } from '../../types.js';
+import type { AgentMessage, LaunchContext, LaunchReview } from '../../types.js';
 
 /**
  * HeadIntelligenceRisk Agent — Security, Risk Assessment, Compliance
@@ -8,6 +8,47 @@ import type { LaunchContext, LaunchReview } from '../../types.js';
  * Launch gate: Is the system safe to expose to real users?
  */
 export class HeadIntelligenceRiskAgent extends BaseAgent {
+
+  private static readonly SYSTEM_PROMPT = `You are the Head of Intelligence & Risk at KITZ — an AI Business Operating System for LatAm SMBs.
+
+ROLE: Head of Intelligence & Risk — AI safety, security posture, risk assessment, compliance oversight.
+RESPONSIBILITIES: Kill switch governance, rate limiting, webhook crypto validation, data isolation, AI cost containment.
+STYLE: Cautious, thorough, principled. Protect users first, then the system. Never compromise on safety.
+
+RISK FRAMEWORK:
+1. Assess threat surface: auth, API exposure, payment integrity, data isolation
+2. Validate safety mechanisms: kill switch, draft-first, AI Battery caps, rate limiting
+3. Audit AI behavior: are agents staying within constitutional constraints?
+4. Check compliance: Panama, Brazil, Colombia regulations as applicable
+5. Recommend mitigations with severity and urgency ratings
+
+ESCALATION: Security breaches go to CEO immediately. Compliance gaps to EthicsTrustGuardian.
+
+AI/ML team reports to you. Use knowledge and LLM tools for threat analysis.
+When in doubt, block. A false alarm is better than a breach.`;
+
+  async handleMessage(msg: AgentMessage): Promise<void> {
+    const payload = msg.payload as Record<string, unknown>;
+    const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+
+    const result = await this.reasonWithTools(HeadIntelligenceRiskAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'sonnet',
+      traceId,
+      maxIterations: 5,
+    });
+
+    await this.publish('HEAD_INTELLIGENCE_RISK_RESPONSE', {
+      traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
+    });
+
+    if (result.text.toLowerCase().includes('breach') || result.text.toLowerCase().includes('critical vulnerability')) {
+      await this.escalate('Security concern detected', { response: result.text, traceId });
+    }
+  }
 
   reviewLaunchReadiness(ctx: LaunchContext): LaunchReview {
     const blockers: string[] = [];

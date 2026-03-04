@@ -17,6 +17,33 @@ import type { AgentMessage } from '../../../types.js';
  * If a claim can't be verified, it gets flagged. Always.
  */
 export class FactCheckerAgent extends BaseAgent {
+  private static readonly SYSTEM_PROMPT = [
+    'You are FactChecker, the content accuracy and truthfulness verification specialist for KITZ.',
+    'Your mission: verify all outbound content for accuracy before it reaches customers.',
+    'Use compliance_factCheck to extract and verify factual claims against real data sources.',
+    'Use web_search to cross-reference claims against public information when needed.',
+    'Use rag_search to find internal knowledge base sources to verify against.',
+    '',
+    'KITZ fact-checking philosophy: Never let fabricated information reach a customer.',
+    'If a claim cannot be verified, it gets flagged. Always. No exceptions.',
+    '',
+    'Fact-checking workflow:',
+    '1. Intercept outbound drafts (WhatsApp, email, content)',
+    '2. Extract all factual claims using LLM analysis',
+    '3. Cross-reference claims against CRM data, orders, and knowledge base',
+    '4. Flag unsourced or unverifiable claims',
+    '5. Route verified + flagged content for human review with sources',
+    '',
+    'Verification categories:',
+    '- Pricing claims: verify against current AI Battery pricing (100/$5, 500/$20, 2000/$60)',
+    '- Feature claims: verify against actual service capabilities (not roadmap)',
+    '- Statistical claims: verify against dashboard metrics and real data',
+    '- Regulatory claims: verify against compliance knowledge base',
+    'Draft-first policy: all content requires human approval regardless of verification status.',
+    'Escalate content with unverified claims to EthicsTrustGuardian before any send.',
+    'Gen Z clarity: exact claim, exact source, exact verdict — no vague "content looks okay".',
+  ].join('\n');
+
   constructor(bus: EventBus, memory: MemoryStore) {
     super('FactChecker', bus, memory);
     this.team = 'legal-compliance';
@@ -25,85 +52,16 @@ export class FactCheckerAgent extends BaseAgent {
 
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
-    const traceId = (payload.traceId as string) ?? msg.id;
-
-    // Check if this is outbound content that needs fact-checking
-    const content = (payload.message as string) || (payload.content as string) || (payload.draft as string) || '';
-    if (!content) {
-      // No content to check — run general fact-check tools
-      const result = await this.invokeTool('compliance_factCheck', {
-        message: JSON.stringify(payload.findings ?? payload),
-      }, traceId);
-
-      await this.publish('SWARM_TASK_COMPLETE', {
-        agent: this.name,
-        team: this.team,
-        tool: 'compliance_factCheck',
-        findings: result.data ?? result.error,
-        traceId,
-      });
-      return;
-    }
-
-    // Step 1: Extract and verify claims against real data
-    const factCheckResult = await this.invokeTool('compliance_factCheck', {
-      message: content,
-      recipient_context: (payload.recipient as string) ?? '',
-    }, traceId);
-
-    const factData = factCheckResult.data as {
-      compliant?: boolean;
-      flags?: Array<{ claim: string; verified: boolean; source?: string }>;
-      recommendation?: string;
-    } | undefined;
-
-    // Step 2: Use LLM to analyze the overall truthfulness
-    const analyzeResult = await this.invokeTool('llm_analyze', {
-      topic: 'content truthfulness and source verification',
-      data: JSON.stringify({
-        content,
-        factCheckResult: factData,
-        claimsFound: factData?.flags?.length ?? 0,
-        unverifiedClaims: factData?.flags?.filter(f => !f.verified) ?? [],
-      }),
-      format: 'json',
-    }, traceId);
-
-    // Step 3: Compile fact-check report
-    const report = {
-      agent: this.name,
-      team: this.team,
-      contentChecked: content.slice(0, 200) + (content.length > 200 ? '...' : ''),
-      compliant: factData?.compliant ?? false,
-      totalClaims: factData?.flags?.length ?? 0,
-      verifiedClaims: factData?.flags?.filter(f => f.verified).length ?? 0,
-      unverifiedClaims: factData?.flags?.filter(f => !f.verified) ?? [],
-      recommendation: factData?.recommendation ?? 'Review required',
-      analysis: analyzeResult.data,
-      requiresHumanReview: true, // Always route to human
-      traceId,
-    };
-
-    // Step 4: Store findings in knowledge base
-    await this.invokeTool('memory_store_knowledge', {
-      category: 'fact-check',
-      content: JSON.stringify(report),
-      tags: ['fact-check', 'outbound', 'compliance'],
-    }, traceId);
-
-    // Step 5: Publish completion with full report
-    await this.publish('SWARM_TASK_COMPLETE', {
-      ...report,
-      tool: 'compliance_factCheck',
-      findings: report,
+    const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+    const result = await this.reasonWithTools(FactCheckerAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku', traceId, maxIterations: 3,
     });
-
-    // If not compliant, escalate
-    if (!report.compliant) {
-      await this.escalate(
-        `Outbound content has ${report.unverifiedClaims.length} unverified claims. Human review required before sending.`,
-        { factCheckReport: report },
-      );
-    }
+    await this.publish('SWARM_TASK_COMPLETE', {
+      agent: this.name, team: this.team, traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
+    });
   }
 }

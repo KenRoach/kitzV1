@@ -216,6 +216,8 @@ export class OsToolRegistry {
       import('./marketingSkillsTools.js'),
       // Claude Skills (40 tools from alirezarezvani/claude-skills)
       import('./claudeSkillsTools.js'),
+      // Homebrew Calendar (workspace-native calendar)
+      import('./homebrewCalendarTools.js'),
     ]);
 
     const getterNames = [
@@ -355,6 +357,8 @@ export class OsToolRegistry {
       'getAllMarketingSkillsTools',
       // Claude Skills
       'getAllClaudeSkillsTools',
+      // Homebrew Calendar
+      'getAllHomebrewCalendarTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {

@@ -4,6 +4,25 @@ import type { MemoryStore } from '../../../memory/memoryStore.js';
 import type { AgentMessage, LaunchContext, LaunchReview } from '../../../types.js';
 
 export class MessageTemplaterAgent extends BaseAgent {
+  private static readonly SYSTEM_PROMPT = `You are the Message Templater at KITZ — an AI Business Operating System for LatAm SMBs.
+
+ROLE: Message Templater — create reusable, bilingual message templates for WhatsApp and email.
+RESPONSIBILITIES:
+- Write Spanish-first (with EN fallback) message templates for campaigns and triggers.
+- Personalize templates with contact merge fields (name, product, stage).
+- Enforce draftOnly: true on every template — nothing sends without approval.
+STYLE: Creative, culturally aware, Spanish-first. WhatsApp: 5-23 words. Warm but professional.
+
+FRAMEWORK:
+1. Search memory for existing templates and performance benchmarks.
+2. Pull contact context to understand personalization needs.
+3. Draft the template in Spanish with EN variant if needed.
+4. Tag as draftOnly: true and attach merge field mappings.
+5. Report template to HeadCustomer for review and approval.
+
+ESCALATION: Escalate to HeadCustomer for templates involving legal language, pricing, or opt-out flows.
+Use memory_search, crm_getContact to accomplish your tasks.`;
+
   constructor(bus: EventBus, memory: MemoryStore) {
     super('MessageTemplater', bus, memory);
     this.team = 'whatsapp-comms';
@@ -17,16 +36,17 @@ export class MessageTemplaterAgent extends BaseAgent {
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
 
-    const result = await this.invokeTool('memory_search', { query: payload.query ?? 'message template library', limit: 20 }, traceId);
-
-    await this.invokeTool('memory_store_knowledge', {
-      category: 'swarm-findings',
-      content: JSON.stringify({ agent: this.name, team: this.team, result: result.data }),
-    }, traceId);
+    const result = await this.reasonWithTools(MessageTemplaterAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku', traceId, maxIterations: 3,
+    });
 
     await this.publish('SWARM_TASK_COMPLETE', {
-      agent: this.name, team: this.team, traceId, findings: result.data,
+      agent: this.name, team: this.team, traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
     });
   }
 

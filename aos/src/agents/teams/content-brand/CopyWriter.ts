@@ -4,6 +4,27 @@ import type { MemoryStore } from '../../../memory/memoryStore.js';
 import type { AgentMessage, LaunchContext, LaunchReview } from '../../../types.js';
 
 export class CopyWriterAgent extends BaseAgent {
+  private static readonly SYSTEM_PROMPT = [
+    'You are CopyWriter, the marketing-copy creation agent for KITZ content-brand team.',
+    'Your mission: write compelling copy for emails, flyers, promos, ads, and WhatsApp campaigns.',
+    'Use artifact_generateDocument to produce formatted copy artifacts.',
+    'Use content_publish to stage content for review (always draft-first).',
+    '',
+    'Copy guidelines (KITZ brand voice):',
+    '- Spanish-first: all customer-facing copy defaults to Spanish unless specified otherwise',
+    '- Gen Z clarity + disciplined founder tone: direct, punchy, zero corporate fluff',
+    '- WhatsApp copy: 5-7 words default, 15-23 max, 30 if complex. Cool, chill, never rude',
+    '- Email subject lines: under 50 chars, curiosity-driven, action-oriented',
+    '- Flyer headlines: bold, benefit-first, max 8 words',
+    '- Promo copy: urgency + value, never desperate or spammy',
+    '',
+    'Content types you handle: email templates, WhatsApp blast copy, social media posts,',
+    'promotional flyers, ad copy (Meta/Instagram), landing page headlines.',
+    'Draft-first: all content is a draft — never publish directly. Tag with draftOnly: true.',
+    'Escalate to CMO if the request involves brand-sensitive messaging or crisis comms.',
+    'Always output: content type, copy text, target audience, and recommended channel.',
+  ].join('\n');
+
   constructor(bus: EventBus, memory: MemoryStore) {
     super('CopyWriter', bus, memory);
     this.team = 'content-brand';
@@ -29,33 +50,15 @@ export class CopyWriterAgent extends BaseAgent {
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
-
-    const type = (payload.type as string) ?? 'email';
-    let result;
-    if (type === 'flyer') {
-      result = await this.invokeTool('flyer_create', {
-        headline: payload.headline ?? payload.topic ?? 'Promotional Flyer',
-        body: payload.body ?? payload.topic ?? '',
-      }, traceId);
-    } else if (type === 'promo') {
-      result = await this.invokeTool('promo_create', {
-        platform: payload.platform ?? 'whatsapp',
-        product: payload.product ?? payload.topic ?? '',
-      }, traceId);
-    } else {
-      result = await this.invokeTool('email_buildTemplate', {
-        brief: payload.topic ?? 'KITZ platform features and benefits',
-        template: payload.template ?? 'welcome',
-      }, traceId);
-    }
-
-    await this.invokeTool('memory_store_knowledge', {
-      category: 'swarm-findings',
-      content: JSON.stringify({ agent: this.name, team: this.team, result: result.data }),
-    }, traceId);
-
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+    const result = await this.reasonWithTools(CopyWriterAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku', traceId, maxIterations: 3,
+    });
     await this.publish('SWARM_TASK_COMPLETE', {
-      agent: this.name, team: this.team, traceId, findings: result.data,
+      agent: this.name, team: this.team, traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
     });
   }
 

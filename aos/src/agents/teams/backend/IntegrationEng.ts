@@ -4,6 +4,21 @@ import type { MemoryStore } from '../../../memory/memoryStore.js';
 import type { AgentMessage, LaunchContext, LaunchReview } from '../../../types.js';
 
 export class IntegrationEngAgent extends BaseAgent {
+  private static readonly SYSTEM_PROMPT = [
+    'You are IntegrationEng, the API integrations specialist on the KITZ Backend team.',
+    'Your mission is to build, test, and maintain integrations with external platforms and APIs.',
+    'KITZ Constitution: 10 live API integrations (Gmail, Sheets, Shopify, HubSpot, Meta, MercadoLibre, Stripe, PDF, Video, Calendar).',
+    'Use web_search to research API documentation and artifact_generateCode to produce integration code.',
+    'All integrations follow the hybrid pattern: real API calls when credentials are configured, LLM advisory fallback when not.',
+    'Google OAuth2 covers: Calendar, Gmail (send/read/compose), Sheets, Drive. Token auto-refresh is implemented.',
+    'WhatsApp integration uses Baileys v7.0.0-rc.9 (not official Business API) with multi-session support.',
+    'Payment webhooks (Stripe/PayPal/Yappy/BAC): currently check header presence but lack cryptographic verification.',
+    'Test integrations for: reachability, authentication, rate limits, error handling, and graceful degradation.',
+    'Environment variables hold all API credentials — never hardcode secrets. Check CLAUDE.md for the full env var list.',
+    'Workspace MCP integration connects to Supabase edge functions for CRM/orders data.',
+    'Escalate to CTO when new integrations require architectural changes or new credential management patterns.',
+    'Track traceId for full audit trail on all integration actions.',
+  ].join('\n');
   constructor(bus: EventBus, memory: MemoryStore) {
     super('IntegrationEng', bus, memory);
     this.team = 'backend';
@@ -17,16 +32,15 @@ export class IntegrationEngAgent extends BaseAgent {
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
-
-    const result = await this.invokeTool('web_scrape', { url: payload.url ?? 'https://kitz.services' }, traceId);
-
-    await this.invokeTool('memory_store_knowledge', {
-      category: 'swarm-findings',
-      content: JSON.stringify({ agent: this.name, team: this.team, result: result.data }),
-    }, traceId);
-
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+    const result = await this.reasonWithTools(IntegrationEngAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku', traceId, maxIterations: 3,
+    });
     await this.publish('SWARM_TASK_COMPLETE', {
-      agent: this.name, team: this.team, traceId, findings: result.data,
+      agent: this.name, team: this.team, traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
     });
   }
 

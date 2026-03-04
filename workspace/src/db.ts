@@ -114,6 +114,7 @@ const memTasks = new Map<string, DbTask[]>();
 const memCheckoutLinks = new Map<string, DbCheckoutLink[]>();
 const memProducts = new Map<string, DbProduct[]>();
 const memPayments = new Map<string, DbPayment[]>();
+const memCalendarEvents = new Map<string, DbCalendarEvent[]>();
 
 // ── Types (DB row shapes with snake_case) ──
 
@@ -493,6 +494,96 @@ export async function getDashboardMetrics(userId: string): Promise<DashboardMetr
     leads_count: leads.length,
     products_count: products.length,
   };
+}
+
+// ── Types: Calendar Events ──
+
+export interface DbCalendarEvent {
+  id: string;
+  user_id: string;
+  org_id?: string;
+  title: string;
+  description: string;
+  start_time: string;
+  end_time: string;
+  all_day: boolean;
+  location: string;
+  type: 'call' | 'meeting' | 'task' | 'follow-up' | 'reminder' | 'other';
+  status: 'scheduled' | 'completed' | 'cancelled';
+  color: string;
+  recurrence: string;
+  source: 'manual' | 'google' | 'ai' | 'whatsapp';
+  google_event_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── CRUD: Calendar Events ──
+
+export async function listCalendarEvents(userId: string, from?: string, to?: string): Promise<DbCalendarEvent[]> {
+  if (hasDB) {
+    let query = `user_id=eq.${userId}&order=start_time.asc`;
+    if (from) query += `&start_time=gte.${from}`;
+    if (to) query += `&start_time=lte.${to}T23:59:59`;
+    const rows = await supaGet<DbCalendarEvent>('calendar_events', query);
+    if (rows.length > 0) return rows;
+  }
+  const all = memCalendarEvents.get(userId) || [];
+  return all.filter(e => {
+    if (from && e.start_time < from) return false;
+    if (to && e.start_time > to + 'T23:59:59') return false;
+    return true;
+  }).sort((a, b) => a.start_time.localeCompare(b.start_time));
+}
+
+export async function createCalendarEvent(userId: string, data: Partial<DbCalendarEvent>): Promise<DbCalendarEvent> {
+  const now = new Date().toISOString();
+  const event: DbCalendarEvent = {
+    id: data.id || randomUUID(),
+    user_id: userId,
+    title: data.title || '',
+    description: data.description || '',
+    start_time: data.start_time || now,
+    end_time: data.end_time || new Date(Date.now() + 3600000).toISOString(),
+    all_day: data.all_day || false,
+    location: data.location || '',
+    type: data.type || 'other',
+    status: data.status || 'scheduled',
+    color: data.color || '#A855F7',
+    recurrence: data.recurrence || '',
+    source: data.source || 'manual',
+    google_event_id: data.google_event_id || '',
+    created_at: now,
+    updated_at: now,
+  };
+  const dbRow = await supaInsert<DbCalendarEvent>('calendar_events', event);
+  if (dbRow) return dbRow;
+  const arr = memCalendarEvents.get(userId) || [];
+  arr.push(event);
+  memCalendarEvents.set(userId, arr);
+  return event;
+}
+
+export async function updateCalendarEvent(userId: string, id: string, updates: Record<string, unknown>): Promise<DbCalendarEvent | null> {
+  if (hasDB) {
+    const row = await supaPatch<DbCalendarEvent>('calendar_events', id, updates);
+    if (row) return row;
+  }
+  const arr = memCalendarEvents.get(userId) || [];
+  const event = arr.find(e => e.id === id);
+  if (!event) return null;
+  Object.assign(event, updates, { updated_at: new Date().toISOString() });
+  return event;
+}
+
+export async function deleteCalendarEvent(userId: string, id: string): Promise<boolean> {
+  if (hasDB) {
+    const ok = await supaDelete('calendar_events', id);
+    if (ok) return true;
+  }
+  const arr = memCalendarEvents.get(userId) || [];
+  memCalendarEvents.set(userId, arr.filter(e => e.id !== id));
+  return true;
 }
 
 export { hasDB };

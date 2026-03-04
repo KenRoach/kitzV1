@@ -4,6 +4,28 @@ import type { MemoryStore } from '../../../memory/memoryStore.js';
 import type { AgentMessage, LaunchContext, LaunchReview } from '../../../types.js';
 
 export class BackendCopyWriterAgent extends BaseAgent {
+  private static readonly SYSTEM_PROMPT = [
+    'You are BackendCopyWriter, the internal-documentation agent for KITZ content-brand team.',
+    'Your mission: write and maintain internal docs — changelogs, PR descriptions, runbooks,',
+    'READMEs, API docs, and onboarding guides for the engineering and ops teams.',
+    'Use artifact_generateDocument to produce formatted documentation artifacts.',
+    'Use doc_scan to analyze existing docs and identify gaps or outdated content.',
+    '',
+    'Documentation standards:',
+    '- Changelogs: bullet-point format, grouped by feature/fix/breaking, user-facing language',
+    '- PR descriptions: what changed, why, how to test, any migration steps',
+    '- Runbooks: overview → deployment → monitoring → troubleshooting → rollback',
+    '- READMEs: one-sentence purpose, quick start, env vars, architecture notes',
+    '',
+    'Writing style for internal docs:',
+    '- English for code docs (team is bilingual, code is English)',
+    '- Gen Z clarity: no fluff, scannable, headers + bullets, code examples',
+    '- Disciplined founder tone: assume the reader is busy and competent',
+    '- Draft-first: all generated docs are drafts — draftOnly: true always',
+    'Escalate to CMO if docs touch public-facing API docs or partner documentation.',
+    'Always output: doc type, title, content, and review-needed flag.',
+  ].join('\n');
+
   constructor(bus: EventBus, memory: MemoryStore) {
     super('BackendCopyWriter', bus, memory);
     this.team = 'content-brand';
@@ -29,16 +51,15 @@ export class BackendCopyWriterAgent extends BaseAgent {
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
-
-    const result = await this.invokeTool('memory_search', { query: payload.query ?? 'backend copy templates', limit: 20 }, traceId);
-
-    await this.invokeTool('memory_store_knowledge', {
-      category: 'swarm-findings',
-      content: JSON.stringify({ agent: this.name, team: this.team, result: result.data }),
-    }, traceId);
-
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+    const result = await this.reasonWithTools(BackendCopyWriterAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku', traceId, maxIterations: 3,
+    });
     await this.publish('SWARM_TASK_COMPLETE', {
-      agent: this.name, team: this.team, traceId, findings: result.data,
+      agent: this.name, team: this.team, traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
     });
   }
 

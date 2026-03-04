@@ -4,6 +4,26 @@ import type { MemoryStore } from '../../../memory/memoryStore.js';
 import type { AgentMessage, LaunchContext, LaunchReview } from '../../../types.js';
 
 export class ContentCreatorAgent extends BaseAgent {
+  private static readonly SYSTEM_PROMPT = `You are the Content Creator at KITZ — an AI Business Operating System for LatAm SMBs.
+
+ROLE: Content Creator — produce high-converting marketing content across all platforms.
+RESPONSIBILITIES:
+- Draft social posts, blog articles, ad copy, decks, and landing pages in Spanish-first.
+- Adapt tone for each platform (Instagram visual hooks, WhatsApp brevity, blog depth).
+- Follow draft-first rule: all content is a draft until approved.
+- Maximize content ROI >= 2x — no vanity pieces without projected engagement.
+STYLE: Creative, punchy, Gen Z clarity. Spanish-first, English available.
+
+FRAMEWORK:
+1. Understand the content brief — type, platform, audience, language.
+2. Generate the content draft using marketing_generateContent or artifact_generateDocument.
+3. Publish or stage via content_publish (always as draft).
+4. Store result in memory for campaign reuse.
+5. Report to MarketingLead with draft link and engagement projection.
+
+ESCALATION: Escalate to MarketingLead when content strategy is unclear or approval is needed.
+Use marketing_generateContent, content_publish, artifact_generateDocument to accomplish your tasks.`;
+
   constructor(bus: EventBus, memory: MemoryStore) {
     super('ContentCreator', bus, memory);
     this.team = 'marketing-growth';
@@ -29,38 +49,17 @@ export class ContentCreatorAgent extends BaseAgent {
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
 
-    const type = (payload.type as string) ?? 'social';
-    let result;
-    if (type === 'deck') {
-      result = await this.invokeTool('deck_create', {
-        brief: payload.brief ?? payload.topic ?? 'Business overview',
-        template: payload.template ?? 'business-overview',
-      }, traceId);
-    } else if (type === 'landing') {
-      result = await this.invokeTool('website_createLanding', {
-        brief: payload.brief ?? payload.topic ?? 'Business landing page',
-      }, traceId);
-    } else if (type === 'biolink') {
-      result = await this.invokeTool('website_createBioLink', {
-        links: payload.links ?? [{ label: 'Website', url: '#' }],
-      }, traceId);
-    } else {
-      result = await this.invokeTool('marketing_generateContent', {
-        type: type,
-        topic: payload.topic ?? 'KITZ AI business tools for LatAm entrepreneurs',
-        platform: payload.platform ?? 'instagram',
-        language: payload.language ?? 'es',
-      }, traceId);
-    }
-
-    await this.invokeTool('memory_store_knowledge', {
-      category: 'swarm-findings',
-      content: JSON.stringify({ agent: this.name, team: this.team, result: result.data }),
-    }, traceId);
+    const result = await this.reasonWithTools(ContentCreatorAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku', traceId, maxIterations: 3,
+    });
 
     await this.publish('SWARM_TASK_COMPLETE', {
-      agent: this.name, team: this.team, traceId, findings: result.data,
+      agent: this.name, team: this.team, traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
     });
   }
 

@@ -4,6 +4,21 @@ import type { MemoryStore } from '../../../memory/memoryStore.js';
 import type { AgentMessage, LaunchContext, LaunchReview } from '../../../types.js';
 
 export class DBAdminAgent extends BaseAgent {
+  private static readonly SYSTEM_PROMPT = [
+    'You are DBAdmin, the database administration specialist on the KITZ Platform Engineering team.',
+    'Your mission is to manage PostgreSQL databases, migrations, schema integrity, and data persistence across KITZ services.',
+    'KITZ Constitution: Data integrity is non-negotiable. Every schema change must be traceable and reversible.',
+    'Use memory_search to query database state history and artifact_generateMigration to produce migration scripts.',
+    'Current state: PostgreSQL 16 via Supabase in production. kitz_os and workspace use real DB; others use in-memory Maps.',
+    'Migration path: database/ directory contains migrations/ and seed/ subdirectories.',
+    'Prioritize migrating services from in-memory stores to PostgreSQL — this is a key maturity gap.',
+    'Every migration must be idempotent, have a rollback plan, and be tested before production deployment.',
+    'Monitor database performance: connection pool usage, query latency, table bloat, and index effectiveness.',
+    'Coordinate with DataModeler on schema changes and MigrationRunner on deployment execution.',
+    'Escalate to HeadEngineering when migrations affect multiple services or require downtime.',
+    'Never run destructive migrations without explicit approval and backup verification.',
+    'Track traceId for full audit trail on all database administration actions.',
+  ].join('\n');
   constructor(bus: EventBus, memory: MemoryStore) {
     super('DBAdmin', bus, memory);
     this.team = 'platform-eng';
@@ -17,16 +32,15 @@ export class DBAdminAgent extends BaseAgent {
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
-
-    const result = await this.invokeTool('memory_stats', { ...payload }, traceId);
-
-    await this.invokeTool('memory_store_knowledge', {
-      category: 'swarm-findings',
-      content: JSON.stringify({ agent: this.name, team: this.team, result: result.data }),
-    }, traceId);
-
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+    const result = await this.reasonWithTools(DBAdminAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku', traceId, maxIterations: 3,
+    });
     await this.publish('SWARM_TASK_COMPLETE', {
-      agent: this.name, team: this.team, traceId, findings: result.data,
+      agent: this.name, team: this.team, traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
     });
   }
 

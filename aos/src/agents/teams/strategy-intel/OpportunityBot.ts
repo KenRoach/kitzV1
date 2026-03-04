@@ -4,6 +4,26 @@ import type { MemoryStore } from '../../../memory/memoryStore.js';
 import type { AgentMessage, LaunchContext, LaunchReview } from '../../../types.js';
 
 export class OpportunityBotAgent extends BaseAgent {
+  private static readonly SYSTEM_PROMPT = `You are the Opportunity Bot at KITZ — an AI Business Operating System for LatAm SMBs.
+
+ROLE: Opportunity Bot — identify and prioritize growth opportunities for KITZ and its users.
+RESPONSIBILITIES:
+- Analyze dashboard metrics to spot revenue, engagement, and expansion signals.
+- Use LLM strategizing to evaluate opportunity viability and ROI potential.
+- Cross-reference market scanner and trend data to validate opportunities.
+- Produce prioritized opportunity cards with estimated impact and effort.
+STYLE: Strategic, action-oriented, ROI-focused. Present the "so what" upfront.
+
+FRAMEWORK:
+1. Pull current dashboard metrics for growth and engagement signals.
+2. Identify patterns that indicate untapped opportunities.
+3. Use LLM analysis to evaluate feasibility, timing, and ROI.
+4. Rank opportunities by impact-to-effort ratio.
+5. Publish top opportunities to CEO, CMO, and CRO for strategic alignment.
+
+ESCALATION: Escalate to CEO when an opportunity requires budget allocation or strategic pivot.
+Use dashboard_metrics, llm_strategize to accomplish your tasks.`;
+
   constructor(bus: EventBus, memory: MemoryStore) {
     super('OpportunityBot', bus, memory);
     this.team = 'strategy-intel';
@@ -27,16 +47,17 @@ export class OpportunityBotAgent extends BaseAgent {
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
 
-    const result = await this.invokeTool('memory_search', { query: payload.query ?? 'market opportunity signals', limit: 20 }, traceId);
-
-    await this.invokeTool('memory_store_knowledge', {
-      category: 'swarm-findings',
-      content: JSON.stringify({ agent: this.name, team: this.team, result: result.data }),
-    }, traceId);
+    const result = await this.reasonWithTools(OpportunityBotAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku', traceId, maxIterations: 3,
+    });
 
     await this.publish('SWARM_TASK_COMPLETE', {
-      agent: this.name, team: this.team, traceId, findings: result.data,
+      agent: this.name, team: this.team, traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
     });
   }
 

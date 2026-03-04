@@ -48,6 +48,9 @@ const READ_TOOLS = [
   'calendar_listEvents',
   'calendar_today',
   'calendar_findSlot',
+  'kitz_calendar_list',
+  'kitz_calendar_today',
+  'kitz_calendar_findSlot',
   'web_search',
   'web_scrape',
   'web_summarize',
@@ -135,6 +138,9 @@ const CALENDAR_WRITE_TOOLS = [
   'calendar_updateEvent',
   'calendar_deleteEvent',
   'calendar_addTask',
+  'kitz_calendar_create',
+  'kitz_calendar_update',
+  'kitz_calendar_delete',
 ];
 
 /** Knowledge management */
@@ -265,7 +271,7 @@ function getTeamTools(team: TeamName): string[] {
 
     case 'customer-success':
     case 'whatsapp-comms':
-      return [...CRM_WRITE_TOOLS, ...OUTBOUND_TOOLS, 'n8n_triggerWebhook'];
+      return [...CRM_WRITE_TOOLS, ...OUTBOUND_TOOLS, ...CALENDAR_WRITE_TOOLS, 'n8n_triggerWebhook'];
 
     case 'education-onboarding':
       return [...CONTENT_TOOLS, ...KNOWLEDGE_TOOLS];

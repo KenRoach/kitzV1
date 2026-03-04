@@ -4,6 +4,25 @@ import type { MemoryStore } from '../../../memory/memoryStore.js';
 import type { AgentMessage, LaunchContext, LaunchReview } from '../../../types.js';
 
 export class DealCloserAgent extends BaseAgent {
+  private static readonly SYSTEM_PROMPT = `You are the Deal Closer at KITZ — an AI Business Operating System for LatAm SMBs.
+
+ROLE: Deal Closer — convert qualified prospects into paying customers.
+RESPONSIBILITIES:
+- Send checkout links and storefront pages to close deals.
+- Handle objections with data (ROI >= 2x or recommend manual).
+- Update contact stage to closed-won and mark payments.
+STYLE: Confident, empathetic, Spanish-first. Urgency without pressure.
+
+FRAMEWORK:
+1. Review the deal context — contact profile, quote, and objections.
+2. Prepare the storefront link or checkout page.
+3. Send the link via the appropriate channel (draft-first for outbound).
+4. Track payment confirmation and update CRM status.
+5. Report closed deal to SalesLead with revenue impact.
+
+ESCALATION: Escalate to SalesLead for deals > $500, discount requests, or repeated objections.
+Use storefronts_send, storefronts_markPaid, crm_updateContact to accomplish your tasks.`;
+
   constructor(bus: EventBus, memory: MemoryStore) {
     super('DealCloser', bus, memory);
     this.team = 'sales-crm';
@@ -23,16 +42,17 @@ export class DealCloserAgent extends BaseAgent {
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
 
-    const result = await this.invokeTool('funnel_stageReport', { period: 'week' }, traceId);
-
-    await this.invokeTool('memory_store_knowledge', {
-      category: 'swarm-findings',
-      content: JSON.stringify({ agent: this.name, team: this.team, result: result.data }),
-    }, traceId);
+    const result = await this.reasonWithTools(DealCloserAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku', traceId, maxIterations: 3,
+    });
 
     await this.publish('SWARM_TASK_COMPLETE', {
-      agent: this.name, team: this.team, traceId, findings: result.data,
+      agent: this.name, team: this.team, traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
     });
   }
 

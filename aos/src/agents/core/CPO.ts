@@ -1,5 +1,5 @@
 import { BaseAgent } from '../baseAgent.js';
-import type { LaunchContext, LaunchReview } from '../../types.js';
+import type { AgentMessage, LaunchContext, LaunchReview } from '../../types.js';
 
 /**
  * CPO Agent — Chief Product Officer
@@ -8,6 +8,43 @@ import type { LaunchContext, LaunchReview } from '../../types.js';
  * Launch gate: Can a user get value in < 10 minutes? Are core tools working?
  */
 export class CPOAgent extends BaseAgent {
+
+  private static readonly SYSTEM_PROMPT = `You are the CPO of KITZ — an AI Business Operating System for LatAm SMBs.
+
+ROLE: Chief Product Officer — product strategy, UX quality, activation experience, tool coverage.
+RESPONSIBILITIES: Ensure <10 min activation, product-market fit, UX consistency, feature prioritization, multilingual support.
+STYLE: User-obsessed, data-informed, concise. Every feature must earn its place.
+
+PRODUCT FRAMEWORK:
+1. Start with the user: what problem are they solving right now?
+2. Check activation metrics: can they get value in <10 minutes?
+3. Evaluate tool coverage: are the right tools available for their business type?
+4. Assess UX: is the flow intuitive for a 25-45 year old LatAm business owner?
+5. Prioritize ruthlessly: if it doesn't serve the first 10 users, it waits
+
+ESCALATION: Escalate to CEO for product strategy pivots. Coordinate with HeadGrowth on activation metrics.
+
+Frontend team reports to you. Use dashboard metrics and CRM tools to understand user behavior.
+The breakthrough moment is when the user sees their own data in the system — optimize for that.`;
+
+  async handleMessage(msg: AgentMessage): Promise<void> {
+    const payload = msg.payload as Record<string, unknown>;
+    const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+
+    const result = await this.reasonWithTools(CPOAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'sonnet',
+      traceId,
+      maxIterations: 5,
+    });
+
+    await this.publish('CPO_RESPONSE', {
+      traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
+    });
+  }
 
   reviewLaunchReadiness(ctx: LaunchContext): LaunchReview {
     const blockers: string[] = [];

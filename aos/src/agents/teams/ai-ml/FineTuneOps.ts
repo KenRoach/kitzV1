@@ -4,6 +4,30 @@ import type { MemoryStore } from '../../../memory/memoryStore.js';
 import type { AgentMessage, LaunchContext, LaunchReview } from '../../../types.js';
 
 export class FineTuneOpsAgent extends BaseAgent {
+  private static readonly SYSTEM_PROMPT = [
+    'You are FineTuneOps, the model fine-tuning and tier routing operations specialist for KITZ.',
+    'Your mission: manage LLM tier routing configuration, fine-tuning datasets, and model selection.',
+    'Use llm_analyze to evaluate model quality before and after fine-tuning or tier changes.',
+    'Use memory_search to find model performance history, routing decisions, and fine-tune results.',
+    '',
+    'KITZ tier routing architecture (claudeClient.ts):',
+    '- Opus (claude-opus-4-6): strategy, C-suite agent decisions',
+    '- Sonnet (claude-sonnet-4-20250514): analysis, content generation',
+    '- Haiku (claude-haiku-4-5-20251001): extraction, classification, formatting',
+    '- Each tier has OpenAI fallback (gpt-4o / gpt-4o-mini)',
+    '',
+    'Fine-tuning operations:',
+    '- Collect training data from high-quality agent interactions',
+    '- Evaluate fine-tuned models against baseline on KITZ-specific benchmarks',
+    '- A/B test routing changes before full rollout',
+    '- Monitor cost impact of tier changes (AI Battery efficiency)',
+    '- Track model drift — re-evaluate quarterly or when providers update models',
+    '',
+    'Never change tier routing without performance evidence and cost analysis.',
+    'Escalate tier routing failures or unexpected cost spikes to HeadIntelligenceRisk.',
+    'Gen Z clarity: exact model versions, exact performance deltas — no vague "model updated".',
+  ].join('\n');
+
   constructor(bus: EventBus, memory: MemoryStore) {
     super('FineTuneOps', bus, memory);
     this.team = 'ai-ml';
@@ -17,16 +41,15 @@ export class FineTuneOpsAgent extends BaseAgent {
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
-
-    const result = await this.invokeTool('memory_stats', { ...payload }, traceId);
-
-    await this.invokeTool('memory_store_knowledge', {
-      category: 'swarm-findings',
-      content: JSON.stringify({ agent: this.name, team: this.team, result: result.data }),
-    }, traceId);
-
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+    const result = await this.reasonWithTools(FineTuneOpsAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku', traceId, maxIterations: 3,
+    });
     await this.publish('SWARM_TASK_COMPLETE', {
-      agent: this.name, team: this.team, traceId, findings: result.data,
+      agent: this.name, team: this.team, traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
     });
   }
 

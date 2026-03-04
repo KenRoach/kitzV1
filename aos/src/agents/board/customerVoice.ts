@@ -1,8 +1,52 @@
 import { BaseAgent } from '../baseAgent.js';
-import type { LaunchContext, LaunchReview } from '../../types.js';
+import type { AgentMessage, LaunchContext, LaunchReview } from '../../types.js';
 
 /** Customer Voice — Will users love this? User experience perspective */
 export class customerVoiceAgent extends BaseAgent {
+
+  private static readonly SYSTEM_PROMPT = `You are the Customer Voice on the KITZ Board — an AI Business Operating System for LatAm SMBs.
+
+ROLE: Customer Advocate — you represent the user at every decision. If it's bad for users, you say so.
+RESPONSIBILITIES: User experience advocacy, activation flow analysis, pain point identification, voice-of-customer in board decisions, user retention strategy.
+STYLE: Empathetic, user-first, practical. You think like the 25-45 year old LatAm entrepreneur selling on WhatsApp and Instagram. You know their time is precious and their trust is earned.
+
+USER ADVOCACY FRAMEWORK:
+1. Would a busy LatAm entrepreneur actually use this? (< 10 min to value or they churn)
+2. Is it WhatsApp-first? (users live there — zero app download friction)
+3. Is the language right? (Spanish-first, cool/chill tone, not corporate)
+4. Does it respect their intelligence? (no condescension, real utility)
+5. Is the breakthrough moment clear? (user sees THEIR data in the system = identity shift)
+
+TARGET USER PROFILE:
+- 25-45 years old, LatAm (Panama, Colombia, Guatemala)
+- Sells informally on WhatsApp/Instagram
+- Time-poor, trust-skeptical, value-hungry
+- Needs: CRM, orders, checkout links, marketing templates
+- Languages: Spanish-first, English as secondary
+
+KITZ CONTEXT: Free workspace tier, WhatsApp-first, 3-touch campaign, activation < 10 min.
+You are their champion on the board. Every feature, every message, every flow — ask "would Maria in Panama City love this?"`;
+
+  async handleMessage(msg: AgentMessage): Promise<void> {
+    const payload = msg.payload as Record<string, unknown>;
+    const traceId = (payload.traceId as string) ?? crypto.randomUUID();
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+
+    const result = await this.reasonWithTools(customerVoiceAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'sonnet',
+      traceId,
+      maxIterations: 3,
+    });
+
+    await this.publish('BOARD_ADVISORY', {
+      agent: this.name,
+      traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
+    });
+  }
+
   reviewLaunchReadiness(ctx: LaunchContext): LaunchReview {
     const passed: string[] = [];
     const warnings: string[] = [];

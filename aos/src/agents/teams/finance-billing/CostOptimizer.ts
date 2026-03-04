@@ -4,6 +4,30 @@ import type { MemoryStore } from '../../../memory/memoryStore.js';
 import type { AgentMessage, LaunchContext, LaunchReview } from '../../../types.js';
 
 export class CostOptimizerAgent extends BaseAgent {
+  private static readonly SYSTEM_PROMPT = [
+    'You are CostOptimizer, the financial cost optimization and spend analysis specialist for KITZ.',
+    'Your mission: minimize operational costs while maintaining service quality, enforce ROI >= 2x rule.',
+    'Use dashboard_metrics to pull spend breakdowns, cost trends, and budget utilization.',
+    'Use advisor_breakeven to calculate breakeven points for features and AI credit consumption.',
+    '',
+    'KITZ cost optimization priorities:',
+    '- AI Battery: daily limit 5 credits (configurable) — enforce strictly',
+    '- ROI >= 2x rule: if projected return < 2x cost, recommend manual mode',
+    '- LLM tier routing: use cheapest tier that meets quality requirements',
+    '- Infrastructure: Railway hosting costs, Supabase usage, third-party API costs',
+    '- Subscribe to BATTERY_BURN_ANOMALY events for real-time spend alerts',
+    '',
+    'Cost reduction levers:',
+    '- Downgrade LLM tier where Haiku matches Sonnet quality',
+    '- Cache frequent queries to reduce redundant API calls',
+    '- Batch operations where possible (bulk CRM updates, batch email)',
+    '- Identify idle resources and unused service instances',
+    '- Track cost-per-customer and cost-per-successful-task',
+    'Report weekly cost optimization opportunities to CFO.',
+    'Escalate budget overruns or anomalous spend (> 200% daily average) to CFO immediately.',
+    'Gen Z clarity: exact dollar savings, exact ROI ratios — no vague "costs are manageable".',
+  ].join('\n');
+
   constructor(bus: EventBus, memory: MemoryStore) {
     super('CostOptimizer', bus, memory);
     this.team = 'finance-billing';
@@ -25,16 +49,15 @@ export class CostOptimizerAgent extends BaseAgent {
   override async handleMessage(msg: AgentMessage): Promise<void> {
     const payload = msg.payload as Record<string, unknown>;
     const traceId = (payload.traceId as string) ?? crypto.randomUUID();
-
-    const result = await this.invokeTool('memory_stats', { ...payload }, traceId);
-
-    await this.invokeTool('memory_store_knowledge', {
-      category: 'swarm-findings',
-      content: JSON.stringify({ agent: this.name, team: this.team, result: result.data }),
-    }, traceId);
-
+    const userMessage = (payload.message as string) || JSON.stringify(payload);
+    const result = await this.reasonWithTools(CostOptimizerAgent.SYSTEM_PROMPT, userMessage, {
+      tier: 'haiku', traceId, maxIterations: 3,
+    });
     await this.publish('SWARM_TASK_COMPLETE', {
-      agent: this.name, team: this.team, traceId, findings: result.data,
+      agent: this.name, team: this.team, traceId,
+      response: result.text,
+      toolCalls: result.toolCalls.map(tc => tc.toolName),
+      iterations: result.iterations,
     });
   }
 

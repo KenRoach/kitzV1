@@ -44,7 +44,7 @@ export const TEAM_DEFINITIONS: TeamConfig[] = [
     name: 'whatsapp-comms',
     displayName: 'WhatsApp / Comms',
     lead: 'HeadCustomer',
-    members: ['WAFlowDesigner', 'MessageTemplater', 'DeliveryMonitor', 'EscalationBot', 'QRLoginBot', 'ConversationAnalyzer'],
+    members: ['WAFlowDesigner', 'MessageTemplater', 'DeliveryMonitor', 'EscalationBot', 'QRLoginBot', 'ConversationAnalyzer', 'EmailAgent', 'CalendarScheduler'],
     description: 'Multi-session WhatsApp bridge, message flows, delivery',
   },
   {
