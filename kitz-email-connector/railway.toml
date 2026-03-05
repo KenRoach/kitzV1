@@ -1,5 +1,9 @@
+# This service slot is repurposed for kitz-whatsapp-connector.
+# Railway may still read this file from the old Config-as-code path.
+# Both this file and kitz-whatsapp-connector/railway.toml point to
+# the same Dockerfile to ensure the correct builder is used.
 [build]
-builder = "NIXPACKS"
+dockerfilePath = "kitz-whatsapp-connector/Dockerfile"
 
 [deploy]
 startCommand = "npx tsx src/index.ts"
