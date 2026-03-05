@@ -2,7 +2,12 @@
 # Build context must be the kitzV1 root (so kitz-schemas is accessible)
 FROM node:20-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends git wget && rm -rf /var/lib/apt/lists/*
+# Install git + wget, then configure git to redirect ALL SSH GitHub URLs to HTTPS.
+# This is needed because Baileys depends on libsignal via git+ssh:// URL.
+# IMPORTANT: Must write gitconfig directly (not via `git config --global`)
+# because git config overwrites duplicate section keys instead of appending.
+RUN apt-get update && apt-get install -y --no-install-recommends git wget && rm -rf /var/lib/apt/lists/* \
+    && printf '[url "https://github.com/"]\n\tinsteadOf = ssh://git@github.com/\n[url "https://github.com/"]\n\tinsteadOf = git@github.com:\n' > /root/.gitconfig
 
 WORKDIR /app
 
@@ -15,11 +20,8 @@ COPY kitz-schemas/tsconfig.json kitz-schemas/
 COPY kitz-whatsapp-connector/package.json kitz-whatsapp-connector/
 COPY kitz-whatsapp-connector/tsconfig.json kitz-whatsapp-connector/
 
-# Install dependencies — git config + npm install in same RUN to ensure config is visible
-RUN git config --global url."https://github.com/".insteadOf "ssh://git@github.com/" \
-    && git config --global url."https://github.com/".insteadOf "git@github.com:" \
-    && git config --global --list \
-    && cd kitz-whatsapp-connector && npm install
+# Install dependencies
+RUN cd kitz-whatsapp-connector && npm install
 
 # Copy source
 COPY kitz-whatsapp-connector/src/ kitz-whatsapp-connector/src/
