@@ -23,7 +23,7 @@ describe('AI Battery', () => {
     assert.equal(entry.provider, 'openai');
     assert.equal(entry.category, 'llm_tokens');
     assert.equal(entry.units, 700);
-    assert.equal(entry.credits, 0.7); // 700 tokens / 1000 = 0.7 credits
+    assert.equal(entry.credits, 1); // 1 use per AI call (flat model)
 
     const after = getBatteryStatus();
     assert.ok(after.todayCredits >= before.todayCredits, 'credits increased');
@@ -41,7 +41,7 @@ describe('AI Battery', () => {
     assert.equal(entry.provider, 'elevenlabs');
     assert.equal(entry.category, 'tts_characters');
     assert.equal(entry.units, 250);
-    assert.equal(entry.credits, 0.5); // 250 chars / 500 = 0.5 credits
+    assert.equal(entry.credits, 1); // 1 use per TTS call (flat model)
   });
 
   it('records recharge as negative credits', async () => {
@@ -81,7 +81,7 @@ describe('AI Battery', () => {
 
   it('byProvider tracks per-provider spend', () => {
     const status = getBatteryStatus();
-    assert.ok(status.byProvider.openai >= 0.7, 'openai spend should include our LLM entry');
-    assert.ok(status.byProvider.elevenlabs >= 0.5, 'elevenlabs spend should include our TTS entry');
+    assert.ok(status.byProvider.openai >= 1, 'openai spend should include our LLM entry');
+    assert.ok(status.byProvider.elevenlabs >= 1, 'elevenlabs spend should include our TTS entry');
   });
 });
