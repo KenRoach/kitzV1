@@ -22,7 +22,7 @@ export const health = { status: 'ok' };
 const log = createSubsystemLogger('brain');
 
 const logRun = (phase: string, traceId: string, details: unknown) => {
-  log.info({ phase, traceId, details });
+  log.info(phase, { traceId, details: details as Record<string, unknown> });
 };
 
 const enforcePolicy = async (action: string, traceId: string): Promise<void> => {
@@ -223,7 +223,7 @@ cron.schedule('0 7 * * *', triggerLaunchReview);  // AOS launch review: 7am dail
 cron.schedule('0 */4 * * *', fetchCtoDigest);     // CTO digest: every 4 hours
 cron.schedule('0 6 * * *', triggerSwarmRun);      // Swarm run: 6am daily
 
-log.info({ financePolicy, growthExecutionPolicy, aosIntegration: true, swarmEnabled: true }, 'kitz-brain scheduler started');
+log.info('kitz-brain scheduler started', { financePolicy: financePolicy as unknown as Record<string, unknown>, growthExecutionPolicy: growthExecutionPolicy as unknown as Record<string, unknown>, aosIntegration: true, swarmEnabled: true });
 
 // ── HTTP Server (real-time classification service) ──
 const PORT = Number(process.env.PORT) || 3015;
@@ -285,8 +285,8 @@ server.post<{ Body: ClassifyRequest }>('/decide', async (req, reply) => {
 });
 
 server.listen({ port: PORT, host: '0.0.0.0' }).then(() => {
-  log.info({ port: PORT }, 'kitz-brain HTTP server listening');
+  log.info('kitz-brain HTTP server listening', { port: PORT });
 }).catch((err) => {
-  log.error({ err }, 'kitz-brain HTTP server failed to start');
+  log.error('kitz-brain HTTP server failed to start', { err });
   process.exit(1);
 });
