@@ -1941,6 +1941,49 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
     };
   });
 
+  // ── Workspace API proxy — forward /api/workspace/* to workspace service ──
+  // In production, the SPA is bundled into kitz_os but workspace runs as a separate service.
+  // This proxy ensures the SPA can reach workspace APIs from the same origin.
+  const WORKSPACE_URL = process.env.WORKSPACE_API_URL || 'http://localhost:3001';
+
+  app.all('/api/workspace/*', async (req, reply) => {
+    const subPath = req.url.replace(/^\/api\/workspace/, '');
+    const target = `${WORKSPACE_URL}/api/workspace${subPath}`;
+
+    try {
+      const headers: Record<string, string> = {
+        'content-type': req.headers['content-type'] || 'application/json',
+      };
+      // Forward auth headers so workspace can authenticate the user
+      if (req.headers.authorization) headers['authorization'] = req.headers.authorization as string;
+      if (req.headers['x-dev-secret']) headers['x-dev-secret'] = req.headers['x-dev-secret'] as string;
+      if (req.headers['x-service-secret']) headers['x-service-secret'] = req.headers['x-service-secret'] as string;
+      if (req.headers['x-trace-id']) headers['x-trace-id'] = req.headers['x-trace-id'] as string;
+      if (req.headers['x-user-id']) headers['x-user-id'] = req.headers['x-user-id'] as string;
+      if (req.headers.cookie) headers['cookie'] = req.headers.cookie as string;
+
+      const res = await fetch(target, {
+        method: req.method,
+        headers,
+        body: ['GET', 'HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body),
+        signal: AbortSignal.timeout(15_000),
+      });
+
+      // Forward response headers
+      const ct = res.headers.get('content-type');
+      if (ct) reply.header('content-type', ct);
+      const setCookie = res.headers.get('set-cookie');
+      if (setCookie) reply.header('set-cookie', setCookie);
+
+      reply.code(res.status);
+      const data = await res.text();
+      return reply.send(data);
+    } catch (err) {
+      log.error('Workspace proxy error', { target, error: (err as Error).message });
+      return reply.code(502).send({ error: 'Workspace service unavailable', detail: (err as Error).message });
+    }
+  });
+
   // ── Artifact Slug Route — kitz.services/Artifact-Name-abc123.html ──
   app.get<{ Params: { slug: string } }>(
     '/:slug',
