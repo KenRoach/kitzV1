@@ -408,6 +408,19 @@ EXECUTION RULES:
 26. FOLLOW-UP: If you can provide a partial answer now but need time for a complete response, use schedule_followup to send the full answer later (within 24 hours).
 27. ALWAYS DELIVER: Even if your answer is imperfect, always provide a first draft. A partial answer is better than no answer. You can schedule a follow-up for the complete version.
 
+VOICE REPLIES:
+- When the user says "reply with voice", "nota de voz", "dime en audio", "send voice note", or "háblame", use the outbound_sendVoiceNote tool to generate a voice version of your response.
+- When the user sends a voice note, consider responding with both text and a voice note.
+
+CROSS-CHANNEL DISPATCH:
+- When the user says "send by email", "enviar por email", "enviar por correo", "mándalo por correo", or "email this", use the email_compose tool to create an email draft.
+- Include the recipient email address if the user mentions one, otherwise ask.
+- Always create as draft first — never auto-send emails.
+
+DRAFT-FIRST POLICY:
+- All outbound actions (sending emails, WhatsApp messages to others, making calls) create drafts.
+- Present the draft summary to the user. They must reply "approve" or "aprobar" to execute.
+
 CHANNEL STRATEGY:
 - WhatsApp → Business operations: orders, payments, CRM, invoicing, customer service, quick lookups
 - Email → Reports, documents, campaigns, follow-up sequences, detailed analysis
@@ -939,8 +952,33 @@ export async function brainFirstRoute(
     log.info('brain_unreachable', { trace_id: traceId });
   }
 
-  // 2. If brain unreachable, fall through to existing routeWithAI
+  // 2. If brain unreachable, try inline agent routing then fall through to routeWithAI
   if (!decision) {
+    // Inline agent routing when kitz-brain is unreachable
+    const lowerMessage = userMessage.toLowerCase();
+    const agentRoutes: Array<[string[], string]> = [
+      [['strategy', 'strategic', 'vision', 'direction', 'competitive', 'market position'], 'Chair'],
+      [['finance', 'budget', 'revenue', 'cost', 'billing', 'invoice', 'financial'], 'CFO'],
+      [['marketing', 'campaign', 'brand', 'content', 'seo', 'social media', 'growth'], 'CMO'],
+      [['technical', 'architecture', 'backend', 'database', 'api', 'infrastructure', 'deploy'], 'CTO'],
+      [['product', 'feature', 'ux', 'ui', 'design', 'user experience', 'roadmap'], 'CPO'],
+      [['operations', 'process', 'workflow', 'efficiency', 'devops', 'ci/cd'], 'COO'],
+      [['sales', 'pipeline', 'lead', 'deal', 'close', 'prospect', 'crm'], 'CRO'],
+      [['customer', 'support', 'ticket', 'complaint', 'feedback', 'nps'], 'HeadCustomer'],
+      [['hire', 'team', 'engineer', 'developer', 'staffing', 'engineering'], 'HeadEngineering'],
+      [['ai', 'model', 'prompt', 'llm', 'ml', 'intelligence', 'risk'], 'HeadIntelligenceRisk'],
+    ];
+
+    for (const [keywords, agentName] of agentRoutes) {
+      if (keywords.some(k => lowerMessage.includes(k))) {
+        try {
+          const result = await dispatchToAgent(agentName, userMessage, traceId);
+          if (result) return { response: result.response, toolsUsed: [`agent:${agentName}`], creditsConsumed: 0, toolResults: [] };
+        } catch { /* fall through to routeWithAI */ }
+        break;
+      }
+    }
+
     return routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
   }
 

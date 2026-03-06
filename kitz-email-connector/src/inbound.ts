@@ -357,7 +357,43 @@ export async function processInboundEmail(
         await new Promise((r) => setTimeout(r, 3 * 60 * 1000));
         log.info({ event: 'inbound.draft_start', traceId, caseNumber, adminEmail: ADMIN_EMAIL });
 
-        const draft = await generateDraftResponse(emailBody, subject, sender.name, language, caseNumber, traceId, log);
+        // Route through kitz_os semantic router for full tool + agent access
+        let aiDraft = '';
+        const kitzOsUrl = KITZ_OS_URL || 'http://localhost:3012';
+        try {
+          const kitzRes = await fetch(`${kitzOsUrl}/api/kitz`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(process.env.DEV_TOKEN_SECRET ? { 'x-dev-secret': process.env.DEV_TOKEN_SECRET } : {}),
+            },
+            body: JSON.stringify({
+              message: `[INBOUND EMAIL] From: ${sender.email} | Subject: ${subject}\n\n${emailBody}`,
+              channel: 'email',
+              source: 'inbound_email',
+              user_id: sender.email,
+              trace_id: traceId,
+            }),
+            signal: AbortSignal.timeout(30_000),
+          });
+          if (kitzRes.ok) {
+            const data = await kitzRes.json() as { response?: string };
+            aiDraft = data.response || '';
+          }
+        } catch (err) {
+          log.info({ event: 'inbound.kitz_os_routing_failed', traceId, err: (err as Error).message });
+        }
+
+        // Fallback to original draft generation if kitz_os fails
+        let draft: { draftBody: string; draftHtml: string; draftSubject: string };
+        if (aiDraft) {
+          const draftSubject = `${TEMPLATES[language].subjectPrefix} ${subject} — ${TEMPLATES[language].caseLabel} ${caseNumber}`;
+          draft = { draftBody: aiDraft, draftHtml: aiDraft, draftSubject };
+          log.info({ event: 'inbound.draft_via_kitz_os', traceId, caseNumber, bodyLen: aiDraft.length });
+        } else {
+          draft = await generateDraftResponse(emailBody, subject, sender.name, language, caseNumber, traceId, log);
+          log.info({ event: 'inbound.draft_via_fallback', traceId, caseNumber, bodyLen: draft.draftBody.length });
+        }
         log.info({ event: 'inbound.draft_generated', traceId, caseNumber, bodyLen: draft.draftBody.length });
 
         const pending = createPendingDraft({

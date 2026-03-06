@@ -64,8 +64,21 @@ import { createArtifactFromToolResult } from './tools/artifactPreview.js';
 import { getContent, getContentBySlug, getBrandKit, approveContent, extendContent, cleanExpiredContent } from './tools/contentEngine.js';
 import type { OutputChannel } from 'kitz-schemas';
 import { createLogger } from './logger.js';
+import { loadContacts, isFirstContact, getContact, touchContact } from './contacts/registry.js';
+import { handleOnboarding } from './contacts/onboarding.js';
 
 const log = createLogger('server');
+
+/** Auto-detect language from message text — defaults to Spanish for LatAm market */
+function detectLanguage(text: string): string {
+  const lower = text.toLowerCase();
+  // English indicators
+  const enWords = /\b(hello|hi|hey|how are you|what|can you|please|thanks|help|good morning|good afternoon)\b/;
+  // Spanish indicators
+  const esWords = /\b(hola|buenos|buenas|como|qué|por favor|gracias|ayuda|quiero|necesito|buen día)\b/;
+  if (enWords.test(lower) && !esWords.test(lower)) return 'en';
+  return 'es'; // Default to Spanish (LatAm target market)
+}
 
 function buildExpiredArtifactHtml(baseUrl: string): string {
   const bk = getBrandKit();
@@ -269,11 +282,11 @@ export async function createServer(kernel: KitzKernel) {
   });
 
   // ── Main WhatsApp webhook ──
-  app.post<{ Body: { message: string; sender?: string; user_id?: string; trace_id?: string; reply_context?: unknown; location?: string; channel?: string; echo_channels?: OutputChannel[]; chat_history?: Array<{ role: 'user' | 'assistant'; content: string }> } }>(
+  app.post<{ Body: { message: string; sender?: string; user_id?: string; trace_id?: string; reply_context?: unknown; location?: string; channel?: string; echo_channels?: OutputChannel[]; chat_history?: Array<{ role: 'user' | 'assistant'; content: string }>; source?: string } }>(
     '/api/kitz',
     { config: { rateLimit: { max: 30, timeWindow: '1 minute' } } },
     async (req, reply) => {
-      const { message, sender, user_id, trace_id, channel: reqChannel, echo_channels, chat_history } = req.body || {};
+      const { message, sender, user_id, trace_id, channel: reqChannel, echo_channels, chat_history, source } = req.body || {};
       if (!message) return reply.code(400).send({ error: 'message required' });
       const validChannels: OutputChannel[] = ['whatsapp', 'web', 'email', 'sms', 'voice', 'terminal', 'instagram', 'messenger', 'twitter'];
       const channel: OutputChannel = validChannels.includes(reqChannel as OutputChannel)
@@ -288,6 +301,33 @@ export async function createServer(kernel: KitzKernel) {
       try {
         storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'user', content: message, traceId });
       } catch { /* non-blocking */ }
+
+      // 0. First-time user onboarding check (before any routing)
+      if (senderJid !== 'unknown' && source !== 'self_chat') {
+        const onboardingChannel = source === 'inbound_email' ? 'email' as const : 'whatsapp' as const;
+        const locale = detectLanguage(message);
+        const onboarding = handleOnboarding(senderJid, onboardingChannel, message, locale);
+        if (onboarding) {
+          log.info('onboarding response', { senderJid, step: onboarding.contact.onboardingStep, locale });
+          const result: Record<string, unknown> = {
+            response: onboarding.response,
+            command: 'onboarding',
+          };
+          // Generate TTS voice note for welcome (first contact only)
+          if (onboarding.voice_note?.text && isElevenLabsConfigured()) {
+            try {
+              const { textToSpeechOgg } = await import('./llm/elevenLabsClient.js');
+              const audio = await textToSpeechOgg({ text: onboarding.voice_note.text });
+              if (audio) {
+                result.voice_note = { audio_base64: audio, mime_type: 'audio/ogg; codecs=opus', text: onboarding.voice_note.text };
+              }
+            } catch (err) {
+              log.warn('TTS for onboarding failed', { err });
+            }
+          }
+          return result;
+        }
+      }
 
       // 1. Try regex command parser first (fast, no AI cost)
       const command = parseWhatsAppCommand(message);
@@ -602,6 +642,52 @@ export async function createServer(kernel: KitzKernel) {
             }
           } catch (artifactErr) {
             log.warn('Artifact generation failed (non-fatal)', { error: (artifactErr as Error).message, traceId });
+          }
+
+          // ── Voice Note extraction ──
+          // If outbound_sendVoiceNote was used, extract audio data from tool results
+          if (result.toolsUsed?.includes('outbound_sendVoiceNote')) {
+            const voiceToolResult = (result.toolResults || []).find(
+              (tr: Record<string, unknown>) => tr.tool === 'outbound_sendVoiceNote' && tr.data,
+            );
+            if (voiceToolResult) {
+              const data = voiceToolResult.data as Record<string, unknown> | undefined;
+              if (data) {
+                responsePayload.voice_note = {
+                  audio_base64: data.audio_base64 || data.audioBase64 || '',
+                  mime_type: data.mime_type || data.mimeType || 'audio/ogg; codecs=opus',
+                  text: data.text || result.response,
+                };
+              }
+            }
+          }
+
+          // ── Artifact Preview shorthand ──
+          // If any artifact_generate* tool was used, surface preview info at top level
+          if (result.toolsUsed?.some((t: string) => t.startsWith('artifact_generate'))) {
+            const artifactData = responsePayload.artifact as { previewUrl?: string; title?: string; category?: string } | undefined;
+            if (artifactData) {
+              responsePayload.artifact_preview = {
+                url: artifactData.previewUrl,
+                title: artifactData.title,
+                category: artifactData.category,
+              };
+            }
+          }
+
+          // ── Draft ID ──
+          // If any drafts were queued for this trace, include the draft_id (traceId)
+          const draftQueueMap = getDraftQueue();
+          if (draftQueueMap.has(traceId)) {
+            const pendingDraftsForTrace = draftQueueMap.get(traceId)?.filter(d => d.status === 'pending');
+            if (pendingDraftsForTrace && pendingDraftsForTrace.length > 0) {
+              responsePayload.draft_id = traceId;
+            }
+          }
+
+          // ── Source passthrough ──
+          if (source) {
+            responsePayload.source = source;
           }
 
           return responsePayload;

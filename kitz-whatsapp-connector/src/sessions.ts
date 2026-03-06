@@ -36,6 +36,19 @@ const log = createSubsystemLogger('whatsapp-sessions');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// ── Rich response from KITZ OS ──
+interface KitzOsResponse {
+  response: string;
+  command?: string;
+  tools_used?: string[];
+  credits_consumed?: number;
+  voice_note?: { audio_base64: string; mime_type: string; text: string };
+  media?: Array<{ type: string; base64: string; mime_type: string; filename: string }>;
+  artifact_preview?: { url: string; title: string; category: string };
+  draft_id?: string;
+  image_url?: string;
+}
+
 // ── Config ──
 const KITZ_OS_URL = process.env.KITZ_OS_URL || 'http://localhost:3012';
 const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
@@ -156,8 +169,8 @@ async function forwardToKitzOs(
   senderJid: string,
   userId: string,
   traceId: string,
-  extra?: { replyContext?: { id: string; body: string | null; sender: string | null }; location?: string },
-): Promise<string> {
+  extra?: { replyContext?: { id: string; body: string | null; sender: string | null }; location?: string; source?: string },
+): Promise<KitzOsResponse> {
   try {
     const res = await fetch(`${KITZ_OS_URL}/api/kitz`, {
       method: 'POST',
@@ -170,20 +183,21 @@ async function forwardToKitzOs(
         response_rules: RESPONSE_RULES,
         reply_context: extra?.replyContext,
         location: extra?.location,
+        source: extra?.source,
       }),
       signal: AbortSignal.timeout(30_000),
     });
 
     if (!res.ok) {
       log.error('KITZ OS returned error status', { userId, status: res.status });
-      return 'KITZ OS is temporarily unavailable. Try again in a moment.';
+      return { response: 'KITZ OS is temporarily unavailable. Try again in a moment.' };
     }
 
-    const data = (await res.json()) as { response?: string; error?: string };
-    return data.response || data.error || 'Done.';
+    const data = await res.json() as KitzOsResponse;
+    return { ...data, response: data.response || (data as any).error || 'Done.' };
   } catch (err) {
     log.error('forward failed', { userId, err });
-    return 'Could not reach KITZ OS. Is it running?';
+    return { response: 'Could not reach KITZ OS. Is it running?' };
   }
 }
 
@@ -195,7 +209,7 @@ async function forwardMediaToKitzOs(
   senderJid: string,
   userId: string,
   traceId: string,
-): Promise<string> {
+): Promise<KitzOsResponse> {
   try {
     const res = await fetch(`${KITZ_OS_URL}/api/kitz/media`, {
       method: 'POST',
@@ -211,13 +225,13 @@ async function forwardMediaToKitzOs(
       signal: AbortSignal.timeout(60_000),
     });
 
-    if (!res.ok) return 'Could not process that file right now.';
+    if (!res.ok) return { response: 'Could not process that file right now.' };
 
-    const data = (await res.json()) as { response?: string; error?: string };
-    return data.response || data.error || 'Media processed.';
+    const data = await res.json() as KitzOsResponse;
+    return { ...data, response: data.response || (data as any).error || 'Media processed.' };
   } catch (err) {
     log.error('media forward failed', { userId, err });
-    return 'Could not process media. Is KITZ OS running?';
+    return { response: 'Could not process media. Is KITZ OS running?' };
   }
 }
 
@@ -754,14 +768,35 @@ class SessionManager {
     // ── Location-only messages ──
     if (hasLocation && !hasText && !hasImage && !hasDocument && !hasAudio) {
       try { await sock.sendPresenceUpdate('composing', replyJid); } catch {}
-      const response = await forwardToKitzOs(
+      const kitzResponse = await forwardToKitzOs(
         locationText || 'Location shared',
         replyJid, userId, traceId,
-        { location: locationText },
+        { location: locationText, source: isDmFromOther ? 'dm' : 'self_chat' },
       );
+      const response = kitzResponse.response;
       await sleep(typingDelayMs(response));
       try { await sock.sendPresenceUpdate('available', replyJid); } catch {}
       try { await sock.sendMessage(replyJid, { text: kitzReply(response) }); } catch {}
+
+      // Send voice note if present
+      if (kitzResponse.voice_note?.audio_base64) {
+        try {
+          await this.sendAudio(userId, replyJid, kitzResponse.voice_note.audio_base64, kitzResponse.voice_note.mime_type || 'audio/ogg; codecs=opus');
+        } catch {}
+      }
+
+      // Send media attachments if present
+      if (kitzResponse.media?.length) {
+        for (const item of kitzResponse.media) {
+          try {
+            if (item.type === 'document') {
+              await this.sendDocument(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type, item.filename);
+            } else if (item.type === 'image') {
+              await this.sendImage(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type);
+            }
+          } catch {}
+        }
+      }
       return;
     }
 
@@ -775,10 +810,12 @@ class SessionManager {
       const fullText = locationText ? `${text}\n${locationText}` : text;
       try { await sock.sendPresenceUpdate('composing', replyJid); } catch {}
       log.info('forwarding text to kitz_os', { userId, textPreview: fullText.slice(0, 50) });
-      const response = await forwardToKitzOs(fullText, replyJid, userId, traceId, {
+      const kitzResponse = await forwardToKitzOs(fullText, replyJid, userId, traceId, {
         replyContext,
         location: locationText,
+        source: isDmFromOther ? 'dm' : 'self_chat',
       });
+      const response = kitzResponse.response;
       log.info('kitz_os response', { userId, responsePreview: response.slice(0, 80) });
       await sleep(typingDelayMs(response));
       try { await sock.sendPresenceUpdate('available', replyJid); } catch {}
@@ -788,6 +825,26 @@ class SessionManager {
         log.info('reply sent to self-chat', { userId });
       } catch (sendErr) {
         log.error('reply failed', { userId, err: sendErr });
+      }
+
+      // Send voice note if present
+      if (kitzResponse.voice_note?.audio_base64) {
+        try {
+          await this.sendAudio(userId, replyJid, kitzResponse.voice_note.audio_base64, kitzResponse.voice_note.mime_type || 'audio/ogg; codecs=opus');
+        } catch {}
+      }
+
+      // Send media attachments if present
+      if (kitzResponse.media?.length) {
+        for (const item of kitzResponse.media) {
+          try {
+            if (item.type === 'document') {
+              await this.sendDocument(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type, item.filename);
+            } else if (item.type === 'image') {
+              await this.sendImage(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type);
+            }
+          } catch {}
+        }
       }
       return;
     }
@@ -807,11 +864,32 @@ class SessionManager {
         }
         const caption = imageMsg.caption || '';
         const mimeType = imageMsg.mimetype || 'image/jpeg';
-        const response = await forwardMediaToKitzOs(base64, mimeType, caption, replyJid, userId, traceId);
+        const kitzResponse = await forwardMediaToKitzOs(base64, mimeType, caption, replyJid, userId, traceId);
+        const response = kitzResponse.response;
         await sleep(typingDelayMs(response));
         try { await sock.sendPresenceUpdate('available', replyJid); } catch {}
         const sent = await sock.sendMessage(replyJid, { text: kitzReply(response) });
         if (sent?.key?.id) trackKitzSent(sent.key.id);
+
+        // Send voice note if present
+        if (kitzResponse.voice_note?.audio_base64) {
+          try {
+            await this.sendAudio(userId, replyJid, kitzResponse.voice_note.audio_base64, kitzResponse.voice_note.mime_type || 'audio/ogg; codecs=opus');
+          } catch {}
+        }
+
+        // Send media attachments if present
+        if (kitzResponse.media?.length) {
+          for (const item of kitzResponse.media) {
+            try {
+              if (item.type === 'document') {
+                await this.sendDocument(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type, item.filename);
+              } else if (item.type === 'image') {
+                await this.sendImage(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type);
+              }
+            } catch {}
+          }
+        }
       } catch (err) {
         log.error('image download failed', { userId, err });
         await typeThenReply('Could not download that image. Try again.');
@@ -834,11 +912,32 @@ class SessionManager {
         }
         const caption = docMsg.caption || docMsg.fileName || '';
         const mimeType = docMsg.mimetype || 'application/pdf';
-        const response = await forwardMediaToKitzOs(base64, mimeType, caption, replyJid, userId, traceId);
+        const kitzResponse = await forwardMediaToKitzOs(base64, mimeType, caption, replyJid, userId, traceId);
+        const response = kitzResponse.response;
         await sleep(typingDelayMs(response));
         try { await sock.sendPresenceUpdate('available', replyJid); } catch {}
         const sent = await sock.sendMessage(replyJid, { text: kitzReply(response) });
         if (sent?.key?.id) trackKitzSent(sent.key.id);
+
+        // Send voice note if present
+        if (kitzResponse.voice_note?.audio_base64) {
+          try {
+            await this.sendAudio(userId, replyJid, kitzResponse.voice_note.audio_base64, kitzResponse.voice_note.mime_type || 'audio/ogg; codecs=opus');
+          } catch {}
+        }
+
+        // Send media attachments if present
+        if (kitzResponse.media?.length) {
+          for (const item of kitzResponse.media) {
+            try {
+              if (item.type === 'document') {
+                await this.sendDocument(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type, item.filename);
+              } else if (item.type === 'image') {
+                await this.sendImage(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type);
+              }
+            } catch {}
+          }
+        }
       } catch (err) {
         log.error('document download failed', { userId, err });
         await typeThenReply('Could not download that document.');
@@ -856,15 +955,36 @@ class SessionManager {
         const rawSizeKB = Math.round(buffer.length / 1024);
         log.info('audio received', { userId, rawSizeKB });
         const mimeType = audioMsg.mimetype || 'audio/ogg; codecs=opus';
-        const response = await forwardMediaToKitzOs(
+        const kitzResponse = await forwardMediaToKitzOs(
           base64, mimeType,
           'Voice note received — transcribe and process as brain dump',
           replyJid, userId, traceId,
         );
+        const response = kitzResponse.response;
         await sleep(typingDelayMs(response));
         try { await sock.sendPresenceUpdate('available', replyJid); } catch {}
         const sent = await sock.sendMessage(replyJid, { text: kitzReply(response) });
         if (sent?.key?.id) trackKitzSent(sent.key.id);
+
+        // Send voice note if present
+        if (kitzResponse.voice_note?.audio_base64) {
+          try {
+            await this.sendAudio(userId, replyJid, kitzResponse.voice_note.audio_base64, kitzResponse.voice_note.mime_type || 'audio/ogg; codecs=opus');
+          } catch {}
+        }
+
+        // Send media attachments if present
+        if (kitzResponse.media?.length) {
+          for (const item of kitzResponse.media) {
+            try {
+              if (item.type === 'document') {
+                await this.sendDocument(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type, item.filename);
+              } else if (item.type === 'image') {
+                await this.sendImage(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type);
+              }
+            } catch {}
+          }
+        }
       } catch (err) {
         log.error('audio download failed', { userId, err });
         await typeThenReply('Could not process that voice note.');
