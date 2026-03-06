@@ -5,9 +5,9 @@ import { useSettingsStore } from '@/stores/settingsStore'
 import { setLocale } from '@/lib/i18n'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { ToastContainer } from '@/components/ui/ToastContainer'
+import { EntryPage } from '@/pages/EntryPage'
 
 // Code-split heavy pages (audit finding 6f)
-const DashboardPage = lazy(() => import('@/pages/DashboardPage').then(m => ({ default: m.DashboardPage })))
 const WhatsAppPage = lazy(() => import('@/pages/WhatsAppPage').then(m => ({ default: m.WhatsAppPage })))
 const LearnPage = lazy(() => import('@/pages/LearnPage').then(m => ({ default: m.LearnPage })))
 const GamePage = lazy(() => import('@/pages/GamePage').then(m => ({ default: m.GamePage })))
@@ -32,7 +32,7 @@ export default function App() {
       <BrowserRouter>
         <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><p className="text-gray-400">Loading...</p></div>}>
           <Routes>
-            <Route path="/" element={<DashboardPage />} />
+            <Route path="/" element={<EntryPage />} />
             <Route path="/connect-whatsapp" element={<WhatsAppPage />} />
             <Route path="/learn" element={<LearnPage />} />
             <Route path="/game" element={<GamePage />} />
