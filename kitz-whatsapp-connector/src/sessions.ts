@@ -765,6 +765,45 @@ class SessionManager {
       }
     };
 
+    // Helper: send all rich response extras (voice note, media, artifact preview, image URL)
+    const sendRichExtras = async (kr: KitzOsResponse) => {
+      // Voice note
+      if (kr.voice_note?.audio_base64) {
+        try {
+          await this.sendAudio(userId, replyJid, kr.voice_note.audio_base64, kr.voice_note.mime_type || 'audio/ogg; codecs=opus');
+        } catch {}
+      }
+      // Media attachments
+      if (kr.media?.length) {
+        for (const item of kr.media) {
+          try {
+            if (item.type === 'document') {
+              await this.sendDocument(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type, item.filename);
+            } else if (item.type === 'image') {
+              await this.sendImage(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type);
+            }
+          } catch {}
+        }
+      }
+      // Artifact preview link
+      if (kr.artifact_preview?.url) {
+        const label = kr.artifact_preview.title || 'Preview';
+        try {
+          await sock.sendMessage(replyJid, { text: `🔗 ${label}: ${kr.artifact_preview.url}` });
+        } catch {}
+      }
+      // Image URL (DALL-E etc.) — download and send as image
+      if (kr.image_url) {
+        try {
+          const imgRes = await fetch(kr.image_url, { signal: AbortSignal.timeout(15_000) });
+          if (imgRes.ok) {
+            const buf = Buffer.from(await imgRes.arrayBuffer());
+            await this.sendImage(userId, replyJid, buf, 'image/png');
+          }
+        } catch {}
+      }
+    };
+
     // ── Location-only messages ──
     if (hasLocation && !hasText && !hasImage && !hasDocument && !hasAudio) {
       try { await sock.sendPresenceUpdate('composing', replyJid); } catch {}
@@ -777,26 +816,7 @@ class SessionManager {
       await sleep(typingDelayMs(response));
       try { await sock.sendPresenceUpdate('available', replyJid); } catch {}
       try { await sock.sendMessage(replyJid, { text: kitzReply(response) }); } catch {}
-
-      // Send voice note if present
-      if (kitzResponse.voice_note?.audio_base64) {
-        try {
-          await this.sendAudio(userId, replyJid, kitzResponse.voice_note.audio_base64, kitzResponse.voice_note.mime_type || 'audio/ogg; codecs=opus');
-        } catch {}
-      }
-
-      // Send media attachments if present
-      if (kitzResponse.media?.length) {
-        for (const item of kitzResponse.media) {
-          try {
-            if (item.type === 'document') {
-              await this.sendDocument(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type, item.filename);
-            } else if (item.type === 'image') {
-              await this.sendImage(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type);
-            }
-          } catch {}
-        }
-      }
+      await sendRichExtras(kitzResponse);
       return;
     }
 
@@ -826,26 +846,7 @@ class SessionManager {
       } catch (sendErr) {
         log.error('reply failed', { userId, err: sendErr });
       }
-
-      // Send voice note if present
-      if (kitzResponse.voice_note?.audio_base64) {
-        try {
-          await this.sendAudio(userId, replyJid, kitzResponse.voice_note.audio_base64, kitzResponse.voice_note.mime_type || 'audio/ogg; codecs=opus');
-        } catch {}
-      }
-
-      // Send media attachments if present
-      if (kitzResponse.media?.length) {
-        for (const item of kitzResponse.media) {
-          try {
-            if (item.type === 'document') {
-              await this.sendDocument(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type, item.filename);
-            } else if (item.type === 'image') {
-              await this.sendImage(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type);
-            }
-          } catch {}
-        }
-      }
+      await sendRichExtras(kitzResponse);
       return;
     }
 
@@ -870,26 +871,7 @@ class SessionManager {
         try { await sock.sendPresenceUpdate('available', replyJid); } catch {}
         const sent = await sock.sendMessage(replyJid, { text: kitzReply(response) });
         if (sent?.key?.id) trackKitzSent(sent.key.id);
-
-        // Send voice note if present
-        if (kitzResponse.voice_note?.audio_base64) {
-          try {
-            await this.sendAudio(userId, replyJid, kitzResponse.voice_note.audio_base64, kitzResponse.voice_note.mime_type || 'audio/ogg; codecs=opus');
-          } catch {}
-        }
-
-        // Send media attachments if present
-        if (kitzResponse.media?.length) {
-          for (const item of kitzResponse.media) {
-            try {
-              if (item.type === 'document') {
-                await this.sendDocument(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type, item.filename);
-              } else if (item.type === 'image') {
-                await this.sendImage(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type);
-              }
-            } catch {}
-          }
-        }
+        await sendRichExtras(kitzResponse);
       } catch (err) {
         log.error('image download failed', { userId, err });
         await typeThenReply('Could not download that image. Try again.');
@@ -918,26 +900,7 @@ class SessionManager {
         try { await sock.sendPresenceUpdate('available', replyJid); } catch {}
         const sent = await sock.sendMessage(replyJid, { text: kitzReply(response) });
         if (sent?.key?.id) trackKitzSent(sent.key.id);
-
-        // Send voice note if present
-        if (kitzResponse.voice_note?.audio_base64) {
-          try {
-            await this.sendAudio(userId, replyJid, kitzResponse.voice_note.audio_base64, kitzResponse.voice_note.mime_type || 'audio/ogg; codecs=opus');
-          } catch {}
-        }
-
-        // Send media attachments if present
-        if (kitzResponse.media?.length) {
-          for (const item of kitzResponse.media) {
-            try {
-              if (item.type === 'document') {
-                await this.sendDocument(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type, item.filename);
-              } else if (item.type === 'image') {
-                await this.sendImage(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type);
-              }
-            } catch {}
-          }
-        }
+        await sendRichExtras(kitzResponse);
       } catch (err) {
         log.error('document download failed', { userId, err });
         await typeThenReply('Could not download that document.');
@@ -965,26 +928,7 @@ class SessionManager {
         try { await sock.sendPresenceUpdate('available', replyJid); } catch {}
         const sent = await sock.sendMessage(replyJid, { text: kitzReply(response) });
         if (sent?.key?.id) trackKitzSent(sent.key.id);
-
-        // Send voice note if present
-        if (kitzResponse.voice_note?.audio_base64) {
-          try {
-            await this.sendAudio(userId, replyJid, kitzResponse.voice_note.audio_base64, kitzResponse.voice_note.mime_type || 'audio/ogg; codecs=opus');
-          } catch {}
-        }
-
-        // Send media attachments if present
-        if (kitzResponse.media?.length) {
-          for (const item of kitzResponse.media) {
-            try {
-              if (item.type === 'document') {
-                await this.sendDocument(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type, item.filename);
-              } else if (item.type === 'image') {
-                await this.sendImage(userId, replyJid, Buffer.from(item.base64, 'base64'), item.mime_type);
-              }
-            } catch {}
-          }
-        }
+        await sendRichExtras(kitzResponse);
       } catch (err) {
         log.error('audio download failed', { userId, err });
         await typeThenReply('Could not process that voice note.');
