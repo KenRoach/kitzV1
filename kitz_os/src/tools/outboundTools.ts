@@ -15,7 +15,8 @@
 import { createSubsystemLogger } from 'kitz-schemas';
 
 const log = createSubsystemLogger('outbound');
-import { textToSpeech, isElevenLabsConfigured } from '../llm/elevenLabsClient.js';
+import { textToSpeech, textToSpeechOgg, isElevenLabsConfigured } from '../llm/elevenLabsClient.js';
+import { getGmailClient, isGoogleOAuthConfigured, hasStoredTokens } from '../auth/googleOAuth.js';
 import type { ToolSchema } from './registry.js';
 
 const WA_CONNECTOR_URL = process.env.WA_CONNECTOR_URL || 'http://localhost:3006';
@@ -95,10 +96,56 @@ export function getAllOutboundTools(): ToolSchema[] {
       },
       riskLevel: 'high',
       execute: async (args, traceId) => {
-        return {
-          status: 'draft',
-          message: 'Email drafted. Only admin_assistant agent can send emails.',
-        };
+        const to = String(args.to || '').trim();
+        const subject = String(args.subject || 'Message from Kitz').trim();
+        const body = String(args.body || args.message || '').trim();
+
+        if (!to) {
+          return { error: 'Recipient email (to) is required.' };
+        }
+
+        // Check if Gmail is configured and authenticated
+        if (!isGoogleOAuthConfigured()) {
+          return {
+            status: 'draft',
+            message: `Email draft for ${to}: "${subject}"`,
+            note: 'Gmail not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable.',
+          };
+        }
+
+        const hasTokens = await hasStoredTokens();
+        if (!hasTokens) {
+          return {
+            status: 'draft',
+            message: `Email draft for ${to}: "${subject}"`,
+            note: 'Gmail not authenticated. Complete OAuth flow at /api/kitz/oauth/google/authorize first.',
+          };
+        }
+
+        try {
+          const gmail = await getGmailClient();
+          const raw = Buffer.from(
+            `To: ${to}\r\nSubject: ${subject}\r\nContent-Type: text/html; charset=utf-8\r\n\r\n${body}`
+          ).toString('base64url');
+          const draft = await gmail.users.drafts.create({
+            userId: 'me',
+            requestBody: { message: { raw } },
+          });
+          return {
+            status: 'draft',
+            draft_id: draft.data.id,
+            to,
+            subject,
+            note: 'Email draft created. Reply "approve" to send.',
+          };
+        } catch (err) {
+          log.error('Gmail draft creation failed', { err: (err as Error).message, trace_id: traceId });
+          return {
+            status: 'draft',
+            message: `Email draft for ${to}: "${subject}"`,
+            error: `Gmail draft failed: ${(err as Error).message}`,
+          };
+        }
       },
     },
 
@@ -150,10 +197,10 @@ export function getAllOutboundTools(): ToolSchema[] {
         }
 
         try {
-          // 1. Generate TTS audio
-          const audioResult = await textToSpeech({
+          // 1. Generate TTS audio in OGG Opus format (native WhatsApp voice note format)
+          const audioResult = await textToSpeechOgg({
             text,
-            outputFormat: 'mp3_22050_32', // Smaller file for WhatsApp
+            outputFormat: 'mp3_22050_32', // Base format before OGG conversion
           });
 
           log.info('executed', { trace_id: traceId });
@@ -167,7 +214,7 @@ export function getAllOutboundTools(): ToolSchema[] {
               body: JSON.stringify({
                 phone,
                 audio_base64: audioResult.audioBase64,
-                mime_type: audioResult.mimeType,
+                mime_type: 'audio/ogg; codecs=opus',
                 caption: text.slice(0, 200),
                 trace_id: traceId,
               }),
@@ -189,7 +236,7 @@ export function getAllOutboundTools(): ToolSchema[] {
             status: 'draft',
             message: `🎙️ Voice note generated for ${phone} (${audioResult.characterCount} chars)`,
             audio_base64: audioResult.audioBase64,
-            mime_type: audioResult.mimeType,
+            mime_type: 'audio/ogg; codecs=opus',
             note: 'WhatsApp connector unavailable. Audio generated and ready to send.',
           };
         } catch (err) {

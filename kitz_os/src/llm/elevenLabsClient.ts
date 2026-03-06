@@ -18,6 +18,13 @@
 
 import { createSubsystemLogger } from 'kitz-schemas';
 import { recordTTSSpend } from '../aiBattery.js';
+import { execFile as execFileCb } from 'node:child_process';
+import { promisify } from 'node:util';
+import { writeFile, readFile, unlink } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+
+const execFileAsync = promisify(execFileCb);
 
 const log = createSubsystemLogger('elevenLabsClient');
 
@@ -314,4 +321,59 @@ export function isElevenLabsConfigured(): boolean {
  */
 export function estimateCreditCost(text: string): number {
   return text.length;
+}
+
+// ── OGG Opus Conversion ───────────────────────────────────
+
+/**
+ * Convert MP3 base64 audio to OGG Opus base64.
+ * Uses ffmpeg for transcoding — required for WhatsApp voice note delivery.
+ *
+ * @param mp3Base64 - Base64-encoded MP3 audio
+ * @returns Base64-encoded OGG Opus audio
+ */
+export async function convertToOggOpus(mp3Base64: string): Promise<string> {
+  const timestamp = Date.now();
+  const inputPath = join(tmpdir(), `kitz_tts_${timestamp}.mp3`);
+  const outputPath = join(tmpdir(), `kitz_tts_${timestamp}.ogg`);
+
+  try {
+    // Write MP3 to temp file
+    await writeFile(inputPath, Buffer.from(mp3Base64, 'base64'));
+
+    // Transcode MP3 → OGG Opus via ffmpeg
+    await execFileAsync('ffmpeg', [
+      '-y',
+      '-i', inputPath,
+      '-c:a', 'libopus',
+      '-b:a', '64k',
+      '-ac', '1',
+      '-ar', '48000',
+      outputPath,
+    ]);
+
+    // Read OGG file back as base64
+    const oggBuffer = await readFile(outputPath);
+    return oggBuffer.toString('base64');
+  } finally {
+    // Clean up temp files (best-effort)
+    await unlink(inputPath).catch(() => {});
+    await unlink(outputPath).catch(() => {});
+  }
+}
+
+/**
+ * Text-to-Speech with OGG Opus output.
+ * Convenience wrapper: calls textToSpeech() then converts to OGG Opus.
+ * Returns the same TTSResult shape with updated audioBase64 and mimeType.
+ */
+export async function textToSpeechOgg(options: TTSOptions): Promise<TTSResult> {
+  const result = await textToSpeech(options);
+  const oggBase64 = await convertToOggOpus(result.audioBase64);
+
+  return {
+    ...result,
+    audioBase64: oggBase64,
+    mimeType: 'audio/ogg; codecs=opus',
+  };
 }
