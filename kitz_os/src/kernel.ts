@@ -17,7 +17,7 @@ import { loadStarterSOPs } from './sops/loader.js';
 import { CadenceEngine } from './cadence/engine.js';
 import { routeWithAI, brainFirstRoute } from './interfaces/whatsapp/semanticRouter.js';
 import { createAOS, type AOSRuntime, createAllAgents, createCoreAgents, registerAgent, dispatchToAgent } from '../../aos/src/index.js';
-import type { LaunchContext } from '../../aos/src/types.js';
+import type { LaunchContext, AOSEvent, AgentMessage } from '../../aos/src/types.js';
 import { createLogger } from './logger.js';
 import { loadCustomTools } from './tools/customToolLoader.js';
 import { setToolFactoryRegistry } from './tools/toolFactoryTools.js';
@@ -56,6 +56,7 @@ export class KitzKernel {
   private server: Awaited<ReturnType<typeof createServer>> | null = null;
   private cadence: CadenceEngine | null = null;
   public aos: AOSRuntime;
+  private eventLoopTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
     // AOS created without tool bridge — will be wired after tools register
@@ -119,6 +120,39 @@ export class KitzKernel {
     for (const agent of coreAgents.values()) { registerAgent(agent); agentCount++; }
     log.info(`${agentCount} agents registered for real-time dispatch`);
 
+    // 3.7. Subscribe agents to event bus for autonomous wake-up
+    const allAgents = [...teamAgents.values(), ...coreAgents.values()];
+
+    // Route AGENT_MESSAGE events to their target agents
+    this.aos.bus.subscribe('AGENT_MESSAGE', async (event: AOSEvent) => {
+      const msg = event as unknown as AgentMessage;
+      const targets = Array.isArray(msg.target) ? msg.target : [msg.target];
+      for (const targetName of targets) {
+        const agent = allAgents.find(a => a.name === targetName);
+        if (agent) {
+          try { await agent.handleMessage(msg); } catch (err) {
+            log.error(`Agent ${agent.name} failed`, { error: (err as Error).message });
+          }
+        }
+      }
+    });
+
+    // Route SWARM_TASK events to target agents
+    this.aos.bus.subscribe('SWARM_TASK', async (event: AOSEvent) => {
+      const msg = event as unknown as AgentMessage;
+      const targets = Array.isArray(msg.target) ? msg.target : [msg.target];
+      for (const targetName of targets) {
+        const agent = allAgents.find(a => a.name === targetName);
+        if (agent) {
+          try { await agent.handleSwarmTask(msg); } catch (err) {
+            log.error(`Swarm task failed for ${agent.name}`, { error: (err as Error).message });
+          }
+        }
+      }
+    });
+
+    log.info(`Event bus subscriptions active — ${allAgents.length} agents listening`);
+
     // 4. Check AI availability
     const hasAI = !!(
       process.env.CLAUDE_API_KEY ||
@@ -142,25 +176,20 @@ export class KitzKernel {
     startNotificationEngine();
 
     // 7. AOS initialized
-    log.info('AOS agent operating system online', { agents: 33 });
+    log.info('AOS agent operating system online', { agents: agentCount });
 
-    // 8. Verify C-Suite agents are registered for task dispatch
+    // 8. Verify C-Suite agents are registered and online
     const CSUITE_AGENTS = [
       'CEO', 'CFO', 'CMO', 'CTO', 'CPO', 'COO', 'CRO',
       'HeadCustomer', 'HeadEngineering', 'HeadGrowth',
       'HeadIntelligenceRisk', 'HeadEducation',
     ];
-    try {
-      const registeredCount = CSUITE_AGENTS.filter(name => {
-        // dispatchToAgent will return "not found" if unregistered — but we just
-        // verify they exist via the agents already registered above.
-        // The factory-based registration (step 3.6) should have covered these.
-        return true; // agents are registered by createAllAgents + createCoreAgents
-      }).length;
-      log.info(`C-Suite agent roster verified: ${registeredCount} agents`, { agents: CSUITE_AGENTS });
-    } catch (err) {
-      log.warn('C-Suite agent registration check failed (non-fatal)', { error: (err as Error).message });
-    }
+    const registeredCsuite = CSUITE_AGENTS.filter(name => allAgents.some(a => a.name === name));
+    const missingCsuite = CSUITE_AGENTS.filter(name => !allAgents.some(a => a.name === name));
+    log.info(`C-Suite roster: ${registeredCsuite.length}/${CSUITE_AGENTS.length} verified`, {
+      registered: registeredCsuite,
+      ...(missingCsuite.length > 0 ? { missing: missingCsuite } : {}),
+    });
   }
 
   async run(opts: { goal: string; agent?: string; mode?: string; context?: Record<string, unknown> }): Promise<RunResult> {
@@ -194,7 +223,7 @@ export class KitzKernel {
   }
 
   /** Build launch context from current system state */
-  buildLaunchContext(): LaunchContext {
+  async buildLaunchContext(): Promise<LaunchContext> {
     const battery = getBatteryStatus();
     const hasAI = !!(process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.AI_API_KEY);
 
@@ -206,7 +235,7 @@ export class KitzKernel {
       batteryRemaining: battery.remaining,
       batteryDailyLimit: battery.dailyLimit,
       batteryDepleted: battery.depleted,
-      servicesHealthy: ['kitz_os', 'workspace', 'kitz-gateway', 'kitz-whatsapp-connector', 'kitz-payments', 'kitz-notifications-queue', 'admin-kitz-services'],
+      servicesHealthy: await this.probeServiceHealth(),
       servicesDown: [],
       campaignProfileCount: 10,
       campaignTemplateLanguages: ['es', 'en'],
@@ -225,9 +254,26 @@ export class KitzKernel {
     };
   }
 
+  /** Probe downstream services for real health status */
+  private async probeServiceHealth(): Promise<string[]> {
+    const services: Array<{ name: string; url: string }> = [
+      { name: 'kitz_os', url: `http://localhost:${process.env.PORT || 3012}/health` },
+      { name: 'workspace', url: `${process.env.WORKSPACE_API_URL || 'http://localhost:3001'}/health` },
+      { name: 'kitz-whatsapp-connector', url: `${process.env.WA_CONNECTOR_URL || 'http://localhost:3006'}/health` },
+    ];
+    const healthy: string[] = [];
+    await Promise.all(services.map(async (svc) => {
+      try {
+        const res = await fetch(svc.url, { signal: AbortSignal.timeout(3000) });
+        if (res.ok) healthy.push(svc.name);
+      } catch { /* service down */ }
+    }));
+    return healthy;
+  }
+
   /** Run the full 33-agent launch review. CEO decides. */
   async runLaunchReview() {
-    const ctx = this.buildLaunchContext();
+    const ctx = await this.buildLaunchContext();
     return this.aos.runLaunchReview(ctx);
   }
 
@@ -243,6 +289,8 @@ export class KitzKernel {
 
   async shutdown(): Promise<void> {
     if (this.cadence) this.cadence.stop();
+    if (this.eventLoopTimer) clearInterval(this.eventLoopTimer);
+    stopNotificationEngine();
     if (this.server) {
       await this.server.close();
     }

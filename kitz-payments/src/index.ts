@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 import { randomUUID, createHmac, timingSafeEqual } from 'node:crypto';
 import type { CheckoutSession, PaymentWebhookEvent, StandardError } from 'kitz-schemas';
-import { insertLedgerEntry, getLedger, queryLedger, upsertSubscription, getSubscription, hasDB, type SubscriptionRecord } from './db.js';
+import { insertLedgerEntry, getLedger, queryLedger, upsertSubscription, getSubscription, hasDB, restoreLedger, restoreSubscriptions, type SubscriptionRecord } from './db.js';
 
 export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
@@ -257,5 +257,13 @@ app.get('/ledger', async (req: any) => {
   const entries = orgId ? await queryLedger(orgId) : getLedger();
   return { entries, policy: 'receive_only', providers: Array.from(allowedReceiveProviders) };
 });
+
+// Restore persisted data from NDJSON before listening
+Promise.all([restoreLedger(), restoreSubscriptions()])
+  .then(([ledgerCount, subsCount]) => {
+    if (ledgerCount > 0) app.log.info(`Restored ${ledgerCount} ledger entries from NDJSON`);
+    if (subsCount > 0) app.log.info(`Restored ${subsCount} subscriptions from NDJSON`);
+  })
+  .catch(() => {});
 
 app.listen({ port: Number(process.env.PORT || 3005), host: '0.0.0.0' });

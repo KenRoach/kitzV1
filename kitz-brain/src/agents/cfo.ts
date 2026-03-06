@@ -5,6 +5,7 @@
 
 import { llmHubClient } from '../llm/hubClient.js';
 import { financePolicy, buildRoiPlan } from '../policy.js';
+import { toolRegistry } from '../tools/registry.js';
 
 export interface CfoReport {
   date: string;
@@ -44,6 +45,17 @@ export const cfoAgent = {
       summary = `Finance review: receive-only mode active. ROI plan: ${currentPlan.initiative}.`;
       roiAssessment = `ROI ${currentPlan.projectedRoiMultiple}x projected.`;
     }
+
+    // 3. Draft WhatsApp summary to owner
+    try {
+      await toolRegistry.invoke('messaging.draftWhatsApp', {
+        phone: process.env.CADENCE_PHONE || process.env.KITZ_WHATSAPP_NUMBER || '',
+        message: `\u{1F4B0} *Weekly CFO Brief*\n\n${summary}\n\n` +
+          `\u2022 ROI: ${currentPlan.projectedRoiMultiple}x projected\n` +
+          `\u2022 Validation: ${currentPlan.validationPassed ? '\u2705 Passed' : '\u26A0\uFE0F Pending'}\n` +
+          `\u2022 Budget request: $${currentPlan.requestedBudgetUsd}`,
+      }, traceId);
+    } catch { /* non-blocking */ }
 
     return {
       date,

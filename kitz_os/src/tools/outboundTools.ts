@@ -58,6 +58,7 @@ export function getAllOutboundTools(): ToolSchema[] {
               phone,
               message,
               userId,
+              draftOnly: false,
             }),
             signal: AbortSignal.timeout(15_000),
           });

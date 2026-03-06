@@ -1,7 +1,7 @@
 import Fastify from 'fastify'
 import { randomUUID } from 'node:crypto'
 import { sendSms, initiateCall } from './providers/twilio.js'
-import { saveComms, updateCommsStatus, getCommsById, type CommsRecord } from './db.js'
+import { saveComms, updateCommsStatus, getCommsById, restoreComms, type CommsRecord } from './db.js'
 
 const app = Fastify({ logger: true })
 const PORT = Number(process.env.PORT) || 3013
@@ -207,6 +207,9 @@ app.get<{ Params: { id: string } }>('/status/:id', async (req, reply) => {
   }
   return record
 })
+
+// Restore persisted comms records from NDJSON before listening
+restoreComms().then((n) => { if (n > 0) app.log.info(`Restored ${n} comms records from NDJSON`) }).catch(() => {})
 
 app.listen({ port: PORT, host: '0.0.0.0' }, (err) => {
   if (err) { app.log.error(err); process.exit(1) }
