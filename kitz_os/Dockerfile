@@ -11,9 +11,9 @@ COPY ui/src/ src/
 COPY ui/public/ public/
 COPY ui/index.html ui/vite.config.ts ui/tsconfig.json ui/vite-env.d.ts ./
 # Build with empty API base URL (same-origin — SPA served from kitz_os)
-# VITE_SERVICE_SECRET must match DEV_TOKEN_SECRET on the kitz_os server
+# VITE_SERVICE_SECRET is intentionally empty — SPA uses JWT Bearer auth, not dev secret
 ENV VITE_API_BASE_URL=""
-ENV VITE_SERVICE_SECRET="dev-secret-change-me"
+ENV VITE_SERVICE_SECRET=""
 RUN npm run build
 
 # ── Stage 2: Build kitz_os with bundled SPA ──

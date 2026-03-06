@@ -43,12 +43,12 @@ async function transcribeAudio(audioBlob: Blob, language: string): Promise<strin
   const base64 = await blobToBase64(audioBlob)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const apiBase = (import.meta as any).env?.VITE_API_BASE_URL || ''
+  const token = localStorage.getItem('kitz_token') || ''
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
   const res = await fetch(`${apiBase}/api/kitz/voice/transcribe`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-dev-secret': import.meta.env.VITE_SERVICE_SECRET || 'dev-secret-change-me',
-    },
+    headers,
     body: JSON.stringify({
       audio_base64: base64,
       language: language === 'auto' ? undefined : language,

@@ -40,6 +40,17 @@ function verifyHash(stored: string, password: string): boolean {
 const memoryUsers = new Map<string, UserRecord>();
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+
+// Log persistence mode on module load
+if (DATABASE_URL && SUPABASE_URL && SUPABASE_KEY) {
+  console.log('[gatewayDb] User persistence: Supabase REST API');
+} else if (DATABASE_URL) {
+  console.log('[gatewayDb] User persistence: DATABASE_URL set but Supabase keys missing — in-memory fallback');
+} else {
+  console.log('[gatewayDb] ⚠ User persistence: IN-MEMORY ONLY (users lost on restart). Set DATABASE_URL + SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY for production.');
+}
 
 /** Row from DB → UserRecord */
 function rowToUser(row: Record<string, unknown>): UserRecord {
