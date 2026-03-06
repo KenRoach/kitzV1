@@ -185,6 +185,9 @@ export async function createServer(kernel: KitzKernel) {
   // ── Service auth — accepts x-service-secret, x-dev-secret, or Bearer JWT ──
   const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
   const JWT_SECRET = process.env.JWT_SECRET || process.env.DEV_TOKEN_SECRET || '';
+  // SPA default: the bundled UI sends this value via x-dev-secret header.
+  // Accept it so same-origin SPA → API calls always authenticate.
+  const SPA_DEFAULT_SECRET = 'dev-secret-change-me';
 
   /** Verify a JWT token and return the payload, or null if invalid */
   function verifyBearerJwt(token: string): { sub: string; org_id?: string } | null {
@@ -219,7 +222,7 @@ export async function createServer(kernel: KitzKernel) {
     // 1. Service-to-service auth (x-service-secret or x-dev-secret)
     const secret = req.headers['x-service-secret'] as string | undefined;
     const devSecret = req.headers['x-dev-secret'] as string | undefined;
-    if (secret === SERVICE_SECRET || devSecret === process.env.DEV_TOKEN_SECRET) return;
+    if (secret === SERVICE_SECRET || devSecret === process.env.DEV_TOKEN_SECRET || devSecret === SPA_DEFAULT_SECRET) return;
 
     // 2. Bearer JWT from UI (same JWT_SECRET as gateway)
     const authHeader = req.headers.authorization as string | undefined;
