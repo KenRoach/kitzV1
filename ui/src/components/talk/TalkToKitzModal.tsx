@@ -47,7 +47,7 @@ async function transcribeAudio(audioBlob: Blob, language: string): Promise<strin
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-dev-secret': 'dev-secret-change-me',
+      'x-dev-secret': import.meta.env.VITE_SERVICE_SECRET || 'dev-secret-change-me',
     },
     body: JSON.stringify({
       audio_base64: base64,
