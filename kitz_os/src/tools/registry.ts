@@ -226,6 +226,10 @@ export class OsToolRegistry {
       // Fiat Currency & Online Transactions
       import('./fiatCurrencyTools.js'),
       import('./onlineTransactionTools.js'),
+      // LatAm Tax, Credit & Banking
+      import('./latamTaxTools.js'),
+      import('./latamCreditTools.js'),
+      import('./latamBankingTools.js'),
     ]);
 
     const getterNames = [
@@ -375,6 +379,10 @@ export class OsToolRegistry {
       // Fiat Currency & Online Transactions
       'getAllFiatCurrencyTools',
       'getAllOnlineTransactionTools',
+      // LatAm Tax, Credit & Banking
+      'getAllLatamTaxTools',
+      'getAllLatamCreditTools',
+      'getAllLatamBankingTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {
