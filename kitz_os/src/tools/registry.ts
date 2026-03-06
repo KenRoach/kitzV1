@@ -218,6 +218,11 @@ export class OsToolRegistry {
       import('./claudeSkillsTools.js'),
       // Homebrew Calendar (workspace-native calendar)
       import('./homebrewCalendarTools.js'),
+      // PMI Project Management (PMBOK 7th Edition)
+      import('./pmiProjectManagerTools.js'),
+      // Crypto & Blockchain
+      import('./cryptoAdvisoryTools.js'),
+      import('./cryptoComplianceTools.js'),
     ]);
 
     const getterNames = [
@@ -359,6 +364,11 @@ export class OsToolRegistry {
       'getAllClaudeSkillsTools',
       // Homebrew Calendar
       'getAllHomebrewCalendarTools',
+      // PMI Project Management
+      'getAllPmiProjectManagerTools',
+      // Crypto & Blockchain
+      'getAllCryptoAdvisoryTools',
+      'getAllCryptoComplianceTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {

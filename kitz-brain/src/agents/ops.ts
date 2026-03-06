@@ -59,6 +59,17 @@ export const opsAgent = {
       summary = `Ops: ${orders.length} open, ${agingOrders.length} aging, ${slaViolations.length} SLA violations.`;
     }
 
+    // 3. Draft WhatsApp summary to owner
+    try {
+      await toolRegistry.invoke('messaging.draftWhatsApp', {
+        phone: process.env.CADENCE_PHONE || process.env.KITZ_WHATSAPP_NUMBER || '',
+        message: `\u{1F527} *Weekly Ops Brief*\n\n${summary}\n\n` +
+          `\u2022 Open orders: ${orders.length}\n` +
+          `\u2022 Aging (>3d): ${agingOrders.length}\n` +
+          `\u2022 SLA violations: ${slaViolations.length}`,
+      }, traceId);
+    } catch { /* non-blocking */ }
+
     return {
       date,
       openOrders: orders.length,

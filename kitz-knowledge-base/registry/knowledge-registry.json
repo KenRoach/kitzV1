@@ -6190,5 +6190,89 @@
     "priority": "High",
     "ingestion_status": "skipped_github_repo",
     "file": "KB_WHATSAPP_REPOS.md"
+  },
+  {
+    "id": "PKB-517",
+    "module": "PMI Project Management",
+    "category": "Framework",
+    "name": "PMBOK 7th Edition — 12 Principles",
+    "url": "https://www.pmi.org/pmbok-guide-standards/foundational/pmbok",
+    "type": "Framework",
+    "why": "12 project management principles: stewardship, team, stakeholders, value, systems thinking, leadership, tailoring, quality, complexity, risk, adaptability, change",
+    "priority": "Critical",
+    "ingestion_status": "Ingested",
+    "file": "KB_PMI_PROJECT_MANAGEMENT.md"
+  },
+  {
+    "id": "PKB-518",
+    "module": "PMI Project Management",
+    "category": "Framework",
+    "name": "PMBOK 5 Process Groups",
+    "url": "https://www.pmi.org/pmbok-guide-standards/foundational/pmbok",
+    "type": "Framework",
+    "why": "Initiating, Planning, Executing, Monitoring & Controlling, Closing — the project lifecycle",
+    "priority": "Critical",
+    "ingestion_status": "Ingested",
+    "file": "KB_PMI_PROJECT_MANAGEMENT.md"
+  },
+  {
+    "id": "PKB-519",
+    "module": "PMI Project Management",
+    "category": "Framework",
+    "name": "PMBOK 10 Knowledge Areas",
+    "url": "https://www.pmi.org/pmbok-guide-standards/foundational/pmbok",
+    "type": "Framework",
+    "why": "Integration, Scope, Schedule, Cost, Quality, Resource, Communications, Risk, Procurement, Stakeholder management",
+    "priority": "Critical",
+    "ingestion_status": "Ingested",
+    "file": "KB_PMI_PROJECT_MANAGEMENT.md"
+  },
+  {
+    "id": "PKB-520",
+    "module": "PMI Project Management",
+    "category": "Tool",
+    "name": "Project Charter (Lean)",
+    "url": "https://www.pmi.org/learning/library/charter-selling-project-7473",
+    "type": "Docs",
+    "why": "1-page project charter: objective, scope, stakeholders, constraints, milestones, success criteria",
+    "priority": "High",
+    "ingestion_status": "Ingested",
+    "file": "KB_PMI_PROJECT_MANAGEMENT.md"
+  },
+  {
+    "id": "PKB-521",
+    "module": "PMI Project Management",
+    "category": "Tool",
+    "name": "Work Breakdown Structure (WBS)",
+    "url": "https://www.pmi.org/learning/library/applying-work-breakdown-structure-project-lifecycle-6979",
+    "type": "Docs",
+    "why": "Decompose deliverables into work packages and tasks. Max 3 levels for SMBs.",
+    "priority": "High",
+    "ingestion_status": "Ingested",
+    "file": "KB_PMI_PROJECT_MANAGEMENT.md"
+  },
+  {
+    "id": "PKB-522",
+    "module": "PMI Project Management",
+    "category": "Tool",
+    "name": "Risk Register & Response Strategies",
+    "url": "https://www.pmi.org/learning/library/risk-analysis-project-management-7070",
+    "type": "Docs",
+    "why": "Identify, score (probability x impact), and plan responses: Mitigate, Transfer, Accept, Avoid",
+    "priority": "High",
+    "ingestion_status": "Ingested",
+    "file": "KB_PMI_PROJECT_MANAGEMENT.md"
+  },
+  {
+    "id": "PKB-523",
+    "module": "PMI Project Management",
+    "category": "Tool",
+    "name": "Stakeholder Power/Interest Matrix",
+    "url": "https://www.pmi.org/learning/library/stakeholder-management-task-project-success-7736",
+    "type": "Docs",
+    "why": "Classify stakeholders by power and interest. Strategies: manage closely, keep satisfied, keep informed, monitor",
+    "priority": "High",
+    "ingestion_status": "Ingested",
+    "file": "KB_PMI_PROJECT_MANAGEMENT.md"
   }
 ]

@@ -241,4 +241,7 @@ export type { CostaRicaBusinessAdvice, CostaRicaBusinessOptions } from './costaR
 export { adviseCrossBorderTrade } from './crossBorderTradeAdvisor.js';
 export type { CrossBorderTradeAdvice, CrossBorderTradeOptions } from './crossBorderTradeAdvisor.js';
 
+export { createProjectCharter, createWBS, createRiskRegister, analyzeStakeholders, createStatusReport, captureLessonsLearned, createFullProjectPlan } from './pmiProjectManager.js';
+export type { ProjectCharter, WBS, RiskRegister, StakeholderAnalysis, StatusReport, LessonsLearned, ProjectPlan, CharterOptions, WBSOptions, RiskOptions, StakeholderOptions, StatusOptions, LessonsOptions, PlanOptions } from './pmiProjectManager.js';
+
 export { PROMPTS } from '../prompts/templates.js';

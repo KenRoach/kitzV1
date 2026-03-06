@@ -63,6 +63,17 @@ export const salesAgent = {
       }
     }
 
+    // 4. Draft WhatsApp summary to owner
+    try {
+      await toolRegistry.invoke('messaging.draftWhatsApp', {
+        phone: process.env.CADENCE_PHONE || process.env.KITZ_WHATSAPP_NUMBER || '',
+        message: `\u{1F4CA} *Daily Sales Brief*\n\n${summary}\n\n` +
+          `\u2022 Leads reviewed: ${leads.length}\n` +
+          `\u2022 Warm leads: ${warmLeads.length}\n` +
+          `\u2022 Follow-ups drafted: ${followUpsDrafted}`,
+      }, traceId);
+    } catch { /* non-blocking */ }
+
     return {
       date,
       leadsReviewed: leads.length,

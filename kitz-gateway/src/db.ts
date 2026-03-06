@@ -3,6 +3,14 @@
  */
 
 import { createHash, randomUUID, scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
+import { appendFile, readFile, mkdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const DATA_DIR = join(__dirname, '..', 'data');
+const USERS_FILE = join(DATA_DIR, 'users.ndjson');
 
 export interface UserRecord {
   id: string;
@@ -37,6 +45,36 @@ function verifyHash(stored: string, password: string): boolean {
 
 // In-memory store (used when DATABASE_URL is not set)
 const memoryUsers = new Map<string, UserRecord>();
+
+async function ensureDataDir(): Promise<void> {
+  if (!existsSync(DATA_DIR)) await mkdir(DATA_DIR, { recursive: true });
+}
+
+async function persistUser(user: UserRecord): Promise<void> {
+  try {
+    await ensureDataDir();
+    await appendFile(USERS_FILE, JSON.stringify(user) + '\n', 'utf-8');
+  } catch { /* non-blocking */ }
+}
+
+export async function restoreUsers(): Promise<number> {
+  try {
+    if (!existsSync(USERS_FILE)) return 0;
+    const raw = await readFile(USERS_FILE, 'utf-8');
+    const lines = raw.trim().split('\n').filter(Boolean);
+    let count = 0;
+    for (const line of lines) {
+      try {
+        const user = JSON.parse(line) as UserRecord;
+        if (user.id && user.email) {
+          const key = user.email.toLowerCase();
+          if (!memoryUsers.has(key)) { memoryUsers.set(key, user); count++; }
+        }
+      } catch { /* skip malformed */ }
+    }
+    return count;
+  } catch { return 0; }
+}
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
 
@@ -176,6 +214,7 @@ export async function createUser(
 
   // Always save to memory as backup
   memoryUsers.set(normalized, user);
+  persistUser(user).catch(() => {});
   return user;
 }
 
@@ -218,6 +257,10 @@ export async function updateUser(email: string, updates: Partial<Pick<UserRecord
     if (updates.picture !== undefined) memUser.picture = updates.picture;
     if (updates.authProvider !== undefined) memUser.authProvider = updates.authProvider;
   }
+
+  // Persist updated user to NDJSON (full overwrite entry — latest wins on restore)
+  const updated = memoryUsers.get(normalized);
+  if (updated) persistUser(updated).catch(() => {});
 }
 
 /** Verify password — supports scrypt (new) and SHA256 (legacy, auto-migrates) */

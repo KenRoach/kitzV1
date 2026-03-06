@@ -11,7 +11,7 @@ import type {
 import { verifyJwt, signJwt } from './jwt.js';
 import { FileBackedRateLimitStore } from './rateLimitStore.js';
 import { isGoogleLoginConfigured, getLoginAuthUrl, exchangeLoginCode } from './googleAuth.js';
-import { findUserByEmail, createUser, updateUser, verifyPassword, listUsers } from './db.js';
+import { findUserByEmail, createUser, updateUser, verifyPassword, listUsers, restoreUsers } from './db.js';
 
 export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
@@ -330,5 +330,8 @@ app.get('/admin/users', async (req, reply) => {
   const list = await listUsers();
   return { users: list, total: list.length };
 });
+
+// Restore persisted users from NDJSON before listening
+restoreUsers().then((n) => { if (n > 0) app.log.info(`Restored ${n} users from NDJSON`); }).catch(() => {});
 
 app.listen({ port: Number(process.env.PORT || 4000), host: '0.0.0.0' });

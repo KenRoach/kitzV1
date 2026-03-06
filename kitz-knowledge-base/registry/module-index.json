@@ -519,6 +519,14 @@
     "enriched": 0,
     "file": "KB_PROJECT_MANAGEMENT.md"
   },
+  "PMI Project Management": {
+    "count": 7,
+    "critical": 3,
+    "high": 4,
+    "ingested": 7,
+    "enriched": 0,
+    "file": "KB_PMI_PROJECT_MANAGEMENT.md"
+  },
   "Puerto Rico Business": {
     "count": 3,
     "critical": 1,

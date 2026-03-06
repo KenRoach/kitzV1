@@ -3,6 +3,15 @@
  * Table: comms_log
  */
 
+import { appendFile, readFile, mkdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const DATA_DIR = join(__dirname, '..', 'data');
+const COMMS_FILE = join(DATA_DIR, 'comms-log.ndjson');
+
 const DATABASE_URL = process.env.DATABASE_URL || '';
 
 export interface CommsRecord {
@@ -23,6 +32,33 @@ export interface CommsRecord {
 // In-memory fallback
 const memComms = new Map<string, CommsRecord>();
 
+async function ensureDataDir(): Promise<void> {
+  if (!existsSync(DATA_DIR)) await mkdir(DATA_DIR, { recursive: true });
+}
+
+async function persistComms(record: CommsRecord): Promise<void> {
+  try {
+    await ensureDataDir();
+    await appendFile(COMMS_FILE, JSON.stringify(record) + '\n', 'utf-8');
+  } catch { /* non-blocking */ }
+}
+
+export async function restoreComms(): Promise<number> {
+  try {
+    if (!existsSync(COMMS_FILE)) return 0;
+    const raw = await readFile(COMMS_FILE, 'utf-8');
+    const lines = raw.trim().split('\n').filter(Boolean);
+    let count = 0;
+    for (const line of lines) {
+      try {
+        const record = JSON.parse(line) as CommsRecord;
+        if (record.id) { memComms.set(record.id, record); count++; }
+      } catch { /* skip malformed */ }
+    }
+    return count;
+  } catch { return 0; }
+}
+
 function supabaseHeaders(): Record<string, string> {
   return {
     'Content-Type': 'application/json',
@@ -33,6 +69,7 @@ function supabaseHeaders(): Record<string, string> {
 
 export async function saveComms(record: CommsRecord): Promise<void> {
   memComms.set(record.id, record);
+  persistComms(record).catch(() => {});
 
   if (!DATABASE_URL) return;
 
@@ -63,6 +100,8 @@ export async function updateCommsStatus(id: string, status: CommsRecord['status'
     mem.updatedAt = new Date().toISOString();
     if (providerSid) mem.providerSid = providerSid;
   }
+
+  if (mem) persistComms(mem).catch(() => {});
 
   if (DATABASE_URL) {
     await fetch(`${DATABASE_URL}/rest/v1/comms_log?id=eq.${id}`, {

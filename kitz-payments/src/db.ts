@@ -4,6 +4,15 @@
  */
 
 import type { AIBatteryLedgerEntry } from 'kitz-schemas';
+import { appendFile, readFile, mkdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const DATA_DIR = join(__dirname, '..', 'data');
+const LEDGER_FILE = join(DATA_DIR, 'payment-ledger.ndjson');
+const SUBS_FILE = join(DATA_DIR, 'subscriptions.ndjson');
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
 
@@ -20,8 +29,60 @@ function supabaseHeaders(): Record<string, string> {
 const memLedger: AIBatteryLedgerEntry[] = [];
 const MAX_MEM = 10_000;
 
+async function ensureDataDir(): Promise<void> {
+  if (!existsSync(DATA_DIR)) await mkdir(DATA_DIR, { recursive: true });
+}
+
+async function persistLedgerEntry(entry: AIBatteryLedgerEntry): Promise<void> {
+  try {
+    await ensureDataDir();
+    await appendFile(LEDGER_FILE, JSON.stringify(entry) + '\n', 'utf-8');
+  } catch { /* non-blocking */ }
+}
+
+async function persistSubscription(record: SubscriptionRecord): Promise<void> {
+  try {
+    await ensureDataDir();
+    await appendFile(SUBS_FILE, JSON.stringify(record) + '\n', 'utf-8');
+  } catch { /* non-blocking */ }
+}
+
+export async function restoreLedger(): Promise<number> {
+  try {
+    if (!existsSync(LEDGER_FILE)) return 0;
+    const raw = await readFile(LEDGER_FILE, 'utf-8');
+    const lines = raw.trim().split('\n').filter(Boolean);
+    let count = 0;
+    for (const line of lines) {
+      try {
+        const entry = JSON.parse(line) as AIBatteryLedgerEntry;
+        if (entry.orgId && entry.ts) { memLedger.push(entry); count++; }
+      } catch { /* skip malformed */ }
+    }
+    if (memLedger.length > MAX_MEM) memLedger.splice(0, memLedger.length - MAX_MEM);
+    return count;
+  } catch { return 0; }
+}
+
+export async function restoreSubscriptions(): Promise<number> {
+  try {
+    if (!existsSync(SUBS_FILE)) return 0;
+    const raw = await readFile(SUBS_FILE, 'utf-8');
+    const lines = raw.trim().split('\n').filter(Boolean);
+    let count = 0;
+    for (const line of lines) {
+      try {
+        const record = JSON.parse(line) as SubscriptionRecord;
+        if (record.orgId) { memSubscriptions.set(record.orgId, record); count++; }
+      } catch { /* skip malformed */ }
+    }
+    return count;
+  } catch { return 0; }
+}
+
 export async function insertLedgerEntry(entry: AIBatteryLedgerEntry): Promise<void> {
   memLedger.push(entry);
+  persistLedgerEntry(entry).catch(() => {});
   if (memLedger.length > MAX_MEM) memLedger.splice(0, memLedger.length - MAX_MEM);
 
   if (!DATABASE_URL) return;
@@ -80,6 +141,7 @@ const memSubscriptions = new Map<string, SubscriptionRecord>();
 
 export async function upsertSubscription(record: SubscriptionRecord): Promise<void> {
   memSubscriptions.set(record.orgId, record);
+  persistSubscription(record).catch(() => {});
 
   if (!DATABASE_URL) return;
 
