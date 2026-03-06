@@ -136,6 +136,76 @@ function kitzReply(text: string): string {
   return `${KITZ_PREFIX}${text}`;
 }
 
+// ── In-Memory Message Store ──
+// Stores recent inbound and outbound messages for conversation review.
+// Max 500 messages per user, FIFO eviction. Not persisted across restarts.
+export interface StoredMessage {
+  id: string;
+  userId: string;
+  jid: string;           // sender or recipient JID
+  phone: string;         // cleaned phone number
+  direction: 'inbound' | 'outbound';
+  content: string;
+  mediaType?: string;    // 'image', 'document', 'audio', 'sticker', 'video'
+  timestamp: number;
+  traceId?: string;
+}
+
+const messageStore = new Map<string, StoredMessage[]>();
+const MAX_MESSAGES_PER_USER = 500;
+
+function storeMessage(msg: Omit<StoredMessage, 'id' | 'timestamp'>): void {
+  const full: StoredMessage = {
+    ...msg,
+    id: Math.random().toString(36).slice(2, 10),
+    timestamp: Date.now(),
+  };
+  const messages = messageStore.get(msg.userId) || [];
+  messages.push(full);
+  // FIFO eviction
+  if (messages.length > MAX_MESSAGES_PER_USER) {
+    messages.splice(0, messages.length - MAX_MESSAGES_PER_USER);
+  }
+  messageStore.set(msg.userId, messages);
+}
+
+/** Get recent messages for a user, optionally filtered by phone number */
+export function getMessages(
+  userId: string,
+  phone?: string,
+  limit = 50,
+): StoredMessage[] {
+  const messages = messageStore.get(userId) || [];
+  const filtered = phone
+    ? messages.filter(m => m.phone === phone.replace(/\D/g, ''))
+    : messages;
+  return filtered.slice(-limit);
+}
+
+/** Get unique conversations (contacts) for a user with last message */
+export function getConversations(userId: string): Array<{ phone: string; jid: string; lastMessage: string; lastTimestamp: number; direction: 'inbound' | 'outbound'; messageCount: number }> {
+  const messages = messageStore.get(userId) || [];
+  const byPhone = new Map<string, { jid: string; lastMsg: StoredMessage; count: number }>();
+  for (const msg of messages) {
+    const existing = byPhone.get(msg.phone);
+    if (!existing || msg.timestamp > existing.lastMsg.timestamp) {
+      byPhone.set(msg.phone, { jid: msg.jid, lastMsg: msg, count: (existing?.count || 0) + 1 });
+    } else {
+      existing.count++;
+    }
+  }
+  return Array.from(byPhone.entries())
+    .map(([phone, { jid, lastMsg, count }]) => ({
+      phone,
+      jid,
+      lastMessage: lastMsg.content.slice(0, 200),
+      lastTimestamp: lastMsg.timestamp,
+      direction: lastMsg.direction,
+      messageCount: count,
+    }))
+    .sort((a, b) => b.lastTimestamp - a.lastTimestamp);
+}
+
 // ── Types ──
 export type SessionListener = (event: string, data: string) => void;
 
@@ -806,6 +876,8 @@ class SessionManager {
 
     // ── Location-only messages ──
     if (hasLocation && !hasText && !hasImage && !hasDocument && !hasAudio) {
+      const locSenderPhone = senderJid.replace(/@.*/, '');
+      storeMessage({ userId, jid: senderJid, phone: locSenderPhone, direction: 'inbound', content: locationText || '[Location]', traceId });
       try { await sock.sendPresenceUpdate('composing', replyJid); } catch {}
       const kitzResponse = await forwardToKitzOs(
         locationText || 'Location shared',
@@ -828,6 +900,9 @@ class SessionManager {
 
     if (text) {
       const fullText = locationText ? `${text}\n${locationText}` : text;
+      // Store inbound message
+      const senderPhone = senderJid.replace(/@.*/, '');
+      storeMessage({ userId, jid: senderJid, phone: senderPhone, direction: 'inbound', content: fullText, traceId });
       try { await sock.sendPresenceUpdate('composing', replyJid); } catch {}
       log.info('forwarding text to kitz_os', { userId, textPreview: fullText.slice(0, 50) });
       const kitzResponse = await forwardToKitzOs(fullText, replyJid, userId, traceId, {
@@ -837,6 +912,8 @@ class SessionManager {
       });
       const response = kitzResponse.response;
       log.info('kitz_os response', { userId, responsePreview: response.slice(0, 80) });
+      // Store outbound response
+      storeMessage({ userId, jid: replyJid, phone: senderPhone, direction: 'outbound', content: response, traceId });
       await sleep(typingDelayMs(response));
       try { await sock.sendPresenceUpdate('available', replyJid); } catch {}
       try {
@@ -854,6 +931,8 @@ class SessionManager {
     const imageMsg = msg.message?.imageMessage;
     if (imageMsg) {
       try {
+        const imgSenderPhone = senderJid.replace(/@.*/, '');
+        storeMessage({ userId, jid: senderJid, phone: imgSenderPhone, direction: 'inbound', content: imageMsg.caption || '[Image]', mediaType: 'image', traceId });
         await sock.sendPresenceUpdate('composing', replyJid);
         const buffer = await downloadMediaMessage(msg, 'buffer', {});
         const base64 = (buffer as Buffer).toString('base64');
@@ -912,6 +991,8 @@ class SessionManager {
     const audioMsg = msg.message?.audioMessage;
     if (audioMsg) {
       try {
+        const audioSenderPhone = senderJid.replace(/@.*/, '');
+        storeMessage({ userId, jid: senderJid, phone: audioSenderPhone, direction: 'inbound', content: '[Voice note]', mediaType: 'audio', traceId });
         await sock.sendPresenceUpdate('composing', replyJid);
         const buffer = await downloadMediaMessage(msg, 'buffer', {});
         const base64 = (buffer as Buffer).toString('base64');
@@ -949,6 +1030,7 @@ class SessionManager {
 
     // Always log the missed message to kitz_os for CRM capture (even during cooldown)
     if (messageText) {
+      storeMessage({ userId, jid: senderJid, phone: senderNumber, direction: 'inbound', content: messageText });
       this.logMissedMessage(userId, senderNumber, messageText).catch(() => {});
     }
 
@@ -1098,6 +1180,8 @@ class SessionManager {
     }
     try {
       await session.socket.sendMessage(jid, { text });
+      const outPhone = jid.replace(/@.*/, '');
+      storeMessage({ userId, jid, phone: outPhone, direction: 'outbound', content: text });
       return { ok: true };
     } catch (err) {
       const msg = (err as Error).message || 'unknown error';

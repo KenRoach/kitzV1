@@ -15,7 +15,7 @@ import Fastify from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { EventEnvelope } from 'kitz-schemas';
 import { startBaileys, getConnectionStatus, sendWhatsAppMessage, sendWhatsAppAudio } from './baileys.js';
-import { sessionManager } from './sessions.js';
+import { sessionManager, getMessages, getConversations } from './sessions.js';
 import { getAutoReplyConfig, setAutoReplyConfig } from './autoReplyConfig.js';
 
 export const health = { status: 'ok' };
@@ -155,6 +155,20 @@ app.put('/whatsapp/sessions/:userId/auto-reply', async (req: any) => {
   const patch = req.body || {};
   const updated = setAutoReplyConfig(req.params.userId, patch);
   return { ok: true, config: updated };
+});
+
+// ── Message History ──
+app.get('/messages/:userId', async (req: any) => {
+  const { userId } = req.params;
+  const phone = (req.query as any)?.phone;
+  const limit = Number((req.query as any)?.limit) || 50;
+  return { messages: getMessages(userId, phone, limit) };
+});
+
+// ── Conversations (unique contacts with last message) ──
+app.get('/conversations/:userId', async (req: any) => {
+  const { userId } = req.params;
+  return { conversations: getConversations(userId) };
 });
 
 // ═══════════════════════════════════════════
