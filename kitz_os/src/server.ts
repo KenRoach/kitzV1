@@ -28,6 +28,12 @@
  *   GET  /api/kitz/artifact/:contentId — Serve branded HTML artifact preview (public)
  *   POST /api/kitz/artifact/:contentId/action — Execute artifact action button clicks
  *
+ *   Gateway Auth (embedded from kitz-gateway):
+ *   POST /api/gateway/auth/signup           — Create user account
+ *   POST /api/gateway/auth/token            — Login (email + password)
+ *   GET  /api/gateway/auth/google/url       — Google OAuth consent URL
+ *   POST /api/gateway/auth/google/callback  — Exchange Google code for JWT
+ *
  * Port: 3012
  */
 
@@ -38,8 +44,10 @@ import fastifyStatic from '@fastify/static';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { existsSync } from 'fs';
-import { createHmac } from 'node:crypto';
 import type { KitzKernel } from './kernel.js';
+import { verifyJwt as gatewayVerifyJwt, signJwt as gatewaySignJwt } from './auth/gatewayJwt.js';
+import { findUserByEmail, createUser as createGatewayUser, updateUser as updateGatewayUser, verifyPassword } from './auth/gatewayDb.js';
+import { isGoogleLoginConfigured as isGatewayGoogleConfigured, getLoginAuthUrl, exchangeLoginCode } from './auth/gatewayGoogleAuth.js';
 import { parseWhatsAppCommand } from './interfaces/whatsapp/commandParser.js';
 import { routeWithAI, brainFirstRoute, getDraftQueue, approveDraft, rejectDraft } from './interfaces/whatsapp/semanticRouter.js';
 import { textToSpeech, getKitzVoiceConfig, getWidgetSnippet, isElevenLabsConfigured } from './llm/elevenLabsClient.js';
@@ -191,15 +199,11 @@ export async function createServer(kernel: KitzKernel) {
 
   /** Verify a JWT token and return the payload, or null if invalid */
   function verifyBearerJwt(token: string): { sub: string; org_id?: string } | null {
+    if (!JWT_SECRET) return null;
     try {
-      const parts = token.split('.');
-      if (parts.length !== 3 || !JWT_SECRET) return null;
-      const sigCheck = Buffer.from(createHmac('sha256', JWT_SECRET).update(`${parts[0]}.${parts[1]}`).digest())
-        .toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-      if (sigCheck !== parts[2]) return null;
-      const payload = JSON.parse(Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString());
-      if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
-      return payload;
+      const payload = gatewayVerifyJwt(token, JWT_SECRET);
+      if (payload.sub) return payload as { sub: string; org_id?: string };
+      return null;
     } catch { return null; }
   }
 
@@ -216,7 +220,8 @@ export async function createServer(kernel: KitzKernel) {
       path.startsWith('/api/payments/webhook/') ||
       path.startsWith('/api/kitz/oauth/google/callback') ||
       path.startsWith('/api/whatsapp/') ||
-      path.startsWith('/api/kitz/artifact/');
+      path.startsWith('/api/kitz/artifact/') ||
+      path.startsWith('/api/gateway/auth/');
     if (skipAuth) return;
 
     // 1. Service-to-service auth (x-service-secret or x-dev-secret)
@@ -1247,6 +1252,140 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
     await revokeTokens();
     return { status: 'revoked', message: 'Google Calendar disconnected.' };
   });
+
+  // ── Gateway Auth Routes (embedded from kitz-gateway) ──────────────
+  // These routes handle user signup, login, and Google OAuth login.
+  // The UI expects them at /api/gateway/auth/* (see ui/src/stores/authStore.ts).
+
+  const GATEWAY_JWT_SECRET = process.env.JWT_SECRET || process.env.DEV_TOKEN_SECRET || '';
+  const GATEWAY_TOKEN_EXPIRY = 86400 * 7; // 7 days
+  const GATEWAY_DEFAULT_SCOPES = ['battery:read', 'payments:write', 'tools:invoke', 'events:write', 'notifications:write', 'messages:write'];
+
+  // POST /api/gateway/auth/signup — Create a new user account
+  app.post<{ Body: { email?: string; password?: string; name?: string } }>(
+    '/api/gateway/auth/signup',
+    async (req, reply) => {
+      const { email, password, name } = req.body || {};
+
+      if (!email || !password || !name) {
+        return reply.code(400).send({ code: 'VALIDATION', message: 'email, password, and name are required' });
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return reply.code(400).send({ code: 'VALIDATION', message: 'Invalid email format' });
+      }
+      if (password.length < 8) {
+        return reply.code(400).send({ code: 'VALIDATION', message: 'Password must be at least 8 characters' });
+      }
+      if (name.length < 2 || name.length > 100) {
+        return reply.code(400).send({ code: 'VALIDATION', message: 'Name must be 2-100 characters' });
+      }
+
+      const existing = await findUserByEmail(email);
+      if (existing) {
+        return reply.code(409).send({ code: 'USER_EXISTS', message: 'An account with this email already exists' });
+      }
+
+      const user = await createGatewayUser(email, password, name);
+
+      const now = Math.floor(Date.now() / 1000);
+      const token = gatewaySignJwt({
+        sub: user.id,
+        org_id: user.orgId,
+        scopes: GATEWAY_DEFAULT_SCOPES,
+        iat: now,
+        exp: now + GATEWAY_TOKEN_EXPIRY,
+      }, GATEWAY_JWT_SECRET);
+
+      log.info('User signup', { userId: user.id, email: user.email });
+      return { token, userId: user.id, orgId: user.orgId, name: user.name, expiresIn: GATEWAY_TOKEN_EXPIRY };
+    }
+  );
+
+  // POST /api/gateway/auth/token — Login with email + password
+  app.post<{ Body: { email?: string; password?: string } }>(
+    '/api/gateway/auth/token',
+    async (req, reply) => {
+      const { email, password } = req.body || {};
+
+      if (!email || !password) {
+        return reply.code(400).send({ code: 'VALIDATION', message: 'email and password are required' });
+      }
+
+      const user = await findUserByEmail(email);
+      if (!user || !verifyPassword(user, password)) {
+        return reply.code(401).send({ code: 'AUTH_FAILED', message: 'Invalid email or password' });
+      }
+
+      const now = Math.floor(Date.now() / 1000);
+      const token = gatewaySignJwt({
+        sub: user.id,
+        org_id: user.orgId,
+        scopes: GATEWAY_DEFAULT_SCOPES,
+        iat: now,
+        exp: now + GATEWAY_TOKEN_EXPIRY,
+      }, GATEWAY_JWT_SECRET);
+
+      log.info('User login', { userId: user.id, email: user.email });
+      return { token, userId: user.id, orgId: user.orgId, name: user.name, expiresIn: GATEWAY_TOKEN_EXPIRY };
+    }
+  );
+
+  // GET /api/gateway/auth/google/url — Get Google consent URL for OAuth login
+  app.get('/api/gateway/auth/google/url', async (_req, reply) => {
+    if (!isGatewayGoogleConfigured()) {
+      return reply.code(503).send({ code: 'GOOGLE_NOT_CONFIGURED', message: 'Google OAuth not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.' });
+    }
+    return { url: getLoginAuthUrl() };
+  });
+
+  // POST /api/gateway/auth/google/callback — Exchange Google code for JWT
+  app.post<{ Body: { code?: string } }>(
+    '/api/gateway/auth/google/callback',
+    async (req, reply) => {
+      const { code } = req.body || {};
+
+      if (!code) {
+        return reply.code(400).send({ code: 'VALIDATION', message: 'Authorization code is required' });
+      }
+
+      try {
+        const profile = await exchangeLoginCode(code);
+
+        // Find or create user by email
+        let user = await findUserByEmail(profile.email);
+        if (!user) {
+          user = await createGatewayUser(profile.email, '', profile.name, {
+            authProvider: 'google',
+            googleId: profile.googleId,
+            picture: profile.picture,
+          });
+        } else {
+          // Update existing user with Google info
+          await updateGatewayUser(profile.email, {
+            googleId: profile.googleId,
+            picture: profile.picture,
+            authProvider: user.authProvider || 'google',
+          });
+          user.googleId = profile.googleId;
+          user.picture = profile.picture;
+        }
+
+        const now = Math.floor(Date.now() / 1000);
+        const token = gatewaySignJwt({
+          sub: user.id,
+          org_id: user.orgId,
+          scopes: GATEWAY_DEFAULT_SCOPES,
+          iat: now,
+          exp: now + GATEWAY_TOKEN_EXPIRY,
+        }, GATEWAY_JWT_SECRET);
+
+        log.info('Google OAuth login', { userId: user.id, email: user.email });
+        return { token, userId: user.id, orgId: user.orgId, name: user.name, picture: user.picture, expiresIn: GATEWAY_TOKEN_EXPIRY };
+      } catch (err) {
+        return reply.code(401).send({ code: 'GOOGLE_AUTH_FAILED', message: (err as Error).message });
+      }
+    }
+  );
 
   // ── Launch Review — 33 agents vote, CEO decides ──────────────
 

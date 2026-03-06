@@ -14,8 +14,8 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api/gateway': {
-        target: 'http://localhost:4000',
-        rewrite: (p) => p.replace(/^\/api\/gateway/, ''),
+        target: 'http://localhost:3012',
+        // Auth routes are served by kitz-os at /api/gateway/auth/*
       },
       '/api/workspace': {
         target: 'http://localhost:3001',
