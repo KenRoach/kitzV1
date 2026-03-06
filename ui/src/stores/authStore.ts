@@ -56,14 +56,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email, password) => {
     set({ isLoading: true, error: null })
     try {
-      const data = await apiFetch<{ token: string; userId: string; orgId?: string }>(
+      const data = await apiFetch<{ token: string; userId: string; orgId?: string; name?: string }>(
         `${API.GATEWAY}/auth/token`,
         {
           method: 'POST',
           body: JSON.stringify({ email, password }),
         },
       )
-      const user: User = { id: data.userId, email, orgId: data.orgId, authProvider: 'email' }
+      const user: User = { id: data.userId, email, orgId: data.orgId, name: data.name, authProvider: 'email' }
       localStorage.setItem(AUTH_TOKEN_KEY, data.token)
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user))
       set({ user, token: data.token, isLoading: false })
