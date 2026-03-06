@@ -223,6 +223,9 @@ export class OsToolRegistry {
       // Crypto & Blockchain
       import('./cryptoAdvisoryTools.js'),
       import('./cryptoComplianceTools.js'),
+      // Fiat Currency & Online Transactions
+      import('./fiatCurrencyTools.js'),
+      import('./onlineTransactionTools.js'),
     ]);
 
     const getterNames = [
@@ -369,6 +372,9 @@ export class OsToolRegistry {
       // Crypto & Blockchain
       'getAllCryptoAdvisoryTools',
       'getAllCryptoComplianceTools',
+      // Fiat Currency & Online Transactions
+      'getAllFiatCurrencyTools',
+      'getAllOnlineTransactionTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {
