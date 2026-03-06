@@ -365,6 +365,7 @@ export function getAllOutboundTools(): ToolSchema[] {
         }
 
         try {
+          // 1. Create draft at comms-api
           const res = await fetch(`${COMMS_API_URL}/text`, {
             method: 'POST',
             headers: serviceHeaders,
@@ -372,18 +373,44 @@ export function getAllOutboundTools(): ToolSchema[] {
             signal: AbortSignal.timeout(10_000),
           });
 
-          if (res.ok) {
-            const data = await res.json() as Record<string, unknown>;
-            return {
-              status: 'draft',
-              id: data.id,
-              message: `📱 SMS drafted to ${phone}: "${message.slice(0, 100)}"`,
-              note: 'SMS is draft-first. Approve via comms-api to send.',
-            };
+          if (!res.ok) {
+            const errBody = await res.text().catch(() => '');
+            return { status: 'failed', error: `SMS send failed (${res.status}): ${errBody.slice(0, 200)}` };
           }
 
-          const errBody = await res.text().catch(() => '');
-          return { status: 'failed', error: `SMS send failed (${res.status}): ${errBody.slice(0, 200)}` };
+          const data = await res.json() as Record<string, unknown>;
+          const draftId = String(data.id || '');
+
+          // 2. Auto-approve to fire Twilio (semantic router gate already handled)
+          if (draftId) {
+            try {
+              const approveRes = await fetch(`${COMMS_API_URL}/${draftId}/approve`, {
+                method: 'POST',
+                headers: serviceHeaders,
+                signal: AbortSignal.timeout(10_000),
+              });
+              if (approveRes.ok) {
+                const approveData = await approveRes.json() as Record<string, unknown>;
+                return {
+                  status: 'sent',
+                  id: draftId,
+                  providerSid: approveData.providerSid,
+                  message: `📱 SMS sent to ${phone}: "${message.slice(0, 100)}"`,
+                };
+              }
+              const approveErr = await approveRes.text().catch(() => '');
+              log.error('SMS approve failed', { draftId, status: approveRes.status, err: approveErr.slice(0, 200), trace_id: traceId });
+            } catch (approveErr) {
+              log.error('SMS approve error', { draftId, err: (approveErr as Error).message, trace_id: traceId });
+            }
+          }
+
+          return {
+            status: 'draft',
+            id: draftId,
+            message: `📱 SMS drafted to ${phone}: "${message.slice(0, 100)}"`,
+            note: 'Draft created but auto-approve failed. Approve manually at comms-api.',
+          };
         } catch (err) {
           return { status: 'failed', error: `Comms API unreachable: ${(err as Error).message}` };
         }
@@ -412,6 +439,7 @@ export function getAllOutboundTools(): ToolSchema[] {
         }
 
         try {
+          // 1. Create draft at comms-api
           const res = await fetch(`${COMMS_API_URL}/talk`, {
             method: 'POST',
             headers: serviceHeaders,
@@ -419,18 +447,44 @@ export function getAllOutboundTools(): ToolSchema[] {
             signal: AbortSignal.timeout(10_000),
           });
 
-          if (res.ok) {
-            const data = await res.json() as Record<string, unknown>;
-            return {
-              status: 'draft',
-              id: data.id,
-              message: `📞 Voice call drafted to ${phone}: "${message.slice(0, 100)}"`,
-              note: 'Call is draft-first. Approve via comms-api to initiate.',
-            };
+          if (!res.ok) {
+            const errBody = await res.text().catch(() => '');
+            return { status: 'failed', error: `Voice call failed (${res.status}): ${errBody.slice(0, 200)}` };
           }
 
-          const errBody = await res.text().catch(() => '');
-          return { status: 'failed', error: `Voice call failed (${res.status}): ${errBody.slice(0, 200)}` };
+          const data = await res.json() as Record<string, unknown>;
+          const draftId = String(data.id || '');
+
+          // 2. Auto-approve to fire Twilio (semantic router gate already handled)
+          if (draftId) {
+            try {
+              const approveRes = await fetch(`${COMMS_API_URL}/${draftId}/approve`, {
+                method: 'POST',
+                headers: serviceHeaders,
+                signal: AbortSignal.timeout(10_000),
+              });
+              if (approveRes.ok) {
+                const approveData = await approveRes.json() as Record<string, unknown>;
+                return {
+                  status: 'initiated',
+                  id: draftId,
+                  providerSid: approveData.providerSid,
+                  message: `📞 Voice call initiated to ${phone}: "${message.slice(0, 100)}"`,
+                };
+              }
+              const approveErr = await approveRes.text().catch(() => '');
+              log.error('Voice call approve failed', { draftId, status: approveRes.status, err: approveErr.slice(0, 200), trace_id: traceId });
+            } catch (approveErr) {
+              log.error('Voice call approve error', { draftId, err: (approveErr as Error).message, trace_id: traceId });
+            }
+          }
+
+          return {
+            status: 'draft',
+            id: draftId,
+            message: `📞 Voice call drafted to ${phone}: "${message.slice(0, 100)}"`,
+            note: 'Draft created but auto-approve failed. Approve manually at comms-api.',
+          };
         } catch (err) {
           return { status: 'failed', error: `Comms API unreachable: ${(err as Error).message}` };
         }
