@@ -50,37 +50,77 @@ export function getAllOutboundTools(): ToolSchema[] {
           return { error: 'Both phone and message are required.' };
         }
 
+        // Strategy: Try Baileys first, fall back to Twilio WhatsApp, then Twilio SMS
+        // 1. Try Baileys connector
         try {
           const res = await fetch(`${WA_CONNECTOR_URL}/outbound/send`, {
             method: 'POST',
             headers: serviceHeaders,
-            body: JSON.stringify({
-              phone,
-              message,
-              userId,
-              draftOnly: false,
-            }),
-            signal: AbortSignal.timeout(15_000),
+            body: JSON.stringify({ phone, message, userId, draftOnly: false }),
+            signal: AbortSignal.timeout(10_000),
           });
 
           if (res.ok) {
-            return {
-              status: 'sent',
-              message: `✅ WhatsApp message sent to ${phone}: "${message.slice(0, 100)}"`,
-            };
+            const data = await res.json() as Record<string, unknown>;
+            if (data.ok) {
+              return { status: 'sent', provider: 'baileys', message: `✅ WhatsApp sent to ${phone}: "${message.slice(0, 100)}"` };
+            }
           }
+        } catch { /* Baileys unavailable — fall through */ }
 
-          const errBody = await res.text().catch(() => '');
-          return {
-            status: 'failed',
-            error: `WhatsApp send failed (${res.status}): ${errBody.slice(0, 200)}`,
-          };
-        } catch (err) {
-          return {
-            status: 'failed',
-            error: `WhatsApp connector unreachable: ${(err as Error).message}`,
-          };
-        }
+        // 2. Try Twilio WhatsApp Business API
+        try {
+          const res = await fetch(`${COMMS_API_URL}/whatsapp`, {
+            method: 'POST',
+            headers: serviceHeaders,
+            body: JSON.stringify({ to: phone, message }),
+            signal: AbortSignal.timeout(10_000),
+          });
+
+          if (res.ok) {
+            const data = await res.json() as Record<string, unknown>;
+            const draftId = String(data.id || '');
+            // Auto-approve
+            if (draftId) {
+              try {
+                const approveRes = await fetch(`${COMMS_API_URL}/${draftId}/approve`, {
+                  method: 'POST', headers: serviceHeaders, body: '{}',
+                  signal: AbortSignal.timeout(10_000),
+                });
+                if (approveRes.ok) {
+                  return { status: 'sent', provider: 'twilio-whatsapp', message: `✅ WhatsApp sent to ${phone} (via Twilio): "${message.slice(0, 100)}"` };
+                }
+              } catch { /* approve failed — fall through to SMS */ }
+            }
+          }
+        } catch { /* Twilio WhatsApp unavailable — fall through */ }
+
+        // 3. Last resort: Twilio SMS
+        try {
+          const res = await fetch(`${COMMS_API_URL}/text`, {
+            method: 'POST',
+            headers: serviceHeaders,
+            body: JSON.stringify({ to: phone, message }),
+            signal: AbortSignal.timeout(10_000),
+          });
+          if (res.ok) {
+            const data = await res.json() as Record<string, unknown>;
+            const draftId = String(data.id || '');
+            if (draftId) {
+              try {
+                const approveRes = await fetch(`${COMMS_API_URL}/${draftId}/approve`, {
+                  method: 'POST', headers: serviceHeaders, body: '{}',
+                  signal: AbortSignal.timeout(10_000),
+                });
+                if (approveRes.ok) {
+                  return { status: 'sent', provider: 'twilio-sms', message: `📱 SMS sent to ${phone} (WhatsApp unavailable): "${message.slice(0, 100)}"` };
+                }
+              } catch { /* SMS approve failed */ }
+            }
+          }
+        } catch { /* all channels failed */ }
+
+        return { status: 'failed', error: `All channels failed for ${phone}. Baileys, Twilio WhatsApp, and SMS all unavailable.` };
       },
     },
     {

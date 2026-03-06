@@ -1,6 +1,6 @@
 import Fastify from 'fastify'
 import { randomUUID } from 'node:crypto'
-import { sendSms, initiateCall } from './providers/twilio.js'
+import { sendSms, initiateCall, sendWhatsApp } from './providers/twilio.js'
 import { saveComms, updateCommsStatus, getCommsById, restoreComms, type CommsRecord } from './db.js'
 
 const app = Fastify({ logger: true })
@@ -106,6 +106,35 @@ app.post<{ Body: { to: string; message: string } }>('/text', async (req, reply) 
   return { id, status: 'draft', channel: 'sms', to, draftOnly: true }
 })
 
+// ── WhatsApp (Twilio WhatsApp Business API) ──
+app.post<{ Body: { to: string; message: string } }>('/whatsapp', async (req, reply) => {
+  const { to, message } = req.body
+  if (!to || !PHONE_RE.test(to.replace(/whatsapp:/, ''))) {
+    return reply.code(400).send({ code: 'INVALID_PHONE', message: 'Valid phone number required', traceId: String(req.headers['x-trace-id'] || randomUUID()) })
+  }
+  const traceId = String(req.headers['x-trace-id'] || randomUUID())
+  const orgId = String(req.headers['x-org-id'] || 'unknown-org')
+  const id = `comms_${Date.now()}_${randomUUID().slice(0, 8)}`
+
+  const record: CommsRecord = {
+    id,
+    channel: 'whatsapp',
+    to: to.replace(/whatsapp:/, ''),
+    message,
+    status: 'draft',
+    provider: 'twilio',
+    orgId,
+    traceId,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }
+
+  await saveComms(record)
+  app.log.info({ id, to, channel: 'whatsapp' }, 'WhatsApp message saved as draft')
+  reply.status(202)
+  return { id, status: 'draft', channel: 'whatsapp', to: record.to, draftOnly: true }
+})
+
 // ── Email (forwards to email connector) ──
 app.post<{ Body: { to: string; subject: string; body: string } }>('/email', async (req, reply) => {
   const { to, subject, body } = req.body
@@ -167,6 +196,10 @@ app.post<{ Params: { id: string } }>('/:id/approve', async (req, reply) => {
         .replace(/'/g, '&apos;')
       const twiml = `<Response><Say language="es-MX">${escaped}</Say></Response>`
       result = await initiateCall(record.to, twiml)
+      break
+    }
+    case 'whatsapp': {
+      result = await sendWhatsApp(record.to, record.message)
       break
     }
     case 'email': {

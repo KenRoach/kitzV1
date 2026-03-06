@@ -16,7 +16,7 @@ const DATABASE_URL = process.env.DATABASE_URL || '';
 
 export interface CommsRecord {
   id: string;
-  channel: 'voice' | 'sms' | 'email';
+  channel: 'voice' | 'sms' | 'email' | 'whatsapp';
   to: string;
   message: string;
   subject?: string;
