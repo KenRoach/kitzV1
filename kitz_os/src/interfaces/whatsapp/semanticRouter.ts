@@ -640,7 +640,19 @@ export async function routeWithAI(
   const allToolDefs: ToolDef[] = registry.toOpenAITools();
   // ── Intent-based tool filtering ──
   // gpt-4o-mini struggles with 170+ tools. Pre-filter by intent for reliability.
-  const toolDefs = filterToolsByIntent(userMessage, allToolDefs);
+  let toolDefs = filterToolsByIntent(userMessage, allToolDefs);
+
+  // ── Ensure media tools are always available when media is attached ──
+  if (mediaContext) {
+    const MEDIA_TOOLS = new Set(['doc_scan', 'braindump_process']);
+    const missingMediaTools = allToolDefs.filter(t =>
+      MEDIA_TOOLS.has(t.function.name) && !toolDefs.some(td => td.function.name === t.function.name)
+    );
+    if (missingMediaTools.length > 0) {
+      toolDefs = [...toolDefs, ...missingMediaTools];
+    }
+  }
+
   if (toolDefs.length < allToolDefs.length) {
     log.info('tool_filter', { trace_id: traceId });
   }
@@ -797,6 +809,19 @@ export async function routeWithAI(
           name: tc.function.name,
         });
         continue;
+      }
+
+      // ── Auto-inject media context into media-processing tools ──
+      // The LLM only sees a text hint about the attachment; it can't provide the actual
+      // base64 data. When mediaContext is present and the tool needs it, inject automatically.
+      if (mediaContext && (toolName === 'doc_scan' || toolName === 'braindump_process')) {
+        if (!args.base64 && mediaContext.media_base64) {
+          args.base64 = mediaContext.media_base64;
+        }
+        if (!args.mime_type && mediaContext.mime_type) {
+          args.mime_type = mediaContext.mime_type;
+        }
+        log.info('media_context_injected', { tool: toolName, mime_type: mediaContext.mime_type, trace_id: traceId });
       }
 
       toolsUsed.push(toolName);
