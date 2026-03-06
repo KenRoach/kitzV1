@@ -135,6 +135,29 @@ async function recordWebhook(provider: string, eventType: string, orgId: string,
   await insertLedgerEntry({ orgId, deltaCredits: 0, reason: `incoming_webhook:${provider}:${eventType}`, traceId, ts: new Date().toISOString() });
 }
 
+// ── Credit provisioning based on payment amount ──
+const CREDIT_TIERS: Record<number, number> = {
+  5: 100,    // $5 → 100 credits
+  20: 500,   // $20 → 500 credits
+  60: 2000,  // $60 → 2000 credits
+};
+
+async function provisionCredits(orgId: string, amount: number, provider: string, traceId: string): Promise<number> {
+  // Find matching tier or calculate proportionally
+  const credits = CREDIT_TIERS[amount] || Math.round(amount * 20); // fallback: 20 credits per dollar
+
+  await insertLedgerEntry({
+    orgId,
+    deltaCredits: credits,
+    reason: `credit_provision:${provider}:${amount}USD:${credits}credits`,
+    traceId,
+    ts: new Date().toISOString(),
+  });
+
+  app.log.info({ traceId, orgId, credits, amount, provider }, 'credits.provisioned');
+  return credits;
+}
+
 // ── Stripe Webhook ──
 app.post('/webhooks/stripe', async (req: any, reply) => {
   const traceId = String(req.headers['x-trace-id'] || randomUUID());
@@ -152,8 +175,38 @@ app.post('/webhooks/stripe', async (req: any, reply) => {
   }
 
   const event = req.body as PaymentWebhookEvent;
-  await recordWebhook('stripe', event.eventType || 'unknown', event.orgId || 'unknown', traceId);
+  const stripeBody = req.body as any;
+  const eventType = event.eventType || stripeBody.type || '';
+  const orgId = event.orgId || stripeBody.data?.object?.metadata?.orgId || 'unknown';
+
+  await recordWebhook('stripe', eventType || 'unknown', orgId, traceId);
   app.log.info({ traceId, provider: 'stripe' }, 'webhook.processed');
+
+  // Provision credits on successful payment
+  if (eventType === 'checkout.session.completed' || eventType === 'payment_intent.succeeded') {
+    const amount = Number(stripeBody.data?.object?.amount_total || stripeBody.data?.object?.amount || 0) / 100; // cents to dollars
+    if (amount > 0 && orgId !== 'unknown') {
+      const credits = await provisionCredits(orgId, amount, 'stripe', traceId);
+      return { ok: true, provider: 'stripe', traceId, credits_provisioned: credits };
+    }
+  }
+
+  // Activate subscription
+  if (eventType === 'customer.subscription.created' || eventType === 'customer.subscription.updated') {
+    const plan = stripeBody.data?.object?.items?.data?.[0]?.price?.lookup_key || 'starter';
+    const planMap: Record<string, 'starter' | 'growth' | 'enterprise'> = {
+      starter: 'starter', growth: 'growth', enterprise: 'enterprise',
+      kitz_starter: 'starter', kitz_growth: 'growth', kitz_enterprise: 'enterprise',
+    };
+    await upsertSubscription({ orgId, plan: planMap[plan] || 'starter', status: 'active', traceId });
+    app.log.info({ traceId, orgId, plan }, 'subscription.activated');
+  }
+
+  // Cancel subscription
+  if (eventType === 'customer.subscription.deleted') {
+    await upsertSubscription({ orgId, plan: 'starter', status: 'canceled', traceId });
+  }
+
   return { ok: true, provider: 'stripe', traceId };
 });
 
@@ -211,8 +264,19 @@ app.post('/webhooks/yappy', async (req: any, reply) => {
   }
 
   const event = req.body as PaymentWebhookEvent;
-  await recordWebhook('yappy', event.eventType || 'unknown', event.orgId || 'unknown', traceId);
+  const yappyBody = req.body as any;
+  const orgId = event.orgId || yappyBody.orgId || 'unknown';
+
+  await recordWebhook('yappy', event.eventType || 'unknown', orgId, traceId);
   app.log.info({ traceId, provider: 'yappy' }, 'webhook.processed');
+
+  // Provision credits on payment
+  const amount = Number(yappyBody.amount || yappyBody.data?.amount || 0);
+  if (amount > 0 && orgId !== 'unknown') {
+    const credits = await provisionCredits(orgId, amount, 'yappy', traceId);
+    return { ok: true, provider: 'yappy', traceId, credits_provisioned: credits };
+  }
+
   return { ok: true, provider: 'yappy', traceId };
 });
 
@@ -232,8 +296,19 @@ app.post('/webhooks/bac', async (req: any, reply) => {
   }
 
   const event = req.body as PaymentWebhookEvent;
-  await recordWebhook('bac', event.eventType || 'unknown', event.orgId || 'unknown', traceId);
+  const bacBody = req.body as any;
+  const orgId = event.orgId || bacBody.orgId || 'unknown';
+
+  await recordWebhook('bac', event.eventType || 'unknown', orgId, traceId);
   app.log.info({ traceId, provider: 'bac' }, 'webhook.processed');
+
+  // Provision credits on payment
+  const amount = Number(bacBody.amount || bacBody.data?.amount || 0);
+  if (amount > 0 && orgId !== 'unknown') {
+    const credits = await provisionCredits(orgId, amount, 'bac', traceId);
+    return { ok: true, provider: 'bac', traceId, credits_provisioned: credits };
+  }
+
   return { ok: true, provider: 'bac', traceId };
 });
 

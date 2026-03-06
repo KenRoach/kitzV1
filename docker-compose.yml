@@ -85,6 +85,8 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GOOGLE_LOGIN_REDIRECT_URI: ${GOOGLE_LOGIN_REDIRECT_URI:-http://localhost:5173/login}
+    volumes:
+      - gateway_data:/app/kitz-gateway/data
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:4000/health"]
       interval: 10s
@@ -147,6 +149,8 @@ services:
       PAYPAL_WEBHOOK_ID: ${PAYPAL_WEBHOOK_ID:-}
       YAPPY_WEBHOOK_SECRET: ${YAPPY_WEBHOOK_SECRET:-}
       BAC_WEBHOOK_SECRET: ${BAC_WEBHOOK_SECRET:-}
+    volumes:
+      - payments_data:/app/kitz-payments/data
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3005/health"]
       interval: 10s
@@ -176,6 +180,8 @@ services:
       KITZ_OS_URL: http://kitz-os:3012
       DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET}
       SERVICE_SECRET: ${DEV_TOKEN_SECRET}
+    volumes:
+      - whatsapp_auth:/app/kitz-whatsapp-connector/auth_info_baileys
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3006/health"]
       interval: 10s
@@ -370,6 +376,8 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:3012/api/kitz/oauth/google/callback}
+    volumes:
+      - kitz_os_data:/app/kitz_os/data
     depends_on:
       - kitz-gateway
       - kitz-llm-hub
@@ -431,6 +439,8 @@ services:
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
       TWILIO_PHONE_FROM: ${TWILIO_PHONE_FROM:-}
       EMAIL_CONNECTOR_URL: http://kitz-email-connector:3007
+    volumes:
+      - comms_api_data:/app/engine/comms-api/data
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3013/health"]
       interval: 10s
@@ -541,6 +551,9 @@ services:
       CADENCE_PHONE: ${CADENCE_PHONE:-}
       CADENCE_EMAIL: ${CADENCE_EMAIL:-}
       DEFAULT_ORG_ID: ${DEFAULT_ORG_ID:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_API_KEY: ${CLAUDE_API_KEY:-}
+      AI_API_KEY: ${AI_API_KEY:-}
     depends_on:
       - kitz-gateway
       - kitz-llm-hub
@@ -589,3 +602,8 @@ networks:
 volumes:
   pgdata:
   n8n_data:
+  gateway_data:
+  payments_data:
+  whatsapp_auth:
+  kitz_os_data:
+  comms_api_data:
