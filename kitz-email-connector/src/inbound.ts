@@ -37,6 +37,16 @@ interface CaseCounter {
   seq: number;
 }
 
+interface KitzOsResponse {
+  response?: string;
+  tools_used?: string[];
+  voice_note?: { audio_base64: string; mime_type: string; text: string };
+  media?: Array<{ type: string; base64: string; mime_type: string; filename: string }>;
+  artifact_preview?: { url: string; title: string; category: string };
+  attachments?: Array<{ type: string; html?: string; url?: string; filename?: string }>;
+  draft_id?: string;
+}
+
 // ── Paths ──
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -359,6 +369,7 @@ export async function processInboundEmail(
 
         // Route through kitz_os semantic router for full tool + agent access
         let aiDraft = '';
+        let kitzOsRichFields: Pick<KitzOsResponse, 'tools_used' | 'artifact_preview' | 'attachments' | 'draft_id'> = {};
         const kitzOsUrl = KITZ_OS_URL || 'http://localhost:3012';
         try {
           const kitzRes = await fetch(`${kitzOsUrl}/api/kitz`, {
@@ -377,8 +388,14 @@ export async function processInboundEmail(
             signal: AbortSignal.timeout(30_000),
           });
           if (kitzRes.ok) {
-            const data = await kitzRes.json() as { response?: string };
+            const data = await kitzRes.json() as KitzOsResponse;
             aiDraft = data.response || '';
+            kitzOsRichFields = {
+              tools_used: data.tools_used,
+              artifact_preview: data.artifact_preview,
+              attachments: data.attachments,
+              draft_id: data.draft_id,
+            };
           }
         } catch (err) {
           log.info({ event: 'inbound.kitz_os_routing_failed', traceId, err: (err as Error).message });
@@ -388,8 +405,37 @@ export async function processInboundEmail(
         let draft: { draftBody: string; draftHtml: string; draftSubject: string };
         if (aiDraft) {
           const draftSubject = `${TEMPLATES[language].subjectPrefix} ${subject} — ${TEMPLATES[language].caseLabel} ${caseNumber}`;
-          draft = { draftBody: aiDraft, draftHtml: aiDraft, draftSubject };
-          log.info({ event: 'inbound.draft_via_kitz_os', traceId, caseNumber, bodyLen: aiDraft.length });
+
+          // Enrich the draft body with rich fields from kitz_os
+          let enrichedBody = aiDraft;
+          let enrichedHtml = aiDraft;
+
+          if (kitzOsRichFields.tools_used && kitzOsRichFields.tools_used.length > 0) {
+            const toolsLine = `\n\nTools used: ${kitzOsRichFields.tools_used.join(', ')}`;
+            enrichedBody += toolsLine;
+            enrichedHtml += `<p style="color:#888;font-size:12px;margin-top:16px"><strong>Tools used:</strong> ${kitzOsRichFields.tools_used.join(', ')}</p>`;
+          }
+
+          if (kitzOsRichFields.artifact_preview) {
+            const ap = kitzOsRichFields.artifact_preview;
+            const previewLine = `\n\nArtifact preview — ${ap.title} (${ap.category}): ${ap.url}`;
+            enrichedBody += previewLine;
+            enrichedHtml += `<p style="margin-top:12px"><strong>Artifact preview:</strong> <a href="${ap.url}">${ap.title}</a> <span style="color:#888;font-size:12px">(${ap.category})</span></p>`;
+          }
+
+          if (kitzOsRichFields.attachments && kitzOsRichFields.attachments.length > 0) {
+            const count = kitzOsRichFields.attachments.length;
+            const names = kitzOsRichFields.attachments
+              .map((a) => a.filename || a.url || a.type)
+              .filter(Boolean)
+              .join(', ');
+            const attachLine = `\n\nAttachments (${count}): ${names}`;
+            enrichedBody += attachLine;
+            enrichedHtml += `<p style="margin-top:12px"><strong>Attachments (${count}):</strong> ${names}</p>`;
+          }
+
+          draft = { draftBody: enrichedBody, draftHtml: enrichedHtml, draftSubject };
+          log.info({ event: 'inbound.draft_via_kitz_os', traceId, caseNumber, bodyLen: enrichedBody.length, richFields: Object.keys(kitzOsRichFields).filter((k) => kitzOsRichFields[k as keyof typeof kitzOsRichFields] != null) });
         } else {
           draft = await generateDraftResponse(emailBody, subject, sender.name, language, caseNumber, traceId, log);
           log.info({ event: 'inbound.draft_via_fallback', traceId, caseNumber, bodyLen: draft.draftBody.length });
@@ -403,6 +449,7 @@ export async function processInboundEmail(
           originalSubject: subject,
           originalBody: emailBody.slice(0, 2000),
           language,
+          ...(kitzOsRichFields.draft_id ? { draft_id: kitzOsRichFields.draft_id } : {}),
           ...draft,
         });
         log.info({ event: 'inbound.draft_stored', traceId, caseNumber, token: pending.token.slice(0, 8) });

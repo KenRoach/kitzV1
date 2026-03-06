@@ -46,7 +46,17 @@ export const cfoAgent = {
       roiAssessment = `ROI ${currentPlan.projectedRoiMultiple}x projected.`;
     }
 
-    // 3. Draft WhatsApp summary to owner
+    // 3. Fetch real revenue from payment ledger
+    let revenueEstimate = 0;
+    try {
+      const paymentData = await toolRegistry.invoke('payments.getLedgerSummary', { window: '30d' }, traceId) as Record<string, unknown>;
+      revenueEstimate = Number(paymentData?.totalRevenue || paymentData?.total || 0);
+    } catch {
+      // Fall back to subscription count estimate if payment data unavailable
+      revenueEstimate = 0;
+    }
+
+    // 4. Draft WhatsApp summary to owner
     try {
       await toolRegistry.invoke('messaging.draftWhatsApp', {
         phone: process.env.CADENCE_PHONE || process.env.KITZ_WHATSAPP_NUMBER || '',
@@ -59,7 +69,7 @@ export const cfoAgent = {
 
     return {
       date,
-      revenueEstimate: 0,
+      revenueEstimate,
       activePlans,
       policyCompliant: true,
       roiAssessment,
