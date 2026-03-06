@@ -188,8 +188,8 @@ app.post('/outbound/send', async (req: any, reply) => {
 
     // If userId specified, send through that specific session
     if (userId) {
-      const sent = await sessionManager.sendMessage(userId, jid, message);
-      return { ok: sent, provider: 'baileys', userId, traceId };
+      const result = await sessionManager.sendMessage(userId, jid, message);
+      return { ok: result.ok, provider: 'baileys', userId, traceId, ...(result.error ? { error: result.error } : {}) };
     }
 
     // Otherwise use legacy (first connected session)

@@ -24,7 +24,7 @@ const COMMS_API_URL = process.env.COMMS_API_URL || 'http://localhost:3013';
 const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
 const serviceHeaders: Record<string, string> = {
   'Content-Type': 'application/json',
-  ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET } : {}),
+  ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET, 'x-dev-secret': SERVICE_SECRET } : {}),
 };
 
 export function getAllOutboundTools(): ToolSchema[] {

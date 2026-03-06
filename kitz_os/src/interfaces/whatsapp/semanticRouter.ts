@@ -954,26 +954,38 @@ export async function brainFirstRoute(
 
   // 2. If brain unreachable, try inline agent routing then fall through to routeWithAI
   if (!decision) {
-    // Inline agent routing when kitz-brain is unreachable
+    // Inline agent routing when kitz-brain is unreachable.
+    // Uses word-boundary matching to prevent false positives (e.g., "producto" matching "product").
+    // Multi-word phrases use includes() since they're specific enough.
     const lowerMessage = userMessage.toLowerCase();
+
+    // Helper: match whole words only (handles Spanish/English mixed input)
+    const hasWord = (word: string) => {
+      if (word.includes(' ')) return lowerMessage.includes(word); // multi-word phrases use includes
+      return new RegExp(`\\b${word}\\b`, 'i').test(lowerMessage);
+    };
+
     const agentRoutes: Array<[string[], string]> = [
-      [['strategy', 'strategic', 'vision', 'direction', 'competitive', 'market position'], 'Chair'],
-      [['finance', 'budget', 'revenue', 'cost', 'billing', 'invoice', 'financial'], 'CFO'],
-      [['marketing', 'campaign', 'brand', 'content', 'seo', 'social media', 'growth'], 'CMO'],
-      [['technical', 'architecture', 'backend', 'database', 'api', 'infrastructure', 'deploy'], 'CTO'],
-      [['product', 'feature', 'ux', 'ui', 'design', 'user experience', 'roadmap'], 'CPO'],
-      [['operations', 'process', 'workflow', 'efficiency', 'devops', 'ci/cd'], 'COO'],
-      [['sales', 'pipeline', 'lead', 'deal', 'close', 'prospect', 'crm'], 'CRO'],
-      [['customer', 'support', 'ticket', 'complaint', 'feedback', 'nps'], 'HeadCustomer'],
-      [['hire', 'team', 'engineer', 'developer', 'staffing', 'engineering'], 'HeadEngineering'],
-      [['ai', 'model', 'prompt', 'llm', 'ml', 'intelligence', 'risk'], 'HeadIntelligenceRisk'],
+      [['strategy', 'strategic', 'vision', 'competitive', 'market position'], 'Chair'],
+      [['finance', 'budget', 'revenue', 'billing', 'invoice', 'financial'], 'CFO'],
+      [['marketing', 'campaign', 'seo', 'social media'], 'CMO'],
+      [['architecture', 'backend', 'database', 'infrastructure', 'deploy'], 'CTO'],
+      [['roadmap', 'user experience'], 'CPO'],
+      [['operations', 'workflow', 'devops', 'ci/cd'], 'COO'],
+      [['pipeline', 'prospect', 'crm'], 'CRO'],
+      [['support', 'ticket', 'complaint', 'nps'], 'HeadCustomer'],
+      [['hire', 'staffing', 'engineering'], 'HeadEngineering'],
+      [['llm', 'machine learning'], 'HeadIntelligenceRisk'],
     ];
 
     for (const [keywords, agentName] of agentRoutes) {
-      if (keywords.some(k => lowerMessage.includes(k))) {
+      if (keywords.some(k => hasWord(k))) {
         try {
           const result = await dispatchToAgent(agentName, userMessage, traceId);
-          if (result) return { response: result.response, toolsUsed: [`agent:${agentName}`], creditsConsumed: 0, toolResults: [] };
+          // Only use agent result if it didn't error out — fall through to routeWithAI otherwise
+          if (result && !result.response.startsWith('Something went wrong') && !result.response.startsWith('AI is temporarily')) {
+            return { response: result.response, toolsUsed: [`agent:${agentName}`], creditsConsumed: 0, toolResults: [] };
+          }
         } catch { /* fall through to routeWithAI */ }
         break;
       }

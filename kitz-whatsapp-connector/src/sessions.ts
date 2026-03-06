@@ -174,7 +174,7 @@ async function forwardToKitzOs(
   try {
     const res = await fetch(`${KITZ_OS_URL}/api/kitz`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET } : {}) },
+      headers: { 'Content-Type': 'application/json', ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET, 'x-dev-secret': SERVICE_SECRET } : {}) },
       body: JSON.stringify({
         message,
         sender: senderJid,
@@ -213,7 +213,7 @@ async function forwardMediaToKitzOs(
   try {
     const res = await fetch(`${KITZ_OS_URL}/api/kitz/media`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET } : {}) },
+      headers: { 'Content-Type': 'application/json', ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET, 'x-dev-secret': SERVICE_SECRET } : {}) },
       body: JSON.stringify({
         media_base64: mediaBase64,
         mime_type: mimeType,
@@ -986,7 +986,7 @@ class SessionManager {
       const traceId = crypto.randomUUID();
       await fetch(`${KITZ_OS_URL}/api/kitz`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET } : {}) },
+        headers: { 'Content-Type': 'application/json', ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET, 'x-dev-secret': SERVICE_SECRET } : {}) },
         body: JSON.stringify({
           message: `[MISSED WhatsApp from +${senderPhone}]: "${messageText}".\nLog this contact and their message in the CRM. Phone: +${senderPhone}. Tag as "missed-whatsapp".`,
           sender: `${senderPhone}@s.whatsapp.net`,
@@ -1086,26 +1086,39 @@ class SessionManager {
   }
 
   /** Send a text message through a specific user's session */
-  async sendMessage(userId: string, jid: string, text: string): Promise<boolean> {
+  async sendMessage(userId: string, jid: string, text: string): Promise<{ ok: boolean; error?: string }> {
     const session = this.sessions.get(userId);
-    if (!session?.socket || !session.isConnected) return false;
+    if (!session?.socket) {
+      log.warn('sendMessage: no socket', { userId, jid });
+      return { ok: false, error: 'No WhatsApp session found. Please reconnect via QR.' };
+    }
+    if (!session.isConnected) {
+      log.warn('sendMessage: session disconnected', { userId, jid });
+      return { ok: false, error: 'WhatsApp session is disconnected. Please reconnect via QR.' };
+    }
     try {
       await session.socket.sendMessage(jid, { text });
-      return true;
-    } catch {
-      return false;
+      return { ok: true };
+    } catch (err) {
+      const msg = (err as Error).message || 'unknown error';
+      log.error('sendMessage failed', { userId, jid, error: msg });
+      return { ok: false, error: `Send failed: ${msg}` };
     }
   }
 
   /** Send an audio message through a specific user's session */
   async sendAudio(userId: string, jid: string, audioBase64: string, mimeType = 'audio/mpeg'): Promise<boolean> {
     const session = this.sessions.get(userId);
-    if (!session?.socket || !session.isConnected) return false;
+    if (!session?.socket || !session.isConnected) {
+      log.warn('sendAudio: session unavailable', { userId, jid });
+      return false;
+    }
     try {
       const buffer = Buffer.from(audioBase64, 'base64');
       await session.socket.sendMessage(jid, { audio: buffer, mimetype: mimeType, ptt: true });
       return true;
-    } catch {
+    } catch (err) {
+      log.error('sendAudio failed', { userId, jid, error: (err as Error).message });
       return false;
     }
   }
@@ -1121,7 +1134,10 @@ class SessionManager {
         caption: caption || undefined,
       });
       return true;
-    } catch { return false; }
+    } catch (err) {
+      log.error('sendImage failed', { userId, jid, error: (err as Error).message });
+      return false;
+    }
   }
 
   /** Send a video through a user's session */
@@ -1136,7 +1152,10 @@ class SessionManager {
         ...(gifPlayback ? { gifPlayback: true } : {}),
       });
       return true;
-    } catch { return false; }
+    } catch (err) {
+      log.error('sendVideo failed', { userId, jid, error: (err as Error).message });
+      return false;
+    }
   }
 
   /** Send a document through a user's session */
@@ -1151,7 +1170,10 @@ class SessionManager {
         caption: caption || undefined,
       });
       return true;
-    } catch { return false; }
+    } catch (err) {
+      log.error('sendDocument failed', { userId, jid, error: (err as Error).message });
+      return false;
+    }
   }
 
   /** Send a poll through a user's session */
@@ -1167,7 +1189,10 @@ class SessionManager {
         },
       } as any);
       return true;
-    } catch { return false; }
+    } catch (err) {
+      log.error('sendPoll failed', { userId, jid, error: (err as Error).message });
+      return false;
+    }
   }
 
   /** Send a reaction to a specific message */
@@ -1182,7 +1207,10 @@ class SessionManager {
         },
       } as any);
       return true;
-    } catch { return false; }
+    } catch (err) {
+      log.error('sendReaction failed', { userId, jid, error: (err as Error).message });
+      return false;
+    }
   }
 
   /** Boot: reconnect any sessions that have persisted auth dirs with valid creds */

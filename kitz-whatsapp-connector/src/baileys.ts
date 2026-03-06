@@ -29,7 +29,8 @@ export async function sendWhatsAppMessage(jid: string, text: string): Promise<bo
   const sessions = sessionManager.listSessions();
   for (const s of sessions) {
     if (s.isConnected) {
-      return sessionManager.sendMessage(s.userId, jid, text);
+      const result = await sessionManager.sendMessage(s.userId, jid, text);
+      return result.ok;
     }
   }
   log.warn('Cannot send — no connected sessions');

@@ -151,7 +151,16 @@ export async function executeAgentTask(
     try {
       llmText = await callLLM(systemPrompt, currentPrompt, tid);
     } catch (err) {
-      finalResponse = `LLM unavailable: ${(err as Error).message}. Agent ${agent.name} cannot process this task.`;
+      const rawErr = (err as Error).message || '';
+      // Log the full error for debugging, but show user-friendly message
+      console.error(`[AgentExecutor] LLM call failed for agent ${agent.name}:`, rawErr);
+      if (rawErr.includes('rate limit') || rawErr.includes('429') || rawErr.includes('529')) {
+        finalResponse = 'AI is temporarily busy — give me a sec and try again, boss.';
+      } else if (rawErr.includes('timeout') || rawErr.includes('unreachable')) {
+        finalResponse = 'AI service is taking too long — try again in a moment, boss.';
+      } else {
+        finalResponse = 'Something went wrong on my end — try again in a sec, boss.';
+      }
       break;
     }
 

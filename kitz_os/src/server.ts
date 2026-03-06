@@ -225,7 +225,6 @@ export async function createServer(kernel: KitzKernel) {
     const isStaticAsset = req.method === 'GET' && !path.startsWith('/api/');
     const skipAuth = isStaticAsset ||
       path === '/health' ||
-      path === '/api/kitz' ||
       path === '/api/kitz/status' ||
       path === '/api/kitz/channels/health' ||
       path === '/ws' ||
