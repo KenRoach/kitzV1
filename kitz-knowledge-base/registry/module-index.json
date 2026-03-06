@@ -527,6 +527,14 @@
     "enriched": 0,
     "file": "KB_PMI_PROJECT_MANAGEMENT.md"
   },
+  "Anthropic Claude Ecosystem": {
+    "count": 10,
+    "critical": 5,
+    "high": 5,
+    "ingested": 10,
+    "enriched": 0,
+    "file": "KB_ANTHROPIC_CLAUDE.md"
+  },
   "Puerto Rico Business": {
     "count": 3,
     "critical": 1,
@@ -678,5 +686,69 @@
     "ingested": 0,
     "enriched": 0,
     "file": "KB_OFFICE_AUTOMATION.md"
+  },
+  "WhatsApp Commerce LatAm": {
+    "count": 5,
+    "critical": 3,
+    "high": 2,
+    "ingested": 5,
+    "enriched": 0,
+    "file": "KB_WHATSAPP_COMMERCE_LATAM.md"
+  },
+  "Panama Compliance 2026": {
+    "count": 4,
+    "critical": 4,
+    "high": 0,
+    "ingested": 4,
+    "enriched": 0,
+    "file": "KB_PANAMA_COMPLIANCE_2026.md"
+  },
+  "AI Agent Frameworks": {
+    "count": 6,
+    "critical": 2,
+    "high": 4,
+    "ingested": 6,
+    "enriched": 0,
+    "file": "KB_AI_AGENT_FRAMEWORKS.md"
+  },
+  "Stripe LatAm Payments": {
+    "count": 4,
+    "critical": 2,
+    "high": 2,
+    "ingested": 4,
+    "enriched": 0,
+    "file": "KB_STRIPE_LATAM_PAYMENTS.md"
+  },
+  "ElevenLabs Voice AI": {
+    "count": 3,
+    "critical": 1,
+    "high": 2,
+    "ingested": 3,
+    "enriched": 0,
+    "file": "KB_ELEVENLABS_VOICE.md"
+  },
+  "Supabase Best Practices": {
+    "count": 4,
+    "critical": 2,
+    "high": 2,
+    "ingested": 4,
+    "enriched": 0,
+    "file": "KB_SUPABASE.md"
+  },
+  "LatAm SMB Market Intelligence": {
+    "count": 6,
+    "critical": 3,
+    "high": 3,
+    "ingested": 6,
+    "enriched": 0,
+    "file": "KB_LATAM_SMB_MARKET.md"
+  },
+  "Prompt Engineering": {
+    "count": 4,
+    "critical": 2,
+    "high": 2,
+    "ingested": 4,
+    "enriched": 0,
+    "file": "KB_PROMPT_ENGINEERING.md"
   }
 }
