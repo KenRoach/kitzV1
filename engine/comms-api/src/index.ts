@@ -158,7 +158,14 @@ app.post<{ Params: { id: string } }>('/:id/approve', async (req, reply) => {
       break
     }
     case 'voice': {
-      const twiml = `<Response><Say>${record.message}</Say></Response>`
+      // XML-escape message for TwiML (handles accents, &, <, >, quotes)
+      const escaped = record.message
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;')
+      const twiml = `<Response><Say language="es-MX">${escaped}</Say></Response>`
       result = await initiateCall(record.to, twiml)
       break
     }
