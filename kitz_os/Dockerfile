@@ -18,6 +18,7 @@ RUN npm run build
 
 # ── Stage 2: Build kitz_os with bundled SPA ──
 FROM base
+RUN apk add --no-cache ffmpeg
 WORKDIR /app
 
 # Shared schemas
