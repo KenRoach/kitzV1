@@ -387,6 +387,7 @@ export function getAllOutboundTools(): ToolSchema[] {
               const approveRes = await fetch(`${COMMS_API_URL}/${draftId}/approve`, {
                 method: 'POST',
                 headers: serviceHeaders,
+                body: '{}',
                 signal: AbortSignal.timeout(10_000),
               });
               if (approveRes.ok) {
@@ -461,6 +462,7 @@ export function getAllOutboundTools(): ToolSchema[] {
               const approveRes = await fetch(`${COMMS_API_URL}/${draftId}/approve`, {
                 method: 'POST',
                 headers: serviceHeaders,
+                body: '{}',
                 signal: AbortSignal.timeout(10_000),
               });
               if (approveRes.ok) {
