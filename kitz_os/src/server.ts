@@ -317,9 +317,9 @@ export async function createServer(kernel: KitzKernel) {
           if (onboarding.voice_note?.text && isElevenLabsConfigured()) {
             try {
               const { textToSpeechOgg } = await import('./llm/elevenLabsClient.js');
-              const audio = await textToSpeechOgg({ text: onboarding.voice_note.text });
-              if (audio) {
-                result.voice_note = { audio_base64: audio, mime_type: 'audio/ogg; codecs=opus', text: onboarding.voice_note.text };
+              const ttsResult = await textToSpeechOgg({ text: onboarding.voice_note.text });
+              if (ttsResult?.audioBase64) {
+                result.voice_note = { audio_base64: ttsResult.audioBase64, mime_type: ttsResult.mimeType || 'audio/ogg; codecs=opus', text: onboarding.voice_note.text };
               }
             } catch (err) {
               log.warn('TTS for onboarding failed', { err });
