@@ -39,17 +39,16 @@ function verifyHash(stored: string, password: string): boolean {
 // In-memory store (used when DATABASE_URL is not set)
 const memoryUsers = new Map<string, UserRecord>();
 
-const DATABASE_URL = process.env.DATABASE_URL || '';
 const SUPABASE_URL = process.env.SUPABASE_URL || '';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+// Use Supabase REST API if both URL and key are set (DATABASE_URL not required)
+const USE_SUPABASE = !!(SUPABASE_URL && SUPABASE_KEY);
 
 // Log persistence mode on module load
-if (DATABASE_URL && SUPABASE_URL && SUPABASE_KEY) {
+if (USE_SUPABASE) {
   console.log('[gatewayDb] User persistence: Supabase REST API');
-} else if (DATABASE_URL) {
-  console.log('[gatewayDb] User persistence: DATABASE_URL set but Supabase keys missing — in-memory fallback');
 } else {
-  console.log('[gatewayDb] ⚠ User persistence: IN-MEMORY ONLY (users lost on restart). Set DATABASE_URL + SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY for production.');
+  console.log('[gatewayDb] ⚠ User persistence: IN-MEMORY ONLY (users lost on restart). Set SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY for production.');
 }
 
 /** Row from DB → UserRecord */
@@ -67,39 +66,34 @@ function rowToUser(row: Record<string, unknown>): UserRecord {
   };
 }
 
-/** Find user by email — DB first, then memory fallback */
+/** Find user by email — Supabase first, then memory fallback */
 export async function findUserByEmail(email: string): Promise<UserRecord | null> {
   const normalized = email.toLowerCase();
 
-  if (DATABASE_URL) {
-    const supabaseUrl = process.env.SUPABASE_URL || '';
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
-
-    if (supabaseUrl && supabaseKey) {
-      try {
-        const res = await fetch(
-          `${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(normalized)}&limit=1`,
-          {
-            headers: {
-              'apikey': supabaseKey,
-              'Authorization': `Bearer ${supabaseKey}`,
-            },
-            signal: AbortSignal.timeout(5_000),
+  if (USE_SUPABASE) {
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(normalized)}&limit=1`,
+        {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
           },
-        );
-        if (res.ok) {
-          const rows = await res.json() as Record<string, unknown>[];
-          if (rows.length > 0) return rowToUser(rows[0]);
-          return null;
-        }
-      } catch { /* fall through to memory */ }
-    }
+          signal: AbortSignal.timeout(5_000),
+        },
+      );
+      if (res.ok) {
+        const rows = await res.json() as Record<string, unknown>[];
+        if (rows.length > 0) return rowToUser(rows[0]);
+        return null;
+      }
+    } catch { /* fall through to memory */ }
   }
 
   return memoryUsers.get(normalized) ?? null;
 }
 
-/** Create a new user — DB first, then memory fallback */
+/** Create a new user — Supabase first, then memory fallback */
 export async function createUser(
   email: string,
   password: string,
@@ -119,39 +113,34 @@ export async function createUser(
     picture: opts?.picture,
   };
 
-  if (DATABASE_URL) {
-    const supabaseUrl = process.env.SUPABASE_URL || '';
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
-
-    if (supabaseUrl && supabaseKey) {
-      try {
-        const res = await fetch(`${supabaseUrl}/rest/v1/users`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': supabaseKey,
-            'Authorization': `Bearer ${supabaseKey}`,
-            'Prefer': 'return=representation',
-          },
-          body: JSON.stringify({
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            password_hash: user.passwordHash,
-            org_id: user.orgId,
-            auth_provider: user.authProvider || 'email',
-            google_id: user.googleId || null,
-            picture: user.picture || null,
-            created_at: user.createdAt,
-          }),
-          signal: AbortSignal.timeout(5_000),
-        });
-        if (res.ok) {
-          const rows = await res.json() as Record<string, unknown>[];
-          if (rows.length > 0) return rowToUser(rows[0]);
-        }
-      } catch { /* fall through to memory */ }
-    }
+  if (USE_SUPABASE) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Prefer': 'return=representation',
+        },
+        body: JSON.stringify({
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          password_hash: user.passwordHash,
+          org_id: user.orgId,
+          auth_provider: user.authProvider || 'email',
+          google_id: user.googleId || null,
+          picture: user.picture || null,
+          created_at: user.createdAt,
+        }),
+        signal: AbortSignal.timeout(5_000),
+      });
+      if (res.ok) {
+        const rows = await res.json() as Record<string, unknown>[];
+        if (rows.length > 0) return rowToUser(rows[0]);
+      }
+    } catch { /* fall through to memory */ }
   }
 
   // Always save to memory as backup
@@ -163,32 +152,27 @@ export async function createUser(
 export async function updateUser(email: string, updates: Partial<Pick<UserRecord, 'googleId' | 'picture' | 'authProvider'>>): Promise<void> {
   const normalized = email.toLowerCase();
 
-  if (DATABASE_URL) {
-    const supabaseUrl = process.env.SUPABASE_URL || '';
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+  if (USE_SUPABASE) {
+    try {
+      const body: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      if (updates.googleId !== undefined) body.google_id = updates.googleId;
+      if (updates.picture !== undefined) body.picture = updates.picture;
+      if (updates.authProvider !== undefined) body.auth_provider = updates.authProvider;
 
-    if (supabaseUrl && supabaseKey) {
-      try {
-        const body: Record<string, unknown> = { updated_at: new Date().toISOString() };
-        if (updates.googleId !== undefined) body.google_id = updates.googleId;
-        if (updates.picture !== undefined) body.picture = updates.picture;
-        if (updates.authProvider !== undefined) body.auth_provider = updates.authProvider;
-
-        await fetch(
-          `${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(normalized)}`,
-          {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': supabaseKey,
-              'Authorization': `Bearer ${supabaseKey}`,
-            },
-            body: JSON.stringify(body),
-            signal: AbortSignal.timeout(5_000),
+      await fetch(
+        `${SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(normalized)}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
           },
-        );
-      } catch { /* best effort */ }
-    }
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(5_000),
+        },
+      );
+    } catch { /* best effort */ }
   }
 
   // Also update memory
@@ -215,13 +199,11 @@ export function verifyPassword(user: UserRecord, password: string): boolean {
 
 /** Persist upgraded password hash to database */
 async function upgradePasswordHash(email: string, newHash: string): Promise<void> {
-  const supabaseUrl = process.env.SUPABASE_URL || '';
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
-  if (!supabaseUrl || !supabaseKey) return;
+  if (!USE_SUPABASE) return;
   try {
-    await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}`, {
+    await fetch(`${SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(email)}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` },
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
       body: JSON.stringify({ password_hash: newHash }),
       signal: AbortSignal.timeout(5_000),
     });
