@@ -3,8 +3,6 @@ import { lazy, Suspense, useEffect } from 'react'
 import { useAuthStore } from '@/stores/authStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { setLocale } from '@/lib/i18n'
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
-import { LoginPage } from '@/pages/LoginPage'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { ToastContainer } from '@/components/ui/ToastContainer'
 
@@ -34,39 +32,10 @@ export default function App() {
       <BrowserRouter>
         <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><p className="text-gray-400">Loading...</p></div>}>
           <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route
-              path="/connect-whatsapp"
-              element={
-                <ProtectedRoute>
-                  <WhatsAppPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/learn"
-              element={
-                <ProtectedRoute>
-                  <LearnPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/game"
-              element={
-                <ProtectedRoute>
-                  <GamePage />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/connect-whatsapp" element={<WhatsAppPage />} />
+            <Route path="/learn" element={<LearnPage />} />
+            <Route path="/game" element={<GamePage />} />
             <Route path="/ui" element={<UIPreviewPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

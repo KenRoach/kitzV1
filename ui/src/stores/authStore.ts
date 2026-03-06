@@ -8,7 +8,7 @@ interface User {
   orgId?: string
   name?: string
   picture?: string
-  authProvider?: 'email' | 'google'
+  authProvider?: 'email' | 'google' | 'guest'
 }
 
 interface AuthState {
@@ -18,13 +18,11 @@ interface AuthState {
   error: string | null
   signup: (email: string, password: string, name: string) => Promise<void>
   login: (email: string, password: string) => Promise<void>
-  loginWithGoogle: (code: string) => Promise<void>
-  getGoogleAuthUrl: () => Promise<string>
   logout: () => void
   hydrate: () => void
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: null,
   isLoading: false,
@@ -76,43 +74,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  loginWithGoogle: async (code) => {
-    set({ isLoading: true, error: null })
-    try {
-      const data = await apiFetch<{ token: string; userId: string; orgId?: string; name?: string; picture?: string }>(
-        `${API.GATEWAY}/auth/google/callback`,
-        {
-          method: 'POST',
-          body: JSON.stringify({ code }),
-        },
-      )
-      const user: User = {
-        id: data.userId,
-        email: '',
-        orgId: data.orgId,
-        name: data.name,
-        picture: data.picture,
-        authProvider: 'google',
-      }
-      localStorage.setItem(AUTH_TOKEN_KEY, data.token)
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user))
-      set({ user, token: data.token, isLoading: false })
-    } catch (err) {
-      set({
-        error: err instanceof Error ? err.message : 'Google login failed',
-        isLoading: false,
-      })
-      throw err
-    }
-  },
-
-  getGoogleAuthUrl: async () => {
-    const data = await apiFetch<{ url: string }>(
-      `${API.GATEWAY}/auth/google/url`,
-    )
-    return data.url
-  },
-
   logout: () => {
     localStorage.removeItem(AUTH_TOKEN_KEY)
     localStorage.removeItem(AUTH_USER_KEY)
@@ -129,25 +90,49 @@ export const useAuthStore = create<AuthState>((set) => ({
         if (payload.exp && payload.exp * 1000 < Date.now()) {
           localStorage.removeItem(AUTH_TOKEN_KEY)
           localStorage.removeItem(AUTH_USER_KEY)
-          return
+          // Token expired — auto-provision a new guest below
+        } else {
+          const user = JSON.parse(raw) as User
+          set({ user, token })
+          return // Valid session exists, done
         }
-      } catch {
-        localStorage.removeItem(AUTH_TOKEN_KEY)
-        localStorage.removeItem(AUTH_USER_KEY)
-        return
-      }
-      try {
-        const user = JSON.parse(raw) as User
-        set({ user, token })
       } catch {
         localStorage.removeItem(AUTH_TOKEN_KEY)
         localStorage.removeItem(AUTH_USER_KEY)
       }
     }
 
-    // Listen for auth expiry events from apiFetch
+    // No valid session — auto-provision a guest account
+    const guestId = crypto.randomUUID().slice(0, 8)
+    const guestEmail = `guest-${guestId}@kitz.services`
+    const guestPassword = `KitzGuest-${crypto.randomUUID()}`
+
+    apiFetch<{ token: string; userId: string; orgId?: string; name?: string }>(
+      `${API.GATEWAY}/auth/signup`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ email: guestEmail, password: guestPassword, name: 'Guest' }),
+        skipAuthRedirect: true,
+      },
+    ).then((data) => {
+      const user: User = { id: data.userId, email: guestEmail, orgId: data.orgId, name: 'Guest', authProvider: 'guest' }
+      localStorage.setItem(AUTH_TOKEN_KEY, data.token)
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user))
+      set({ user, token: data.token })
+    }).catch(() => {
+      // If signup fails (e.g. backend unreachable), set a minimal guest user
+      // so the UI renders — API calls will fail gracefully
+      const fallbackUser: User = { id: guestId, email: guestEmail, name: 'Guest', authProvider: 'guest' }
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(fallbackUser))
+      set({ user: fallbackUser, token: null })
+    })
+
+    // Listen for auth expiry events from apiFetch — re-provision guest
     window.addEventListener('kitz:auth-expired', () => {
-      set({ user: null, token: null, error: 'Session expired — please log in again.' })
+      localStorage.removeItem(AUTH_TOKEN_KEY)
+      localStorage.removeItem(AUTH_USER_KEY)
+      set({ user: null, token: null })
+      get().hydrate() // Re-provision guest
     })
   },
 }))
