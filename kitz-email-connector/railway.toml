@@ -1,12 +1,11 @@
 # This service slot is repurposed for kitz-whatsapp-connector.
-# Railway may still read this file from the old Config-as-code path.
-# Both this file and kitz-whatsapp-connector/railway.toml point to
-# the same Dockerfile to ensure the correct builder is used.
+# Dockerfile clones the full repo inside the build to access kitz-schemas
+# and kitz-whatsapp-connector source (needed because Railway Root Directory
+# may scope the build context to kitz-email-connector/ only).
 [build]
-dockerfilePath = "kitz-whatsapp-connector/Dockerfile"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "npx tsx src/index.ts"
 healthcheckPath = "/health"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
