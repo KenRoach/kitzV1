@@ -8,7 +8,8 @@ interface User {
   orgId?: string
   name?: string
   picture?: string
-  authProvider?: 'email' | 'google' | 'guest'
+  phone?: string
+  authProvider?: 'email' | 'whatsapp' | 'guest'
 }
 
 interface AuthState {
@@ -18,11 +19,14 @@ interface AuthState {
   error: string | null
   signup: (email: string, password: string, name: string) => Promise<void>
   login: (email: string, password: string) => Promise<void>
+  loginWithToken: (token: string, user: User) => void
+  upgrade: (email: string, password: string, name?: string) => Promise<void>
   logout: () => void
   hydrate: () => void
+  isGuest: () => boolean
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: null,
   isLoading: false,
@@ -74,10 +78,54 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
+  /** Direct token login — used by magic-link redirect */
+  loginWithToken: (token, user) => {
+    localStorage.setItem(AUTH_TOKEN_KEY, token)
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user))
+    set({ user, token, isLoading: false, error: null })
+  },
+
+  /** Upgrade a guest or phone-only user to full account with email + password */
+  upgrade: async (email, password, name) => {
+    set({ isLoading: true, error: null })
+    try {
+      const data = await apiFetch<{ token: string; userId: string; email: string; name?: string; upgraded: boolean }>(
+        `${API.GATEWAY}/auth/upgrade`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ email, password, name }),
+        },
+      )
+      const currentUser = get().user
+      const updatedUser: User = {
+        id: data.userId || currentUser?.id || '',
+        email: data.email,
+        orgId: currentUser?.orgId,
+        name: data.name || name || currentUser?.name,
+        authProvider: 'email',
+      }
+      localStorage.setItem(AUTH_TOKEN_KEY, data.token)
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(updatedUser))
+      set({ user: updatedUser, token: data.token, isLoading: false })
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : 'Upgrade failed',
+        isLoading: false,
+      })
+      throw err
+    }
+  },
+
   logout: () => {
     localStorage.removeItem(AUTH_TOKEN_KEY)
     localStorage.removeItem(AUTH_USER_KEY)
     set({ user: null, token: null })
+  },
+
+  /** Returns true if current user is a guest (auto-provisioned) */
+  isGuest: () => {
+    const user = get().user
+    return user?.authProvider === 'guest' || (user?.email?.includes('@kitz.services') ?? false)
   },
 
   hydrate: () => {

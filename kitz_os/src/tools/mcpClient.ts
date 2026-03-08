@@ -1,91 +1,64 @@
 /**
- * MCP Client — Routes workspace tool calls to the workspace REST API.
+ * MCP Client — Routes workspace tool calls to local DB functions.
  *
- * When WORKSPACE_API_URL is set (the workspace Fastify service at port 3001),
- * known tool names are translated to REST calls (GET/POST/PATCH/DELETE).
- * Falls back to JSON-RPC MCP call when WORKSPACE_MCP_URL is set and the tool
- * isn't handled by REST.
+ * Phase 4 consolidation: Instead of making HTTP calls to the workspace
+ * service (port 3001), this module now calls the workspace DB functions
+ * directly. Same Supabase connection, zero network hop.
  *
- * Passes the caller's userId via Bearer token for auth.
- * Falls back to GOD_MODE_USER_ID when no userId is provided (system/cron calls).
+ * Falls back to JSON-RPC MCP call when WORKSPACE_MCP_URL is set and the
+ * tool isn't handled locally.
  */
 
 import { createSubsystemLogger } from 'kitz-schemas';
+import {
+  listLeads, createLead, updateLead, deleteLead,
+  listOrders, createOrder, updateOrder, deleteOrder,
+  listTasks, createTask, updateTask, deleteTask,
+  listCheckoutLinks, createCheckoutLink, updateCheckoutLink, deleteCheckoutLink,
+  listProducts, createProduct, updateProduct, deleteProduct,
+  listPayments, createPayment, deletePayment,
+  getDashboardMetrics,
+} from '../workspace/db.js';
 
 const log = createSubsystemLogger('mcpClient');
 
-const WORKSPACE_API_URL = process.env.WORKSPACE_API_URL || process.env.WORKSPACE_URL || 'http://localhost:3001';
 const WORKSPACE_MCP_URL = process.env.WORKSPACE_MCP_URL || '';
 const WORKSPACE_MCP_KEY = process.env.WORKSPACE_MCP_KEY || '';
 const GOD_MODE_USER_ID = process.env.GOD_MODE_USER_ID || '';
-const JWT_SECRET = process.env.JWT_SECRET || process.env.DEV_TOKEN_SECRET || '';
 
-// ── Workspace REST adapter ──
-
-async function restFetch(
-  method: string,
-  path: string,
-  userId: string,
-  body?: Record<string, unknown>,
-  traceId?: string,
-): Promise<unknown> {
-  const headers: Record<string, string> = {
-    'Authorization': `Bearer ${JWT_SECRET}`,
-    'x-user-id': userId,
-  };
-  if (traceId) {
-    headers['x-trace-id'] = traceId;
-  }
-  const opts: RequestInit = {
-    method,
-    headers,
-    signal: AbortSignal.timeout(10_000),
-  };
-  if (body) {
-    headers['Content-Type'] = 'application/json';
-    opts.body = JSON.stringify(body);
-  }
-  const res = await fetch(`${WORKSPACE_API_URL}${path}`, opts);
-  if (!res.ok) {
-    const errText = await res.text().catch(() => 'unknown');
-    return { error: `REST ${res.status}: ${errText.slice(0, 200)}` };
-  }
-  return res.json();
-}
+// ── Local workspace tool router ──
 
 /**
- * Map MCP tool names → workspace REST calls.
- * Returns the result if handled, or null if the tool isn't a REST route.
+ * Map MCP tool names → direct workspace DB calls.
+ * Returns the result if handled, or null if the tool isn't a workspace tool.
  */
-async function tryRestRoute(
+async function tryLocalRoute(
   toolName: string,
   args: Record<string, unknown>,
   userId: string,
-  traceId?: string,
 ): Promise<unknown | null> {
   switch (toolName) {
     // ── Contacts/Leads ──
     case 'list_contacts':
-      return restFetch('GET', '/api/workspace/leads', userId, undefined, traceId);
+      return listLeads(userId);
 
     case 'get_contact': {
-      const rows = await restFetch('GET', '/api/workspace/leads', userId, undefined, traceId) as any[];
-      if (!Array.isArray(rows)) return rows;
-      const contact = rows.find((r: any) => r.id === args.contact_id);
+      const rows = await listLeads(userId);
+      const contact = rows.find(r => r.id === args.contact_id);
       return contact || { error: 'Contact not found' };
     }
 
     case 'create_contact':
-      return restFetch('POST', '/api/workspace/leads', userId, {
+      return createLead(userId, {
         name: args.name as string || '',
         phone: args.phone as string || '',
         email: args.email as string || '',
-        notes: args.notes as string || '',
-      }, traceId);
+        notes: args.notes ? [args.notes as string] : [],
+      });
 
     case 'update_contact':
       if (!args.contact_id) return { error: 'contact_id required' };
-      return restFetch('PATCH', `/api/workspace/leads/${args.contact_id}`, userId, {
+      return updateLead(userId, args.contact_id as string, {
         ...(args.name !== undefined && { name: args.name }),
         ...(args.phone !== undefined && { phone: args.phone }),
         ...(args.email !== undefined && { email: args.email }),
@@ -93,25 +66,24 @@ async function tryRestRoute(
         ...(args.tags !== undefined && { tags: args.tags }),
         ...(args.source !== undefined && { source: args.source }),
         ...(args.value !== undefined && { value: args.value }),
-      }, traceId);
+      });
 
     // ── Orders ──
     case 'list_orders':
-      return restFetch('GET', '/api/workspace/orders', userId, undefined, traceId);
+      return listOrders(userId);
 
     case 'get_order': {
-      const orders = await restFetch('GET', '/api/workspace/orders', userId, undefined, traceId) as any[];
-      if (!Array.isArray(orders)) return orders;
-      const order = orders.find((o: any) => o.id === args.order_id);
+      const orders = await listOrders(userId);
+      const order = orders.find(o => o.id === args.order_id);
       return order || { error: 'Order not found' };
     }
 
     case 'create_order':
-      return restFetch('POST', '/api/workspace/orders', userId, {
+      return createOrder(userId, {
         description: args.notes as string || '',
         total: Number(args.total || 0),
         status: args.payment_status as string || 'pending',
-      }, traceId);
+      });
 
     case 'update_order': {
       if (!args.order_id) return { error: 'order_id required' };
@@ -119,36 +91,41 @@ async function tryRestRoute(
       if (args.payment_status) orderUpdates.status = args.payment_status;
       if (args.fulfillment_status) orderUpdates.status = args.fulfillment_status;
       if (args.notes) orderUpdates.description = args.notes;
-      return restFetch('PATCH', `/api/workspace/orders/${args.order_id}`, userId, orderUpdates, traceId);
+      return updateOrder(userId, args.order_id as string, orderUpdates);
     }
+
+    case 'delete_order':
+      if (!args.order_id) return { error: 'order_id required' };
+      return deleteOrder(userId, args.order_id as string);
 
     // ── Tasks ──
     case 'list_tasks':
-      return restFetch('GET', '/api/workspace/tasks', userId, undefined, traceId);
+      return listTasks(userId);
 
     case 'create_task':
-      return restFetch('POST', '/api/workspace/tasks', userId, {
-        title: args.title as string || args.description as string || '',
-      }, traceId);
+      return createTask(userId, args.title as string || args.description as string || '');
 
     case 'update_task': {
       if (!args.task_id) return { error: 'task_id required' };
       const taskUpdates: Record<string, unknown> = {};
       if (args.status === 'done' || args.done === true) taskUpdates.done = true;
       if (args.title) taskUpdates.title = args.title;
-      return restFetch('PATCH', `/api/workspace/tasks/${args.task_id}`, userId, taskUpdates, traceId);
+      return updateTask(userId, args.task_id as string, taskUpdates);
     }
+
+    case 'delete_task':
+      if (!args.task_id) return { error: 'task_id required' };
+      return deleteTask(userId, args.task_id as string);
 
     // ── Checkout Links / Storefronts ──
     case 'list_storefronts':
-      return restFetch('GET', '/api/workspace/checkout-links', userId, undefined, traceId);
+      return listCheckoutLinks(userId);
 
     case 'create_storefront':
-      return restFetch('POST', '/api/workspace/checkout-links', userId, {
-        orderId: args.title as string || '',
-        amount: Number(args.price || args.amount || 0),
+      return createCheckoutLink(userId, {
         label: args.title as string || '',
-      }, traceId);
+        amount: Number(args.price || args.amount || 0),
+      });
 
     case 'update_storefront': {
       if (!args.storefront_id) return { error: 'storefront_id required' };
@@ -156,46 +133,44 @@ async function tryRestRoute(
       if (args.title !== undefined) sfUpdates.label = args.title;
       if (args.description !== undefined) sfUpdates.label = args.description;
       if (args.price !== undefined) sfUpdates.amount = Number(args.price);
-      return restFetch('PATCH', `/api/workspace/checkout-links/${args.storefront_id}`, userId, sfUpdates, traceId);
+      return updateCheckoutLink(userId, args.storefront_id as string, sfUpdates);
     }
 
     case 'delete_storefront':
       if (!args.storefront_id) return { error: 'storefront_id required' };
-      return restFetch('DELETE', `/api/workspace/checkout-links/${args.storefront_id}`, userId, undefined, traceId);
+      return deleteCheckoutLink(userId, args.storefront_id as string);
 
     case 'mark_storefront_paid': {
       if (!args.storefront_id) return { error: 'storefront_id required' };
-      // Mark the checkout link as paid and create a payment record
-      const [patchResult] = await Promise.all([
-        restFetch('PATCH', `/api/workspace/checkout-links/${args.storefront_id}`, userId, { active: false }, traceId),
-      ]);
-      // Attempt to fetch the link to create a matching payment
-      const links = await restFetch('GET', '/api/workspace/checkout-links', userId, undefined, traceId) as any[];
-      const link = Array.isArray(links) ? links.find((l: any) => l.id === args.storefront_id) : null;
+      await updateCheckoutLink(userId, args.storefront_id as string, { active: false });
+      const links = await listCheckoutLinks(userId);
+      const link = links.find(l => l.id === args.storefront_id);
       if (link) {
-        await restFetch('POST', '/api/workspace/payments', userId, {
+        await createPayment(userId, {
           type: 'incoming',
           description: `Storefront payment: ${link.label || link.id}`,
           amount: Number(link.amount || 0),
           status: 'completed',
           method: 'storefront',
-        }, traceId);
+        });
       }
-      return { ok: true, message: 'Storefront marked as paid', storefront_id: args.storefront_id, ...patchResult as object };
+      return { ok: true, message: 'Storefront marked as paid', storefront_id: args.storefront_id };
     }
 
-    case 'send_storefront': {
+    case 'send_storefront':
       if (!args.storefront_id) return { error: 'storefront_id required' };
-      // Mark as sent (we don't actually send — draft-first). Return the link URL.
       return { ok: true, message: 'Storefront link ready to send (draft-first)', storefront_id: args.storefront_id };
-    }
+
+    case 'delete_checkout_link':
+      if (!args.link_id) return { error: 'link_id required' };
+      return deleteCheckoutLink(userId, args.link_id as string);
 
     // ── Products ──
     case 'list_products':
-      return restFetch('GET', '/api/workspace/products', userId, undefined, traceId);
+      return listProducts(userId);
 
     case 'create_product':
-      return restFetch('POST', '/api/workspace/products', userId, {
+      return createProduct(userId, {
         name: args.name as string || '',
         price: Number(args.price || 0),
         cost: Number(args.cost || 0),
@@ -205,7 +180,7 @@ async function tryRestRoute(
         category: args.category as string || '',
         description: args.description as string || '',
         image_url: args.image_url as string || '',
-      }, traceId);
+      });
 
     case 'update_product': {
       if (!args.product_id) return { error: 'product_id required' };
@@ -220,76 +195,57 @@ async function tryRestRoute(
       if (args.is_active !== undefined) updates.is_active = args.is_active;
       if (args.description !== undefined) updates.description = args.description;
       if (args.image_url !== undefined) updates.image_url = args.image_url;
-      return restFetch('PATCH', `/api/workspace/products/${args.product_id}`, userId, updates, traceId);
+      return updateProduct(userId, args.product_id as string, updates);
     }
 
     case 'delete_product':
       if (!args.product_id) return { error: 'product_id required' };
-      return restFetch('DELETE', `/api/workspace/products/${args.product_id}`, userId, undefined, traceId);
+      return deleteProduct(userId, args.product_id as string);
 
     // ── Payments ──
     case 'list_payments':
-      return restFetch('GET', '/api/workspace/payments', userId, undefined, traceId);
+      return listPayments(userId);
 
     case 'create_payment':
-      return restFetch('POST', '/api/workspace/payments', userId, {
+      return createPayment(userId, {
         type: args.type as string || 'incoming',
         description: args.description as string || '',
         amount: Number(args.amount || 0),
         status: args.status as string || 'pending',
         method: args.method as string || 'manual',
-      }, traceId);
+      });
+
+    case 'delete_payment':
+      if (!args.payment_id) return { error: 'payment_id required' };
+      return deletePayment(userId, args.payment_id as string);
 
     // ── Business Summary (computed) ──
     case 'business_summary': {
       const [leads, orders, payments] = await Promise.all([
-        restFetch('GET', '/api/workspace/leads', userId, undefined, traceId),
-        restFetch('GET', '/api/workspace/orders', userId, undefined, traceId),
-        restFetch('GET', '/api/workspace/payments', userId, undefined, traceId),
+        listLeads(userId), listOrders(userId), listPayments(userId),
       ]);
-      const leadsArr = Array.isArray(leads) ? leads : [];
-      const ordersArr = Array.isArray(orders) ? orders : [];
-      const paymentsArr = Array.isArray(payments) ? payments : [];
-      const totalRevenue = ordersArr.reduce((sum: number, o: any) => sum + Number(o.amount || o.total || 0), 0);
-      const completedPayments = paymentsArr.filter((p: any) => p.status === 'completed');
-      const collectedRevenue = completedPayments.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+      const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+      const completedPayments = payments.filter(p => p.status === 'completed');
+      const collectedRevenue = completedPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
       return {
-        contacts: leadsArr.length,
-        orders: ordersArr.length,
+        contacts: leads.length,
+        orders: orders.length,
         total_revenue: totalRevenue,
         collected_revenue: collectedRevenue,
-        pending_orders: ordersArr.filter((o: any) => o.status === 'pending').length,
+        pending_orders: orders.filter(o => o.status === 'pending').length,
       };
     }
 
-    // ── Delete operations ──
-    case 'delete_order':
-      if (!args.order_id) return { error: 'order_id required' };
-      return restFetch('DELETE', `/api/workspace/orders/${args.order_id}`, userId, undefined, traceId);
-
-    case 'delete_task':
-      if (!args.task_id) return { error: 'task_id required' };
-      return restFetch('DELETE', `/api/workspace/tasks/${args.task_id}`, userId, undefined, traceId);
-
-    case 'delete_checkout_link':
-      if (!args.link_id) return { error: 'link_id required' };
-      return restFetch('DELETE', `/api/workspace/checkout-links/${args.link_id}`, userId, undefined, traceId);
-
-    case 'delete_payment':
-      if (!args.payment_id) return { error: 'payment_id required' };
-      return restFetch('DELETE', `/api/workspace/payments/${args.payment_id}`, userId, undefined, traceId);
-
     // ── Dashboard Metrics ──
     case 'dashboard_metrics':
-      return restFetch('GET', '/api/workspace/dashboard', userId, undefined, traceId);
+      return getDashboardMetrics(userId);
 
     // ── Feedback ──
     case 'submit_feedback':
-      // Store as a note on a contact or log it
       return { ok: true, message: 'Feedback recorded', ...args };
 
     default:
-      return null; // Not a REST-handled tool
+      return null; // Not a workspace tool
   }
 }
 
@@ -312,14 +268,14 @@ export async function callWorkspaceMcp(
 
   log.info('call', { tool: toolName, trace_id: traceId });
 
-  // ── Try workspace REST API first ──
+  // ── Try local workspace DB first (zero network hop) ──
   try {
-    const restResult = await tryRestRoute(toolName, args, effectiveUserId, traceId);
-    if (restResult !== null) {
-      return restResult;
+    const localResult = await tryLocalRoute(toolName, args, effectiveUserId);
+    if (localResult !== null) {
+      return localResult;
     }
   } catch (err) {
-    log.error('REST route failed', { tool: toolName, detail: (err as Error).message, trace_id: traceId });
+    log.error('Local route failed', { tool: toolName, detail: (err as Error).message, trace_id: traceId });
     // Fall through to MCP
   }
 

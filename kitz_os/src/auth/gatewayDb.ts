@@ -212,3 +212,177 @@ async function upgradePasswordHash(email: string, newHash: string): Promise<void
   const memUser = memoryUsers.get(email.toLowerCase());
   if (memUser) memUser.passwordHash = newHash;
 }
+
+// ── Phone / WhatsApp identity (Phase 1b) ──────────────────────────────
+
+/** Find user by phone number (E.164 format, e.g. +50761234567) */
+export async function findUserByPhone(phone: string): Promise<UserRecord | null> {
+  if (!phone) return null;
+
+  if (USE_SUPABASE) {
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/users?phone=eq.${encodeURIComponent(phone)}&limit=1`,
+        {
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
+          signal: AbortSignal.timeout(5_000),
+        },
+      );
+      if (res.ok) {
+        const rows = await res.json() as Record<string, unknown>[];
+        if (rows.length > 0) return rowToUser(rows[0]);
+      }
+    } catch { /* fall through */ }
+  }
+
+  // In-memory fallback: scan by phone
+  for (const u of memoryUsers.values()) {
+    if ((u as any).phone === phone) return u;
+  }
+  return null;
+}
+
+/** Create a phone-only user (WhatsApp magic-link signup) */
+export async function createUserByPhone(
+  phone: string,
+  name: string,
+): Promise<UserRecord> {
+  const user: UserRecord = {
+    id: randomUUID(),
+    email: `${phone.replace(/\+/g, '')}@phone.kitz.services`, // synthetic email for backward compat
+    name,
+    passwordHash: '',
+    orgId: randomUUID(),
+    createdAt: new Date().toISOString(),
+    authProvider: 'email', // will become 'whatsapp' after migration runs
+  };
+
+  if (USE_SUPABASE) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Prefer': 'return=representation',
+        },
+        body: JSON.stringify({
+          id: user.id, email: user.email, name: user.name,
+          password_hash: '', org_id: user.orgId,
+          auth_provider: 'email', phone,
+          created_at: user.createdAt,
+        }),
+        signal: AbortSignal.timeout(5_000),
+      });
+      if (res.ok) {
+        const rows = await res.json() as Record<string, unknown>[];
+        if (rows.length > 0) return rowToUser(rows[0]);
+      }
+    } catch { /* fall through to memory */ }
+  }
+
+  (user as any).phone = phone;
+  memoryUsers.set(user.email, user);
+  return user;
+}
+
+/** Link a WhatsApp JID to an existing user */
+export async function linkWhatsAppToUser(userId: string, phone: string, whatsappJid: string): Promise<void> {
+  if (USE_SUPABASE) {
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
+        body: JSON.stringify({ phone, whatsapp_jid: whatsappJid, updated_at: new Date().toISOString() }),
+        signal: AbortSignal.timeout(5_000),
+      });
+    } catch { /* best effort */ }
+  }
+}
+
+// ── Magic-Link Tokens ─────────────────────────────────────────────────
+
+export interface MagicLinkToken {
+  id: string;
+  userId: string | null;
+  phone: string;
+  token: string;
+  expiresAt: string;
+  usedAt: string | null;
+}
+
+const memoryTokens = new Map<string, MagicLinkToken>();
+
+/** Create a magic-link token for a phone number (10 min expiry) */
+export async function createMagicLinkToken(phone: string, userId: string | null): Promise<MagicLinkToken> {
+  const token = randomUUID().replace(/-/g, '');
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  const record: MagicLinkToken = { id: randomUUID(), userId, phone, token, expiresAt, usedAt: null };
+
+  if (USE_SUPABASE) {
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/magic_link_tokens`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+        },
+        body: JSON.stringify({
+          id: record.id, user_id: userId, phone, token, expires_at: expiresAt,
+        }),
+        signal: AbortSignal.timeout(5_000),
+      });
+    } catch { /* fall through to memory */ }
+  }
+
+  memoryTokens.set(token, record);
+  return record;
+}
+
+/** Verify and consume a magic-link token. Returns the token record if valid. */
+export async function verifyMagicLinkToken(token: string): Promise<MagicLinkToken | null> {
+  // Try Supabase first
+  if (USE_SUPABASE) {
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/magic_link_tokens?token=eq.${encodeURIComponent(token)}&used_at=is.null&limit=1`,
+        {
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
+          signal: AbortSignal.timeout(5_000),
+        },
+      );
+      if (res.ok) {
+        const rows = await res.json() as Record<string, unknown>[];
+        if (rows.length > 0) {
+          const row = rows[0];
+          const expiresAt = new Date(String(row.expires_at));
+          if (expiresAt < new Date()) return null; // expired
+
+          // Mark as used
+          await fetch(`${SUPABASE_URL}/rest/v1/magic_link_tokens?id=eq.${row.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
+            body: JSON.stringify({ used_at: new Date().toISOString() }),
+            signal: AbortSignal.timeout(5_000),
+          });
+
+          return {
+            id: String(row.id), userId: row.user_id ? String(row.user_id) : null,
+            phone: String(row.phone), token: String(row.token),
+            expiresAt: String(row.expires_at), usedAt: new Date().toISOString(),
+          };
+        }
+      }
+    } catch { /* fall through */ }
+  }
+
+  // Memory fallback
+  const record = memoryTokens.get(token);
+  if (!record || record.usedAt) return null;
+  if (new Date(record.expiresAt) < new Date()) return null;
+  record.usedAt = new Date().toISOString();
+  memoryTokens.delete(token);
+  return record;
+}

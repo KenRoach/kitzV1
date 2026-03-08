@@ -1,8 +1,8 @@
 import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import formbody from '@fastify/formbody';
-import { randomUUID, createHash, createHmac } from 'node:crypto';
-import { createTraceId, type StandardError } from 'kitz-schemas';
+import { randomUUID, createHash } from 'node:crypto';
+import { createTraceId, type StandardError, extractAuthFromHeaders, signJwt } from 'kitz-schemas';
 import {
   listLeads as dbListLeads, createLead as dbCreateLead, updateLead as dbUpdateLead, deleteLead as dbDeleteLead,
   listOrders as dbListOrders, createOrder as dbCreateOrder, updateOrder as dbUpdateOrder, deleteOrder as dbDeleteOrder,
@@ -36,25 +36,22 @@ if (!JWT_SECRET) {
   process.exit(1);
 }
 
-/* ── Inline Auth (no gateway round-trip) ── */
+/* ── Auth (shared JWT from kitz-schemas) ── */
 
 interface UserRecord { id: string; email: string; name: string; passwordHash: string; orgId: string; }
-const registeredUsers = new Map<string, UserRecord>(); // email → user
+const registeredUsers = new Map<string, UserRecord>(); // email → user (legacy HTML pages only)
 
 function hashPw(pw: string): string { return createHash('sha256').update(pw).digest('hex'); }
 
-function b64url(buf: Buffer): string { return buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+const SERVICE_SECRET = process.env.SERVICE_SECRET || '';
 
 function mintJwt(userId: string, orgId: string): string {
   const now = Math.floor(Date.now() / 1000);
-  const header = b64url(Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })));
-  const payload = b64url(Buffer.from(JSON.stringify({
+  return signJwt({
     sub: userId, org_id: orgId,
     scopes: ['battery:read', 'payments:write', 'tools:invoke', 'events:write', 'notifications:write', 'messages:write'],
     iat: now, exp: now + 604800,
-  })));
-  const sig = b64url(createHmac('sha256', JWT_SECRET).update(`${header}.${payload}`).digest());
-  return `${header}.${payload}.${sig}`;
+  }, JWT_SECRET);
 }
 
 const ELEVENLABS_AGENT_ID = process.env.ELEVENLABS_AGENT_ID || '';
@@ -1550,9 +1547,14 @@ app.get('/api/ops/metrics', async () => {
 
 /* ── JSON REST API for UI (Bearer token auth) ── */
 
-/** Extract userId from Bearer JWT, service header, or cookie session */
+/** Extract userId from Bearer JWT, service header, or cookie session.
+ *  Uses shared extractAuthFromHeaders from kitz-schemas for JWT + service-secret validation. */
 function getApiUser(req: any): { userId: string; orgId: string } | null {
-  // Try service-to-service auth (kitz_os → workspace): x-user-id header with JWT_SECRET as Bearer
+  // 1. Try shared auth (JWT, service-secret, dev-secret)
+  const result = extractAuthFromHeaders(req.headers as Record<string, string | string[] | undefined>, JWT_SECRET, SERVICE_SECRET);
+  if (result) return { userId: result.userId, orgId: result.orgId };
+
+  // 2. Legacy: service-to-service with raw JWT_SECRET as Bearer (kitz_os mcpClient pattern)
   const serviceUserId = req.headers?.['x-user-id'] as string | undefined;
   const authHeader = req.headers?.authorization as string | undefined;
   if (serviceUserId && authHeader) {
@@ -1561,24 +1563,8 @@ function getApiUser(req: any): { userId: string; orgId: string } | null {
       return { userId: serviceUserId, orgId: '' };
     }
   }
-  // Try Bearer JWT token (UI sends this)
-  if (authHeader) {
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
-    try {
-      const parts = token.split('.');
-      if (parts.length === 3) {
-        // Verify signature
-        const sigCheck = b64url(createHmac('sha256', JWT_SECRET).update(`${parts[0]}.${parts[1]}`).digest());
-        if (sigCheck === parts[2]) {
-          const payload = JSON.parse(Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString());
-          if (payload.sub && payload.exp && payload.exp > Math.floor(Date.now() / 1000)) {
-            return { userId: payload.sub, orgId: payload.org_id || '' };
-          }
-        }
-      }
-    } catch { /* fall through to cookie */ }
-  }
-  // Fall back to cookie session
+
+  // 3. Fall back to cookie session (legacy HTML pages)
   const session = getSession(req);
   if (session) return { userId: session.userId, orgId: session.orgId };
   return null;
