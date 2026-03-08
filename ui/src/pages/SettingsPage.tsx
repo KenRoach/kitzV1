@@ -69,7 +69,7 @@ export function SettingsPage() {
             >
               <option value="English">English</option>
               <option value="Español">Español</option>
-              <option value="Auto-detect">Auto-detect</option>
+              <option value="Auto-detect">{t('settings.autoDetect')}</option>
             </select>
           </FieldRow>
         </SettingsSection>
@@ -88,9 +88,9 @@ export function SettingsPage() {
               onChange={(e) => settings.setAgentDigest(e.target.value as 'Off' | 'Daily' | 'Weekly')}
               className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 outline-none focus:border-purple-500"
             >
-              <option value="Off">Off</option>
-              <option value="Daily">Daily</option>
-              <option value="Weekly">Weekly</option>
+              <option value="Off">{t('settings.off')}</option>
+              <option value="Daily">{t('settings.daily')}</option>
+              <option value="Weekly">{t('settings.weekly')}</option>
             </select>
           </FieldRow>
         </SettingsSection>

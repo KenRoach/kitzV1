@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
+import { useTranslation } from '@/lib/i18n'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -10,6 +11,7 @@ export function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
+  const { t } = useTranslation()
 
   // If already logged in, redirect to dashboard
   useEffect(() => {
@@ -42,7 +44,7 @@ export function LoginPage() {
               KITZ
             </span>
           </h1>
-          <p className="mt-2 text-sm text-purple-300/60">Your hustle deserves infrastructure</p>
+          <p className="mt-2 text-sm text-purple-300/60">{t('auth.tagline')}</p>
         </div>
 
         {/* Email/Password Form */}
@@ -50,7 +52,7 @@ export function LoginPage() {
           {mode === 'signup' && (
             <input
               type="text"
-              placeholder="Name"
+              placeholder={t('auth.namePlaceholder')}
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/50 focus:ring-2 focus:ring-white/20"
@@ -58,7 +60,7 @@ export function LoginPage() {
           )}
           <input
             type="email"
-            placeholder="Email"
+            placeholder={t('auth.emailPlaceholder')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -66,7 +68,7 @@ export function LoginPage() {
           />
           <input
             type="password"
-            placeholder="Password"
+            placeholder={t('auth.passwordPlaceholder')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -78,7 +80,7 @@ export function LoginPage() {
             disabled={isLoading}
             className="w-full rounded-xl bg-purple-600 py-2.5 text-sm font-medium text-white transition hover:bg-purple-500 disabled:opacity-50"
           >
-            {isLoading ? 'Loading...' : mode === 'login' ? 'Sign in' : 'Create account'}
+            {isLoading ? t('loading') : mode === 'login' ? t('auth.signIn') : t('auth.createAccount')}
           </button>
         </form>
 
@@ -86,16 +88,16 @@ export function LoginPage() {
         <p className="text-center text-xs text-white/40">
           {mode === 'login' ? (
             <>
-              No account?{' '}
+              {t('auth.noAccount')}{' '}
               <button onClick={() => setMode('signup')} className="text-purple-300 hover:underline">
-                Sign up
+                {t('auth.signUp')}
               </button>
             </>
           ) : (
             <>
-              Already have an account?{' '}
+              {t('auth.alreadyHaveAccount')}{' '}
               <button onClick={() => setMode('login')} className="text-purple-300 hover:underline">
-                Sign in
+                {t('auth.signIn')}
               </button>
             </>
           )}
