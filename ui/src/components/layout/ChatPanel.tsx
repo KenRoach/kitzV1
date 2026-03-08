@@ -79,7 +79,7 @@ export function CommandCenter() {
         {messages.length === 0 && (
           <div className="space-y-4 pt-2">
             {/* Quick action buttons */}
-            <div className="flex items-center gap-2" role="group" aria-label="Quick actions">
+            <div className="flex items-center gap-2 overflow-x-auto" role="group" aria-label="Quick actions">
               {QUICK_ACTIONS.map((action) => {
                 const Icon = action.icon
                 return (
@@ -89,9 +89,9 @@ export function CommandCenter() {
                       setInput(t(action.promptKey))
                       inputRef.current?.focus()
                     }}
-                    className="flex items-center gap-1.5 rounded-lg border border-purple-400/30 bg-purple-500/10 px-3 py-1.5 text-xs font-medium text-purple-300 transition hover:bg-purple-500/20 hover:text-purple-200"
+                    className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-purple-400/30 bg-purple-500/10 px-3 py-1.5 text-xs font-medium text-purple-300 transition hover:bg-purple-500/20 hover:text-purple-200"
                   >
-                    <Icon className="h-3.5 w-3.5" />
+                    <Icon className="h-3.5 w-3.5 shrink-0" />
                     {t(action.labelKey)}
                   </button>
                 )
