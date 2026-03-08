@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MessageCircle, ShoppingCart, Users, Calendar, Zap, ArrowRight, Sparkles } from 'lucide-react'
+import { MessageCircle, ShoppingCart, Users, Calendar, Zap, ArrowRight } from 'lucide-react'
 
 interface MobileLandingPageProps {
   onEnter: () => void
@@ -64,7 +64,7 @@ export function MobileLandingPage({ onEnter }: MobileLandingPageProps) {
           onClick={() => setShowFeatures(true)}
           className="mt-8 flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 px-8 py-3.5 text-sm font-semibold shadow-lg shadow-purple-500/30 transition-all active:scale-95"
         >
-          <Sparkles className="h-4 w-4" />
+          <Zap className="h-4 w-4" />
           Que puedo hacer por ti?
         </button>
       </div>

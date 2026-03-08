@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { PhoneOff, ArrowUp, Sparkles, Mic, MicOff, Globe } from 'lucide-react'
+import { PhoneOff, ArrowUp, Zap, Mic, MicOff, Globe, Loader } from 'lucide-react'
 import { useOrbStore } from '@/stores/orbStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useAgentThinkingStore } from '@/stores/agentThinkingStore'
@@ -318,7 +318,7 @@ export function TalkToKitzModal() {
       {/* Top bar */}
       <div className="flex w-full items-center justify-between px-6 py-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-purple-400" />
+          <Zap className="h-4 w-4 text-purple-400" />
           <span className="text-sm font-medium text-white/80">Kitz AI</span>
         </div>
 
@@ -393,9 +393,9 @@ export function TalkToKitzModal() {
           {micState === 'listening' ? (
             <MicOff className="h-10 w-10 text-white" />
           ) : micState === 'transcribing' ? (
-            <Sparkles className="h-10 w-10 text-white animate-spin" />
+            <Loader className="h-10 w-10 text-white animate-spin" />
           ) : speaking ? (
-            <Sparkles className="h-10 w-10 text-white" />
+            <Mic className="h-10 w-10 text-white" />
           ) : (
             <Mic className="h-10 w-10 text-white" />
           )}
