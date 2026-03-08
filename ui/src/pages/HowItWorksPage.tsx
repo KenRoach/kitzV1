@@ -1,48 +1,89 @@
 import {
   MessageCircle,
   Brain,
-  Zap,
   Shield,
   Users,
-  ArrowRight,
+  ArrowDown,
   CheckCircle2,
   Clock,
   DollarSign,
   Globe,
+  Cpu,
+  FileText,
+  Send,
+  Eye,
+  Layers,
+  Bot,
 } from 'lucide-react'
 import { PageHeader } from '@/components/home/PageHeader'
 import { KITZ_MANIFEST } from '@/content/kitz-manifest'
 
-/* ── Steps ── */
-const steps = [
+/* ── End-to-End Flow ── */
+const e2eSteps = [
   {
-    number: '01',
-    title: 'You talk, KITZ listens',
-    description:
-      'Send a message via WhatsApp or the web chat. KITZ understands your intent in your language — English or Spanish.',
+    phase: 'INPUT',
+    title: 'You send a message',
+    description: 'Type in the Command Center (left panel) or send a WhatsApp message. KITZ understands English and Spanish.',
     icon: MessageCircle,
+    detail: 'Web chat, WhatsApp, or voice — all channels feed into the same AI engine.',
   },
   {
-    number: '02',
-    title: 'AI agents get to work',
-    description:
-      'Your request is routed to the right specialist team. 100+ agents across sales, marketing, operations, and finance collaborate behind the scenes.',
+    phase: 'READ',
+    title: 'Intent recognition',
+    description: 'Claude Haiku reads your message and understands what you need — create an invoice, follow up with a lead, draft an email, etc.',
+    icon: Eye,
+    detail: 'Phase 1 of the 5-phase semantic router. Fast, accurate intent classification.',
+  },
+  {
+    phase: 'COMPREHEND',
+    title: 'Entity extraction',
+    description: 'KITZ extracts names, amounts, dates, and context from your message. It pulls in your CRM data, order history, and business context.',
+    icon: Layers,
+    detail: 'Phase 2. Enriches the request with data from your workspace (contacts, orders, products).',
+  },
+  {
+    phase: 'BRAINSTORM',
+    title: 'Tool strategy',
+    description: 'The AI plans which tools to use — CRM lookups, invoice generation, email drafting, payment links, and more. Complex requests use Claude Sonnet.',
     icon: Brain,
+    detail: `Phase 3. Picks from ${KITZ_MANIFEST.capabilities.tools}+ tools across ${KITZ_MANIFEST.capabilities.agentTeams} domains.`,
   },
   {
-    number: '03',
-    title: 'Draft-first, always',
-    description:
-      'Nothing goes out without your approval. Every message, action, and decision is drafted first — you review and decide.',
+    phase: 'EXECUTE',
+    title: 'Agents do the work',
+    description: 'Tools are called in sequence — real API calls to your CRM, Google Sheets, Shopify, Stripe, Gmail, and more. Results are collected and formatted.',
+    icon: Cpu,
+    detail: 'Phase 4. Uses OpenAI gpt-4o-mini for tool routing (fastest + cheapest). Falls back to Claude.',
+  },
+  {
+    phase: 'CANVAS',
+    title: 'Artifact generated',
+    description: 'The output becomes a branded HTML artifact — invoice, email, landing page, plan, report. It appears in the Canvas (right panel) with action buttons.',
+    icon: FileText,
+    detail: 'Every meaningful output gets Save PDF, Send Email, Send WhatsApp action buttons.',
+  },
+  {
+    phase: 'REVIEW',
+    title: 'You approve or edit',
+    description: 'Nothing goes out without your say. Review the artifact, click Approve to send, or ask KITZ to edit it. Draft-first, always.',
     icon: Shield,
+    detail: 'Draft-first governance. Kill-switch available. Full audit trail on every action.',
   },
   {
-    number: '04',
-    title: 'Results, not busywork',
-    description:
-      'Invoices sent, leads scored, orders tracked, customers followed up — real business outcomes delivered in minutes, not days.',
-    icon: Zap,
+    phase: 'DELIVER',
+    title: 'Real business outcome',
+    description: 'Invoice sent. Lead scored. Order tracked. Email delivered. Payment link live. Your business moved forward in seconds, not hours.',
+    icon: Send,
+    detail: 'Results flow back to WhatsApp, email, or wherever your customers are.',
   },
+] as const
+
+/* ── How the AI Battery Works ── */
+const batteryFacts = [
+  { label: '1 credit', value: '≈ 1,000 LLM tokens or 500 voice characters' },
+  { label: 'Daily limit', value: `${KITZ_MANIFEST.governance.aiBatteryDailyLimit} credits (configurable)` },
+  { label: 'ROI rule', value: `If projected ROI < ${KITZ_MANIFEST.governance.roiMinimum}, KITZ recommends manual mode` },
+  { label: 'Pricing', value: '100 credits / $5 — 500 / $20 — 2,000 / $60' },
 ] as const
 
 /* ── Principles ── */
@@ -55,29 +96,27 @@ const principles = [
   {
     icon: Shield,
     title: 'You are always in control',
-    description:
-      'Draft-first governance means AI never acts without your approval. Kill-switch available at any time.',
+    description: 'Draft-first governance means AI never acts without your approval. Kill-switch available at any time.',
   },
   {
     icon: DollarSign,
     title: 'Pay only for what you use',
-    description: `AI Battery credits power everything. ${KITZ_MANIFEST.governance.aiBatteryDailyLimit} credits/day limit ensures you never overspend. ROI minimum: ${KITZ_MANIFEST.governance.roiMinimum}.`,
+    description: `AI Battery credits power everything. ${KITZ_MANIFEST.governance.aiBatteryDailyLimit} credits/day limit ensures you never overspend.`,
   },
   {
     icon: Globe,
     title: 'Built for Latin America',
-    description:
-      'WhatsApp-first, Spanish + English, Panama compliance, and payment methods your customers actually use.',
+    description: 'WhatsApp-first, Spanish + English, Panama compliance, and payment methods your customers actually use.',
   },
   {
     icon: Users,
     title: 'Fortune 500 infrastructure, SMB price',
-    description: `${KITZ_MANIFEST.capabilities.agentTeams} specialist teams, ${KITZ_MANIFEST.capabilities.totalAgents}+ agents, and ${KITZ_MANIFEST.capabilities.tools}+ tools — the same capabilities big companies have.`,
+    description: `${KITZ_MANIFEST.capabilities.agentTeams} specialist teams, ${KITZ_MANIFEST.capabilities.totalAgents}+ agents, and ${KITZ_MANIFEST.capabilities.tools}+ tools.`,
   },
   {
-    icon: CheckCircle2,
-    title: 'SOPs keep things consistent',
-    description: `${KITZ_MANIFEST.capabilities.sops} standard operating procedures ensure every customer gets the same quality experience, every time.`,
+    icon: Bot,
+    title: `${KITZ_MANIFEST.capabilities.totalAgents}+ AI agents`,
+    description: 'Sales, marketing, operations, finance, compliance — specialist agents collaborate behind the scenes on every request.',
   },
 ] as const
 
@@ -86,48 +125,65 @@ export function HowItWorksPage() {
   return (
     <div className="mx-auto max-w-6xl px-6 py-8 pb-12">
       <PageHeader
-        title="How It Works"
-        description="Every interaction follows the same simple path — from message to business outcome"
+        title="How KITZ Works"
+        description="End-to-end: from your message to real business outcomes — every step explained"
       />
 
-      {/* ── 4-Step Flow ── */}
+      {/* ── End-to-End Pipeline ── */}
       <section className="mt-2">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {steps.map((step, i) => {
+        <div className="space-y-3">
+          {e2eSteps.map((step, i) => {
             const Icon = step.icon
             return (
-              <div
-                key={step.number}
-                className="relative flex flex-col rounded-2xl border border-gray-200 bg-white p-5"
-              >
-                {/* Arrow connector (hidden on last + mobile) */}
-                {i < steps.length - 1 && (
-                  <ArrowRight className="absolute -right-3 top-1/2 hidden h-5 w-5 -translate-y-1/2 text-gray-300 lg:block" />
+              <div key={step.phase}>
+                <div className="flex items-start gap-4 rounded-2xl border border-gray-200 bg-white p-5">
+                  <div className="flex flex-col items-center gap-1 pt-0.5">
+                    <span className="font-mono text-[10px] font-bold text-purple-400">{step.phase}</span>
+                    <Icon className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-black">{step.title}</h4>
+                    <p className="mt-1 text-xs leading-relaxed text-gray-500">{step.description}</p>
+                    <p className="mt-1.5 text-[11px] text-gray-400 italic">{step.detail}</p>
+                  </div>
+                </div>
+                {/* Arrow connector */}
+                {i < e2eSteps.length - 1 && (
+                  <div className="flex justify-center py-1">
+                    <ArrowDown className="h-4 w-4 text-gray-300" />
+                  </div>
                 )}
-
-                <span className="text-xs font-bold text-gray-300">{step.number}</span>
-                <Icon className="mt-3 h-5 w-5 text-purple-500" />
-                <h4 className="mt-3 text-sm font-semibold text-black">{step.title}</h4>
-                <p className="mt-1 text-xs leading-relaxed text-gray-500">{step.description}</p>
               </div>
             )
           })}
         </div>
       </section>
 
+      {/* ── AI Battery ── */}
+      <section className="mt-12">
+        <h3 className="text-lg font-bold text-black">AI Battery — Credit System</h3>
+        <p className="mt-1 text-sm text-gray-500">Every AI action consumes credits. You control how they're spent.</p>
+
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {batteryFacts.map((f) => (
+            <div key={f.label} className="rounded-xl border border-gray-200 bg-white p-4">
+              <span className="text-xs font-bold text-purple-600">{f.label}</span>
+              <p className="mt-1 text-sm text-gray-700">{f.value}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ── Principles ── */}
       <section className="mt-12">
-        <h3 className="text-lg font-bold text-black">Our Principles</h3>
+        <h3 className="text-lg font-bold text-black">Principles</h3>
         <p className="mt-1 text-sm text-gray-500">What makes KITZ different from other tools</p>
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {principles.map((p) => {
             const Icon = p.icon
             return (
-              <div
-                key={p.title}
-                className="rounded-2xl border border-gray-200 bg-white p-5"
-              >
+              <div key={p.title} className="rounded-2xl border border-gray-200 bg-white p-5">
                 <Icon className="h-5 w-5 text-purple-500" />
                 <h4 className="mt-3 text-sm font-semibold text-black">{p.title}</h4>
                 <p className="mt-1 text-xs leading-relaxed text-gray-500">{p.description}</p>

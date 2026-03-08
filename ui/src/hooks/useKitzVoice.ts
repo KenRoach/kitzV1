@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react'
-import { useOrbStore } from '@/stores/orbStore'
 
 export function useKitzVoice() {
   const [speaking, setSpeaking] = useState(false)
@@ -13,7 +12,6 @@ export function useKitzVoice() {
     }
 
     setSpeaking(true)
-    useOrbStore.getState().setSpeaking(true)
 
     try {
       const res = await fetch('/api/kitz/voice/speak', {
@@ -34,19 +32,16 @@ export function useKitzVoice() {
 
       audio.onended = () => {
         setSpeaking(false)
-        useOrbStore.getState().setSpeaking(false)
         audioRef.current = null
       }
       audio.onerror = () => {
         setSpeaking(false)
-        useOrbStore.getState().setSpeaking(false)
         audioRef.current = null
       }
 
       await audio.play()
     } catch {
       setSpeaking(false)
-      useOrbStore.getState().setSpeaking(false)
     }
   }
 
@@ -56,7 +51,6 @@ export function useKitzVoice() {
       audioRef.current = null
     }
     setSpeaking(false)
-    useOrbStore.getState().setSpeaking(false)
   }
 
   return { speak, stop, speaking }

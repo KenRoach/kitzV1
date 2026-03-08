@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { apiFetch } from '@/lib/api'
 
 export interface AgentResult {
   agent: string
@@ -40,9 +41,6 @@ interface SimulationStore {
   clearResult: () => void
 }
 
-const API_BASE = import.meta.env.VITE_KITZ_OS_URL || 'http://localhost:3012'
-const DEV_SECRET = import.meta.env.VITE_DEV_TOKEN_SECRET || ''
-
 export const useSimulationStore = create<SimulationStore>((set) => ({
   running: false,
   lastResult: null,
@@ -51,13 +49,8 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
   startSimulation: async (options) => {
     set({ running: true, error: null })
     try {
-      const res = await fetch(`${API_BASE}/api/kitz/swarm/run`, {
+      const result = await apiFetch<SwarmResult>('/api/kitz/swarm/run', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-dev-secret': DEV_SECRET,
-          'x-service-secret': DEV_SECRET,
-        },
         body: JSON.stringify({
           teams: options?.teams,
           dryRun: options?.dryRun ?? false,
@@ -65,8 +58,6 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
           timeoutMs: 60_000,
         }),
       })
-      if (!res.ok) throw new Error(`Swarm failed: ${res.status}`)
-      const result = (await res.json()) as SwarmResult
       set({ running: false, lastResult: result })
     } catch (err) {
       set({ running: false, error: (err as Error).message })

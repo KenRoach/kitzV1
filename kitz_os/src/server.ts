@@ -80,8 +80,40 @@ function detectLanguage(text: string): string {
   return 'es'; // Default to Spanish (LatAm target market)
 }
 
+/** Escape user-controlled values before injecting into HTML */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** Sanitize a CSS color value — only allow hex colors, rgb(), and named colors */
+function sanitizeColor(color: string): string {
+  if (/^#[0-9a-fA-F]{3,8}$/.test(color)) return color;
+  if (/^rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$/.test(color)) return color;
+  if (/^[a-zA-Z]{1,20}$/.test(color)) return color;
+  return '#A855F7'; // fallback to brand purple
+}
+
 function buildExpiredArtifactHtml(baseUrl: string): string {
-  const bk = getBrandKit();
+  const rawBk = getBrandKit();
+  // Sanitize all user-controlled brand kit values before HTML injection
+  const bk = {
+    ...rawBk,
+    businessName: escapeHtml(rawBk.businessName),
+    tagline: rawBk.tagline ? escapeHtml(rawBk.tagline) : '',
+    language: rawBk.language,
+    colors: {
+      primary: sanitizeColor(rawBk.colors.primary),
+      secondary: sanitizeColor(rawBk.colors.secondary),
+      accent: sanitizeColor(rawBk.colors.accent),
+      background: sanitizeColor(rawBk.colors.background),
+      text: sanitizeColor(rawBk.colors.text),
+    },
+  };
   return `<!DOCTYPE html>
 <html lang="${bk.language}">
 <head>
@@ -223,6 +255,8 @@ export async function createServer(kernel: KitzKernel) {
     // Skip auth for health, status, OAuth callbacks, webhook endpoints, and static SPA assets
     const path = req.url.split('?')[0];
     const isStaticAsset = (req.method === 'GET' || req.method === 'HEAD') && !path.startsWith('/api/');
+    // Artifact GET (preview) is public; artifact POST (actions) requires auth
+    const isArtifactPreview = path.startsWith('/api/kitz/artifact/') && !path.endsWith('/action') && req.method === 'GET';
     const skipAuth = isStaticAsset ||
       path === '/health' ||
       path === '/api/kitz/status' ||
@@ -231,14 +265,15 @@ export async function createServer(kernel: KitzKernel) {
       path.startsWith('/api/payments/webhook/') ||
       path.startsWith('/api/kitz/oauth/google/callback') ||
       path.startsWith('/api/whatsapp/') ||
-      path.startsWith('/api/kitz/artifact/') ||
+      isArtifactPreview ||
       path.startsWith('/api/gateway/auth/');
     if (skipAuth) return;
 
     // 1. Service-to-service auth (x-service-secret or x-dev-secret)
     const secret = req.headers['x-service-secret'] as string | undefined;
     const devSecret = req.headers['x-dev-secret'] as string | undefined;
-    if (secret === SERVICE_SECRET || devSecret === process.env.DEV_TOKEN_SECRET) return;
+    if (SERVICE_SECRET && secret === SERVICE_SECRET) return;
+    if (process.env.DEV_TOKEN_SECRET && devSecret === process.env.DEV_TOKEN_SECRET) return;
 
     // 2. Bearer JWT from UI (same JWT_SECRET as gateway)
     const authHeader = req.headers.authorization as string | undefined;
@@ -248,10 +283,8 @@ export async function createServer(kernel: KitzKernel) {
       if (payload?.sub) return; // Valid JWT — allow through
     }
 
-    // No valid auth found
-    if (SERVICE_SECRET) {
-      return reply.code(401).send({ error: 'Unauthorized: missing or invalid credentials' });
-    }
+    // No valid auth found — always reject
+    return reply.code(401).send({ error: 'Unauthorized: missing or invalid credentials' });
   });
 
   // ── Health check — verifies downstream connectivity ──
@@ -630,6 +663,8 @@ export async function createServer(kernel: KitzKernel) {
                 previewUrl: artifact.previewUrl,
                 category: artifact.category,
                 title: artifact.title,
+                actions: artifact.actions,
+                status: artifact.status,
               };
               responsePayload.attachments = [{
                 type: 'html',
@@ -1691,12 +1726,27 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
     return { cleared: true };
   });
 
-  // ── Knowledge Ingest — swarm findings go here instead of /api/kitz ──
+  // ── Knowledge Center — CRUD for user knowledge base (RAG context) ──
+  app.get('/api/kitz/knowledge', async (_req, _reply) => {
+    const { getKnowledge } = await import('./memory/manager.js');
+    return { entries: getKnowledge() };
+  });
+
   app.post('/api/kitz/knowledge', async (req, reply) => {
     const { source, category, content, title } = req.body as Record<string, string> || {};
     if (!content) return reply.code(400).send({ error: 'content required' });
     const { upsertKnowledge } = await import('./memory/manager.js');
-    upsertKnowledge({ source: source || 'unknown', category: category || 'general', content, title });
+    const entry = upsertKnowledge({ source: source || 'upload', category: category || 'general', content, title });
+    return { ok: true, entry };
+  });
+
+  app.delete<{ Params: { id: string } }>('/api/kitz/knowledge/:id', async (req, reply) => {
+    const { getKnowledge } = await import('./memory/manager.js');
+    const { deleteKnowledge } = await import('./memory/manager.js');
+    const entries = getKnowledge();
+    const target = entries.find(e => e.id === req.params.id);
+    if (!target) return reply.code(404).send({ error: 'not found' });
+    deleteKnowledge(req.params.id);
     return { ok: true };
   });
 

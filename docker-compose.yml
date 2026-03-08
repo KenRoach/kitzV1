@@ -435,6 +435,8 @@ services:
     environment:
       <<: *env-common
       PORT: 3013
+      SERVICE_SECRET: ${DEV_TOKEN_SECRET:-}
+      DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET:-}
       TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
       TWILIO_PHONE_FROM: ${TWILIO_PHONE_FROM:-}
@@ -464,6 +466,8 @@ services:
     environment:
       <<: *env-common
       PORT: 3014
+      SERVICE_SECRET: ${DEV_TOKEN_SECRET:-}
+      DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET:-}
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3014/health"]
       interval: 10s
@@ -476,7 +480,7 @@ services:
 
   # ── n8n Workflow Automation (port 5678) ──
   n8n:
-    image: n8nio/n8n:1.76.1
+    image: n8nio/n8n:1.76
     restart: unless-stopped
     networks:
       - kitz-net

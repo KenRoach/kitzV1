@@ -239,6 +239,18 @@ export function getKnowledge(category?: string): KnowledgeEntry[] {
   return [...knowledge];
 }
 
+/**
+ * Delete a knowledge entry by ID.
+ */
+export function deleteKnowledge(id: string): boolean {
+  initMemory();
+  const idx = knowledge.findIndex(k => k.id === id);
+  if (idx === -1) return false;
+  knowledge.splice(idx, 1);
+  persistKnowledge();
+  return true;
+}
+
 // ── Search ──
 
 /**

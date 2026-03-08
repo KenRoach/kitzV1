@@ -43,9 +43,7 @@ export function AutomationCategoryGroup({ group, defaultExpanded = false }: Auto
         className="flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-gray-50/50"
       >
         <div className="flex items-center gap-3">
-          <div className={cn('flex h-9 w-9 items-center justify-center rounded-xl', colors.bg)}>
-            <Icon className={cn('h-4.5 w-4.5', colors.text)} />
-          </div>
+          <Icon className={cn('h-5 w-5', colors.text)} />
           <div>
             <h3 className="text-sm font-bold text-black">{group.label}</h3>
             <p className="text-xs text-gray-500">{group.description}</p>
@@ -55,12 +53,12 @@ export function AutomationCategoryGroup({ group, defaultExpanded = false }: Auto
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             {liveCount > 0 && (
-              <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+              <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-700">
                 {liveCount} live
               </span>
             )}
             {soonCount > 0 && (
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600">
                 {soonCount} soon
               </span>
             )}

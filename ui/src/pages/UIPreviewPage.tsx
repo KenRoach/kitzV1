@@ -168,9 +168,7 @@ export default function UIPreviewPage() {
             <Card variant="interactive">
               <CardBody>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] bg-purple-100 text-purple-600">
-                    <Settings size={20} />
-                  </div>
+                  <Settings size={20} className="text-purple-600" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">Interactive Card</p>
                     <p className="text-xs text-gray-500">Hover for shadow effect</p>

@@ -2,7 +2,10 @@
  * Animated typing indicator — three bouncing dots shown while KITZ is thinking.
  * Uses the `typing-bounce` keyframe defined in index.css.
  */
+import { useTranslation } from '@/lib/i18n'
+
 export function TypingIndicator() {
+  const { t } = useTranslation()
   return (
     <div className="flex items-center gap-1.5 py-2">
       <div className="flex items-center gap-1.5 rounded-2xl bg-white/10 px-4 py-3">
@@ -19,7 +22,7 @@ export function TypingIndicator() {
           style={{ animation: 'typing-bounce 1.4s ease-in-out 0.4s infinite' }}
         />
       </div>
-      <span className="text-[11px] text-gray-500">Kitz is thinking…</span>
+      <span className="text-[11px] text-gray-500">{t('chat.thinking')}</span>
     </div>
   )
 }

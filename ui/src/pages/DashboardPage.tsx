@@ -1,105 +1,60 @@
-import { useState, lazy, Suspense } from 'react'
-import { DashboardLayout } from '@/components/layout/DashboardLayout'
-import { HomePage } from './HomePage'
-import { WorkspacePage } from './WorkspacePage'
-import { AgentsPage } from './AgentsPage'
-import { AutomationsPage } from './AutomationsPage'
-import { ActivityPage } from './ActivityPage'
-import { HowItWorksPage } from './HowItWorksPage'
-import { SettingsPage } from './SettingsPage'
-import { ChatPanel } from '@/components/layout/ChatPanel'
+import { useState } from 'react'
+import { MessageSquare as MessageSquareIcon } from 'lucide-react'
+import { NavRail } from '@/components/layout/NavRail'
+import { CommandCenter } from '@/components/layout/ChatPanel'
+import { Canvas } from '@/components/canvas/Canvas'
 import { TalkToKitzModal } from '@/components/talk/TalkToKitzModal'
-import { FloatingOrb } from '@/components/orb/FloatingOrb'
-import { cn } from '@/lib/utils'
-
-// Code-split heavy pages to reduce main bundle size
-const LearnPage = lazy(() => import('./LearnPage').then(m => ({ default: m.LearnPage })))
-const GamePage = lazy(() => import('./GamePage').then(m => ({ default: m.GamePage })))
-
-type Mode = 'manual' | 'kitz'
+import { StatusBanner } from '@/components/layout/StatusBanner'
 
 export function DashboardPage() {
-  const [currentNav, setCurrentNav] = useState('home')
-  const [mode, setMode] = useState<Mode>('manual')
-
-  const renderPage = () => {
-    switch (currentNav) {
-      case 'learn':
-        return <Suspense fallback={<div className="flex items-center justify-center p-8"><p className="text-gray-400">Loading...</p></div>}><LearnPage /></Suspense>
-      case 'game':
-        return <Suspense fallback={<div className="flex items-center justify-center p-8"><p className="text-gray-400">Loading...</p></div>}><GamePage /></Suspense>
-      case 'workspace':
-        return <WorkspacePage />
-      case 'agents':
-        return <AgentsPage />
-      case 'automations':
-        return <AutomationsPage />
-      case 'activity':
-        return <ActivityPage />
-      case 'how-it-works':
-        return <HowItWorksPage />
-      case 'settings':
-        return <SettingsPage />
-      default:
-        return <HomePage onNavigate={setCurrentNav} showKitz={mode === 'kitz'} />
-    }
-  }
-
   return (
-    <DashboardLayout currentNav={currentNav} onNavChange={setCurrentNav}>
-      <div className="flex h-full">
-        {/* Left: main content area */}
-        <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Mode toggle — static center */}
-          <div className="flex items-center justify-center pt-3 pb-1">
-            <div className="relative flex items-center rounded-full bg-gray-100 p-0.5">
-              {/* Sliding background pill */}
-              <div
-                className={cn(
-                  'absolute top-0.5 bottom-0.5 rounded-full transition-all duration-300 ease-in-out',
-                  mode === 'manual'
-                    ? 'left-0.5 w-[72px] bg-white shadow-sm'
-                    : 'left-[76px] w-[130px] bg-gradient-to-r from-purple-500 to-purple-600 shadow-sm',
-                )}
-              />
-              <button
-                onClick={() => setMode('manual')}
-                className={cn(
-                  'relative z-10 rounded-full px-4 py-1.5 text-xs font-medium transition-colors duration-300',
-                  mode === 'manual' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600',
-                )}
-              >
-                Manual
-              </button>
-              <button
-                onClick={() => setMode('kitz')}
-                className={cn(
-                  'relative z-10 rounded-full px-4 py-1.5 text-xs font-medium transition-colors duration-300',
-                  mode === 'kitz' ? 'text-white' : 'text-gray-400 hover:text-gray-600',
-                )}
-              >
-                Powered by KITZ
-              </button>
-            </div>
-          </div>
+    <div className="flex h-screen flex-col bg-white">
+      <StatusBanner />
+      <div className="flex flex-1 overflow-hidden">
+        {/* 56px icon-only nav rail */}
+        <NavRail />
 
-          {/* Page content — scrollable */}
-          <div className="flex-1 overflow-y-auto">
-            {renderPage()}
-          </div>
+        {/* Command Center — chat panel on the left (hidden on mobile) */}
+        <div className="hidden lg:flex w-[380px] shrink-0 border-r border-white/10">
+          <CommandCenter />
         </div>
 
-        {/* Right: dark chat panel — always visible */}
-        <div className="hidden lg:flex w-[420px] shrink-0 border-l border-white/10">
-          <ChatPanel />
+        {/* Canvas — main content area */}
+        <div className="flex-1 overflow-hidden">
+          <Canvas />
         </div>
       </div>
 
-      {/* Floating Orb — moves toward nav targets */}
-      {mode === 'kitz' && <FloatingOrb />}
+      {/* Mobile: FAB to open Command Center as overlay */}
+      <MobileCommandCenterFAB />
 
-      {/* Voice/chat modal */}
       <TalkToKitzModal />
-    </DashboardLayout>
+    </div>
+  )
+}
+
+/** Floating action button on mobile to open Command Center as overlay */
+function MobileCommandCenterFAB() {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-purple-600 text-white shadow-lg transition hover:bg-purple-700 lg:hidden"
+        aria-label="Open Command Center"
+      >
+        <MessageSquareIcon className="h-6 w-6" />
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setOpen(false)} />
+          <div className="absolute inset-x-0 bottom-0 top-12 rounded-t-2xl overflow-hidden">
+            <CommandCenter />
+          </div>
+        </div>
+      )}
+    </>
   )
 }

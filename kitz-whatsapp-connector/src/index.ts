@@ -91,7 +91,7 @@ app.get('/whatsapp/connect', async (req: any, reply) => {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGINS || 'https://workspace.kitz.services',
   });
 
   // Send the userId so the client knows its session ID

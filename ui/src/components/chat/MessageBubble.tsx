@@ -309,19 +309,25 @@ function parseInline(text: string, variant: 'dark' | 'light'): React.ReactNode {
       continue
     }
 
-    // ── [text](url) links ──
+    // ── [text](url) links — only allow safe URL schemes ──
     const linkMatch = remaining.match(/^\[(.+?)\]\((.+?)\)/)
     if (linkMatch) {
+      const href = linkMatch[2] ?? ''
+      const isSafeUrl = /^https?:\/\//i.test(href) || /^mailto:/i.test(href) || /^\//.test(href)
       parts.push(
-        <a
-          key={key++}
-          href={linkMatch[2]}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-purple-400 underline decoration-purple-400/40 hover:text-purple-300 hover:decoration-purple-300/60 transition"
-        >
-          {linkMatch[1]}
-        </a>,
+        isSafeUrl ? (
+          <a
+            key={key++}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-purple-400 underline decoration-purple-400/40 hover:text-purple-300 hover:decoration-purple-300/60 transition"
+          >
+            {linkMatch[1]}
+          </a>
+        ) : (
+          <span key={key++} className="text-purple-400">{linkMatch[1]}</span>
+        ),
       )
       remaining = remaining.slice(linkMatch[0].length)
       continue
@@ -375,12 +381,18 @@ export function MessageBubble({ role, content, variant = 'light', imageUrl, atta
           />
         )}
 
-        {/* Attachments — Artifact preview (branded) or fallback */}
+        {/* Attachments — Compact card in dark mode, full preview in light mode */}
         {attachments?.map((att, idx) => (
           <div key={`att-${idx}`} className="my-3">
-            {att.type === 'html' && att.html && (
+            {att.type === 'html' && att.html && variant === 'dark' && (
+              /* Simple text reference — artifact already pushed to Canvas by orbStore */
+              <p className="text-[11px] text-purple-400 italic">
+                {att.filename?.replace(/\.html$/, '') || 'Document'} — view in Canvas
+              </p>
+            )}
+            {att.type === 'html' && att.html && variant === 'light' && (
+              /* Full artifact preview for light contexts */
               <div className="rounded-xl border border-purple-500/20 overflow-hidden shadow-lg shadow-purple-500/5">
-                {/* KITZ Artifact Header */}
                 <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700">
                   <div className="flex items-center gap-2.5">
                     <div className="w-7 h-7 rounded-md bg-white/20 flex items-center justify-center">
@@ -394,16 +406,12 @@ export function MessageBubble({ role, content, variant = 'light', imageUrl, atta
                     KITZ Preview
                   </span>
                 </div>
-
-                {/* Iframe Preview */}
                 <iframe
                   srcDoc={att.html}
                   className="w-full h-72 bg-white border-0"
-                  sandbox="allow-same-origin allow-scripts"
+                  sandbox="allow-scripts"
                   title={att.filename || 'Artifact preview'}
                 />
-
-                {/* Action Bar */}
                 <div className="px-3 py-2 border-t border-purple-500/10 bg-purple-500/5 flex items-center gap-2 flex-wrap">
                   {att.url && (
                     <a

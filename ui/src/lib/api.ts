@@ -32,7 +32,10 @@ export async function apiFetch<T>(
   } else if (token) {
     headers.set('Authorization', `Bearer ${token}`)
   }
-  headers.set('x-dev-secret', import.meta.env.VITE_SERVICE_SECRET || '')
+  // Only send dev secret in local development — never expose in production bundles
+  if (import.meta.env.DEV && import.meta.env.VITE_SERVICE_SECRET) {
+    headers.set('x-dev-secret', import.meta.env.VITE_SERVICE_SECRET)
+  }
   headers.set('x-trace-id', generateTraceId())
   if (!headers.has('Content-Type') && options.body) {
     headers.set('Content-Type', 'application/json')

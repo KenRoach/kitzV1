@@ -31,28 +31,28 @@ const eventTypes = [
     title: 'CRM Events',
     description: 'Customer created, deal updated, contact enriched, follow-up scheduled — all CRM changes in real time.',
     examples: ['New customer added', 'Deal moved to closed', 'Contact merged'],
-    color: 'bg-blue-100 text-blue-600',
+    color: 'bg-purple-50 text-purple-500',
   },
   {
     icon: ShoppingCart,
     title: 'Order Events',
     description: 'Order placed, payment received, shipped, delivered, or returned — the full lifecycle of every transaction.',
     examples: ['Order #1234 placed', 'Payment confirmed', 'Delivery completed'],
-    color: 'bg-emerald-100 text-emerald-600',
+    color: 'bg-gray-100 text-gray-600',
   },
   {
     icon: MessageSquare,
     title: 'Message Events',
     description: 'WhatsApp messages sent/received, email drafts created, responses delivered — your complete communication log.',
     examples: ['WhatsApp received', 'Draft reply created', 'Message delivered'],
-    color: 'bg-amber-100 text-amber-600',
+    color: 'bg-purple-100 text-purple-600',
   },
   {
     icon: Server,
     title: 'System Events',
     description: 'AI Battery usage, SOP triggers, kill-switch activations, service health — infrastructure-level visibility.',
     examples: ['Battery credit spent', 'SOP triggered', 'Service restarted'],
-    color: 'bg-pink-100 text-pink-600',
+    color: 'bg-gray-100 text-gray-500',
   },
 ] as const
 

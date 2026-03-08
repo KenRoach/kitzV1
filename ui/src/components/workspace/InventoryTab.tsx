@@ -50,9 +50,9 @@ export function InventoryTab() {
   }
 
   const stockColor = (p: Product) => {
-    if (p.stock_qty === 0) return 'text-red-500'
-    if (p.stock_qty <= p.low_stock_threshold) return 'text-amber-500'
-    return 'text-green-500'
+    if (p.stock_qty === 0) return 'text-gray-400'
+    if (p.stock_qty <= p.low_stock_threshold) return 'text-gray-500'
+    return 'text-purple-500'
   }
 
   return (
@@ -61,12 +61,12 @@ export function InventoryTab() {
       {(lowStock.length > 0 || outOfStock.length > 0) && (
         <div className="flex flex-wrap gap-2">
           {lowStock.length > 0 && (
-            <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+            <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600">
               <AlertTriangle className="h-4 w-4" /> {lowStock.length} product{lowStock.length > 1 ? 's' : ''} low on stock
             </div>
           )}
           {outOfStock.length > 0 && (
-            <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+            <div className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-sm text-gray-700">
               <Package className="h-4 w-4" /> {outOfStock.length} out of stock
             </div>
           )}
@@ -80,11 +80,11 @@ export function InventoryTab() {
           <p className="text-xs text-gray-400 uppercase tracking-wider">Active Products</p>
         </div>
         <div className="rounded-xl border border-gray-100 p-4 text-center">
-          <p className="text-2xl font-bold text-amber-500">{lowStock.length}</p>
+          <p className="text-2xl font-bold text-gray-500">{lowStock.length}</p>
           <p className="text-xs text-gray-400 uppercase tracking-wider">Low Stock</p>
         </div>
         <div className="rounded-xl border border-gray-100 p-4 text-center">
-          <p className="text-2xl font-bold text-red-500">{outOfStock.length}</p>
+          <p className="text-2xl font-bold text-gray-400">{outOfStock.length}</p>
           <p className="text-xs text-gray-400 uppercase tracking-wider">Out of Stock</p>
         </div>
       </div>
@@ -167,15 +167,13 @@ export function InventoryTab() {
               {p.image_url ? (
                 <img src={p.image_url} alt={p.name} className="h-10 w-10 rounded-lg object-cover" />
               ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50">
-                  <Package className="h-5 w-5 text-purple-400" />
-                </div>
+                <Package className="h-5 w-5 text-purple-400" />
               )}
               <div>
                 <div className="flex items-center gap-2">
                   <p className="font-medium text-black">{p.name}</p>
                   {p.category && <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">{p.category}</span>}
-                  {!p.is_active && <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-500">Inactive</span>}
+                  {!p.is_active && <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">Inactive</span>}
                 </div>
                 <p className="text-xs text-gray-400">{p.sku ? `SKU: ${p.sku} · ` : ''}${p.price.toFixed(2)}{p.cost ? ` · Cost: $${p.cost.toFixed(2)}` : ''}</p>
               </div>

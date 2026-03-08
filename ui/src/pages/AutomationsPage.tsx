@@ -71,7 +71,7 @@ const kitzCapabilities = [
     title: 'Talk to Your Customers',
     description: 'WhatsApp, email, SMS — all from one place. AI drafts replies, you approve with one tap.',
     example: '"Send a WhatsApp to Maria about her order"',
-    color: 'from-green-500 to-emerald-600',
+    color: 'from-purple-500 to-purple-600',
     stats: '7 automations',
   },
   {
@@ -79,7 +79,7 @@ const kitzCapabilities = [
     title: 'Get Paid Faster',
     description: 'Generate invoices, send payment links, track who owes you. Auto-invoice when orders confirm.',
     example: '"Create an invoice for Carlos — 3 t-shirts at $25"',
-    color: 'from-emerald-500 to-emerald-600',
+    color: 'from-purple-400 to-purple-600',
     stats: '6 automations',
   },
   {
@@ -87,7 +87,7 @@ const kitzCapabilities = [
     title: 'Create Marketing Content',
     description: 'Pitch decks, flyers, landing pages, emails, bio links — all branded with your colors.',
     example: '"Build me a landing page for my new product"',
-    color: 'from-rose-500 to-pink-600',
+    color: 'from-purple-600 to-purple-700',
     stats: '7 automations',
   },
   {
@@ -95,7 +95,7 @@ const kitzCapabilities = [
     title: 'Grow Your Pipeline',
     description: 'Score leads, track conversions, get AI recommendations on your next best move.',
     example: '"Who should I follow up with today?"',
-    color: 'from-blue-500 to-purple-600',
+    color: 'from-gray-500 to-gray-600',
     stats: '7 automations',
   },
   {
@@ -103,7 +103,7 @@ const kitzCapabilities = [
     title: 'Run Campaigns',
     description: 'Multi-touch campaigns across WhatsApp, email, and SMS. A/B test and track ROI.',
     example: '"Launch a promo blast for Black Friday"',
-    color: 'from-pink-500 to-fuchsia-600',
+    color: 'from-purple-500 to-purple-700',
     stats: '6 automations',
   },
   {
@@ -111,7 +111,7 @@ const kitzCapabilities = [
     title: 'Know Your Customers',
     description: 'Auto-tag contacts, build segments, personalize every message with CRM data.',
     example: '"Show me all VIP customers who bought last month"',
-    color: 'from-purple-500 to-violet-600',
+    color: 'from-gray-400 to-gray-600',
     stats: '6 automations',
   },
   {
@@ -127,7 +127,7 @@ const kitzCapabilities = [
     title: 'AI That Works for You',
     description: '15 agents monitor your business 24/7. Reports delivered to WhatsApp on schedule.',
     example: '"How\'s my week looking?"',
-    color: 'from-amber-500 to-orange-600',
+    color: 'from-purple-400 to-purple-500',
     stats: '5 automations',
   },
 ] as const
@@ -157,8 +157,7 @@ export function AutomationsPage() {
 
       {/* ── What KITZ Can Do — Capability Showcase ── */}
       <section className="mt-6 mb-10">
-        <div className="mb-5 flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-purple-500" />
+        <div className="mb-5">
           <h3 className="text-lg font-bold text-black">What KITZ Can Do</h3>
         </div>
         <p className="mb-5 text-sm text-gray-500">
@@ -173,9 +172,7 @@ export function AutomationsPage() {
                 className="group flex flex-col rounded-2xl border border-gray-200 bg-white p-5 transition hover:shadow-lg hover:-translate-y-0.5"
               >
                 {/* Icon + title */}
-                <div className={cn('flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br', cap.color)}>
-                  <Icon className="h-5 w-5 text-white" />
-                </div>
+                <Icon className="h-5 w-5 text-purple-600" />
                 <h4 className="mt-3 text-sm font-bold text-black">{cap.title}</h4>
                 <p className="mt-1 flex-1 text-xs leading-relaxed text-gray-500">{cap.description}</p>
 
@@ -191,7 +188,7 @@ export function AutomationsPage() {
                 {/* Stats */}
                 <div className="mt-3 flex items-center justify-between">
                   <span className="text-[10px] font-medium text-gray-400">{cap.stats}</span>
-                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">Ready</span>
+                  <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-700">Ready</span>
                 </div>
               </div>
             )
@@ -212,11 +209,11 @@ export function AutomationsPage() {
             <p className="mt-0.5 text-xs text-gray-500">Total Automations</p>
           </div>
           <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
-            <p className="text-2xl font-bold text-green-600">{stats.live}</p>
+            <p className="text-2xl font-bold text-purple-600">{stats.live}</p>
             <p className="mt-0.5 text-xs text-gray-500">Live Now</p>
           </div>
           <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
-            <p className="text-2xl font-bold text-amber-600">{stats.comingSoon}</p>
+            <p className="text-2xl font-bold text-gray-500">{stats.comingSoon}</p>
             <p className="mt-0.5 text-xs text-gray-500">Coming Soon</p>
           </div>
           <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">

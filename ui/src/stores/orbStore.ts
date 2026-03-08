@@ -3,6 +3,7 @@ import { apiFetch } from '@/lib/api'
 import { API } from '@/lib/constants'
 import { useAgentThinkingStore } from './agentThinkingStore'
 import { useOrbNavigatorStore, detectNavHint } from '@/hooks/useOrbNavigator'
+import { useCanvasStore } from './canvasStore'
 import { KITZ_MANIFEST } from '@/content/kitz-manifest'
 
 interface ChatAttachment {
@@ -37,16 +38,8 @@ interface OrbStore {
   isOpen: boolean
   /* Text chatbox focus signal — ChatPanel listens for this */
   chatFocused: boolean
-  /* Chatbox glow animation — stays true for ~1.5s after puff arrival */
-  chatGlowing: boolean
-  /* Chatbox shake animation — phone-vibration rattle on puff arrival */
-  chatShaking: boolean
   /* Welcome message injected flag — prevents duplicate welcomes */
   welcomeInjected: boolean
-  /* TTS speaking state — Orb shows talking mood */
-  speaking: boolean
-  /** Incremented each time user clicks Kitz to puff-teleport to chatbox */
-  teleportSeq: number
   /** Echo responses to WhatsApp when enabled */
   echoToWhatsApp: boolean
   /** AI Battery remaining credits (fetched from backend) */
@@ -62,13 +55,8 @@ interface OrbStore {
   close: () => void
   focusChat: () => void
   blurChat: () => void
-  /** Trigger the chatbox glow + shake animation */
-  glowChat: () => void
   /** Inject welcome + status message into chatbox (like WhatsApp greeting) */
   injectWelcome: () => void
-  /** Signal a puff-teleport to chatbox (FloatingOrb listens) */
-  teleportToChat: () => void
-  setSpeaking: (val: boolean) => void
   setEchoToWhatsApp: (val: boolean) => void
   sendMessage: (content: string, userId: string) => Promise<void>
   /** Connect to WebSocket gateway for real-time streaming */
@@ -77,9 +65,11 @@ interface OrbStore {
   disconnectWebSocket: () => void
 }
 
-let _glowTimer: ReturnType<typeof setTimeout> | null = null
 let _ws: WebSocket | null = null
 let _wsReconnectTimer: ReturnType<typeof setTimeout> | null = null
+let _wsReconnectAttempt = 0
+const WS_MAX_RECONNECT_ATTEMPTS = 10
+const WS_BASE_DELAY_MS = 1000
 /** ID of the streaming assistant message currently being built from text.delta events */
 let _streamingMsgId: string | null = null
 
@@ -198,11 +188,7 @@ function handleWSEvent(event: WSEvent): void {
 export const useOrbStore = create<OrbStore>((set, get) => ({
   isOpen: false,
   chatFocused: false,
-  chatGlowing: false,
-  chatShaking: false,
   welcomeInjected: false,
-  speaking: false,
-  teleportSeq: 0,
   echoToWhatsApp: false,
   batteryRemaining: KITZ_MANIFEST.governance.aiBatteryDailyLimit,
   wsConnected: false,
@@ -214,17 +200,6 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
   close: () => set({ isOpen: false }),
   focusChat: () => set({ chatFocused: true }),
   blurChat: () => set({ chatFocused: false }),
-  teleportToChat: () => set((s) => ({ teleportSeq: s.teleportSeq + 1 })),
-  glowChat: () => {
-    if (_glowTimer) clearTimeout(_glowTimer)
-    set({ chatGlowing: true, chatShaking: true })
-    // Shake is short — 0.4s vibration then stop
-    setTimeout(() => set({ chatShaking: false }), 400)
-    _glowTimer = setTimeout(() => {
-      set({ chatGlowing: false })
-      _glowTimer = null
-    }, 1800)
-  },
   injectWelcome: () => {
     const { welcomeInjected } = get()
     if (welcomeInjected) {
@@ -279,7 +254,6 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
       }))
     })
   },
-  setSpeaking: (val) => set({ speaking: val }),
   setEchoToWhatsApp: (val) => set({ echoToWhatsApp: val }),
 
   connectWebSocket: () => {
@@ -297,6 +271,7 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
 
     _ws.onopen = () => {
       set({ wsConnected: true })
+      _wsReconnectAttempt = 0 // Reset backoff on successful connection
       if (_wsReconnectTimer) {
         clearTimeout(_wsReconnectTimer)
         _wsReconnectTimer = null
@@ -319,12 +294,14 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
     _ws.onclose = () => {
       set({ wsConnected: false })
       _ws = null
-      // Auto-reconnect after 3 seconds
-      if (!_wsReconnectTimer) {
+      // Exponential backoff: 1s, 2s, 4s, 8s, 16s, 32s... capped at 30s, max 10 attempts
+      if (!_wsReconnectTimer && _wsReconnectAttempt < WS_MAX_RECONNECT_ATTEMPTS) {
+        const delay = Math.min(WS_BASE_DELAY_MS * Math.pow(2, _wsReconnectAttempt), 30_000)
+        _wsReconnectAttempt++
         _wsReconnectTimer = setTimeout(() => {
           _wsReconnectTimer = null
           get().connectWebSocket()
-        }, 3000)
+        }, delay)
       }
     }
 
@@ -376,6 +353,14 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
         tools_used?: string[]
         image_url?: string
         attachments?: ChatAttachment[]
+        artifact?: {
+          contentId: string
+          previewUrl: string
+          category: string
+          title: string
+          actions: Array<{ id: string; label: string; icon: string; type: string; endpoint: string; payload: Record<string, unknown> }>
+          status: string
+        }
       }>(
         `${API.KITZ_OS}`,
         {
@@ -416,6 +401,37 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
           attachments: res.attachments,
         }
         set((s) => ({ messages: [...s.messages, assistantMsg], state: 'success' }))
+      }
+
+      // Push artifacts to Canvas
+      if (res.artifact?.contentId) {
+        const html = res.attachments?.find((a: ChatAttachment) => a.type === 'html')?.html || ''
+        useCanvasStore.getState().pushArtifact({
+          contentId: res.artifact.contentId,
+          category: (res.artifact.category || 'document') as import('@/types/artifact').ArtifactCategory,
+          title: res.artifact.title || 'Document',
+          html,
+          previewUrl: res.artifact.previewUrl || '',
+          actions: (res.artifact.actions || []) as import('@/types/artifact').ArtifactAction[],
+          status: 'draft',
+        })
+      } else if (res.attachments?.length) {
+        // Fallback for responses without artifact metadata
+        for (const att of res.attachments) {
+          if (att.type === 'html' && att.html) {
+            useCanvasStore.getState().pushPreview({
+              type: 'html',
+              title: att.filename?.replace(/\.html$/, '') || 'Document',
+              content: att.html,
+            })
+          } else if (att.type === 'image' && att.url) {
+            useCanvasStore.getState().pushPreview({
+              type: 'image',
+              title: att.filename || 'Image',
+              content: att.url,
+            })
+          }
+        }
       }
 
       // Resolve thinking steps with real tools used from backend

@@ -13,11 +13,11 @@ const MONTH_NAMES = [
 ]
 
 const EVENT_TYPE_COLORS: Record<CalendarEvent['type'], { bg: string; text: string; dot: string }> = {
-  call: { bg: 'bg-blue-100', text: 'text-blue-700', dot: 'bg-blue-500' },
-  meeting: { bg: 'bg-purple-100', text: 'text-purple-700', dot: 'bg-purple-500' },
-  task: { bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-500' },
-  'follow-up': { bg: 'bg-emerald-100', text: 'text-emerald-700', dot: 'bg-emerald-500' },
-  reminder: { bg: 'bg-green-100', text: 'text-green-700', dot: 'bg-green-500' },
+  call: { bg: 'bg-purple-100', text: 'text-purple-700', dot: 'bg-purple-500' },
+  meeting: { bg: 'bg-purple-50', text: 'text-purple-600', dot: 'bg-purple-400' },
+  task: { bg: 'bg-gray-100', text: 'text-gray-700', dot: 'bg-gray-500' },
+  'follow-up': { bg: 'bg-purple-100', text: 'text-purple-600', dot: 'bg-purple-500' },
+  reminder: { bg: 'bg-gray-100', text: 'text-gray-600', dot: 'bg-gray-400' },
   other: { bg: 'bg-gray-100', text: 'text-gray-600', dot: 'bg-gray-400' },
 }
 

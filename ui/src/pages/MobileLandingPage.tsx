@@ -78,9 +78,7 @@ export function MobileLandingPage({ onEnter }: MobileLandingPageProps) {
                 key={f.title}
                 className="flex items-start gap-4 rounded-2xl bg-white/5 border border-white/10 p-4 backdrop-blur-sm"
               >
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${f.color}`}>
-                  <f.icon className="h-5 w-5 text-white" />
-                </div>
+                <f.icon className="h-5 w-5 shrink-0 text-purple-400" />
                 <div>
                   <h3 className="text-sm font-semibold text-white">{f.title}</h3>
                   <p className="mt-0.5 text-xs leading-relaxed text-purple-200/60">{f.desc}</p>

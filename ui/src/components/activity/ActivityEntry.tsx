@@ -12,9 +12,9 @@ const typeIcons: Record<ActivityType, typeof Bot> = {
 
 const typeStyles: Record<ActivityType, string> = {
   agent: 'bg-purple-50 text-purple-600',
-  crm: 'bg-blue-50 text-blue-600',
-  order: 'bg-orange-50 text-orange-600',
-  message: 'bg-green-50 text-green-600',
+  crm: 'bg-purple-50 text-purple-500',
+  order: 'bg-gray-100 text-gray-600',
+  message: 'bg-purple-100 text-purple-600',
   system: 'bg-gray-100 text-gray-500',
 }
 
@@ -27,9 +27,7 @@ export function ActivityEntry({ entry }: ActivityEntryProps) {
 
   return (
     <div className="flex gap-3 border-b border-gray-50 py-3 last:border-b-0">
-      <div className={cn('mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full', typeStyles[entry.type])}>
-        <Icon className="h-4 w-4" />
-      </div>
+      <Icon className={cn('mt-0.5 h-4 w-4 flex-shrink-0', typeStyles[entry.type].replace(/bg-\S+/g, '').trim())} />
       <div className="min-w-0 flex-1">
         <p className="text-sm text-black">
           <span className="font-medium">{entry.actor.name}</span>

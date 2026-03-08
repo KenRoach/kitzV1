@@ -11,8 +11,8 @@ const channelIcons: Record<Draft['channel'], typeof MessageSquare> = {
 }
 
 const channelColors: Record<Draft['channel'], string> = {
-  whatsapp: 'text-green-600 bg-green-50',
-  email: 'text-blue-600 bg-blue-50',
+  whatsapp: 'text-purple-600 bg-purple-50',
+  email: 'text-gray-600 bg-gray-100',
   sms: 'text-purple-600 bg-purple-50',
 }
 
@@ -62,9 +62,7 @@ export function DraftQueue() {
                 key={draft.id}
                 className="flex items-start gap-3 border-b border-gray-50 px-4 py-3 last:border-b-0"
               >
-                <div className={cn('mt-0.5 flex h-7 w-7 items-center justify-center rounded-full', channelColors[draft.channel])}>
-                  <Icon className="h-3.5 w-3.5" />
-                </div>
+                <Icon className={cn('mt-0.5 h-4 w-4 flex-shrink-0', channelColors[draft.channel].replace(/bg-\S+/g, '').trim())} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-gray-500">{draft.agentName}</span>
@@ -77,13 +75,13 @@ export function DraftQueue() {
                 <div className="flex gap-1">
                   <button
                     onClick={() => approveDraft(draft.id)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 text-green-600 transition hover:bg-green-50"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 text-purple-600 transition hover:bg-purple-50"
                   >
                     <Check className="h-3.5 w-3.5" />
                   </button>
                   <button
                     onClick={() => rejectDraft(draft.id)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 text-red-500 transition hover:bg-red-50"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 text-gray-400 transition hover:bg-gray-50"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>

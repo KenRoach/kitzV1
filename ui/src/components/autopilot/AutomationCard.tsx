@@ -22,8 +22,8 @@ const triggerLabel: Record<AutomationTrigger, string> = {
 }
 
 const statusStyles: Record<AutomationStatus, string> = {
-  live: 'bg-green-100 text-green-700',
-  'coming-soon': 'bg-amber-100 text-amber-700',
+  live: 'bg-purple-100 text-purple-700',
+  'coming-soon': 'bg-gray-100 text-gray-600',
 }
 
 export function AutomationCard({ item, colorDot }: AutomationCardProps) {

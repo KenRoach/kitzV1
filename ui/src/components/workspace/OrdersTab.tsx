@@ -54,7 +54,7 @@ export function OrdersTab() {
             </div>
             <div className="flex items-center gap-3">
               <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                order.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                order.status === 'completed' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
               }`}>
                 {order.status}
               </span>

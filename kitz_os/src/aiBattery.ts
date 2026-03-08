@@ -286,8 +286,10 @@ export function getBatteryStatus(orgId?: string): BatteryStatus {
  * Returns false if free tier exhausted and no purchased credits.
  */
 export function hasBudget(estimatedCredits = 1, orgId?: string): boolean {
-  // Feature-flagged: usage enforcement disabled until AI_USAGE_ENABLED=true
-  if (process.env.AI_BATTERY_ENABLED !== 'true' && process.env.AI_USAGE_ENABLED !== 'true') return true;
+  // Usage enforcement is ON by default. Set AI_BATTERY_ENABLED=false to explicitly disable.
+  if (process.env.AI_BATTERY_ENABLED === 'false' || process.env.AI_USAGE_ENABLED === 'false') {
+    return true;
+  }
   const status = getBatteryStatus(orgId);
   return status.remaining >= estimatedCredits;
 }

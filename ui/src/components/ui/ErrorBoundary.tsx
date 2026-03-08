@@ -25,7 +25,7 @@ export class ErrorBoundary extends Component<Props, State> {
     try {
       fetch('/api/logs/logs', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-dev-secret': import.meta.env.VITE_SERVICE_SECRET || '' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'frontend_error',
           action: 'error_boundary_catch',

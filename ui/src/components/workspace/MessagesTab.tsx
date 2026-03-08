@@ -14,9 +14,9 @@ interface Conversation {
 }
 
 const channelColors = {
-  whatsapp: 'text-green-500',
-  email: 'text-blue-500',
-  instagram: 'text-pink-500',
+  whatsapp: 'text-purple-600',
+  email: 'text-gray-500',
+  instagram: 'text-purple-500',
 }
 
 export function MessagesTab() {
@@ -89,9 +89,7 @@ export function MessagesTab() {
               className="flex w-full items-center justify-between rounded-xl border border-gray-100 bg-white px-4 py-3 text-left transition hover:border-gray-200"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 shrink-0">
-                  <MessageCircle className={cn('h-4 w-4', channelColors[convo.channel] ?? 'text-gray-400')} />
-                </div>
+                <MessageCircle className={cn('h-4 w-4 shrink-0', channelColors[convo.channel] ?? 'text-gray-400')} />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <p className={cn('text-sm font-medium truncate', convo.unread > 0 ? 'text-black font-semibold' : 'text-gray-700')}>

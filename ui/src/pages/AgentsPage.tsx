@@ -31,19 +31,19 @@ const tiers = [
     title: 'The Advisors',
     count: 9,
     description: 'Risk checkers, ethics watchers, growth visionaries. They review big decisions before anything gets executed.',
-    color: 'bg-blue-500',
+    color: 'bg-purple-400',
   },
   {
     title: 'The Guardrails',
     count: 9,
     description: 'Budget control, focus management, accountability. These agents keep the whole operation running clean.',
-    color: 'bg-emerald-500',
+    color: 'bg-gray-400',
   },
   {
     title: 'The Specialists',
     count: KITZ_MANIFEST.capabilities.totalAgents,
     description: `${KITZ_MANIFEST.capabilities.agentTeams} teams covering every business function — from sales and marketing to engineering and compliance.`,
-    color: 'bg-amber-500',
+    color: 'bg-purple-300',
   },
 ] as const
 
@@ -61,28 +61,28 @@ const phases = [
     title: 'Comprehend',
     description: 'Classify the request, extract entities, identify urgency.',
     model: 'Claude Haiku',
-    color: 'bg-blue-100 text-blue-600',
+    color: 'bg-purple-50 text-purple-500',
   },
   {
     number: '03',
     title: 'Brainstorm',
     description: 'Pick the right tools and agents. Plan the execution strategy.',
     model: 'Claude Sonnet',
-    color: 'bg-emerald-100 text-emerald-600',
+    color: 'bg-gray-100 text-gray-600',
   },
   {
     number: '04',
     title: 'Execute',
     description: 'Run tool-use loops — CRM writes, messages drafted, orders tracked.',
     model: 'GPT-4o-mini',
-    color: 'bg-amber-100 text-amber-600',
+    color: 'bg-purple-100 text-purple-600',
   },
   {
     number: '05',
     title: 'Voice',
     description: 'Format the response for your channel — WhatsApp, web, or email.',
     model: 'Claude Haiku',
-    color: 'bg-pink-100 text-pink-600',
+    color: 'bg-gray-100 text-gray-500',
   },
 ] as const
 
@@ -251,7 +251,7 @@ export function AgentsPage() {
               <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
                 <div className={cn(
                   'text-xs font-bold uppercase',
-                  lastResult.status === 'completed' ? 'text-emerald-600' : lastResult.status === 'partial' ? 'text-amber-600' : 'text-red-600',
+                  lastResult.status === 'completed' ? 'text-purple-600' : lastResult.status === 'partial' ? 'text-gray-500' : 'text-gray-400',
                 )}>
                   {lastResult.status}
                 </div>
@@ -264,7 +264,7 @@ export function AgentsPage() {
                 <div className="text-[10px] text-gray-400">duration</div>
               </div>
               <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
-                <Zap className="mx-auto h-4 w-4 text-amber-500" />
+                <Zap className="mx-auto h-4 w-4 text-purple-500" />
                 <div className="mt-1 text-lg font-bold text-black">{lastResult.agentResults.length}</div>
                 <div className="text-[10px] text-gray-400">agents run</div>
               </div>
@@ -274,7 +274,7 @@ export function AgentsPage() {
                 <div className="text-[10px] text-gray-400">handoffs</div>
               </div>
               <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
-                <Brain className="mx-auto h-4 w-4 text-blue-500" />
+                <Brain className="mx-auto h-4 w-4 text-purple-500" />
                 <div className="mt-1 text-lg font-bold text-black">{lastResult.knowledgeWritten}</div>
                 <div className="text-[10px] text-gray-400">knowledge</div>
               </div>
@@ -286,9 +286,9 @@ export function AgentsPage() {
                 <div key={tr.team} className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3">
                   <div className="flex items-center gap-2">
                     {tr.status === 'completed' ? (
-                      <CheckCircle className="h-4 w-4 text-emerald-500" />
+                      <CheckCircle className="h-4 w-4 text-purple-500" />
                     ) : (
-                      <XCircle className="h-4 w-4 text-red-500" />
+                      <XCircle className="h-4 w-4 text-gray-400" />
                     )}
                     <span className="text-xs font-medium text-black">{tr.team}</span>
                   </div>

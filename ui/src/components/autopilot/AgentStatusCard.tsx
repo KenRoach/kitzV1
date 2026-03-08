@@ -9,17 +9,17 @@ interface AgentStatusCardProps {
 
 const statusDot: Record<AgentInfo['status'], string> = {
   active: 'bg-purple-500',
-  idle: 'bg-amber-400',
+  idle: 'bg-gray-400',
   paused: 'bg-gray-400',
   offline: 'bg-gray-300',
 }
 
 const badgeStyles: Record<TeamCluster, string> = {
   manager: 'bg-purple-500/10 text-purple-500',
-  sales: 'bg-blue-100 text-blue-600',
-  'demand-gen': 'bg-pink-100 text-pink-600',
-  operations: 'bg-orange-100 text-orange-600',
-  finance: 'bg-emerald-100 text-emerald-600',
+  sales: 'bg-purple-100 text-purple-600',
+  'demand-gen': 'bg-purple-50 text-purple-500',
+  operations: 'bg-gray-100 text-gray-600',
+  finance: 'bg-gray-100 text-gray-500',
 }
 
 export function AgentStatusCard({ agent, onToggle }: AgentStatusCardProps) {

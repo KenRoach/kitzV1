@@ -9,35 +9,37 @@ import {
 import { PageHeader } from '@/components/home/PageHeader'
 import { useSettingsStore } from '@/stores/settingsStore'
 import type { Language } from '@/stores/settingsStore'
+import { useTranslation } from '@/lib/i18n'
 
 export function SettingsPage() {
   const settings = useSettingsStore()
+  const { t } = useTranslation()
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-8 pb-12">
       <PageHeader
-        title="Settings"
-        description="Manage your account, preferences, and integrations"
+        title={t('settings.title')}
+        description={t('settings.description')}
       />
 
       <div className="space-y-6">
         {/* Profile */}
-        <SettingsSection icon={User} title="Profile">
-          <FieldRow label="Display Name">
+        <SettingsSection icon={User} title={t('settings.profile')}>
+          <FieldRow label={t('settings.displayName')}>
             <input
               type="text"
               defaultValue="Kenneth"
               className="w-48 rounded-lg border border-gray-200 px-3 py-1.5 text-right text-sm text-gray-700 outline-none focus:border-purple-500"
             />
           </FieldRow>
-          <FieldRow label="Email">
+          <FieldRow label={t('email')}>
             <input
               type="text"
               defaultValue="kenneth@kitz.services"
               className="w-48 rounded-lg border border-gray-200 px-3 py-1.5 text-right text-sm text-gray-700 outline-none focus:border-purple-500"
             />
           </FieldRow>
-          <FieldRow label="Phone">
+          <FieldRow label={t('phone')}>
             <input
               type="text"
               defaultValue="+507 6000-0000"
@@ -47,8 +49,8 @@ export function SettingsPage() {
         </SettingsSection>
 
         {/* Language */}
-        <SettingsSection icon={Globe} title="Language">
-          <FieldRow label="Interface Language">
+        <SettingsSection icon={Globe} title={t('settings.language')}>
+          <FieldRow label={t('settings.interfaceLang')}>
             <select
               value={settings.interfaceLang}
               onChange={(e) => settings.setInterfaceLang(e.target.value as Language)}
@@ -59,7 +61,7 @@ export function SettingsPage() {
               <option value="Português">Português</option>
             </select>
           </FieldRow>
-          <FieldRow label="WhatsApp Bot Language">
+          <FieldRow label={t('settings.botLang')}>
             <select
               value={settings.botLang}
               onChange={(e) => settings.setBotLang(e.target.value as 'English' | 'Español' | 'Auto-detect')}
@@ -73,14 +75,14 @@ export function SettingsPage() {
         </SettingsSection>
 
         {/* Notifications */}
-        <SettingsSection icon={Bell} title="Notifications">
-          <FieldRow label="Email Notifications">
+        <SettingsSection icon={Bell} title={t('settings.notifications')}>
+          <FieldRow label={t('settings.emailNotifications')}>
             <Toggle on={settings.emailNotifications} onToggle={settings.setEmailNotifications} />
           </FieldRow>
-          <FieldRow label="WhatsApp Alerts">
+          <FieldRow label={t('settings.whatsappAlerts')}>
             <Toggle on={settings.whatsappAlerts} onToggle={settings.setWhatsappAlerts} />
           </FieldRow>
-          <FieldRow label="Agent Activity Digest">
+          <FieldRow label={t('settings.agentDigest')}>
             <select
               value={settings.agentDigest}
               onChange={(e) => settings.setAgentDigest(e.target.value as 'Off' | 'Daily' | 'Weekly')}
@@ -94,8 +96,8 @@ export function SettingsPage() {
         </SettingsSection>
 
         {/* AI Battery */}
-        <SettingsSection icon={CreditCard} title="AI Battery">
-          <FieldRow label="Daily Credit Limit">
+        <SettingsSection icon={CreditCard} title={t('settings.aiBattery')}>
+          <FieldRow label={t('settings.dailyCreditLimit')}>
             <input
               type="number"
               value={settings.dailyCreditLimit}
@@ -103,26 +105,26 @@ export function SettingsPage() {
               className="w-24 rounded-lg border border-gray-200 px-3 py-1.5 text-right text-sm text-gray-700 outline-none focus:border-purple-500"
             />
           </FieldRow>
-          <FieldRow label="Current Balance">
+          <FieldRow label={t('settings.currentBalance')}>
             <span className="text-sm font-medium text-gray-700">$20.00</span>
           </FieldRow>
-          <FieldRow label="Monthly Spend">
+          <FieldRow label={t('settings.monthlySpend')}>
             <span className="text-sm font-medium text-gray-700">$12.50</span>
           </FieldRow>
-          <FieldRow label="Low Balance Alert">
+          <FieldRow label={t('settings.lowBalanceAlert')}>
             <Toggle on={settings.lowBalanceAlert} onToggle={settings.setLowBalanceAlert} />
           </FieldRow>
         </SettingsSection>
 
         {/* Security */}
-        <SettingsSection icon={Shield} title="Security">
-          <FieldRow label="Kill Switch">
+        <SettingsSection icon={Shield} title={t('settings.security')}>
+          <FieldRow label={t('settings.killSwitch')}>
             <Toggle on={settings.killSwitch} onToggle={settings.setKillSwitch} />
           </FieldRow>
-          <FieldRow label="Draft-First Mode">
+          <FieldRow label={t('settings.draftFirst')}>
             <Toggle on={settings.draftFirst} onToggle={settings.setDraftFirst} />
           </FieldRow>
-          <FieldRow label="Audit Trail">
+          <FieldRow label={t('settings.auditTrail')}>
             <Toggle on={settings.auditTrail} onToggle={settings.setAuditTrail} />
           </FieldRow>
         </SettingsSection>
@@ -131,15 +133,15 @@ export function SettingsPage() {
         <div className="rounded-2xl border border-red-200 bg-red-50 p-5">
           <div className="flex items-center gap-2.5 mb-4">
             <Trash2 className="h-4 w-4 text-red-500" />
-            <h3 className="text-sm font-bold text-red-700">Danger Zone</h3>
+            <h3 className="text-sm font-bold text-red-700">{t('settings.dangerZone')}</h3>
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-red-700">Delete Account</p>
-              <p className="text-xs text-red-400">Permanently remove your account and all data</p>
+              <p className="text-sm text-red-700">{t('settings.deleteAccount')}</p>
+              <p className="text-xs text-red-400">{t('settings.deleteAccountDesc')}</p>
             </div>
             <button className="rounded-lg border border-red-300 px-4 py-1.5 text-sm font-medium text-red-600 transition hover:bg-red-100">
-              Delete
+              {t('delete')}
             </button>
           </div>
         </div>

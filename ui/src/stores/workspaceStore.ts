@@ -158,18 +158,22 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       notes: [],
       createdAt: new Date().toISOString(),
     }
+    const prevLeads = get().leads
     set((s) => ({ leads: [...s.leads, newLead] }))
     try {
       await apiFetch(`${API.WORKSPACE}/leads`, { method: 'POST', body: JSON.stringify(data) })
     } catch (err) {
+      set({ leads: prevLeads }) // Rollback on failure
       toast(err instanceof Error ? err.message : 'Failed to save lead')
     }
   },
   deleteLead: async (id) => {
+    const prevLeads = get().leads
     set((s) => ({ leads: s.leads.filter((l) => l.id !== id) }))
     try {
       await apiFetch(`${API.WORKSPACE}/leads/${id}`, { method: 'DELETE' })
     } catch (err) {
+      set({ leads: prevLeads }) // Rollback on failure
       toast(err instanceof Error ? err.message : 'Failed to delete lead')
     }
   },
@@ -288,30 +292,36 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       createdAt: now,
       updatedAt: now,
     }
+    const prevProducts = get().products
     set((s) => ({ products: [...s.products, newProduct] }))
     try {
       await apiFetch(`${API.WORKSPACE}/products`, { method: 'POST', body: JSON.stringify(data) })
     } catch (err) {
+      set({ products: prevProducts }) // Rollback on failure
       toast(err instanceof Error ? err.message : 'Failed to save product')
     }
   },
   updateProduct: async (id, data) => {
+    const prevProducts = get().products
     set((s) => ({
       products: s.products.map((p) => p.id === id ? { ...p, ...data, updatedAt: new Date().toISOString() } : p),
     }))
     try {
       await apiFetch(`${API.WORKSPACE}/products/${id}`, { method: 'PATCH', body: JSON.stringify(data) })
     } catch (err) {
+      set({ products: prevProducts }) // Rollback on failure
       toast(err instanceof Error ? err.message : 'Failed to update product')
     }
   },
   deleteProduct: async (id) => {
+    const prevProducts = get().products
     set((s) => ({
       products: s.products.map((p) => p.id === id ? { ...p, is_active: false } : p),
     }))
     try {
       await apiFetch(`${API.WORKSPACE}/products/${id}`, { method: 'DELETE' })
     } catch (err) {
+      set({ products: prevProducts }) // Rollback on failure
       toast(err instanceof Error ? err.message : 'Failed to delete product')
     }
   },

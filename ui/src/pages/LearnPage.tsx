@@ -3,7 +3,6 @@ import { ModuleSelect } from '@/components/learn/ModuleSelect'
 import { QuestionCard } from '@/components/learn/QuestionCard'
 import { COURSES } from '@/content/courses'
 import { useGameStore } from '@/stores/gameStore'
-import { Orb } from '@/components/orb/Orb'
 
 export function LearnPage() {
   const {
@@ -53,10 +52,7 @@ export function LearnPage() {
   if (showComplete && currentCourse) {
     return (
       <div className="flex min-h-full flex-col items-center justify-center px-4 py-12">
-        <div className="mb-6 scale-150">
-          <Orb level={level} static />
-        </div>
-        <h2 className="mt-4 text-2xl font-bold text-gray-900">Course Complete!</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Course Complete!</h2>
         <p className="mt-2 text-sm text-gray-500">
           You finished &ldquo;{currentCourse.title}&rdquo; — Kitz leveled up!
         </p>

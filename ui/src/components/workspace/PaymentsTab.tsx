@@ -4,9 +4,9 @@ import { cn } from '@/lib/utils'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 
 const statusStyles = {
-  completed: 'bg-emerald-50 text-emerald-700',
-  pending: 'bg-amber-50 text-amber-700',
-  failed: 'bg-red-50 text-red-700',
+  completed: 'bg-purple-50 text-purple-700',
+  pending: 'bg-gray-100 text-gray-600',
+  failed: 'bg-gray-100 text-gray-500',
 }
 
 export function PaymentsTab() {
@@ -32,7 +32,7 @@ export function PaymentsTab() {
         </div>
         <div className="flex-1 rounded-xl border border-gray-200 p-4">
           <p className="font-mono text-xs text-gray-500">Pending</p>
-          <p className="mt-1 text-2xl font-bold text-amber-500">${pendingAmount.toLocaleString()}</p>
+          <p className="mt-1 text-2xl font-bold text-gray-500">${pendingAmount.toLocaleString()}</p>
         </div>
       </div>
 
@@ -46,7 +46,7 @@ export function PaymentsTab() {
             <div className="flex items-center gap-3">
               <div className={cn(
                 'flex h-8 w-8 items-center justify-center rounded-full',
-                payment.type === 'incoming' ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500',
+                payment.type === 'incoming' ? 'bg-purple-50 text-purple-600' : 'bg-gray-100 text-gray-500',
               )}>
                 {payment.type === 'incoming'
                   ? <ArrowDownLeft className="h-4 w-4" />

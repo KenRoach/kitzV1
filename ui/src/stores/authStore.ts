@@ -22,7 +22,7 @@ interface AuthState {
   hydrate: () => void
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   token: null,
   isLoading: false,
@@ -127,12 +127,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ user: fallbackUser, token: null })
     })
 
-    // Listen for auth expiry events from apiFetch — re-provision guest
-    window.addEventListener('kitz:auth-expired', () => {
-      localStorage.removeItem(AUTH_TOKEN_KEY)
-      localStorage.removeItem(AUTH_USER_KEY)
-      set({ user: null, token: null })
-      get().hydrate() // Re-provision guest
-    })
   },
 }))
+
+// Listen for auth expiry events from apiFetch — module-scoped, added once (prevents listener leak)
+window.addEventListener('kitz:auth-expired', () => {
+  localStorage.removeItem(AUTH_TOKEN_KEY)
+  localStorage.removeItem(AUTH_USER_KEY)
+  useAuthStore.setState({ user: null, token: null })
+  useAuthStore.getState().hydrate()
+})

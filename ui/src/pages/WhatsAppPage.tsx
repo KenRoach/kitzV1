@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { QRScanner } from '@/components/whatsapp/QRScanner'
-import { Orb } from '@/components/orb/Orb'
+import { useTranslation } from '@/lib/i18n'
 
 export function WhatsAppPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -19,8 +20,8 @@ export function WhatsAppPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-white px-6">
-      <Orb static />
-      <p className="mt-4 mb-8 text-gray-500">Scan the QR to run Kitz in your WhatsApp</p>
+      <h2 className="text-lg font-bold text-gray-900">{t('whatsapp.connectTitle')}</h2>
+      <p className="mt-2 mb-8 text-gray-500">{t('whatsapp.connectDesc')}</p>
 
       <QRScanner onConnected={handleConnected} />
 
@@ -28,7 +29,7 @@ export function WhatsAppPage() {
         onClick={() => navigate('/')}
         className="mt-6 text-sm text-gray-400 transition hover:text-purple-500"
       >
-        Skip to run it manually →
+        {t('whatsapp.skipManual')}
       </button>
     </div>
   )
