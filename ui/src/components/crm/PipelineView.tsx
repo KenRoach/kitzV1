@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils'
 import { useWorkspaceStore, PIPELINE_STAGES, STAGE_LABELS, STAGE_COLORS, type Lead, type PipelineStage } from '@/stores/workspaceStore'
 import { DollarSign, Phone, Mail } from 'lucide-react'
+import { useTranslation } from '@/lib/i18n'
 
 interface PipelineViewProps {
   onSelectLead: (lead: Lead) => void
@@ -39,6 +40,7 @@ function PipelineColumn({ stage, leads, onSelectLead, onDrop }: {
   onSelectLead: (lead: Lead) => void
   onDrop: (leadId: string, stage: PipelineStage) => void
 }) {
+  const { t } = useTranslation()
   const color = STAGE_COLORS[stage]
   const totalValue = leads.reduce((sum, l) => sum + (l.value ?? 0), 0)
 
@@ -83,7 +85,7 @@ function PipelineColumn({ stage, leads, onSelectLead, onDrop }: {
         ))}
         {leads.length === 0 && (
           <div className="flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-gray-200 py-8">
-            <span className="font-mono text-xs text-gray-300">drag here</span>
+            <span className="font-mono text-xs text-gray-300">{t('crm.dragHere')}</span>
           </div>
         )}
       </div>
@@ -92,6 +94,7 @@ function PipelineColumn({ stage, leads, onSelectLead, onDrop }: {
 }
 
 export function PipelineView({ onSelectLead }: PipelineViewProps) {
+  const { t } = useTranslation()
   const { leads, updateLeadStage } = useWorkspaceStore()
 
   const activeStages: PipelineStage[] = ['new', 'contacted', 'qualified', 'proposal']
@@ -110,12 +113,12 @@ export function PipelineView({ onSelectLead }: PipelineViewProps) {
       {/* Pipeline summary */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-bold text-black">Pipeline</h3>
-          <p className="text-sm text-gray-500">Drag contacts between stages</p>
+          <h3 className="text-lg font-bold text-black">{t('crm.pipeline')}</h3>
+          <p className="text-sm text-gray-500">{t('crm.dragContacts')}</p>
         </div>
         <div className="text-right">
           <p className="font-mono text-2xl font-bold text-black">${totalPipeline.toLocaleString()}</p>
-          <p className="font-mono text-xs text-gray-400">total pipeline value</p>
+          <p className="font-mono text-xs text-gray-400">{t('crm.totalPipelineValue')}</p>
         </div>
       </div>
 
@@ -187,7 +190,7 @@ export function PipelineView({ onSelectLead }: PipelineViewProps) {
                   </button>
                 ))}
                 {stageLeads.length === 0 && (
-                  <span className="font-mono text-xs text-gray-300">none</span>
+                  <span className="font-mono text-xs text-gray-300">{t('crm.none')}</span>
                 )}
               </div>
             </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/lib/i18n'
 import { CrmTab } from '../crm/CrmTab'
 import { LeadsTab } from './LeadsTab'
 import { OrdersTab } from './OrdersTab'
@@ -11,25 +12,26 @@ import { CalendarTab } from './CalendarTab'
 import { MessagesTab } from './MessagesTab'
 
 const tabs = [
-  { id: 'crm', label: 'CRM' },
-  { id: 'payments', label: 'Payments' },
-  { id: 'leads', label: 'Contacts' },
-  { id: 'orders', label: 'Orders' },
-  { id: 'tasks', label: 'Tasks' },
-  { id: 'checkout', label: 'Payment Links' },
-  { id: 'inventory', label: 'Products' },
-  { id: 'messages', label: 'Messages' },
-  { id: 'calendar', label: 'Calendar' },
+  { id: 'crm', labelKey: 'workspace.crm' },
+  { id: 'payments', labelKey: 'workspace.payments' },
+  { id: 'leads', labelKey: 'workspace.contacts' },
+  { id: 'orders', labelKey: 'workspace.orders' },
+  { id: 'tasks', labelKey: 'workspace.tasks' },
+  { id: 'checkout', labelKey: 'workspace.paymentLinks' },
+  { id: 'inventory', labelKey: 'workspace.products' },
+  { id: 'messages', labelKey: 'workspace.messages' },
+  { id: 'calendar', labelKey: 'workspace.calendar' },
 ] as const
 
 type TabId = (typeof tabs)[number]['id']
 
 export function WorkspaceTabs() {
+  const { t } = useTranslation()
   const [active, setActive] = useState<TabId>('crm')
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white">
-      <div className="flex overflow-x-auto border-b border-gray-200 px-4" role="tablist" aria-label="Workspace tabs">
+      <div className="flex overflow-x-auto border-b border-gray-200 px-4" role="tablist" aria-label={t('workspace.tabs')}>
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -43,7 +45,7 @@ export function WorkspaceTabs() {
                 : 'text-gray-400 hover:text-gray-600',
             )}
           >
-            {tab.label}
+            {t(tab.labelKey)}
           </button>
         ))}
       </div>

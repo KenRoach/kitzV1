@@ -728,6 +728,12 @@ export async function createServer(kernel: KitzKernel) {
             responsePayload.source = source;
           }
 
+          // ── Human-like thinking delay for WhatsApp (3-7 seconds) ──
+          if (channel === 'whatsapp') {
+            const delay = 3000 + Math.floor(Math.random() * 4000);
+            await new Promise(r => setTimeout(r, delay));
+          }
+
           return responsePayload;
         } catch (err) {
           log.error('AI routing error', { error: (err as Error).message });

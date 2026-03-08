@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { ArrowUpRight, ArrowDownLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { useTranslation } from '@/lib/i18n'
 
 const statusStyles = {
   completed: 'bg-purple-50 text-purple-700',
@@ -10,6 +11,7 @@ const statusStyles = {
 }
 
 export function PaymentsTab() {
+  const { t } = useTranslation()
   const payments = useWorkspaceStore((s) => s.payments)
   const fetchPayments = useWorkspaceStore((s) => s.fetchPayments)
 
@@ -27,11 +29,11 @@ export function PaymentsTab() {
       {/* Summary */}
       <div className="flex gap-4">
         <div className="flex-1 rounded-xl border border-gray-200 p-4">
-          <p className="font-mono text-xs text-gray-500">Received this week</p>
+          <p className="font-mono text-xs text-gray-500">{t('payments.receivedThisWeek')}</p>
           <p className="mt-1 text-2xl font-bold text-purple-500">${totalIncoming.toLocaleString()}</p>
         </div>
         <div className="flex-1 rounded-xl border border-gray-200 p-4">
-          <p className="font-mono text-xs text-gray-500">Pending</p>
+          <p className="font-mono text-xs text-gray-500">{t('payments.pending')}</p>
           <p className="mt-1 text-2xl font-bold text-gray-500">${pendingAmount.toLocaleString()}</p>
         </div>
       </div>

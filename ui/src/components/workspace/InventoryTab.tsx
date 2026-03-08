@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Package, AlertTriangle, Plus, Pencil, Trash2, X } from 'lucide-react'
 import { useWorkspaceStore, type Product } from '@/stores/workspaceStore'
+import { useTranslation } from '@/lib/i18n'
 
 export function InventoryTab() {
+  const { t } = useTranslation()
   const { products, isLoading, fetchProducts, addProduct, updateProduct, deleteProduct } = useWorkspaceStore()
   // Form state
   const [name, setName] = useState('')
@@ -62,12 +64,12 @@ export function InventoryTab() {
         <div className="flex flex-wrap gap-2">
           {lowStock.length > 0 && (
             <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600">
-              <AlertTriangle className="h-4 w-4" /> {lowStock.length} product{lowStock.length > 1 ? 's' : ''} low on stock
+              <AlertTriangle className="h-4 w-4" /> {lowStock.length} {t('inventory.lowOnStock')}
             </div>
           )}
           {outOfStock.length > 0 && (
             <div className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-sm text-gray-700">
-              <Package className="h-4 w-4" /> {outOfStock.length} out of stock
+              <Package className="h-4 w-4" /> {outOfStock.length} {t('inventory.outOfStock')}
             </div>
           )}
         </div>
@@ -77,22 +79,22 @@ export function InventoryTab() {
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-xl border border-gray-100 p-4 text-center">
           <p className="text-2xl font-bold text-purple-500">{activeProducts.length}</p>
-          <p className="text-xs text-gray-400 uppercase tracking-wider">Active Products</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wider">{t('inventory.activeProducts')}</p>
         </div>
         <div className="rounded-xl border border-gray-100 p-4 text-center">
           <p className="text-2xl font-bold text-gray-500">{lowStock.length}</p>
-          <p className="text-xs text-gray-400 uppercase tracking-wider">Low Stock</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wider">{t('inventory.lowStock')}</p>
         </div>
         <div className="rounded-xl border border-gray-100 p-4 text-center">
           <p className="text-2xl font-bold text-gray-400">{outOfStock.length}</p>
-          <p className="text-xs text-gray-400 uppercase tracking-wider">Out of Stock</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wider">{t('inventory.outOfStockLabel')}</p>
         </div>
       </div>
 
       {/* Add/Edit Form */}
       <form onSubmit={handleSubmit} className="rounded-xl border border-gray-200 p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-700">{editId ? 'Edit Product' : 'Add Product'}</h3>
+          <h3 className="text-sm font-semibold text-gray-700">{editId ? t('inventory.editProduct') : t('inventory.addProduct')}</h3>
           {editId && (
             <button type="button" onClick={resetForm} className="text-gray-400 hover:text-gray-600">
               <X className="h-4 w-4" />
@@ -101,64 +103,64 @@ export function InventoryTab() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Name *</label>
-            <input value={name} onChange={e => setName(e.target.value)} required placeholder="Product name"
+            <label className="block text-xs font-medium text-gray-500 mb-1">{t('inventory.nameRequired')}</label>
+            <input value={name} onChange={e => setName(e.target.value)} required placeholder={t('inventory.productName')}
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">SKU</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">{t('inventory.sku')}</label>
             <input value={sku} onChange={e => setSku(e.target.value)} placeholder="SKU-001"
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
           </div>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
-          <input value={description} onChange={e => setDescription(e.target.value)} placeholder="Product description"
+          <label className="block text-xs font-medium text-gray-500 mb-1">{t('inventory.description')}</label>
+          <input value={description} onChange={e => setDescription(e.target.value)} placeholder={t('inventory.productDescription')}
             className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
         </div>
         <div className="grid grid-cols-4 gap-3">
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Price *</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">{t('inventory.priceRequired')}</label>
             <input type="number" step="0.01" value={price} onChange={e => setPrice(e.target.value)} required placeholder="0.00"
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Cost</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">{t('inventory.cost')}</label>
             <input type="number" step="0.01" value={cost} onChange={e => setCost(e.target.value)} placeholder="0.00"
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Stock Qty</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">{t('inventory.stockQty')}</label>
             <input type="number" value={stockQty} onChange={e => setStockQty(e.target.value)} placeholder="0"
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Low Stock At</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">{t('inventory.lowStockAt')}</label>
             <input type="number" value={lowStockThreshold} onChange={e => setLowStockThreshold(e.target.value)} placeholder="5"
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Category</label>
-            <input value={category} onChange={e => setCategory(e.target.value)} placeholder="e.g. Food, Services"
+            <label className="block text-xs font-medium text-gray-500 mb-1">{t('inventory.category')}</label>
+            <input value={category} onChange={e => setCategory(e.target.value)} placeholder={t('inventory.categoryPlaceholder')}
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Image URL</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">{t('inventory.imageUrl')}</label>
             <input value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://..."
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
           </div>
         </div>
         <button type="submit" className="flex items-center gap-2 rounded-lg bg-purple-500 px-4 py-2 text-sm font-medium text-white hover:bg-purple-400 transition">
-          <Plus className="h-4 w-4" /> {editId ? 'Update' : 'Add Product'}
+          <Plus className="h-4 w-4" /> {editId ? t('inventory.update') : t('inventory.addProduct')}
         </button>
       </form>
 
       {/* Product List */}
-      {isLoading && <p className="text-sm text-gray-400">Loading...</p>}
+      {isLoading && <p className="text-sm text-gray-400">{t('common.loading')}</p>}
       {products.length === 0 && !isLoading && (
-        <p className="py-8 text-center text-sm text-gray-400">No products yet. Add your first product above.</p>
+        <p className="py-8 text-center text-sm text-gray-400">{t('inventory.noProductsYet')}</p>
       )}
       <div className="space-y-2">
         {products.map(p => (
@@ -173,14 +175,14 @@ export function InventoryTab() {
                 <div className="flex items-center gap-2">
                   <p className="font-medium text-black">{p.name}</p>
                   {p.category && <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">{p.category}</span>}
-                  {!p.is_active && <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">Inactive</span>}
+                  {!p.is_active && <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">{t('inventory.inactive')}</span>}
                 </div>
                 <p className="text-xs text-gray-400">{p.sku ? `SKU: ${p.sku} · ` : ''}${p.price.toFixed(2)}{p.cost ? ` · Cost: $${p.cost.toFixed(2)}` : ''}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <span className={`font-mono text-sm font-semibold ${stockColor(p)}`}>
-                {p.stock_qty} in stock
+                {p.stock_qty} {t('inventory.inStock')}
               </span>
               <button onClick={() => startEdit(p)} className="rounded-lg p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600" aria-label={`Edit ${p.name}`}>
                 <Pencil className="h-4 w-4" />

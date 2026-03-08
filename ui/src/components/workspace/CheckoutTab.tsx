@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, Copy, Plus } from 'lucide-react'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { useTranslation } from '@/lib/i18n'
 
 export function CheckoutTab() {
+  const { t } = useTranslation()
   const { checkoutLinks, isLoading, fetchCheckoutLinks, addCheckoutLink, products, fetchProducts } = useWorkspaceStore()
   const [label, setLabel] = useState('')
   const [amount, setAmount] = useState('')
@@ -28,40 +30,40 @@ export function CheckoutTab() {
     <div className="space-y-4">
       <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
         <div className="flex-1 min-w-[160px]">
-          <label className="block text-xs font-medium text-gray-500 mb-1">Product</label>
+          <label className="block text-xs font-medium text-gray-500 mb-1">{t('checkout.product')}</label>
           <select value={productId} onChange={(e) => {
             setProductId(e.target.value)
             const p = products.find(pr => pr.id === e.target.value)
             if (p) { setLabel(p.name); setAmount(String(p.price)) }
           }}
             className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500 bg-white">
-            <option value="">Select product (optional)</option>
+            <option value="">{t('checkout.selectProduct')}</option>
             {products.filter(p => p.is_active).map(p => (
               <option key={p.id} value={p.id}>{p.name} — ${p.price.toFixed(2)}</option>
             ))}
           </select>
         </div>
         <div className="flex-1 min-w-[160px]">
-          <label className="block text-xs font-medium text-gray-500 mb-1">Label *</label>
+          <label className="block text-xs font-medium text-gray-500 mb-1">{t('checkout.labelRequired')}</label>
           <input value={label} onChange={(e) => setLabel(e.target.value)} required
-            placeholder="Payment for..."
+            placeholder={t('checkout.labelPlaceholder')}
             className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
         </div>
         <div className="w-32">
-          <label className="block text-xs font-medium text-gray-500 mb-1">Amount *</label>
+          <label className="block text-xs font-medium text-gray-500 mb-1">{t('checkout.amountRequired')}</label>
           <input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required
             placeholder="$0.00"
             className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
         </div>
         <button type="submit" className="flex items-center gap-2 rounded-lg bg-purple-500 px-4 py-2 text-sm font-medium text-white hover:bg-purple-400 transition">
-          <Plus className="h-4 w-4" /> Create
+          <Plus className="h-4 w-4" /> {t('common.create')}
         </button>
       </form>
 
-      {isLoading && <p className="text-sm text-gray-400">Loading...</p>}
+      {isLoading && <p className="text-sm text-gray-400">{t('common.loading')}</p>}
 
       {checkoutLinks.length === 0 && !isLoading && (
-        <p className="py-8 text-center text-sm text-gray-400">No checkout links yet.</p>
+        <p className="py-8 text-center text-sm text-gray-400">{t('checkout.noLinksYet')}</p>
       )}
 
       <div className="space-y-2">
@@ -77,7 +79,7 @@ export function CheckoutTab() {
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1">
                 <span className={`h-2 w-2 rounded-full ${link.active ? 'bg-purple-500' : 'bg-gray-300'}`} />
-                <span className="text-xs text-gray-500">{link.active ? 'Active' : 'Inactive'}</span>
+                <span className="text-xs text-gray-500">{link.active ? t('checkout.active') : t('checkout.inactive')}</span>
               </span>
               <span className="font-semibold text-purple-500">${link.amount.toFixed(2)}</span>
               <button onClick={() => copySlug(link.slug)} className="rounded-lg p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600">

@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { UserPlus, Trash2 } from 'lucide-react'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { useTranslation } from '@/lib/i18n'
 
 export function LeadsTab() {
+  const { t } = useTranslation()
   const { leads, isLoading, fetchLeads, addLead, deleteLead } = useWorkspaceStore()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -21,32 +23,32 @@ export function LeadsTab() {
     <div className="space-y-4">
       <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
         <div className="flex-1 min-w-[140px]">
-          <label className="block text-xs font-medium text-gray-500 mb-1">Name *</label>
+          <label className="block text-xs font-medium text-gray-500 mb-1">{t('leads.nameRequired')}</label>
           <input value={name} onChange={(e) => setName(e.target.value)} required
-            placeholder="Contact name"
+            placeholder={t('leads.contactName')}
             className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
         </div>
         <div className="flex-1 min-w-[120px]">
-          <label className="block text-xs font-medium text-gray-500 mb-1">Phone</label>
+          <label className="block text-xs font-medium text-gray-500 mb-1">{t('leads.phone')}</label>
           <input value={phone} onChange={(e) => setPhone(e.target.value)}
             placeholder="+507..."
             className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
         </div>
         <div className="flex-1 min-w-[140px]">
-          <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
+          <label className="block text-xs font-medium text-gray-500 mb-1">{t('leads.email')}</label>
           <input value={email} onChange={(e) => setEmail(e.target.value)}
             placeholder="email@..."
             className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
         </div>
         <button type="submit" className="flex items-center gap-2 rounded-lg bg-purple-500 px-4 py-2 text-sm font-medium text-white hover:bg-purple-400 transition">
-          <UserPlus className="h-4 w-4" /> Add
+          <UserPlus className="h-4 w-4" /> {t('common.add')}
         </button>
       </form>
 
-      {isLoading && <p className="text-sm text-gray-400">Loading...</p>}
+      {isLoading && <p className="text-sm text-gray-400">{t('common.loading')}</p>}
 
       {leads.length === 0 && !isLoading && (
-        <p className="py-8 text-center text-sm text-gray-400">No leads yet. Add your first contact above.</p>
+        <p className="py-8 text-center text-sm text-gray-400">{t('leads.noLeadsYet')}</p>
       )}
 
       <div className="space-y-2">
@@ -55,7 +57,7 @@ export function LeadsTab() {
             <div>
               <p className="font-medium text-black">{lead.name}</p>
               <p className="text-xs text-gray-500">
-                {[lead.phone, lead.email].filter(Boolean).join(' · ') || 'No contact info'}
+                {[lead.phone, lead.email].filter(Boolean).join(' · ') || t('leads.noContactInfo')}
               </p>
             </div>
             <button onClick={() => void deleteLead(lead.id)} className="text-gray-300 transition hover:text-red-500">

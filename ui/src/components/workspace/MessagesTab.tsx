@@ -3,6 +3,7 @@ import { MessageCircle, Inbox } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { apiFetch } from '@/lib/api'
 import { API } from '@/lib/constants'
+import { useTranslation } from '@/lib/i18n'
 
 interface Conversation {
   id: string
@@ -20,6 +21,7 @@ const channelColors = {
 }
 
 export function MessagesTab() {
+  const { t } = useTranslation()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -55,7 +57,7 @@ export function MessagesTab() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-bold text-black">Messages</h3>
+          <h3 className="text-lg font-bold text-black">{t('messages.title')}</h3>
           {totalUnread > 0 && (
             <span className="rounded-full bg-purple-500 px-2 py-0.5 text-[10px] font-bold text-white">
               {totalUnread}
@@ -75,8 +77,8 @@ export function MessagesTab() {
       {!isLoading && conversations.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-gray-200 py-12">
           <Inbox className="h-8 w-8 text-gray-300" />
-          <p className="text-sm text-gray-400">No conversations yet</p>
-          <p className="text-xs text-gray-300">Messages from WhatsApp, email, and Instagram will appear here</p>
+          <p className="text-sm text-gray-400">{t('messages.noConversations')}</p>
+          <p className="text-xs text-gray-300">{t('messages.channelHelp')}</p>
         </div>
       )}
 

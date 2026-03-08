@@ -370,6 +370,10 @@ export const useOrbStore = create<OrbStore>((set, get) => ({
         },
       )
 
+      // Human-like thinking delay (3-5 seconds)
+      const thinkDelay = 3000 + Math.random() * 2000
+      await new Promise((r) => setTimeout(r, thinkDelay))
+
       // If WS already streamed the response via text.done, skip adding a duplicate
       if (_streamingMsgId) {
         // WS handled it — just ensure final content/metadata is correct

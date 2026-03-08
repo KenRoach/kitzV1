@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Plus, Square, CheckSquare } from 'lucide-react'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { useTranslation } from '@/lib/i18n'
 
 export function TasksTab() {
+  const { t } = useTranslation()
   const { tasks, isLoading, fetchTasks, addTask } = useWorkspaceStore()
   const [title, setTitle] = useState('')
 
@@ -19,20 +21,20 @@ export function TasksTab() {
     <div className="space-y-4">
       <form onSubmit={handleSubmit} className="flex items-end gap-3">
         <div className="flex-1">
-          <label className="block text-xs font-medium text-gray-500 mb-1">New Task</label>
+          <label className="block text-xs font-medium text-gray-500 mb-1">{t('tasks.newTask')}</label>
           <input value={title} onChange={(e) => setTitle(e.target.value)} required
-            placeholder="What needs to get done?"
+            placeholder={t('tasks.placeholder')}
             className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500" />
         </div>
         <button type="submit" className="flex items-center gap-2 rounded-lg bg-purple-500 px-4 py-2 text-sm font-medium text-white hover:bg-purple-400 transition">
-          <Plus className="h-4 w-4" /> Add
+          <Plus className="h-4 w-4" /> {t('common.add')}
         </button>
       </form>
 
-      {isLoading && <p className="text-sm text-gray-400">Loading...</p>}
+      {isLoading && <p className="text-sm text-gray-400">{t('common.loading')}</p>}
 
       {tasks.length === 0 && !isLoading && (
-        <p className="py-8 text-center text-sm text-gray-400">All clear! Add a task to get started.</p>
+        <p className="py-8 text-center text-sm text-gray-400">{t('tasks.empty')}</p>
       )}
 
       <div className="space-y-1">

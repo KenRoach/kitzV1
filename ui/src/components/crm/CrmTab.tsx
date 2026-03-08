@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { useWorkspaceStore, STAGE_LABELS, STAGE_COLORS, type Lead } from '@/stores/workspaceStore'
 import { PipelineView } from './PipelineView'
 import { ContactDetail } from './ContactDetail'
+import { useTranslation } from '@/lib/i18n'
 
 type ViewMode = 'pipeline' | 'list'
 
@@ -11,6 +12,7 @@ type ViewMode = 'pipeline' | 'list'
 type WizardStep = 'name' | 'contact' | 'details'
 
 function AddContactWizard({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation()
   const { addLead } = useWorkspaceStore()
   const [step, setStep] = useState<WizardStep>('name')
   const [name, setName] = useState('')
@@ -20,9 +22,9 @@ function AddContactWizard({ onClose }: { onClose: () => void }) {
   const [value, setValue] = useState('')
 
   const steps: { id: WizardStep; label: string; num: number }[] = [
-    { id: 'name', label: 'Name', num: 1 },
-    { id: 'contact', label: 'Contact', num: 2 },
-    { id: 'details', label: 'Details', num: 3 },
+    { id: 'name', label: t('crm.stepName'), num: 1 },
+    { id: 'contact', label: t('crm.stepContact'), num: 2 },
+    { id: 'details', label: t('crm.stepDetails'), num: 3 },
   ]
 
   const currentIdx = steps.findIndex((s) => s.id === step)
@@ -90,8 +92,8 @@ function AddContactWizard({ onClose }: { onClose: () => void }) {
         <div className="px-8 pt-8 pb-6">
           {step === 'name' && (
             <div>
-              <h2 className="text-2xl font-bold text-black">What's their name?</h2>
-              <p className="mt-1 text-sm text-gray-500">We'll use this to identify the contact.</p>
+              <h2 className="text-2xl font-bold text-black">{t('crm.whatsTheirName')}</h2>
+              <p className="mt-1 text-sm text-gray-500">{t('crm.wellUseThis')}</p>
               <input
                 autoFocus
                 value={name}
@@ -105,8 +107,8 @@ function AddContactWizard({ onClose }: { onClose: () => void }) {
 
           {step === 'contact' && (
             <div>
-              <h2 className="text-2xl font-bold text-black">How do you reach them?</h2>
-              <p className="mt-1 text-sm text-gray-500">Add phone, email, or both.</p>
+              <h2 className="text-2xl font-bold text-black">{t('crm.howReachThem')}</h2>
+              <p className="mt-1 text-sm text-gray-500">{t('crm.addPhoneEmail')}</p>
               <div className="mt-6 space-y-3">
                 <input
                   autoFocus
@@ -128,21 +130,21 @@ function AddContactWizard({ onClose }: { onClose: () => void }) {
 
           {step === 'details' && (
             <div>
-              <h2 className="text-2xl font-bold text-black">Any extra details?</h2>
-              <p className="mt-1 text-sm text-gray-500">Source and estimated deal value.</p>
+              <h2 className="text-2xl font-bold text-black">{t('crm.extraDetails')}</h2>
+              <p className="mt-1 text-sm text-gray-500">{t('crm.sourceAndValue')}</p>
               <div className="mt-6 space-y-3">
                 <div>
-                  <label className="block font-mono text-xs text-gray-500 mb-1">Source</label>
+                  <label className="block font-mono text-xs text-gray-500 mb-1">{t('crm.source')}</label>
                   <input
                     autoFocus
                     value={source}
                     onChange={(e) => setSource(e.target.value)}
-                    placeholder="WhatsApp, Instagram, Referral..."
+                    placeholder={t('crm.sourcePlaceholder')}
                     className="w-full rounded-xl border border-gray-200 px-4 py-3.5 text-base text-black placeholder-gray-400 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                   />
                 </div>
                 <div>
-                  <label className="block font-mono text-xs text-gray-500 mb-1">Deal value ($)</label>
+                  <label className="block font-mono text-xs text-gray-500 mb-1">{t('crm.dealValue')}</label>
                   <input
                     type="number"
                     step="0.01"
@@ -164,14 +166,14 @@ function AddContactWizard({ onClose }: { onClose: () => void }) {
             onClick={onClose}
             className="font-mono text-xs text-gray-400 transition hover:text-gray-600"
           >
-            Cancel
+            {t('crm.cancel')}
           </button>
           <button
             onClick={handleNext}
             disabled={step === 'name' && !name.trim()}
             className="rounded-xl bg-purple-500 px-8 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-400 disabled:opacity-40"
           >
-            {step === 'details' ? 'Add Contact' : 'Continue'} →
+            {step === 'details' ? t('crm.addContact') : t('crm.continue')} →
           </button>
         </div>
       </div>
@@ -180,6 +182,7 @@ function AddContactWizard({ onClose }: { onClose: () => void }) {
 }
 
 function ContactListView({ leads, onSelectLead }: { leads: Lead[]; onSelectLead: (lead: Lead) => void }) {
+  const { t } = useTranslation()
   return (
     <div className="space-y-1">
       {leads.map((lead) => {
@@ -197,7 +200,7 @@ function ContactListView({ leads, onSelectLead }: { leads: Lead[]; onSelectLead:
               <div className="min-w-0">
                 <p className="font-semibold text-black truncate">{lead.name}</p>
                 <p className="font-mono text-xs text-gray-400 truncate">
-                  {[lead.phone, lead.email].filter(Boolean).join(' · ') || 'No contact info'}
+                  {[lead.phone, lead.email].filter(Boolean).join(' · ') || t('crm.noContactInfo')}
                 </p>
               </div>
             </div>
@@ -220,6 +223,7 @@ function ContactListView({ leads, onSelectLead }: { leads: Lead[]; onSelectLead:
 }
 
 export function CrmTab() {
+  const { t } = useTranslation()
   const { leads } = useWorkspaceStore()
   const [view, setView] = useState<ViewMode>('pipeline')
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
@@ -229,7 +233,7 @@ export function CrmTab() {
   const filteredLeads = search
     ? leads.filter((l) =>
         l.name.toLowerCase().includes(search.toLowerCase()) ||
-        l.tags.some((t) => t.includes(search.toLowerCase())) ||
+        l.tags.some((tag) => tag.includes(search.toLowerCase())) ||
         (l.email?.toLowerCase().includes(search.toLowerCase()) ?? false)
       )
     : leads
@@ -249,7 +253,7 @@ export function CrmTab() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search contacts..."
+              placeholder={t('crm.searchContacts')}
               className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-black placeholder-gray-400 outline-none focus:border-purple-500"
             />
           </div>
@@ -282,7 +286,7 @@ export function CrmTab() {
             className="flex items-center gap-2 rounded-xl bg-purple-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-purple-400"
           >
             <UserPlus className="h-4 w-4" />
-            Add Contact
+            {t('crm.addContact')}
           </button>
         </div>
       </div>

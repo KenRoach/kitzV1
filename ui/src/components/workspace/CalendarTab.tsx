@@ -3,14 +3,9 @@ import { CalendarDays, Plus, ChevronLeft, ChevronRight, Clock, MapPin, X, Edit3,
 import { cn } from '@/lib/utils'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import type { CalendarEvent } from '@/stores/workspaceStore'
+import { useTranslation } from '@/lib/i18n'
 
 type ViewMode = 'month' | 'week' | 'day'
-
-const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mi\u00e9', 'Jue', 'Vie', 'S\u00e1b']
-const MONTH_NAMES = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
-]
 
 const EVENT_TYPE_COLORS: Record<CalendarEvent['type'], { bg: string; text: string; dot: string }> = {
   call: { bg: 'bg-purple-100', text: 'text-purple-700', dot: 'bg-purple-500' },
@@ -70,8 +65,19 @@ function formatTime(dateStr: string): string {
 // ---------- Component ----------
 
 export function CalendarTab() {
+  const { t } = useTranslation()
   const { calendarEvents, isLoading, fetchCalendarEvents, addCalendarEvent, updateCalendarEvent, deleteCalendarEvent } =
     useWorkspaceStore()
+
+  const DAY_NAMES = [
+    t('calendar.sun'), t('calendar.mon'), t('calendar.tue'), t('calendar.wed'),
+    t('calendar.thu'), t('calendar.fri'), t('calendar.sat'),
+  ]
+  const MONTH_NAMES = [
+    t('calendar.january'), t('calendar.february'), t('calendar.march'), t('calendar.april'),
+    t('calendar.may'), t('calendar.june'), t('calendar.july'), t('calendar.august'),
+    t('calendar.september'), t('calendar.october'), t('calendar.november'), t('calendar.december'),
+  ]
 
   const today = useMemo(() => new Date(), [])
   const [currentDate, setCurrentDate] = useState(today)
@@ -187,7 +193,7 @@ export function CalendarTab() {
   const headerTitle = view === 'month'
     ? `${MONTH_NAMES[currentDate.getMonth()]} ${currentDate.getFullYear()}`
     : view === 'week'
-      ? `Semana del ${weekStart.getDate()} ${MONTH_NAMES[weekStart.getMonth()]?.slice(0, 3) ?? ''} - ${weekEnd.getDate()} ${MONTH_NAMES[weekEnd.getMonth()]?.slice(0, 3) ?? ''} ${weekEnd.getFullYear()}`
+      ? `${t('calendar.week')} ${weekStart.getDate()} ${MONTH_NAMES[weekStart.getMonth()]?.slice(0, 3) ?? ''} - ${weekEnd.getDate()} ${MONTH_NAMES[weekEnd.getMonth()]?.slice(0, 3) ?? ''} ${weekEnd.getFullYear()}`
       : `${currentDate.getDate()} ${MONTH_NAMES[currentDate.getMonth()]} ${currentDate.getFullYear()}`
 
   return (
@@ -208,7 +214,7 @@ export function CalendarTab() {
                 view === v ? 'bg-purple-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50',
               )}
             >
-              {v === 'month' ? 'Mes' : v === 'week' ? 'Semana' : 'D\u00eda'}
+              {v === 'month' ? t('calendar.month') : v === 'week' ? t('calendar.week') : t('calendar.day')}
             </button>
           ))}
         </div>
@@ -219,7 +225,7 @@ export function CalendarTab() {
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button onClick={goToday} className="rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-100">
-            Hoy
+            {t('calendar.today')}
           </button>
           <button onClick={goNext} className="rounded-lg p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600">
             <ChevronRight className="h-4 w-4" />
@@ -231,7 +237,7 @@ export function CalendarTab() {
           onClick={openCreateForm}
           className="flex items-center gap-2 rounded-lg bg-purple-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-purple-400"
         >
-          <Plus className="h-4 w-4" /> Evento
+          <Plus className="h-4 w-4" /> {t('calendar.event')}
         </button>
       </div>
 
@@ -361,7 +367,7 @@ export function CalendarTab() {
           {eventsForDay(calendarEvents, currentDate).length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-gray-200 py-12">
               <CalendarDays className="h-8 w-8 text-gray-300" />
-              <p className="text-sm text-gray-400">No hay eventos este d&iacute;a</p>
+              <p className="text-sm text-gray-400">{t('calendar.noEventsDay')}</p>
             </div>
           ) : (
             eventsForDay(calendarEvents, currentDate).map((ev) => (
@@ -378,17 +384,17 @@ export function CalendarTab() {
             <h4 className="text-sm font-semibold text-gray-700">
               {selectedDate.getDate()} {MONTH_NAMES[selectedDate.getMonth()]} {selectedDate.getFullYear()}
             </h4>
-            <span className="text-xs text-gray-400">{selectedDayEvents.length} evento{selectedDayEvents.length !== 1 ? 's' : ''}</span>
+            <span className="text-xs text-gray-400">{selectedDayEvents.length} {t('calendar.event')}{selectedDayEvents.length !== 1 ? 's' : ''}</span>
           </div>
           {selectedDayEvents.length === 0 && (
             <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-gray-200 py-12">
               <CalendarDays className="h-8 w-8 text-gray-300" />
-              <p className="text-sm text-gray-400">Sin eventos para este d&iacute;a</p>
+              <p className="text-sm text-gray-400">{t('calendar.noEventsSelected')}</p>
               <button
                 onClick={openCreateForm}
                 className="flex items-center gap-1.5 rounded-lg bg-purple-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-purple-400"
               >
-                <Plus className="h-3.5 w-3.5" /> Crear evento
+                <Plus className="h-3.5 w-3.5" /> {t('calendar.createEvent')}
               </button>
             </div>
           )}
@@ -403,7 +409,7 @@ export function CalendarTab() {
         <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-gray-700">
-              {editingEvent ? 'Editar evento' : 'Nuevo evento'}
+              {editingEvent ? t('calendar.editEvent') : t('calendar.newEvent')}
             </h3>
             <button onClick={resetForm} className="text-gray-400 transition hover:text-gray-600">
               <X className="h-4 w-4" />
@@ -411,18 +417,18 @@ export function CalendarTab() {
           </div>
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">T&iacute;tulo *</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">{t('calendar.titleRequired')}</label>
               <input
                 value={formTitle}
                 onChange={(e) => setFormTitle(e.target.value)}
                 required
-                placeholder="Nombre del evento"
+                placeholder={t('calendar.eventName')}
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500"
               />
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Fecha</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{t('calendar.date')}</label>
                 <input
                   type="date"
                   value={formDate}
@@ -431,7 +437,7 @@ export function CalendarTab() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Inicio</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{t('calendar.start')}</label>
                 <input
                   type="time"
                   value={formStartTime}
@@ -441,7 +447,7 @@ export function CalendarTab() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Fin</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{t('calendar.end')}</label>
                 <input
                   type="time"
                   value={formEndTime}
@@ -459,39 +465,39 @@ export function CalendarTab() {
                 onChange={(e) => setFormAllDay(e.target.checked)}
                 className="h-4 w-4 rounded border-gray-300 text-purple-500 focus:ring-purple-500"
               />
-              <label htmlFor="allDay" className="text-xs text-gray-600">Todo el d&iacute;a</label>
+              <label htmlFor="allDay" className="text-xs text-gray-600">{t('calendar.allDay')}</label>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Tipo</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{t('calendar.type')}</label>
                 <select
                   value={formType}
                   onChange={(e) => setFormType(e.target.value as CalendarEvent['type'])}
                   className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500"
                 >
-                  {EVENT_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t === 'call' ? 'Llamada' : t === 'meeting' ? 'Reuni\u00f3n' : t === 'task' ? 'Tarea' : t === 'follow-up' ? 'Seguimiento' : t === 'reminder' ? 'Recordatorio' : 'Otro'}
+                  {EVENT_TYPES.map((tp) => (
+                    <option key={tp} value={tp}>
+                      {tp === 'call' ? t('calendar.call') : tp === 'meeting' ? t('calendar.meeting') : tp === 'task' ? t('calendar.task') : tp === 'follow-up' ? t('calendar.followUp') : tp === 'reminder' ? t('calendar.reminder') : t('calendar.other')}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Ubicaci&oacute;n</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{t('calendar.location')}</label>
                 <input
                   value={formLocation}
                   onChange={(e) => setFormLocation(e.target.value)}
-                  placeholder="Lugar o enlace"
+                  placeholder={t('calendar.locationPlaceholder')}
                   className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Descripci&oacute;n</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">{t('calendar.descriptionLabel')}</label>
               <input
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
-                placeholder="Detalles del evento"
+                placeholder={t('calendar.descriptionPlaceholder')}
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black outline-none focus:border-purple-500"
               />
             </div>
@@ -500,14 +506,14 @@ export function CalendarTab() {
                 type="submit"
                 className="flex items-center gap-2 rounded-lg bg-purple-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-purple-400"
               >
-                <Plus className="h-4 w-4" /> {editingEvent ? 'Guardar' : 'Crear'}
+                <Plus className="h-4 w-4" /> {editingEvent ? t('calendar.save') : t('calendar.create')}
               </button>
               <button
                 type="button"
                 onClick={resetForm}
                 className="rounded-lg px-4 py-2 text-sm font-medium text-gray-500 transition hover:bg-gray-100"
               >
-                Cancelar
+                {t('calendar.cancelBtn')}
               </button>
             </div>
           </form>
@@ -528,6 +534,7 @@ function EventCard({
   onEdit: (e: CalendarEvent) => void
   onDelete: (id: string) => Promise<void>
 }) {
+  const { t } = useTranslation()
   const colors = EVENT_TYPE_COLORS[event.type] ?? EVENT_TYPE_COLORS.other
 
   return (
@@ -558,7 +565,7 @@ function EventCard({
           {event.allDay && (
             <span className="flex items-center gap-1 text-xs text-gray-400">
               <Clock className="h-3 w-3" />
-              Todo el d&iacute;a
+              {t('calendar.allDay')}
             </span>
           )}
           {event.location && (
