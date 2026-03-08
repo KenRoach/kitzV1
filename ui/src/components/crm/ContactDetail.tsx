@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { X, Phone, Mail, Tag, MessageSquare, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkspaceStore, STAGE_LABELS, STAGE_COLORS, PIPELINE_STAGES, type Lead } from '@/stores/workspaceStore'
+import { useTranslation } from '@/lib/i18n'
 
 interface ContactDetailProps {
   lead: Lead
@@ -13,6 +14,7 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
   const [newNote, setNewNote] = useState('')
   const [newTag, setNewTag] = useState('')
   const [showStageDropdown, setShowStageDropdown] = useState(false)
+  const { t } = useTranslation()
 
   const stageColor = STAGE_COLORS[lead.stage]
 
@@ -43,8 +45,8 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
           <div>
             <h3 className="text-lg font-bold text-gray-900">{lead.name}</h3>
             <p className="mt-0.5 text-xs text-gray-400">
-              Added {new Date(lead.createdAt).toLocaleDateString()}
-              {lead.source && <> · via <span className="text-gray-600">{lead.source}</span></>}
+              {t('crm.added')} {new Date(lead.createdAt).toLocaleDateString()}
+              {lead.source && <> · {t('crm.via')} <span className="text-gray-600">{lead.source}</span></>}
             </p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
@@ -56,7 +58,7 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
           {/* Stage selector */}
           <div>
             <label className="text-xs font-medium text-gray-500 mb-1.5 block">
-              Pipeline Stage
+              {t('crm.pipelineStage')}
             </label>
             <div className="relative">
               <button
@@ -99,7 +101,7 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
           {/* Contact info */}
           <div>
             <label className="text-xs font-medium text-gray-500 mb-1.5 block">
-              Contact Info
+              {t('crm.contactInfo')}
             </label>
             <div className="space-y-2">
               {lead.phone && (
@@ -116,7 +118,7 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
               )}
               {lead.value != null && lead.value > 0 && (
                 <div className="rounded-lg border border-gray-200 px-3 py-2">
-                  <span className="text-xs text-gray-400">Deal value</span>
+                  <span className="text-xs text-gray-400">{t('crm.dealValue')}</span>
                   <p className="text-lg font-bold text-purple-600">${lead.value.toLocaleString()}</p>
                 </div>
               )}
@@ -126,7 +128,7 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
           {/* Tags */}
           <div>
             <label className="text-xs font-medium text-gray-500 mb-1.5 block">
-              Tags
+              {t('crm.tags')}
             </label>
             <div className="flex flex-wrap gap-2 mb-2">
               {lead.tags.map((tag) => (
@@ -143,11 +145,11 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
               <input
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
-                placeholder="Add tag..."
+                placeholder={t('crm.addTag')}
                 className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-black placeholder-gray-400 outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
               />
               <button type="submit" className="rounded-lg bg-gray-100 px-4 py-2 text-xs font-medium text-gray-600 transition hover:bg-gray-200">
-                Add
+                {t('add')}
               </button>
             </form>
           </div>
@@ -155,7 +157,7 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
           {/* Notes */}
           <div>
             <label className="text-xs font-medium text-gray-500 mb-1.5 block">
-              Notes
+              {t('crm.notes')}
             </label>
             {lead.notes.length > 0 && (
               <div className="mb-3 space-y-2">
@@ -171,11 +173,11 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
               <input
                 value={newNote}
                 onChange={(e) => setNewNote(e.target.value)}
-                placeholder="Add a note..."
+                placeholder={t('crm.addNote')}
                 className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-black placeholder-gray-400 outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
               />
               <button type="submit" className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-purple-700">
-                Add
+                {t('add')}
               </button>
             </form>
           </div>
@@ -187,13 +189,13 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
             onClick={handleDelete}
             className="text-xs text-gray-400 transition hover:text-red-500"
           >
-            Delete contact
+            {t('crm.deleteContact')}
           </button>
           <button
             onClick={onClose}
             className="rounded-xl bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-700"
           >
-            Done
+            {t('done')}
           </button>
         </div>
       </div>

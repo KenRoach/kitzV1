@@ -1,6 +1,7 @@
 import { Pause, Play } from 'lucide-react'
 import { cn, timeAgo } from '@/lib/utils'
 import type { AgentInfo, TeamCluster } from '@/types/agent'
+import { useTranslation } from '@/lib/i18n'
 
 interface AgentStatusCardProps {
   agent: AgentInfo
@@ -23,6 +24,7 @@ const badgeStyles: Record<TeamCluster, string> = {
 }
 
 export function AgentStatusCard({ agent, onToggle }: AgentStatusCardProps) {
+  const { t } = useTranslation()
   const canToggle = agent.status === 'active' || agent.status === 'paused'
 
   return (
@@ -54,7 +56,7 @@ export function AgentStatusCard({ agent, onToggle }: AgentStatusCardProps) {
       {agent.lastAction ? (
         <p className="mt-1.5 text-xs text-gray-500 line-clamp-1">{agent.lastAction}</p>
       ) : (
-        <p className="mt-1.5 text-xs text-gray-400 italic">No recent activity</p>
+        <p className="mt-1.5 text-xs text-gray-400 italic">{t('agents.noRecentActivity')}</p>
       )}
 
       <div className="mt-3 flex items-center justify-between">
@@ -64,14 +66,14 @@ export function AgentStatusCard({ agent, onToggle }: AgentStatusCardProps) {
           </span>
           {agent.monitoringCount != null && agent.monitoringCount > 0 && (
             <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
-              {agent.monitoringCount} workflows
+              {agent.monitoringCount} {t('agents.workflows')}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2">
           {agent.actionsToday > 0 && (
             <span className="font-mono text-[10px] text-gray-400">
-              {agent.actionsToday} today
+              {agent.actionsToday} {t('agents.today')}
             </span>
           )}
           <span className="font-mono text-[10px] text-gray-400">

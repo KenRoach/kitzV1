@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { cn } from '@/lib/utils'
 import { useCanvasStore, type CanvasTab } from '@/stores/canvasStore'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
+import { useTranslation } from '@/lib/i18n'
 import { DashboardCards } from './DashboardCards'
 import { CanvasPreview } from './CanvasPreview'
 import { WorkspaceTabs } from '@/components/workspace/WorkspaceTabs'
@@ -15,31 +16,33 @@ import { KnowledgePage } from '@/pages/KnowledgePage'
 const LearnPage = lazy(() => import('@/pages/LearnPage').then((m) => ({ default: m.LearnPage })))
 const GamePage = lazy(() => import('@/pages/GamePage').then((m) => ({ default: m.GamePage })))
 
-const TAB_LABELS: Partial<Record<CanvasTab, string>> = {
-  dashboard: 'Dashboard',
-  preview: 'Preview',
-  workspace: 'Workspace',
-  knowledge: 'Knowledge',
-  automations: 'Automations',
-  activity: 'Activity',
-  settings: 'Settings',
-  agents: 'Agents',
-  learn: 'Learn',
-  game: 'Game',
-  'how-it-works': 'How It Works',
+const TAB_KEYS: Partial<Record<CanvasTab, string>> = {
+  dashboard: 'canvas.tabDashboard',
+  preview: 'canvas.tabPreview',
+  workspace: 'canvas.tabWorkspace',
+  knowledge: 'canvas.tabKnowledge',
+  automations: 'canvas.tabAutomations',
+  activity: 'canvas.tabActivity',
+  settings: 'canvas.tabSettings',
+  agents: 'canvas.tabAgents',
+  learn: 'canvas.tabLearn',
+  game: 'canvas.tabGame',
+  'how-it-works': 'canvas.tabHowItWorks',
 }
 
 const ALWAYS_VISIBLE: CanvasTab[] = ['dashboard']
 
 function SuspenseFallback() {
+  const { t } = useTranslation()
   return (
     <div className="flex items-center justify-center p-8">
-      <p className="text-gray-400 text-sm">Loading...</p>
+      <p className="text-gray-400 text-sm">{t('loading')}</p>
     </div>
   )
 }
 
 export function Canvas() {
+  const { t } = useTranslation()
   const { activeTab, setActiveTab, artifacts, hasNewPreview } = useCanvasStore()
 
   // Show tabs that are always visible + the active tab
@@ -60,7 +63,7 @@ export function Canvas() {
                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50',
             )}
           >
-            {TAB_LABELS[tab] ?? tab}
+            {t(TAB_KEYS[tab] ?? tab)}
             {tab === 'preview' && hasNewPreview && (
               <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-purple-500" />
             )}
