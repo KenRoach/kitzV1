@@ -36,33 +36,33 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-      <div className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={onClose}>
+      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-bold text-black">{lead.name}</h2>
-            <p className="mt-0.5 font-mono text-xs text-gray-400">
+            <h3 className="text-lg font-bold text-gray-900">{lead.name}</h3>
+            <p className="mt-0.5 text-xs text-gray-400">
               Added {new Date(lead.createdAt).toLocaleDateString()}
               {lead.source && <> · via <span className="text-gray-600">{lead.source}</span></>}
             </p>
           </div>
-          <button onClick={onClose} className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto px-6 py-5 space-y-6">
+        <div className="max-h-[70vh] overflow-y-auto space-y-4">
           {/* Stage selector */}
           <div>
-            <label className="block font-mono text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+            <label className="text-xs font-medium text-gray-500 mb-1.5 block">
               Pipeline Stage
             </label>
             <div className="relative">
               <button
                 onClick={() => setShowStageDropdown(!showStageDropdown)}
                 className={cn(
-                  'flex w-full items-center justify-between rounded-xl border border-gray-200 px-4 py-3 transition hover:border-purple-500/30',
+                  'flex w-full items-center justify-between rounded-lg border border-gray-200 px-3 py-2 transition hover:border-purple-500/30',
                 )}
               >
                 <div className="flex items-center gap-2">
@@ -72,7 +72,7 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
                 <ChevronDown className={cn('h-4 w-4 text-gray-400 transition', showStageDropdown && 'rotate-180')} />
               </button>
               {showStageDropdown && (
-                <div className="absolute z-10 mt-1 w-full rounded-xl border border-gray-200 bg-white py-1 shadow-lg">
+                <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
                   {PIPELINE_STAGES.map((stage) => (
                     <button
                       key={stage}
@@ -98,26 +98,26 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
 
           {/* Contact info */}
           <div>
-            <label className="block font-mono text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+            <label className="text-xs font-medium text-gray-500 mb-1.5 block">
               Contact Info
             </label>
             <div className="space-y-2">
               {lead.phone && (
-                <div className="flex items-center gap-3 rounded-xl border border-gray-200 px-4 py-3">
+                <div className="flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2">
                   <Phone className="h-4 w-4 text-gray-400" />
-                  <span className="font-mono text-sm text-black">{lead.phone}</span>
+                  <span className="text-sm text-black">{lead.phone}</span>
                 </div>
               )}
               {lead.email && (
-                <div className="flex items-center gap-3 rounded-xl border border-gray-200 px-4 py-3">
+                <div className="flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2">
                   <Mail className="h-4 w-4 text-gray-400" />
-                  <span className="font-mono text-sm text-black">{lead.email}</span>
+                  <span className="text-sm text-black">{lead.email}</span>
                 </div>
               )}
               {lead.value != null && lead.value > 0 && (
-                <div className="rounded-xl border border-gray-200 px-4 py-3">
-                  <span className="font-mono text-xs text-gray-400">Deal value</span>
-                  <p className="font-mono text-lg font-bold text-purple-500">${lead.value.toLocaleString()}</p>
+                <div className="rounded-lg border border-gray-200 px-3 py-2">
+                  <span className="text-xs text-gray-400">Deal value</span>
+                  <p className="text-lg font-bold text-purple-600">${lead.value.toLocaleString()}</p>
                 </div>
               )}
             </div>
@@ -125,12 +125,12 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
 
           {/* Tags */}
           <div>
-            <label className="block font-mono text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+            <label className="text-xs font-medium text-gray-500 mb-1.5 block">
               Tags
             </label>
             <div className="flex flex-wrap gap-2 mb-2">
               {lead.tags.map((tag) => (
-                <span key={tag} className="flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 font-mono text-xs text-gray-700">
+                <span key={tag} className="flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
                   <Tag className="h-3 w-3" />
                   {tag}
                   <button onClick={() => removeLeadTag(lead.id, tag)} className="ml-1 text-gray-400 hover:text-red-500">
@@ -144,9 +144,9 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 placeholder="Add tag..."
-                className="flex-1 rounded-xl border border-gray-200 px-3 py-2 font-mono text-sm text-black placeholder-gray-400 outline-none focus:border-purple-500"
+                className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-black placeholder-gray-400 outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
               />
-              <button type="submit" className="rounded-xl bg-gray-100 px-4 py-2 font-mono text-xs font-medium text-gray-600 transition hover:bg-gray-200">
+              <button type="submit" className="rounded-lg bg-gray-100 px-4 py-2 text-xs font-medium text-gray-600 transition hover:bg-gray-200">
                 Add
               </button>
             </form>
@@ -154,13 +154,13 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
 
           {/* Notes */}
           <div>
-            <label className="block font-mono text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+            <label className="text-xs font-medium text-gray-500 mb-1.5 block">
               Notes
             </label>
             {lead.notes.length > 0 && (
               <div className="mb-3 space-y-2">
                 {lead.notes.map((note, i) => (
-                  <div key={i} className="flex items-start gap-2 rounded-xl bg-gray-50 px-4 py-3">
+                  <div key={i} className="flex items-start gap-2 rounded-lg bg-gray-50 px-3 py-2">
                     <MessageSquare className="mt-0.5 h-3.5 w-3.5 text-gray-400 shrink-0" />
                     <p className="text-sm text-gray-700">{note}</p>
                   </div>
@@ -172,9 +172,9 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
                 value={newNote}
                 onChange={(e) => setNewNote(e.target.value)}
                 placeholder="Add a note..."
-                className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm text-black placeholder-gray-400 outline-none focus:border-purple-500"
+                className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-black placeholder-gray-400 outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
               />
-              <button type="submit" className="rounded-xl bg-purple-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-purple-400">
+              <button type="submit" className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-purple-700">
                 Add
               </button>
             </form>
@@ -182,16 +182,16 @@ export function ContactDetail({ lead, onClose }: ContactDetailProps) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-gray-100 px-6 py-4">
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
           <button
             onClick={handleDelete}
-            className="font-mono text-xs text-gray-400 transition hover:text-red-500"
+            className="text-xs text-gray-400 transition hover:text-red-500"
           >
             Delete contact
           </button>
           <button
             onClick={onClose}
-            className="rounded-xl bg-black px-6 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800"
+            className="rounded-xl bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-700"
           >
             Done
           </button>

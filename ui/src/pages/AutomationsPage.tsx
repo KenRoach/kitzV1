@@ -18,7 +18,6 @@ import {
   Globe,
   Users,
   Megaphone,
-  Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/home/PageHeader'
@@ -104,7 +103,7 @@ const kitzCapabilities = [
     statsCount: '4',
   },
   {
-    icon: Sparkles,
+    icon: Zap,
     titleKey: 'automations.aiWorksForYou',
     descKey: 'automations.aiWorksForYouDesc',
     example: '"How\'s my week looking?"',

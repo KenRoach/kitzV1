@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { UserPlus, LayoutGrid, List, Search, Sparkles } from 'lucide-react'
+import { UserPlus, LayoutGrid, List, Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkspaceStore, STAGE_LABELS, STAGE_COLORS, type Lead } from '@/stores/workspaceStore'
 import { PipelineView } from './PipelineView'
@@ -45,18 +45,18 @@ function AddContactWizard({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-      <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white shadow-xl">
-        {/* Logo */}
-        <div className="pt-6 text-center">
-          <div className="inline-flex items-center gap-1.5">
-            <Sparkles className="h-5 w-5 text-purple-500" />
-            <span className="text-xl font-extrabold tracking-tight text-black">kitz</span>
-          </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-gray-900">{t('crm.addContact')}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
         {/* Step indicator */}
-        <div className="mt-4 flex items-center justify-center gap-6 px-8">
+        <div className="flex items-center justify-center gap-6">
           {steps.map((s, i) => (
             <div key={s.id} className="flex items-center gap-2">
               <span className={cn(
@@ -76,7 +76,7 @@ function AddContactWizard({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Progress bar */}
-        <div className="mt-3 flex gap-1 px-8">
+        <div className="mt-3 flex gap-1">
           {steps.map((s, i) => (
             <div
               key={s.id}
@@ -89,17 +89,17 @@ function AddContactWizard({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Step content */}
-        <div className="px-8 pt-8 pb-6">
+        <div className="pt-6 pb-4">
           {step === 'name' && (
             <div>
-              <h2 className="text-2xl font-bold text-black">{t('crm.whatsTheirName')}</h2>
+              <h2 className="text-sm font-semibold text-gray-900">{t('crm.whatsTheirName')}</h2>
               <p className="mt-1 text-sm text-gray-500">{t('crm.wellUseThis')}</p>
               <input
                 autoFocus
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Maria Rodriguez"
-                className="mt-6 w-full rounded-xl border border-gray-200 px-4 py-3.5 text-base text-black placeholder-gray-400 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                className="mt-4 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black placeholder-gray-400 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
                 onKeyDown={(e) => e.key === 'Enter' && handleNext()}
               />
             </div>
@@ -107,21 +107,21 @@ function AddContactWizard({ onClose }: { onClose: () => void }) {
 
           {step === 'contact' && (
             <div>
-              <h2 className="text-2xl font-bold text-black">{t('crm.howReachThem')}</h2>
+              <h2 className="text-sm font-semibold text-gray-900">{t('crm.howReachThem')}</h2>
               <p className="mt-1 text-sm text-gray-500">{t('crm.addPhoneEmail')}</p>
-              <div className="mt-6 space-y-3">
+              <div className="mt-4 space-y-3">
                 <input
                   autoFocus
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+507 6234-5678"
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3.5 text-base text-black placeholder-gray-400 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black placeholder-gray-400 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
                 />
                 <input
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="email@business.com"
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3.5 text-base text-black placeholder-gray-400 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black placeholder-gray-400 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
                   onKeyDown={(e) => e.key === 'Enter' && handleNext()}
                 />
               </div>
@@ -130,28 +130,28 @@ function AddContactWizard({ onClose }: { onClose: () => void }) {
 
           {step === 'details' && (
             <div>
-              <h2 className="text-2xl font-bold text-black">{t('crm.extraDetails')}</h2>
+              <h2 className="text-sm font-semibold text-gray-900">{t('crm.extraDetails')}</h2>
               <p className="mt-1 text-sm text-gray-500">{t('crm.sourceAndValue')}</p>
-              <div className="mt-6 space-y-3">
+              <div className="mt-4 space-y-3">
                 <div>
-                  <label className="block font-mono text-xs text-gray-500 mb-1">{t('crm.source')}</label>
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">{t('crm.source')}</label>
                   <input
                     autoFocus
                     value={source}
                     onChange={(e) => setSource(e.target.value)}
                     placeholder={t('crm.sourcePlaceholder')}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3.5 text-base text-black placeholder-gray-400 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black placeholder-gray-400 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
                   />
                 </div>
                 <div>
-                  <label className="block font-mono text-xs text-gray-500 mb-1">{t('crm.dealValue')}</label>
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">{t('crm.dealValue')}</label>
                   <input
                     type="number"
                     step="0.01"
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
                     placeholder="0.00"
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3.5 text-base text-black placeholder-gray-400 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black placeholder-gray-400 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
                     onKeyDown={(e) => e.key === 'Enter' && handleNext()}
                   />
                 </div>
@@ -161,17 +161,17 @@ function AddContactWizard({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-between border-t border-gray-100 px-8 py-4">
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
           <button
             onClick={onClose}
-            className="font-mono text-xs text-gray-400 transition hover:text-gray-600"
+            className="text-xs text-gray-400 transition hover:text-gray-600"
           >
             {t('crm.cancel')}
           </button>
           <button
             onClick={handleNext}
             disabled={step === 'name' && !name.trim()}
-            className="rounded-xl bg-purple-500 px-8 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-400 disabled:opacity-40"
+            className="rounded-xl bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {step === 'details' ? t('crm.addContact') : t('crm.continue')} →
           </button>
