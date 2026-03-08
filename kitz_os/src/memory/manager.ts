@@ -20,6 +20,11 @@ import { createHash, randomUUID } from 'node:crypto';
 
 const log = createSubsystemLogger('manager');
 
+// ── Supabase persistence for unified messages table ──
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+const USE_SUPABASE = !!(SUPABASE_URL && SUPABASE_KEY);
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ── Config ──
@@ -147,7 +152,7 @@ function appendConversation(msg: ConversationMessage): void {
 // ── Conversation API ──
 
 /**
- * Store a conversation message.
+ * Store a conversation message — JSONL (fast local cache) + Supabase messages table (unified inbox).
  */
 export function storeMessage(msg: Omit<ConversationMessage, 'id' | 'createdAt'>): ConversationMessage {
   initMemory();
@@ -158,7 +163,47 @@ export function storeMessage(msg: Omit<ConversationMessage, 'id' | 'createdAt'>)
   };
   conversations.push(full);
   appendConversation(full);
+
+  // Fire-and-forget: persist to Supabase unified messages table
+  if (USE_SUPABASE) {
+    persistMessageToSupabase(full).catch(err => {
+      log.warn('Supabase message persist failed (non-blocking)', { detail: (err as Error).message });
+    });
+  }
+
   return full;
+}
+
+/** Persist a conversation message to the unified Supabase `messages` table. */
+async function persistMessageToSupabase(msg: ConversationMessage): Promise<void> {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({
+        id: msg.id,
+        user_id: msg.userId || null,
+        channel: msg.channel,
+        direction: msg.role === 'user' ? 'inbound' : 'outbound',
+        sender_id: msg.role === 'user' ? msg.senderJid : 'kitz',
+        recipient_id: msg.role === 'user' ? 'kitz' : msg.senderJid,
+        content: msg.content,
+        trace_id: msg.traceId || null,
+        thread_id: `${msg.userId}:${msg.senderJid}`,
+        status: msg.role === 'assistant' ? 'sent' : 'received',
+        metadata: { role: msg.role, source: 'kitz_os' },
+        created_at: new Date(msg.createdAt).toISOString(),
+      }),
+      signal: AbortSignal.timeout(5_000),
+    });
+  } catch {
+    // Non-blocking — JSONL is the primary store, Supabase is the unified view
+  }
 }
 
 /**

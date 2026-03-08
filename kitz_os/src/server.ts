@@ -46,7 +46,7 @@ import { dirname, join } from 'path';
 import { existsSync } from 'fs';
 import type { KitzKernel } from './kernel.js';
 import { verifyJwt as gatewayVerifyJwt, signJwt as gatewaySignJwt } from './auth/gatewayJwt.js';
-import { findUserByEmail, createUser as createGatewayUser, updateUser as updateGatewayUser, verifyPassword } from './auth/gatewayDb.js';
+import { findUserByEmail, createUser as createGatewayUser, updateUser as updateGatewayUser, verifyPassword, findUserByPhone, createUserByPhone, createMagicLinkToken, verifyMagicLinkToken } from './auth/gatewayDb.js';
 import { isGoogleLoginConfigured as isGatewayGoogleConfigured, getLoginAuthUrl, exchangeLoginCode } from './auth/gatewayGoogleAuth.js';
 import { parseWhatsAppCommand } from './interfaces/whatsapp/commandParser.js';
 import { routeWithAI, brainFirstRoute, getDraftQueue, approveDraft, rejectDraft } from './interfaces/whatsapp/semanticRouter.js';
@@ -1514,6 +1514,215 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
         return reply.code(401).send({ code: 'GOOGLE_AUTH_FAILED', message: (err as Error).message });
       }
     }
+  );
+
+  // ── Magic-Link (WhatsApp passwordless login) ─────────────────
+
+  const KITZ_DOMAIN = process.env.KITZ_DOMAIN || 'https://workspace.kitz.services';
+  const waConnectorUrl = process.env.WA_CONNECTOR_URL || 'http://localhost:3006';
+
+  // POST /api/gateway/auth/magic-link — Request a magic-link via WhatsApp
+  app.post<{ Body: { phone?: string } }>(
+    '/api/gateway/auth/magic-link',
+    async (req, reply) => {
+      const { phone } = req.body || {};
+      if (!phone || !/^\+\d{7,15}$/.test(phone)) {
+        return reply.code(400).send({ code: 'VALIDATION', message: 'Valid phone number in E.164 format required (e.g. +50761234567)' });
+      }
+
+      // Find or create user by phone
+      let user = await findUserByPhone(phone);
+      const userId = user?.id ?? null;
+
+      // Create magic-link token (10 min TTL)
+      const magicToken = await createMagicLinkToken(phone, userId);
+      const magicUrl = `${KITZ_DOMAIN}/api/gateway/auth/magic-link/verify?token=${magicToken.token}`;
+
+      // Send via WhatsApp connector
+      try {
+        await fetch(`${waConnectorUrl}/api/send-message`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: phone.replace('+', '') + '@s.whatsapp.net',
+            message: `🔐 Tu link para entrar a KITZ:\n\n${magicUrl}\n\nExpira en 10 minutos.`,
+          }),
+          signal: AbortSignal.timeout(10_000),
+        });
+      } catch (err) {
+        log.warn('Failed to send magic-link via WhatsApp, link still valid', { phone, error: (err as Error).message });
+      }
+
+      log.info('Magic-link requested', { phone, hasExistingUser: !!user });
+      return { sent: true, phone, expiresIn: 600 };
+    },
+  );
+
+  // GET /api/gateway/auth/magic-link/verify — Verify token and return JWT
+  app.get<{ Querystring: { token?: string } }>(
+    '/api/gateway/auth/magic-link/verify',
+    async (req, reply) => {
+      const { token } = req.query || {};
+      if (!token) {
+        return reply.code(400).send({ code: 'VALIDATION', message: 'Token is required' });
+      }
+
+      const magicRecord = await verifyMagicLinkToken(token);
+      if (!magicRecord) {
+        return reply.code(401).send({ code: 'INVALID_TOKEN', message: 'Token is invalid or expired' });
+      }
+
+      // Find or create user
+      let user = magicRecord.userId ? await findUserByEmail('').catch(() => null) : null;
+      if (magicRecord.userId) {
+        // Try by phone first since userId might map to a phone-based user
+        user = await findUserByPhone(magicRecord.phone);
+      }
+      if (!user) {
+        user = await createUserByPhone(magicRecord.phone, `User ${magicRecord.phone.slice(-4)}`);
+      }
+
+      const now = Math.floor(Date.now() / 1000);
+      const jwtToken = gatewaySignJwt({
+        sub: user.id,
+        org_id: user.orgId,
+        scopes: GATEWAY_DEFAULT_SCOPES,
+        iat: now,
+        exp: now + GATEWAY_TOKEN_EXPIRY,
+      }, GATEWAY_JWT_SECRET);
+
+      log.info('Magic-link login', { userId: user.id, phone: magicRecord.phone });
+
+      // If request is from a browser (Accept: text/html), redirect to SPA with token
+      const accept = req.headers.accept || '';
+      if (accept.includes('text/html')) {
+        return reply.redirect(`${KITZ_DOMAIN}/?token=${jwtToken}&userId=${user.id}&orgId=${user.orgId}&name=${encodeURIComponent(user.name)}`);
+      }
+
+      return { token: jwtToken, userId: user.id, orgId: user.orgId, name: user.name, expiresIn: GATEWAY_TOKEN_EXPIRY };
+    },
+  );
+
+  // POST /api/gateway/auth/upgrade — Upgrade guest to full account
+  app.post<{ Body: { email?: string; password?: string; name?: string } }>(
+    '/api/gateway/auth/upgrade',
+    async (req, reply) => {
+      // Require existing auth (guest or phone-only user)
+      const authHeader = req.headers.authorization;
+      if (!authHeader?.startsWith('Bearer ')) {
+        return reply.code(401).send({ code: 'AUTH_REQUIRED', message: 'Bearer token required' });
+      }
+
+      let userId: string;
+      try {
+        const payload = gatewayVerifyJwt(authHeader.slice(7), GATEWAY_JWT_SECRET);
+        userId = payload.sub as string;
+      } catch {
+        return reply.code(401).send({ code: 'INVALID_TOKEN', message: 'Invalid or expired token' });
+      }
+
+      const { email, password, name } = req.body || {};
+      if (!email || !password || password.length < 6) {
+        return reply.code(400).send({ code: 'VALIDATION', message: 'Email and password (min 6 chars) required' });
+      }
+
+      // Check email isn't taken
+      const existing = await findUserByEmail(email);
+      if (existing && existing.id !== userId) {
+        return reply.code(409).send({ code: 'EMAIL_TAKEN', message: 'Email already in use' });
+      }
+
+      // Update user record with email + password
+      await updateGatewayUser(email, {
+        authProvider: 'email',
+      });
+
+      const now = Math.floor(Date.now() / 1000);
+      const token = gatewaySignJwt({
+        sub: userId,
+        org_id: existing?.orgId || '',
+        scopes: GATEWAY_DEFAULT_SCOPES,
+        iat: now,
+        exp: now + GATEWAY_TOKEN_EXPIRY,
+      }, GATEWAY_JWT_SECRET);
+
+      log.info('Guest upgrade', { userId, email });
+      return { token, userId, email, name: name || existing?.name, upgraded: true };
+    },
+  );
+
+  // ── Unified Inbox API ──────────────────────────────────────────
+
+  const INBOX_SUPABASE_URL = process.env.SUPABASE_URL || '';
+  const INBOX_SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+
+  // GET /api/kitz/inbox — Fetch messages (unified across all channels)
+  app.get<{ Querystring: { user_id?: string; channel?: string; limit?: string; offset?: string; thread_id?: string } }>(
+    '/api/kitz/inbox',
+    async (req, reply) => {
+      if (!INBOX_SUPABASE_URL || !INBOX_SUPABASE_KEY) {
+        return reply.code(503).send({ code: 'NO_DB', message: 'Supabase not configured' });
+      }
+
+      const { user_id, channel, limit: limitStr, offset: offsetStr, thread_id } = req.query;
+      const limit = Math.min(parseInt(limitStr || '50', 10), 100);
+      const offset = parseInt(offsetStr || '0', 10);
+
+      let url = `${INBOX_SUPABASE_URL}/rest/v1/messages?order=created_at.desc&limit=${limit}&offset=${offset}`;
+      if (user_id) url += `&user_id=eq.${encodeURIComponent(user_id)}`;
+      if (channel) url += `&channel=eq.${encodeURIComponent(channel)}`;
+      if (thread_id) url += `&thread_id=eq.${encodeURIComponent(thread_id)}`;
+
+      try {
+        const res = await fetch(url, {
+          headers: { 'apikey': INBOX_SUPABASE_KEY, 'Authorization': `Bearer ${INBOX_SUPABASE_KEY}` },
+          signal: AbortSignal.timeout(8_000),
+        });
+        if (!res.ok) return reply.code(502).send({ code: 'DB_ERROR', message: `Supabase ${res.status}` });
+        const rows = await res.json();
+        return rows;
+      } catch (err) {
+        return reply.code(502).send({ code: 'DB_ERROR', message: (err as Error).message });
+      }
+    },
+  );
+
+  // GET /api/kitz/inbox/threads — Get distinct threads with latest message
+  app.get<{ Querystring: { user_id?: string; limit?: string } }>(
+    '/api/kitz/inbox/threads',
+    async (req, reply) => {
+      if (!INBOX_SUPABASE_URL || !INBOX_SUPABASE_KEY) {
+        return reply.code(503).send({ code: 'NO_DB', message: 'Supabase not configured' });
+      }
+
+      const { user_id, limit: limitStr } = req.query;
+      const limit = Math.min(parseInt(limitStr || '20', 10), 50);
+
+      // Use Supabase RPC or a raw query to get distinct threads
+      // For now, fetch recent messages and deduplicate by thread_id
+      let url = `${INBOX_SUPABASE_URL}/rest/v1/messages?order=created_at.desc&limit=200`;
+      if (user_id) url += `&user_id=eq.${encodeURIComponent(user_id)}`;
+
+      try {
+        const res = await fetch(url, {
+          headers: { 'apikey': INBOX_SUPABASE_KEY, 'Authorization': `Bearer ${INBOX_SUPABASE_KEY}` },
+          signal: AbortSignal.timeout(8_000),
+        });
+        if (!res.ok) return reply.code(502).send({ code: 'DB_ERROR', message: `Supabase ${res.status}` });
+        const rows = await res.json() as Array<Record<string, unknown>>;
+
+        // Deduplicate by thread_id — keep the most recent message per thread
+        const threadMap = new Map<string, Record<string, unknown>>();
+        for (const row of rows) {
+          const tid = String(row.thread_id || row.id);
+          if (!threadMap.has(tid)) threadMap.set(tid, row);
+        }
+        const threads = Array.from(threadMap.values()).slice(0, limit);
+        return threads;
+      } catch (err) {
+        return reply.code(502).send({ code: 'DB_ERROR', message: (err as Error).message });
+      }
+    },
   );
 
   // ── Launch Review — 33 agents vote, CEO decides ──────────────

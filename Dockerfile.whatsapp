@@ -1,0 +1,37 @@
+# Railway Dockerfile for kitz-whatsapp-connector
+# Must live at repo root so COPY paths resolve correctly
+FROM node:20-slim
+
+# Install git + wget, then configure git to redirect ALL SSH GitHub URLs to HTTPS.
+# This is needed because Baileys depends on libsignal via git+ssh:// URL.
+RUN apt-get update && apt-get install -y --no-install-recommends git wget ca-certificates && rm -rf /var/lib/apt/lists/* \
+    && printf '[url "https://github.com/"]\n\tinsteadOf = ssh://git@github.com/\n[url "https://github.com/"]\n\tinsteadOf = git@github.com:\n' > /root/.gitconfig
+
+WORKDIR /app
+
+# Copy shared schemas (needed for file: dependency)
+COPY kitz-schemas/package.json kitz-schemas/
+COPY kitz-schemas/src/ kitz-schemas/src/
+COPY kitz-schemas/tsconfig.json kitz-schemas/
+
+# Copy connector
+COPY kitz-whatsapp-connector/package.json kitz-whatsapp-connector/
+COPY kitz-whatsapp-connector/tsconfig.json kitz-whatsapp-connector/
+
+# Install dependencies
+RUN cd kitz-whatsapp-connector && npm install
+
+# Copy source
+COPY kitz-whatsapp-connector/src/ kitz-whatsapp-connector/src/
+
+# Auth directory for session persistence
+RUN mkdir -p kitz-whatsapp-connector/auth_info_baileys
+
+WORKDIR /app/kitz-whatsapp-connector
+
+EXPOSE 3006
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3006/health || exit 1
+
+CMD ["npx", "tsx", "src/index.ts"]
