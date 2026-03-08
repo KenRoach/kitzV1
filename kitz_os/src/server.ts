@@ -222,7 +222,7 @@ export async function createServer(kernel: KitzKernel) {
   app.addHook('onRequest', async (req, reply) => {
     // Skip auth for health, status, OAuth callbacks, webhook endpoints, and static SPA assets
     const path = req.url.split('?')[0];
-    const isStaticAsset = req.method === 'GET' && !path.startsWith('/api/');
+    const isStaticAsset = (req.method === 'GET' || req.method === 'HEAD') && !path.startsWith('/api/');
     const skipAuth = isStaticAsset ||
       path === '/health' ||
       path === '/api/kitz/status' ||
