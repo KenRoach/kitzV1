@@ -1,222 +1,92 @@
-import {
-  Activity,
-  Bot,
-  Users,
-  ShoppingCart,
-  MessageSquare,
-  Server,
-  Shield,
-  Search,
-  Clock,
-  Eye,
-  Code,
-  ExternalLink,
-} from 'lucide-react'
-import { PageHeader } from '@/components/home/PageHeader'
-import { ActivityTab } from '@/components/activity/ActivityTab'
-import { KITZ_MANIFEST } from '@/content/kitz-manifest'
+import { useEffect } from 'react'
+import { useActivityStore } from '@/stores/activityStore'
+import { useTranslation } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
+import { ActivityEntry } from '@/components/activity/ActivityEntry'
+import { Loader2 } from 'lucide-react'
+import type { ActivityType } from '@/types/activity'
 
-/* ── Event types tracked ── */
-const eventTypes = [
-  {
-    icon: Bot,
-    title: 'Agent Actions',
-    description: 'Every agent decision, draft, execution, and recommendation is logged — who did what, when, and why.',
-    examples: ['LeadScorer scored contact', 'OutreachDrafter created message', 'InvoiceBot generated invoice'],
-    color: 'bg-purple-100 text-purple-600',
-  },
-  {
-    icon: Users,
-    title: 'CRM Events',
-    description: 'Customer created, deal updated, contact enriched, follow-up scheduled — all CRM changes in real time.',
-    examples: ['New customer added', 'Deal moved to closed', 'Contact merged'],
-    color: 'bg-purple-50 text-purple-500',
-  },
-  {
-    icon: ShoppingCart,
-    title: 'Order Events',
-    description: 'Order placed, payment received, shipped, delivered, or returned — the full lifecycle of every transaction.',
-    examples: ['Order #1234 placed', 'Payment confirmed', 'Delivery completed'],
-    color: 'bg-gray-100 text-gray-600',
-  },
-  {
-    icon: MessageSquare,
-    title: 'Message Events',
-    description: 'WhatsApp messages sent/received, email drafts created, responses delivered — your complete communication log.',
-    examples: ['WhatsApp received', 'Draft reply created', 'Message delivered'],
-    color: 'bg-purple-100 text-purple-600',
-  },
-  {
-    icon: Server,
-    title: 'System Events',
-    description: 'AI Battery usage, SOP triggers, kill-switch activations, service health — infrastructure-level visibility.',
-    examples: ['Battery credit spent', 'SOP triggered', 'Service restarted'],
-    color: 'bg-gray-100 text-gray-500',
-  },
-] as const
-
-/* ── Audit trail anatomy ── */
-const traceFields = [
-  { field: 'traceId', desc: 'Unique ID linking every action in a chain' },
-  { field: 'orgId', desc: 'Your organization — full data isolation' },
-  { field: 'userId', desc: 'Who initiated (you or which agent)' },
-  { field: 'source', desc: 'Where it happened — WhatsApp, web, API, cron' },
-  { field: 'event', desc: 'What happened — the action type' },
-  { field: 'payload', desc: 'Full context — the data involved' },
-  { field: 'ts', desc: 'Exact timestamp — millisecond precision' },
-] as const
-
-/* ── What agents see ── */
-const agentCapabilities = [
-  {
-    icon: Search,
-    title: 'Query Activity',
-    description: 'Agents search the activity log to understand context before acting — "what happened with this customer last week?"',
-  },
-  {
-    icon: Clock,
-    title: 'Cadence Reports',
-    description: 'Daily, weekly, monthly, and quarterly summaries auto-generated from the activity stream by scheduled AI jobs.',
-  },
-  {
-    icon: Eye,
-    title: 'Pattern Detection',
-    description: 'TrendAnalyst and ChurnPredictor scan the activity feed for patterns — dropping engagement, payment delays, growth signals.',
-  },
-] as const
+const FILTERS: { id: ActivityType | 'all'; labelKey: string }[] = [
+  { id: 'all', labelKey: 'activity.all' },
+  { id: 'agent', labelKey: 'activity.agents' },
+  { id: 'crm', labelKey: 'activity.crm' },
+  { id: 'order', labelKey: 'activity.orders' },
+  { id: 'message', labelKey: 'activity.messages' },
+  { id: 'system', labelKey: 'activity.system' },
+]
 
 export function ActivityPage() {
+  const { t } = useTranslation()
+  const entries = useActivityStore((s) => s.entries)
+  const filter = useActivityStore((s) => s.filter)
+  const setFilter = useActivityStore((s) => s.setFilter)
+  const hasMore = useActivityStore((s) => s.hasMore)
+  const isLoading = useActivityStore((s) => s.isLoading)
+  const loadMore = useActivityStore((s) => s.loadMore)
+  const fetchActivity = useActivityStore((s) => s.fetchActivity)
+
+  useEffect(() => {
+    void fetchActivity()
+  }, [fetchActivity])
+
+  const filtered = filter === 'all'
+    ? entries
+    : entries.filter((e) => e.type === filter)
+
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8 pb-12">
-      <PageHeader
-        title="Activity"
-        description="Every action — human or AI — creates an event in the activity stream"
-      />
+    <div className="mx-auto max-w-4xl px-6 py-6">
+      {/* Header */}
+      <div className="mb-4">
+        <h2 className="text-lg font-bold text-gray-900">{t('activity.title')}</h2>
+      </div>
 
-      {/* ── Live Activity Feed ── */}
-      <section className="mt-2 mb-10">
-        <ActivityTab />
-      </section>
+      {/* Filter chips */}
+      <div className="flex gap-1.5 overflow-x-auto pb-3">
+        {FILTERS.map((f) => (
+          <button
+            key={f.id}
+            onClick={() => setFilter(f.id)}
+            className={cn(
+              'whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition-colors',
+              filter === f.id
+                ? 'bg-purple-600 text-white'
+                : 'bg-gray-100 text-gray-500 hover:bg-gray-200',
+            )}
+          >
+            {t(f.labelKey)}
+          </button>
+        ))}
+      </div>
 
-      {/* ── What Gets Tracked ── */}
-      <section className="mt-2">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {eventTypes.map((evt) => {
-            const Icon = evt.icon
-            return (
-              <div
-                key={evt.title}
-                className="flex flex-col rounded-2xl border border-gray-200 bg-white p-5"
-              >
-                <Icon className="h-5 w-5 text-purple-500" />
-                <h4 className="mt-3 text-sm font-semibold text-black">{evt.title}</h4>
-                <p className="mt-1 text-xs leading-relaxed text-gray-500">{evt.description}</p>
+      {/* Log entries */}
+      <div className="rounded-xl border border-gray-200 bg-white">
+        {isLoading && filtered.length === 0 ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="py-12 text-center">
+            <p className="text-sm text-gray-400">{t('activity.noActivity')}</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-50 px-4">
+            {filtered.map((entry) => (
+              <ActivityEntry key={entry.id} entry={entry} />
+            ))}
+          </div>
+        )}
 
-                <div className="mt-3">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                    Examples
-                  </span>
-                  <div className="mt-1 space-y-1">
-                    {evt.examples.map((ex) => (
-                      <div key={ex} className="flex items-center gap-1.5">
-                        <Activity className="h-2.5 w-2.5 text-gray-300" />
-                        <span className="text-[11px] text-gray-500">{ex}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </section>
-
-      {/* ── Audit Trail Anatomy ── */}
-      <section className="mt-12 rounded-2xl bg-gray-50 p-6">
-        <div className="flex items-center gap-2">
-          <Shield className="h-5 w-5 text-purple-500" />
-          <h3 className="text-lg font-bold text-black">Audit Trail Anatomy</h3>
-        </div>
-        <p className="mt-1 text-sm text-gray-500">
-          Every event follows the EventEnvelope schema — full traceability, zero gaps
-        </p>
-
-        <div className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
-          {traceFields.map((f, i) => (
-            <div
-              key={f.field}
-              className={cn(
-                'flex items-center gap-4 px-5 py-3',
-                i < traceFields.length - 1 && 'border-b border-gray-100',
-              )}
+        {hasMore && (
+          <div className="border-t border-gray-100 px-4 py-3">
+            <button
+              onClick={loadMore}
+              className="w-full rounded-lg bg-gray-50 py-2 text-center text-xs font-medium text-gray-500 transition hover:bg-gray-100"
             >
-              <code className="w-20 shrink-0 font-mono text-xs font-semibold text-purple-600">
-                {f.field}
-              </code>
-              <span className="text-xs text-gray-500">{f.desc}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── How Agents Use Activity ── */}
-      <section className="mt-12">
-        <h3 className="text-lg font-bold text-black">How AI Agents Use the Activity Stream</h3>
-        <p className="mt-1 text-sm text-gray-500">
-          The activity log is the shared memory of your entire AI organization
-        </p>
-
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {agentCapabilities.map((cap) => {
-            const Icon = cap.icon
-            return (
-              <div key={cap.title} className="rounded-2xl border border-gray-200 bg-white p-5">
-                <Icon className="h-5 w-5 text-purple-500" />
-                <h4 className="mt-3 text-sm font-semibold text-black">{cap.title}</h4>
-                <p className="mt-1 text-xs leading-relaxed text-gray-500">{cap.description}</p>
-              </div>
-            )
-          })}
-        </div>
-      </section>
-
-      {/* ── API for Agents ── */}
-      <section className="mt-12 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 p-6 text-white">
-        <div className="flex items-center gap-2">
-          <Code className="h-5 w-5 text-white/80" />
-          <h3 className="text-lg font-bold">Activity API for Agents</h3>
-        </div>
-        <p className="mt-1 text-sm text-white/70">
-          External AI agents can query the activity stream and subscribe to real-time events
-        </p>
-
-        <div className="mt-6 space-y-2">
-          {[
-            { method: 'GET', path: `${KITZ_MANIFEST.endpoints.api}/activity`, desc: 'Query activity events with filters' },
-            { method: 'GET', path: `${KITZ_MANIFEST.endpoints.api}/activity/stream`, desc: 'SSE real-time event stream' },
-            { method: 'GET', path: `${KITZ_MANIFEST.endpoints.api}/activity/cadence`, desc: 'Daily/weekly/monthly reports' },
-          ].map((ep) => (
-            <div key={ep.path} className="flex items-center gap-3 rounded-lg bg-white/10 px-4 py-3">
-              <span className="rounded-md bg-white/20 px-2 py-0.5 font-mono text-[10px] font-bold text-white/90">
-                {ep.method}
-              </span>
-              <code className="flex-1 font-mono text-xs text-white/80">{ep.path}</code>
-              <span className="text-xs text-white/60">{ep.desc}</span>
-            </div>
-          ))}
-        </div>
-
-        <a
-          href={`${window.location.origin}/.well-known/kitz.json`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-white/80 transition hover:text-white"
-        >
-          <span className="font-mono">Full API manifest</span>
-          <ExternalLink className="h-3 w-3" />
-        </a>
-      </section>
+              {t('activity.loadMore')}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

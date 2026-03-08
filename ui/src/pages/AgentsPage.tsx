@@ -1,12 +1,8 @@
 import { useState } from 'react'
 import {
   Users,
-  Bot,
   Brain,
-  Shield,
   Zap,
-  Code,
-  ExternalLink,
   Network,
   Play,
   Loader2,
@@ -18,31 +14,32 @@ import { PageHeader } from '@/components/home/PageHeader'
 import { KITZ_MANIFEST } from '@/content/kitz-manifest'
 import { useSimulationStore } from '@/stores/simulationStore'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/lib/i18n'
 
 /* ── Agent architecture tiers ── */
 const tiers = [
   {
-    title: 'The Bosses',
+    titleKey: 'agents.theBosses',
     count: 12,
-    description: 'The top dogs — The Boss, Money Manager, Megaphone, Operator, Closer, Architect. Each one owns a domain and tells the specialist teams what to do.',
+    descKey: 'agents.theBossesDesc',
     color: 'bg-purple-500',
   },
   {
-    title: 'The Advisors',
+    titleKey: 'agents.theAdvisors',
     count: 9,
-    description: 'Risk checkers, ethics watchers, growth visionaries. They review big decisions before anything gets executed.',
+    descKey: 'agents.theAdvisorsDesc',
     color: 'bg-purple-400',
   },
   {
-    title: 'The Guardrails',
+    titleKey: 'agents.theGuardrails',
     count: 9,
-    description: 'Budget control, focus management, accountability. These agents keep the whole operation running clean.',
+    descKey: 'agents.theGuardrailsDesc',
     color: 'bg-gray-400',
   },
   {
-    title: 'The Specialists',
+    titleKey: 'agents.theSpecialists',
     count: KITZ_MANIFEST.capabilities.totalAgents,
-    description: `${KITZ_MANIFEST.capabilities.agentTeams} teams covering every business function — from sales and marketing to engineering and compliance.`,
+    descKey: '',
     color: 'bg-purple-300',
   },
 ] as const
@@ -89,15 +86,16 @@ const phases = [
 export function AgentsPage() {
   const [showAll, setShowAll] = useState(false)
   const { running, lastResult, error: simError, startSimulation } = useSimulationStore()
+  const { t } = useTranslation()
 
   const teams = showAll
     ? KITZ_MANIFEST.agentTeams
-    : KITZ_MANIFEST.agentTeams.filter((t) => t.customerFacing)
+    : KITZ_MANIFEST.agentTeams.filter((tm) => tm.customerFacing)
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8 pb-12">
       <PageHeader
-        title="AI Agents"
+        title={t('agents.title')}
         description={`${KITZ_MANIFEST.capabilities.totalAgents}+ agents organized like a real company — leadership, governance, and ${KITZ_MANIFEST.capabilities.agentTeams} specialist teams`}
       />
 
@@ -105,15 +103,17 @@ export function AgentsPage() {
       <section className="mt-2">
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {tiers.map((tier) => (
-            <div key={tier.title} className="rounded-2xl border border-gray-200 bg-white p-5">
+            <div key={tier.titleKey} className="rounded-2xl border border-gray-200 bg-white p-5">
               <div className="flex items-center gap-3">
                 <Network className="h-5 w-5 text-purple-500" />
                 <div>
-                  <h4 className="text-sm font-semibold text-black">{tier.title}</h4>
-                  <span className="text-xs text-gray-400">{tier.count} agents</span>
+                  <h4 className="text-sm font-semibold text-black">{t(tier.titleKey)}</h4>
+                  <span className="text-xs text-gray-400">{tier.count} {t('agents.agents')}</span>
                 </div>
               </div>
-              <p className="mt-3 text-xs leading-relaxed text-gray-500">{tier.description}</p>
+              <p className="mt-3 text-xs leading-relaxed text-gray-500">
+                {tier.descKey ? t(tier.descKey) : `${KITZ_MANIFEST.capabilities.agentTeams} ${t('agents.teams')} covering every business function.`}
+              </p>
             </div>
           ))}
         </div>
@@ -121,9 +121,9 @@ export function AgentsPage() {
 
       {/* ── 5-Phase Semantic Router ── */}
       <section className="mt-12">
-        <h3 className="text-lg font-bold text-black">How Agents Think</h3>
+        <h3 className="text-lg font-bold text-black">{t('agents.howAgentsThink')}</h3>
         <p className="mt-1 text-sm text-gray-500">
-          Every request passes through a 5-phase semantic router — the AI brain
+          {t('agents.howAgentsThinkDesc')}
         </p>
 
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-5">
@@ -145,10 +145,10 @@ export function AgentsPage() {
       <section className="mt-12 rounded-3xl bg-gray-50 p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold text-black">Team Directory</h3>
+            <h3 className="text-lg font-bold text-black">{t('agents.teamDirectory')}</h3>
             <p className="mt-0.5 text-sm text-gray-500">
-              {KITZ_MANIFEST.capabilities.agentTeams} specialist teams,{' '}
-              {KITZ_MANIFEST.capabilities.totalAgents}+ agents
+              {KITZ_MANIFEST.capabilities.agentTeams} {t('agents.teams')},{' '}
+              {KITZ_MANIFEST.capabilities.totalAgents}+ {t('agents.agents')}
             </p>
           </div>
 
@@ -160,7 +160,7 @@ export function AgentsPage() {
                 !showAll ? 'bg-purple-50 text-purple-600' : 'text-gray-500 hover:text-gray-700',
               )}
             >
-              Customer Teams
+              {t('home.customerTeams')}
             </button>
             <button
               onClick={() => setShowAll(true)}
@@ -169,7 +169,7 @@ export function AgentsPage() {
                 showAll ? 'bg-purple-50 text-purple-600' : 'text-gray-500 hover:text-gray-700',
               )}
             >
-              All Teams
+              {t('home.allTeams')}
             </button>
           </div>
         </div>
@@ -188,7 +188,7 @@ export function AgentsPage() {
                 </span>
               </div>
 
-              <span className="mt-1 text-xs text-gray-400">Led by {team.agents[0]}</span>
+              <span className="mt-1 text-xs text-gray-400">{t('home.ledBy')} {team.agents[0]}</span>
 
               {/* Agent roster */}
               <div className="mt-3 w-full space-y-1.5">
@@ -209,9 +209,9 @@ export function AgentsPage() {
       <section className="mt-12">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold text-black">Swarm Simulation</h3>
+            <h3 className="text-lg font-bold text-black">{t('agents.swarmSimulation')}</h3>
             <p className="mt-0.5 text-sm text-gray-500">
-              Run all {KITZ_MANIFEST.capabilities.totalAgents} agents across {KITZ_MANIFEST.capabilities.agentTeams} teams — findings flow to brain
+              Run all {KITZ_MANIFEST.capabilities.totalAgents} {t('agents.agents')} across {KITZ_MANIFEST.capabilities.agentTeams} {t('agents.teams')}
             </p>
           </div>
           <button
@@ -227,12 +227,12 @@ export function AgentsPage() {
             {running ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Running…
+                {t('agents.running')}
               </>
             ) : (
               <>
                 <Play className="h-4 w-4" />
-                Run Swarm
+                {t('agents.runSwarm')}
               </>
             )}
           </button>
@@ -256,27 +256,27 @@ export function AgentsPage() {
                   {lastResult.status}
                 </div>
                 <div className="mt-1 text-lg font-bold text-black">{lastResult.teamsCompleted}/{lastResult.teamsTotal}</div>
-                <div className="text-[10px] text-gray-400">teams</div>
+                <div className="text-[10px] text-gray-400">{t('agents.teams')}</div>
               </div>
               <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
                 <Clock className="mx-auto h-4 w-4 text-gray-400" />
                 <div className="mt-1 text-lg font-bold text-black">{(lastResult.durationMs / 1000).toFixed(1)}s</div>
-                <div className="text-[10px] text-gray-400">duration</div>
+                <div className="text-[10px] text-gray-400">{t('agents.duration')}</div>
               </div>
               <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
                 <Zap className="mx-auto h-4 w-4 text-purple-500" />
                 <div className="mt-1 text-lg font-bold text-black">{lastResult.agentResults.length}</div>
-                <div className="text-[10px] text-gray-400">agents run</div>
+                <div className="text-[10px] text-gray-400">{t('agents.agentsRun')}</div>
               </div>
               <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
                 <Network className="mx-auto h-4 w-4 text-purple-500" />
                 <div className="mt-1 text-lg font-bold text-black">{lastResult.handoffCount}</div>
-                <div className="text-[10px] text-gray-400">handoffs</div>
+                <div className="text-[10px] text-gray-400">{t('agents.handoffs')}</div>
               </div>
               <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
                 <Brain className="mx-auto h-4 w-4 text-purple-500" />
                 <div className="mt-1 text-lg font-bold text-black">{lastResult.knowledgeWritten}</div>
-                <div className="text-[10px] text-gray-400">knowledge</div>
+                <div className="text-[10px] text-gray-400">{t('agents.knowledge')}</div>
               </div>
             </div>
 
@@ -293,7 +293,7 @@ export function AgentsPage() {
                     <span className="text-xs font-medium text-black">{tr.team}</span>
                   </div>
                   <div className="flex items-center gap-3 text-[10px] text-gray-400">
-                    <span>{tr.agentResults.filter(a => a.success).length}/{tr.agentResults.length} agents</span>
+                    <span>{tr.agentResults.filter(a => a.success).length}/{tr.agentResults.length} {t('agents.agents')}</span>
                     <span>{(tr.durationMs / 1000).toFixed(1)}s</span>
                   </div>
                 </div>
@@ -303,50 +303,6 @@ export function AgentsPage() {
         )}
       </section>
 
-      {/* ── Tools + Integration ── */}
-      <section className="mt-12 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 p-6 text-white">
-        <div className="flex items-center gap-2">
-          <Code className="h-5 w-5 text-white/80" />
-          <h3 className="text-lg font-bold">Agent Integration</h3>
-        </div>
-        <p className="mt-1 text-sm text-white/70">
-          External AI agents can discover and interact with KITZ agents through the manifest
-        </p>
-
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="rounded-xl bg-white/10 p-4">
-            <Zap className="h-5 w-5 text-white/80" />
-            <h4 className="mt-2 text-sm font-semibold">{KITZ_MANIFEST.capabilities.tools}+ Tools</h4>
-            <p className="mt-1 text-xs text-white/60">
-              CRM operations, payment processing, message drafting, order management, and more — all callable by agents.
-            </p>
-          </div>
-          <div className="rounded-xl bg-white/10 p-4">
-            <Shield className="h-5 w-5 text-white/80" />
-            <h4 className="mt-2 text-sm font-semibold">Draft-First Governance</h4>
-            <p className="mt-1 text-xs text-white/60">
-              Every agent action is a draft until approved. Audit trail on every operation. Kill-switch available.
-            </p>
-          </div>
-          <div className="rounded-xl bg-white/10 p-4">
-            <Bot className="h-5 w-5 text-white/80" />
-            <h4 className="mt-2 text-sm font-semibold">Agent-to-Agent OS</h4>
-            <p className="mt-1 text-xs text-white/60">
-              Event bus, ledger persistence, approval policies. Agents collaborate via structured artifacts: Task → Proposal → Decision → Outcome.
-            </p>
-          </div>
-        </div>
-
-        <a
-          href={`${window.location.origin}/.well-known/kitz.json`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-white/80 transition hover:text-white"
-        >
-          <span className="font-mono">View full agent manifest</span>
-          <ExternalLink className="h-3 w-3" />
-        </a>
-      </section>
     </div>
   )
 }

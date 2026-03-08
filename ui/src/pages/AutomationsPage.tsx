@@ -27,108 +27,89 @@ import { AutomationCategoryGroup } from '@/components/autopilot/AutomationCatego
 import { KITZ_MANIFEST } from '@/content/kitz-manifest'
 import { AUTOMATION_CATALOG, getAutomationStats } from '@/content/automation-catalog'
 import { useOrbStore } from '@/stores/orbStore'
+import { useTranslation } from '@/lib/i18n'
 
 /* ── How Autopilot Works ── */
 const autopilotSteps = [
-  {
-    number: '01',
-    title: 'Trigger',
-    description: 'A business event fires — new message, new order, scheduled task, or an agent recommendation.',
-    icon: Zap,
-  },
-  {
-    number: '02',
-    title: 'Draft',
-    description: 'The responsible agent creates a draft action — reply, invoice, status update, follow-up — never executes directly.',
-    icon: FileCheck,
-  },
-  {
-    number: '03',
-    title: 'Review',
-    description: 'You see the draft in your queue. Approve, edit, or reject. One tap on WhatsApp or the web dashboard.',
-    icon: Eye,
-  },
-  {
-    number: '04',
-    title: 'Execute',
-    description: 'Approved actions fire immediately. Rejected ones are logged. Every outcome updates the audit trail.',
-    icon: CheckCircle2,
-  },
+  { number: '01', titleKey: 'automations.trigger', descKey: 'automations.triggerDesc', icon: Zap },
+  { number: '02', titleKey: 'automations.draftStep', descKey: 'automations.draftStepDesc', icon: FileCheck },
+  { number: '03', titleKey: 'automations.review', descKey: 'automations.reviewDesc', icon: Eye },
+  { number: '04', titleKey: 'automations.execute', descKey: 'automations.executeDesc', icon: CheckCircle2 },
 ] as const
 
 /* ── Safety guardrails ── */
 const guardrails = [
-  { icon: Shield, label: 'Draft-first by default', desc: 'Nothing sends without your approval' },
-  { icon: AlertTriangle, label: 'Kill switch', desc: 'One tap halts all AI execution instantly' },
-  { icon: RotateCcw, label: 'Retry with DLQ', desc: '3 retries, then dead-letter queue. No silent failures' },
-  { icon: Clock, label: 'ROI gate', desc: `Projected ROI must be ≥ ${KITZ_MANIFEST.governance.roiMinimum} or agent recommends manual` },
+  { icon: Shield, labelKey: 'automations.draftFirst', descKey: 'automations.draftFirstDesc' },
+  { icon: AlertTriangle, labelKey: 'automations.killSwitch', descKey: 'automations.killSwitchDesc' },
+  { icon: RotateCcw, labelKey: 'automations.retryDLQ', descKey: 'automations.retryDLQFullDesc' },
+  { icon: Clock, labelKey: 'automations.roiGate', descKey: '' },
 ] as const
 
 /* ── What KITZ Can Do — showcase cards ── */
 const kitzCapabilities = [
   {
     icon: MessageSquare,
-    title: 'Talk to Your Customers',
-    description: 'WhatsApp, email, SMS — all from one place. AI drafts replies, you approve with one tap.',
+    titleKey: 'automations.talkToCustomers',
+    descKey: 'automations.talkToCustomersDesc',
     example: '"Send a WhatsApp to Maria about her order"',
     color: 'from-purple-500 to-purple-600',
-    stats: '7 automations',
+    statsCount: '7',
   },
   {
     icon: Receipt,
-    title: 'Get Paid Faster',
-    description: 'Generate invoices, send payment links, track who owes you. Auto-invoice when orders confirm.',
+    titleKey: 'automations.getPaidFaster',
+    descKey: 'automations.getPaidFasterDesc',
     example: '"Create an invoice for Carlos — 3 t-shirts at $25"',
     color: 'from-purple-400 to-purple-600',
-    stats: '6 automations',
+    statsCount: '6',
   },
   {
     icon: Palette,
-    title: 'Create Marketing Content',
-    description: 'Pitch decks, flyers, landing pages, emails, bio links — all branded with your colors.',
+    titleKey: 'automations.createMarketing',
+    descKey: 'automations.createMarketingDesc',
     example: '"Build me a landing page for my new product"',
     color: 'from-purple-600 to-purple-700',
-    stats: '7 automations',
+    statsCount: '7',
   },
   {
     icon: TrendingUp,
-    title: 'Grow Your Pipeline',
-    description: 'Score leads, track conversions, get AI recommendations on your next best move.',
+    titleKey: 'automations.growPipeline',
+    descKey: 'automations.growPipelineDesc',
     example: '"Who should I follow up with today?"',
     color: 'from-gray-500 to-gray-600',
-    stats: '7 automations',
+    statsCount: '7',
   },
   {
     icon: Megaphone,
-    title: 'Run Campaigns',
-    description: 'Multi-touch campaigns across WhatsApp, email, and SMS. A/B test and track ROI.',
+    titleKey: 'automations.runCampaigns',
+    descKey: 'automations.runCampaignsDesc',
     example: '"Launch a promo blast for Black Friday"',
     color: 'from-purple-500 to-purple-700',
-    stats: '6 automations',
+    statsCount: '6',
   },
   {
     icon: Users,
-    title: 'Know Your Customers',
-    description: 'Auto-tag contacts, build segments, personalize every message with CRM data.',
+    titleKey: 'automations.knowCustomers',
+    descKey: 'automations.knowCustomersDesc',
     example: '"Show me all VIP customers who bought last month"',
     color: 'from-gray-400 to-gray-600',
-    stats: '6 automations',
+    statsCount: '6',
   },
   {
     icon: Globe,
-    title: 'Deploy to the Web',
-    description: 'Push landing pages and catalogs live. Generate bio links for Instagram.',
+    titleKey: 'automations.deployWeb',
+    descKey: 'automations.deployWebDesc',
     example: '"Deploy my catalog as a website"',
     color: 'from-purple-500 to-purple-700',
-    stats: '4 automations',
+    statsCount: '4',
   },
   {
     icon: Sparkles,
-    title: 'AI That Works for You',
-    description: '15 agents monitor your business 24/7. Reports delivered to WhatsApp on schedule.',
+    titleKey: 'automations.aiWorksForYou',
+    descKey: 'automations.aiWorksForYouDesc',
     example: '"How\'s my week looking?"',
     color: 'from-purple-400 to-purple-500',
-    stats: '5 automations',
+    statsCount: '5',
   },
 ] as const
 
@@ -138,6 +119,7 @@ export function AutomationsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const stats = getAutomationStats()
   const sendMessage = useOrbStore((s) => s.sendMessage)
+  const { t } = useTranslation()
 
   const filteredCatalog = AUTOMATION_CATALOG
     .map((group) => ({
@@ -151,44 +133,44 @@ export function AutomationsPage() {
   return (
     <div className="mx-auto max-w-6xl px-6 py-8 pb-12">
       <PageHeader
-        title="Automations"
-        description="Every automation follows the same trust cycle — trigger, draft, review, execute"
+        title={t('automations.title')}
+        description={t('automations.description')}
       />
 
       {/* ── What KITZ Can Do — Capability Showcase ── */}
       <section className="mt-6 mb-10">
         <div className="mb-5">
-          <h3 className="text-lg font-bold text-black">What KITZ Can Do</h3>
+          <h3 className="text-lg font-bold text-black">{t('automations.whatKitzCanDo')}</h3>
         </div>
         <p className="mb-5 text-sm text-gray-500">
-          Tap any example to try it — KITZ handles the rest
+          {t('automations.tapToTry')}
         </p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {kitzCapabilities.map((cap) => {
             const Icon = cap.icon
             return (
               <div
-                key={cap.title}
+                key={cap.titleKey}
                 className="group flex flex-col rounded-2xl border border-gray-200 bg-white p-5 transition hover:shadow-lg hover:-translate-y-0.5"
               >
                 {/* Icon + title */}
                 <Icon className="h-5 w-5 text-purple-600" />
-                <h4 className="mt-3 text-sm font-bold text-black">{cap.title}</h4>
-                <p className="mt-1 flex-1 text-xs leading-relaxed text-gray-500">{cap.description}</p>
+                <h4 className="mt-3 text-sm font-bold text-black">{t(cap.titleKey)}</h4>
+                <p className="mt-1 flex-1 text-xs leading-relaxed text-gray-500">{t(cap.descKey)}</p>
 
                 {/* Try it example — clickable */}
                 <button
                   onClick={() => void sendMessage(cap.example.replace(/"/g, ''), 'default')}
                   className="mt-3 rounded-lg bg-purple-50 px-3 py-2 text-left text-[11px] font-medium text-purple-700 transition hover:bg-purple-100 group-hover:ring-1 group-hover:ring-purple-200"
                 >
-                  <span className="text-purple-400">Try: </span>
+                  <span className="text-purple-400">{t('try')}: </span>
                   {cap.example}
                 </button>
 
                 {/* Stats */}
                 <div className="mt-3 flex items-center justify-between">
-                  <span className="text-[10px] font-medium text-gray-400">{cap.stats}</span>
-                  <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-700">Ready</span>
+                  <span className="text-[10px] font-medium text-gray-400">{cap.statsCount} {t('automations.automations')}</span>
+                  <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-700">{t('ready')}</span>
                 </div>
               </div>
             )
@@ -206,19 +188,19 @@ export function AutomationsPage() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
             <p className="text-2xl font-bold text-black">{stats.total}</p>
-            <p className="mt-0.5 text-xs text-gray-500">Total Automations</p>
+            <p className="mt-0.5 text-xs text-gray-500">{t('automations.totalAutomations')}</p>
           </div>
           <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
             <p className="text-2xl font-bold text-purple-600">{stats.live}</p>
-            <p className="mt-0.5 text-xs text-gray-500">Live Now</p>
+            <p className="mt-0.5 text-xs text-gray-500">{t('automations.liveNow')}</p>
           </div>
           <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
             <p className="text-2xl font-bold text-gray-500">{stats.comingSoon}</p>
-            <p className="mt-0.5 text-xs text-gray-500">Coming Soon</p>
+            <p className="mt-0.5 text-xs text-gray-500">{t('comingSoon')}</p>
           </div>
           <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
             <p className="text-2xl font-bold text-purple-600">{stats.agents}</p>
-            <p className="mt-0.5 text-xs text-gray-500">Agents Monitoring</p>
+            <p className="mt-0.5 text-xs text-gray-500">{t('automations.agentsMonitoring')}</p>
           </div>
         </div>
       </section>
@@ -227,9 +209,9 @@ export function AutomationsPage() {
       <section className="mt-2">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold text-black">Automated Workflows</h3>
+            <h3 className="text-lg font-bold text-black">{t('automations.automatedWorkflows')}</h3>
             <p className="text-sm text-gray-500">
-              {stats.categories} categories of workflows — agents monitor and manage each one
+              {stats.categories} {t('automations.categories')}
             </p>
           </div>
           <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1">
@@ -245,7 +227,7 @@ export function AutomationsPage() {
                     : 'text-gray-500 hover:bg-gray-100',
                 )}
               >
-                {f === 'all' ? 'All' : f === 'live' ? 'Live' : 'Coming Soon'}
+                {f === 'all' ? t('all') : f === 'live' ? t('live') : t('comingSoon')}
               </button>
             ))}
           </div>
@@ -264,7 +246,7 @@ export function AutomationsPage() {
 
       {/* ── How it works ── */}
       <section className="mt-12">
-        <h3 className="text-lg font-bold text-black mb-4">How Automations Work</h3>
+        <h3 className="text-lg font-bold text-black mb-4">{t('automations.howAutomationsWork')}</h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {autopilotSteps.map((step) => {
             const Icon = step.icon
@@ -275,8 +257,8 @@ export function AutomationsPage() {
               >
                 <span className="text-xs font-bold text-gray-300">{step.number}</span>
                 <Icon className="mt-3 h-5 w-5 text-purple-500" />
-                <h4 className="mt-3 text-sm font-semibold text-black">{step.title}</h4>
-                <p className="mt-1 text-xs leading-relaxed text-gray-500">{step.description}</p>
+                <h4 className="mt-3 text-sm font-semibold text-black">{t(step.titleKey)}</h4>
+                <p className="mt-1 text-xs leading-relaxed text-gray-500">{t(step.descKey)}</p>
               </div>
             )
           })}
@@ -285,20 +267,22 @@ export function AutomationsPage() {
 
       {/* ── Guardrails ── */}
       <section className="mt-12 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 p-6 text-white">
-        <h3 className="text-lg font-bold">Safety Guardrails</h3>
+        <h3 className="text-lg font-bold">{t('automations.safetyGuardrails')}</h3>
         <p className="mt-1 text-sm text-white/70">
-          Built-in protections ensure automations never act beyond their authority
+          {t('automations.safetyGuardrailsDesc')}
         </p>
 
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {guardrails.map((g) => {
             const Icon = g.icon
             return (
-              <div key={g.label} className="flex items-start gap-3 rounded-xl bg-white/10 p-4">
+              <div key={g.labelKey} className="flex items-start gap-3 rounded-xl bg-white/10 p-4">
                 <Icon className="mt-0.5 h-4 w-4 shrink-0 text-white/80" />
                 <div>
-                  <span className="text-sm font-semibold">{g.label}</span>
-                  <p className="mt-0.5 text-xs text-white/60">{g.desc}</p>
+                  <span className="text-sm font-semibold">{t(g.labelKey)}</span>
+                  <p className="mt-0.5 text-xs text-white/60">
+                    {g.descKey ? t(g.descKey) : `Projected ROI must be >= ${KITZ_MANIFEST.governance.roiMinimum} or agent recommends manual`}
+                  </p>
                 </div>
               </div>
             )
@@ -310,11 +294,10 @@ export function AutomationsPage() {
       <section className="mt-8 rounded-2xl border border-gray-200 bg-white p-6">
         <div className="flex items-center gap-2">
           <Code className="h-5 w-5 text-purple-500" />
-          <h3 className="text-lg font-bold text-black">For External AI Agents</h3>
+          <h3 className="text-lg font-bold text-black">{t('automations.forExternalAgents')}</h3>
         </div>
         <p className="mt-1 text-sm text-gray-500">
-          External agents can trigger KITZ automations via the API. All requests go through the
-          same draft-first governance — no external agent can bypass human approval.
+          {t('automations.forExternalAgentsDesc')}
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <div className="rounded-lg bg-gray-50 px-4 py-2">
@@ -330,7 +313,7 @@ export function AutomationsPage() {
           rel="noopener noreferrer"
           className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-purple-500 transition hover:text-purple-400"
         >
-          <span className="font-mono">Full automation manifest</span>
+          <span className="font-mono">{t('automations.fullManifest')}</span>
           <ExternalLink className="h-3 w-3" />
         </a>
       </section>

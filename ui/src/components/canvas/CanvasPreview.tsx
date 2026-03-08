@@ -15,34 +15,35 @@ import {
 import { useCanvasStore } from '@/stores/canvasStore'
 import { useOrbStore } from '@/stores/orbStore'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/lib/i18n'
 import type { CanvasArtifact, ArtifactCategory } from '@/types/artifact'
 
 /* ── Category icons & colors ── */
 
-const CATEGORY_CONFIG: Record<ArtifactCategory, { icon: typeof FileText; label: string; color: string }> = {
-  document: { icon: FileText, label: 'Document', color: 'bg-purple-100 text-purple-600' },
-  presentation: { icon: Presentation, label: 'Deck', color: 'bg-purple-100 text-purple-600' },
-  plan: { icon: ClipboardList, label: 'Plan', color: 'bg-purple-100 text-purple-600' },
-  report: { icon: BarChart3, label: 'Report', color: 'bg-purple-100 text-purple-600' },
-  content: { icon: Palette, label: 'Content', color: 'bg-purple-100 text-purple-600' },
-  media: { icon: Image, label: 'Media', color: 'bg-purple-100 text-purple-600' },
+const CATEGORY_CONFIG: Record<ArtifactCategory, { icon: typeof FileText; labelKey: string; color: string }> = {
+  document: { icon: FileText, labelKey: 'canvas.document', color: 'bg-purple-100 text-purple-600' },
+  presentation: { icon: Presentation, labelKey: 'canvas.deck', color: 'bg-purple-100 text-purple-600' },
+  plan: { icon: ClipboardList, labelKey: 'canvas.plan', color: 'bg-purple-100 text-purple-600' },
+  report: { icon: BarChart3, labelKey: 'canvas.report', color: 'bg-purple-100 text-purple-600' },
+  content: { icon: Palette, labelKey: 'canvas.content', color: 'bg-purple-100 text-purple-600' },
+  media: { icon: Image, labelKey: 'canvas.media', color: 'bg-purple-100 text-purple-600' },
 }
 
-const STATUS_CONFIG: Record<CanvasArtifact['status'], { label: string; color: string }> = {
-  draft: { label: 'Draft', color: 'bg-gray-100 text-gray-600' },
-  approved: { label: 'Approved', color: 'bg-purple-100 text-purple-700' },
-  sent: { label: 'Sent', color: 'bg-purple-200 text-purple-800' },
+const STATUS_CONFIG: Record<CanvasArtifact['status'], { labelKey: string; color: string }> = {
+  draft: { labelKey: 'canvas.draft', color: 'bg-gray-100 text-gray-600' },
+  approved: { labelKey: 'canvas.approved', color: 'bg-purple-100 text-purple-700' },
+  sent: { labelKey: 'canvas.sent', color: 'bg-purple-200 text-purple-800' },
 }
 
 /* ── Quick-create cards for empty state ── */
 
 const QUICK_CREATES = [
-  { label: 'Invoice', icon: FileText, prompt: 'Create an invoice for my client' },
-  { label: 'Email', icon: Mail, prompt: 'Draft a professional business email' },
-  { label: 'Landing Page', icon: Globe, prompt: 'Create a landing page for my business' },
-  { label: 'Pitch Deck', icon: Presentation, prompt: 'Build a pitch deck for my business' },
-  { label: 'Report', icon: BarChart3, prompt: 'Generate a business performance report' },
-  { label: 'Image', icon: Image, prompt: 'Generate a promotional image for my business' },
+  { labelKey: 'canvas.invoice', icon: FileText, prompt: 'Create an invoice for my client' },
+  { labelKey: 'canvas.email', icon: Mail, prompt: 'Draft a professional business email' },
+  { labelKey: 'canvas.landingPage', icon: Globe, prompt: 'Create a landing page for my business' },
+  { labelKey: 'canvas.pitchDeck', icon: Presentation, prompt: 'Build a pitch deck for my business' },
+  { labelKey: 'canvas.report', icon: BarChart3, prompt: 'Generate a business performance report' },
+  { labelKey: 'canvas.image', icon: Image, prompt: 'Generate a promotional image for my business' },
 ] as const
 
 /* ── Empty State ── */
@@ -50,14 +51,15 @@ const QUICK_CREATES = [
 function CanvasEmptyState() {
   const focusChat = useOrbStore((s) => s.focusChat)
   const sendMessage = useOrbStore((s) => s.sendMessage)
+  const { t } = useTranslation()
 
   return (
     <div className="flex h-full flex-col items-center justify-center px-8">
       <div className="text-center mb-8">
         <Palette className="mx-auto mb-4 h-8 w-8 text-purple-600" />
-        <h2 className="text-xl font-bold text-gray-900">What do you want to create?</h2>
+        <h2 className="text-xl font-bold text-gray-900">{t('canvas.whatToCreate')}</h2>
         <p className="mt-1.5 text-sm text-gray-500">
-          Ask Kitz anything — invoices, emails, landing pages, pitch decks, and more.
+          {t('canvas.askKitzDesc')}
         </p>
       </div>
 
@@ -66,7 +68,7 @@ function CanvasEmptyState() {
           const Icon = item.icon
           return (
             <button
-              key={item.label}
+              key={item.labelKey}
               onClick={() => {
                 void sendMessage(item.prompt, 'default')
                 focusChat()
@@ -75,7 +77,7 @@ function CanvasEmptyState() {
             >
               <Icon className="h-5 w-5 text-purple-600" />
               <span className="text-xs font-semibold text-gray-700 group-hover:text-purple-600">
-                {item.label}
+                {t(item.labelKey)}
               </span>
             </button>
           )
@@ -89,6 +91,7 @@ function CanvasEmptyState() {
 
 function ArtifactHeader({ artifact }: { artifact: CanvasArtifact }) {
   const setActiveTab = useCanvasStore((s) => s.setActiveTab)
+  const { t } = useTranslation()
   const catConfig = CATEGORY_CONFIG[artifact.category] || CATEGORY_CONFIG.document
   const statusConfig = STATUS_CONFIG[artifact.status] || STATUS_CONFIG.draft
   const CatIcon = catConfig.icon
@@ -99,7 +102,7 @@ function ArtifactHeader({ artifact }: { artifact: CanvasArtifact }) {
         <button
           onClick={() => setActiveTab('dashboard')}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-          title="Back to Dashboard"
+          title={t('canvas.backToDashboard')}
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
@@ -112,10 +115,10 @@ function ArtifactHeader({ artifact }: { artifact: CanvasArtifact }) {
       </div>
       <div className="flex items-center gap-2">
         <span className={cn('rounded-full px-2.5 py-0.5 text-[10px] font-semibold', catConfig.color)}>
-          {catConfig.label}
+          {t(catConfig.labelKey)}
         </span>
         <span className={cn('rounded-full px-2.5 py-0.5 text-[10px] font-semibold', statusConfig.color)}>
-          {statusConfig.label}
+          {t(statusConfig.labelKey)}
         </span>
       </div>
     </div>
@@ -215,6 +218,7 @@ function ActionIcon({ actionId }: { actionId: string }) {
 
 export function CanvasPreview() {
   const { artifacts, selectedArtifactId } = useCanvasStore()
+  const { t } = useTranslation()
 
   if (artifacts.length === 0) {
     return <CanvasEmptyState />
@@ -246,7 +250,7 @@ export function CanvasPreview() {
             </div>
           ) : (
             <div className="flex h-full items-center justify-center text-gray-400">
-              <p className="text-sm">No preview available</p>
+              <p className="text-sm">{t('canvas.noPreviewAvailable')}</p>
             </div>
           )}
         </div>

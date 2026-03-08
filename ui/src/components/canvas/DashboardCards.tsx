@@ -3,10 +3,12 @@ import { DollarSign, ShoppingCart, MessageSquare, ListTodo } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useCanvasStore } from '@/stores/canvasStore'
+import { useTranslation } from '@/lib/i18n'
 
 export function DashboardCards() {
   const { payments, orders, tasks, leads, fetchPayments, fetchOrders, fetchTasks, fetchLeads } = useWorkspaceStore()
   const setActiveTab = useCanvasStore((s) => s.setActiveTab)
+  const { t } = useTranslation()
 
   useEffect(() => {
     void fetchPayments()
@@ -22,38 +24,38 @@ export function DashboardCards() {
   const pendingOrders = orders.filter((o) => o.status === 'pending').length
   const completedOrders = orders.filter((o) => o.status === 'completed').length
 
-  const doneTasks = tasks.filter((t) => t.done).length
+  const doneTasks = tasks.filter((tk) => tk.done).length
   const totalTasks = tasks.length
 
   const cards = [
     {
-      label: 'Revenue',
+      label: t('dashboard.revenue'),
       value: `$${revenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      sub: `${payments.filter((p) => p.status === 'completed').length} payments`,
+      sub: `${payments.filter((p) => p.status === 'completed').length} ${t('dashboard.payments')}`,
       icon: DollarSign,
       color: 'text-purple-600',
       onClick: () => setActiveTab('workspace'),
     },
     {
-      label: 'Orders',
+      label: t('dashboard.orders'),
       value: String(orders.length),
-      sub: `${pendingOrders} pending, ${completedOrders} done`,
+      sub: `${pendingOrders} ${t('dashboard.pending')}, ${completedOrders} ${t('dashboard.done')}`,
       icon: ShoppingCart,
       color: 'text-purple-600',
       onClick: () => setActiveTab('workspace'),
     },
     {
-      label: 'Contacts',
+      label: t('dashboard.contacts'),
       value: String(leads.length),
-      sub: `${leads.filter((l) => l.stage === 'new').length} new leads`,
+      sub: `${leads.filter((l) => l.stage === 'new').length} ${t('dashboard.newLeads')}`,
       icon: MessageSquare,
       color: 'text-purple-500',
       onClick: () => setActiveTab('workspace'),
     },
     {
-      label: 'Tasks',
+      label: t('dashboard.tasks'),
       value: `${doneTasks}/${totalTasks}`,
-      sub: totalTasks > 0 ? `${Math.round((doneTasks / totalTasks) * 100)}% complete` : 'No tasks yet',
+      sub: totalTasks > 0 ? `${Math.round((doneTasks / totalTasks) * 100)}% ${t('dashboard.complete')}` : t('dashboard.noTasksYet'),
       icon: ListTodo,
       color: 'text-gray-500',
       onClick: () => setActiveTab('workspace'),
@@ -85,9 +87,9 @@ export function DashboardCards() {
 
       {/* Today's tasks */}
       <div className="rounded-xl border border-gray-200 bg-white p-5">
-        <h3 className="text-sm font-semibold text-gray-900">Today's Tasks</h3>
+        <h3 className="text-sm font-semibold text-gray-900">{t('dashboard.todaysTasks')}</h3>
         {tasks.length === 0 ? (
-          <p className="mt-3 text-xs text-gray-400">No tasks yet. Ask Kitz to create some!</p>
+          <p className="mt-3 text-xs text-gray-400">{t('dashboard.askKitzCreate')}</p>
         ) : (
           <ul className="mt-3 space-y-2">
             {tasks.slice(0, 5).map((task) => (
@@ -111,7 +113,7 @@ export function DashboardCards() {
               </li>
             ))}
             {tasks.length > 5 && (
-              <li className="text-xs text-gray-400">+{tasks.length - 5} more</li>
+              <li className="text-xs text-gray-400">+{tasks.length - 5} {t('more')}</li>
             )}
           </ul>
         )}
@@ -119,19 +121,19 @@ export function DashboardCards() {
 
       {/* Recent activity */}
       <div className="rounded-xl border border-gray-200 bg-white p-5">
-        <h3 className="text-sm font-semibold text-gray-900">Recent Activity</h3>
+        <h3 className="text-sm font-semibold text-gray-900">{t('dashboard.recentActivity')}</h3>
         {orders.length === 0 && payments.length === 0 ? (
-          <p className="mt-3 text-xs text-gray-400">No activity yet.</p>
+          <p className="mt-3 text-xs text-gray-400">{t('dashboard.noActivityYet')}</p>
         ) : (
           <ul className="mt-3 space-y-2">
             {[...orders.slice(0, 3).map((o) => ({
               id: o.id,
-              text: `Order: ${o.description}`,
+              text: `${t('dashboard.order')}: ${o.description}`,
               sub: `$${o.total} - ${o.status}`,
               time: o.createdAt,
             })), ...payments.slice(0, 2).map((p) => ({
               id: p.id,
-              text: `Payment: ${p.description}`,
+              text: `${t('dashboard.payment')}: ${p.description}`,
               sub: `$${p.amount} - ${p.status}`,
               time: p.date,
             }))]
