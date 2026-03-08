@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { HomePage } from './HomePage'
 import { WorkspacePage } from './WorkspacePage'
@@ -7,12 +7,14 @@ import { AutomationsPage } from './AutomationsPage'
 import { ActivityPage } from './ActivityPage'
 import { HowItWorksPage } from './HowItWorksPage'
 import { SettingsPage } from './SettingsPage'
-import { LearnPage } from './LearnPage'
-import { GamePage } from './GamePage'
 import { ChatPanel } from '@/components/layout/ChatPanel'
 import { TalkToKitzModal } from '@/components/talk/TalkToKitzModal'
 import { FloatingOrb } from '@/components/orb/FloatingOrb'
 import { cn } from '@/lib/utils'
+
+// Code-split heavy pages to reduce main bundle size
+const LearnPage = lazy(() => import('./LearnPage').then(m => ({ default: m.LearnPage })))
+const GamePage = lazy(() => import('./GamePage').then(m => ({ default: m.GamePage })))
 
 type Mode = 'manual' | 'kitz'
 
@@ -23,9 +25,9 @@ export function DashboardPage() {
   const renderPage = () => {
     switch (currentNav) {
       case 'learn':
-        return <LearnPage />
+        return <Suspense fallback={<div className="flex items-center justify-center p-8"><p className="text-gray-400">Loading...</p></div>}><LearnPage /></Suspense>
       case 'game':
-        return <GamePage />
+        return <Suspense fallback={<div className="flex items-center justify-center p-8"><p className="text-gray-400">Loading...</p></div>}><GamePage /></Suspense>
       case 'workspace':
         return <WorkspacePage />
       case 'agents':

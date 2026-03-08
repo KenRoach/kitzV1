@@ -19,7 +19,7 @@ async function ensureDir(): Promise<void> {
   await mkdir(CUSTOM_TOOLS_DIR, { recursive: true })
 }
 
-function buildTool(def: CustomToolDef): ToolSchema {
+function buildTool(def: CustomToolDef): ToolSchema | null {
   if (def.type === 'n8n' && def.n8nWorkflowId) {
     return {
       name: def.name,
@@ -47,13 +47,8 @@ function buildTool(def: CustomToolDef): ToolSchema {
     }
   }
 
-  return {
-    name: def.name,
-    description: `[BROKEN] ${def.description}`,
-    parameters: { type: 'object', properties: {} },
-    riskLevel: 'low',
-    execute: async () => ({ error: `Tool "${def.name}" has invalid definition` }),
-  }
+  log.warn(`Skipping tool "${def.name}": invalid type="${def.type}" or missing logic/workflowId`)
+  return null
 }
 
 export async function loadCustomTools(registry: OsToolRegistry): Promise<number> {
@@ -79,6 +74,7 @@ export async function loadCustomTools(registry: OsToolRegistry): Promise<number>
       }
 
       const tool = buildTool(def)
+      if (!tool) continue
       registry.register(tool)
       loaded++
     } catch (err) {

@@ -1,10 +1,22 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import app from './index.js';
+import type { FastifyInstance } from 'fastify';
+
+// JWT_SECRET must be set before the app module loads (it calls process.exit if missing).
+// ESM hoists static imports, so we use dynamic import() instead.
+let app: FastifyInstance;
+
+beforeAll(async () => {
+  process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-vitest';
+  const mod = await import('./index.js');
+  app = mod.default;
+  await app.ready();
+});
+
+afterAll(async () => {
+  if (app) await app.close();
+});
 
 describe('health', () => {
-  beforeAll(async () => { await app.ready(); });
-  afterAll(async () => { await app.close(); });
-
   it('returns status ok with checks', async () => {
     const res = await app.inject({ method: 'GET', url: '/health' });
     expect(res.statusCode).toBe(200);
@@ -16,14 +28,6 @@ describe('health', () => {
 });
 
 describe('ops metrics', () => {
-  beforeAll(async () => {
-    await app.ready();
-  });
-
-  afterAll(async () => {
-    await app.close();
-  });
-
   it('returns minimum metrics shape', async () => {
     await app.inject({ method: 'GET', url: '/leads' });
     await app.inject({ method: 'GET', url: '/ai-direction' });

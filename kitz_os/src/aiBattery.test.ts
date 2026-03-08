@@ -1,5 +1,4 @@
-import { describe, it, beforeEach } from 'node:test';
-import assert from 'node:assert/strict';
+import { describe, it, expect } from 'vitest';
 import { recordLLMSpend, recordTTSSpend, recordRecharge, getBatteryStatus, hasBudget, getLedger } from './aiBattery.js';
 
 describe('AI Battery', () => {
@@ -18,16 +17,16 @@ describe('AI Battery', () => {
       toolContext: 'test_tool',
     });
 
-    assert.ok(entry.id, 'entry has id');
-    assert.ok(entry.ts, 'entry has timestamp');
-    assert.equal(entry.provider, 'openai');
-    assert.equal(entry.category, 'llm_tokens');
-    assert.equal(entry.units, 700);
-    assert.equal(entry.credits, 1); // 1 use per AI call (flat model)
+    expect(entry.id).toBeTruthy();
+    expect(entry.ts).toBeTruthy();
+    expect(entry.provider).toBe('openai');
+    expect(entry.category).toBe('llm_tokens');
+    expect(entry.units).toBe(700);
+    expect(entry.credits).toBe(1); // 1 use per AI call (flat model)
 
     const after = getBatteryStatus();
-    assert.ok(after.todayCredits >= before.todayCredits, 'credits increased');
-    assert.ok(after.todayCalls > before.todayCalls, 'call count increased');
+    expect(after.todayCredits).toBeGreaterThanOrEqual(before.todayCredits);
+    expect(after.todayCalls).toBeGreaterThan(before.todayCalls);
   });
 
   it('records TTS spend', async () => {
@@ -38,50 +37,50 @@ describe('AI Battery', () => {
       traceId: 'test-trace-2',
     });
 
-    assert.equal(entry.provider, 'elevenlabs');
-    assert.equal(entry.category, 'tts_characters');
-    assert.equal(entry.units, 250);
-    assert.equal(entry.credits, 1); // 1 use per TTS call (flat model)
+    expect(entry.provider).toBe('elevenlabs');
+    expect(entry.category).toBe('tts_characters');
+    expect(entry.units).toBe(250);
+    expect(entry.credits).toBe(1); // 1 use per TTS call (flat model)
   });
 
   it('records recharge as negative credits', async () => {
     const entry = await recordRecharge(10, 'test-trace-3');
-    assert.equal(entry.credits, -10);
-    assert.equal(entry.category, 'recharge');
+    expect(entry.credits).toBe(-10);
+    expect(entry.category).toBe('recharge');
   });
 
   it('hasBudget returns true when credits remain', () => {
     const status = getBatteryStatus();
     if (status.remaining > 1) {
-      assert.equal(hasBudget(1), true);
+      expect(hasBudget(1)).toBe(true);
     }
   });
 
   it('getLedger returns all entries', () => {
     const ledger = getLedger();
-    assert.ok(Array.isArray(ledger));
-    assert.ok(ledger.length >= 3, 'should have at least 3 entries from earlier tests');
+    expect(Array.isArray(ledger)).toBe(true);
+    expect(ledger.length).toBeGreaterThanOrEqual(3);
   });
 
   it('battery status has correct shape', () => {
     const status = getBatteryStatus();
-    assert.equal(typeof status.todayCredits, 'number');
-    assert.equal(typeof status.totalCredits, 'number');
-    assert.equal(typeof status.dailyLimit, 'number');
-    assert.equal(typeof status.remaining, 'number');
-    assert.equal(typeof status.depleted, 'boolean');
-    assert.equal(typeof status.byProvider, 'object');
-    assert.ok('openai' in status.byProvider);
-    assert.ok('claude' in status.byProvider);
-    assert.ok('elevenlabs' in status.byProvider);
-    assert.equal(typeof status.todayTokens, 'number');
-    assert.equal(typeof status.todayTtsChars, 'number');
-    assert.equal(typeof status.todayCalls, 'number');
+    expect(typeof status.todayCredits).toBe('number');
+    expect(typeof status.totalCredits).toBe('number');
+    expect(typeof status.dailyLimit).toBe('number');
+    expect(typeof status.remaining).toBe('number');
+    expect(typeof status.depleted).toBe('boolean');
+    expect(typeof status.byProvider).toBe('object');
+    expect('openai' in status.byProvider).toBe(true);
+    expect('claude' in status.byProvider).toBe(true);
+    expect('elevenlabs' in status.byProvider).toBe(true);
+    expect(typeof status.todayTokens).toBe('number');
+    expect(typeof status.todayTtsChars).toBe('number');
+    expect(typeof status.todayCalls).toBe('number');
   });
 
   it('byProvider tracks per-provider spend', () => {
     const status = getBatteryStatus();
-    assert.ok(status.byProvider.openai >= 1, 'openai spend should include our LLM entry');
-    assert.ok(status.byProvider.elevenlabs >= 1, 'elevenlabs spend should include our TTS entry');
+    expect(status.byProvider.openai).toBeGreaterThanOrEqual(1);
+    expect(status.byProvider.elevenlabs).toBeGreaterThanOrEqual(1);
   });
 });

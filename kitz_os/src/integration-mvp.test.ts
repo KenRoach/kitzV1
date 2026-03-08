@@ -10,10 +10,9 @@
  * Uses Fastify .inject() for HTTP-level testing without network calls.
  */
 
-import { describe, it, before, after } from 'node:test';
-import assert from 'node:assert/strict';
+import { describe, it, expect } from 'vitest';
 import { createHmac } from 'node:crypto';
-import { readFile, rm, mkdir } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -43,10 +42,7 @@ describe('1. RLS Policy Verification — org-level isolation per table', () => {
     const migration = await readFile(join(__dirname, '..', 'migrations', '002_workspace_tables.sql'), 'utf-8');
 
     for (const table of TABLES_WITH_RLS) {
-      assert.ok(
-        migration.includes(`ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY`),
-        `${table}: missing ENABLE ROW LEVEL SECURITY`,
-      );
+      expect(migration).toContain(`ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY`);
     }
   });
 
@@ -54,10 +50,7 @@ describe('1. RLS Policy Verification — org-level isolation per table', () => {
     const migration = await readFile(join(__dirname, '..', 'migrations', '002_workspace_tables.sql'), 'utf-8');
 
     for (const table of TABLES_WITH_RLS) {
-      assert.ok(
-        migration.includes(`ON ${table} FOR ALL USING (auth.uid() = user_id)`),
-        `${table}: missing user-level RLS policy`,
-      );
+      expect(migration).toContain(`ON ${table} FOR ALL USING (auth.uid() = user_id)`);
     }
   });
 
@@ -65,10 +58,7 @@ describe('1. RLS Policy Verification — org-level isolation per table', () => {
     const migration = await readFile(join(__dirname, '..', 'migrations', '002_workspace_tables.sql'), 'utf-8');
 
     for (const table of TABLES_WITH_RLS) {
-      assert.ok(
-        migration.includes(`ON ${table} FOR ALL TO service_role USING (true)`),
-        `${table}: missing service_role bypass`,
-      );
+      expect(migration).toContain(`ON ${table} FOR ALL TO service_role USING (true)`);
     }
   });
 
@@ -76,10 +66,7 @@ describe('1. RLS Policy Verification — org-level isolation per table', () => {
     const migration = await readFile(join(__dirname, '..', 'migrations', '003_rls_org_isolation.sql'), 'utf-8');
 
     for (const table of TABLES_WITH_RLS) {
-      assert.ok(
-        migration.includes(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS org_id UUID`),
-        `${table}: missing org_id column addition`,
-      );
+      expect(migration).toContain(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS org_id UUID`);
     }
   });
 
@@ -87,10 +74,7 @@ describe('1. RLS Policy Verification — org-level isolation per table', () => {
     const migration = await readFile(join(__dirname, '..', 'migrations', '003_rls_org_isolation.sql'), 'utf-8');
 
     for (const table of TABLES_WITH_RLS) {
-      assert.ok(
-        migration.includes(`ON ${table}(org_id)`),
-        `${table}: missing org_id index`,
-      );
+      expect(migration).toContain(`ON ${table}(org_id)`);
     }
   });
 
@@ -101,25 +85,22 @@ describe('1. RLS Policy Verification — org-level isolation per table', () => {
     const orgPolicyPattern = /auth\.jwt\(\)\s*->>\s*'org_id'/g;
     const matches = migration.match(orgPolicyPattern);
     // Each table has 2 refs (USING + WITH CHECK) = 5 tables × 2 = 10
-    assert.ok(matches && matches.length >= 10, `expected at least 10 org_id JWT claim references, got ${matches?.length || 0}`);
+    expect(matches?.length).toBeGreaterThanOrEqual(10);
   });
 
   it('all workspace tables have user_id foreign key for RLS', async () => {
     const migration = await readFile(join(__dirname, '..', 'migrations', '002_workspace_tables.sql'), 'utf-8');
 
     for (const table of TABLES_WITH_RLS) {
-      assert.ok(
-        migration.includes(`user_id UUID NOT NULL`),
-        `${table}: missing user_id column`,
-      );
+      expect(migration).toContain(`user_id UUID NOT NULL`);
     }
   });
 
   it('payment_transactions table has service-role-only RLS', async () => {
     const migration = await readFile(join(__dirname, '..', 'migrations', '001_payment_transactions.sql'), 'utf-8');
 
-    assert.ok(migration.includes('ENABLE ROW LEVEL SECURITY'), 'RLS not enabled on payment_transactions');
-    assert.ok(migration.includes('pt_service_all'), 'missing service-role policy on payment_transactions');
+    expect(migration).toContain('ENABLE ROW LEVEL SECURITY');
+    expect(migration).toContain('pt_service_all');
   });
 });
 
@@ -144,38 +125,38 @@ describe('2. Webhook Signature Verification — cryptographic validation', () =>
     it('accepts valid Stripe signature', () => {
       const header = makeStripeHeader(body, secret);
       const result = verifyStripeSignature(body, header, secret);
-      assert.equal(result.valid, true);
+      expect(result.valid).toBe(true);
     });
 
     it('rejects Stripe signature with wrong secret', () => {
       const header = makeStripeHeader(body, 'wrong-secret');
       const result = verifyStripeSignature(body, header, secret);
-      assert.equal(result.valid, false);
-      assert.ok(result.error?.includes('mismatch'));
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('mismatch');
     });
 
     it('rejects Stripe signature with tampered body', () => {
       const header = makeStripeHeader(body, secret);
       const result = verifyStripeSignature(body + 'tampered', header, secret);
-      assert.equal(result.valid, false);
+      expect(result.valid).toBe(false);
     });
 
     it('rejects Stripe signature with expired timestamp', () => {
       const oldTs = Math.floor(Date.now() / 1000) - 600; // 10 min ago
       const header = makeStripeHeader(body, secret, oldTs);
       const result = verifyStripeSignature(body, header, secret, 300);
-      assert.equal(result.valid, false);
-      assert.ok(result.error?.includes('tolerance'));
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('tolerance');
     });
 
     it('rejects missing Stripe signature header', () => {
       const result = verifyStripeSignature(body, '', secret);
-      assert.equal(result.valid, false);
+      expect(result.valid).toBe(false);
     });
 
     it('rejects malformed Stripe signature header', () => {
       const result = verifyStripeSignature(body, 'not-a-valid-header', secret);
-      assert.equal(result.valid, false);
+      expect(result.valid).toBe(false);
     });
   });
 
@@ -192,30 +173,30 @@ describe('2. Webhook Signature Verification — cryptographic validation', () =>
     it('accepts valid HMAC-SHA256 signature', () => {
       const sig = makeHmacSig(body, secret);
       const result = verifyHmacSha256(body, sig, secret);
-      assert.equal(result.valid, true);
+      expect(result.valid).toBe(true);
     });
 
     it('accepts HMAC-SHA256 with sha256= prefix', () => {
       const sig = 'sha256=' + makeHmacSig(body, secret);
       const result = verifyHmacSha256(body, sig, secret);
-      assert.equal(result.valid, true);
+      expect(result.valid).toBe(true);
     });
 
     it('rejects HMAC-SHA256 with wrong secret', () => {
       const sig = makeHmacSig(body, 'wrong-secret');
       const result = verifyHmacSha256(body, sig, secret);
-      assert.equal(result.valid, false);
+      expect(result.valid).toBe(false);
     });
 
     it('rejects HMAC-SHA256 with tampered body', () => {
       const sig = makeHmacSig(body, secret);
       const result = verifyHmacSha256(body + 'x', sig, secret);
-      assert.equal(result.valid, false);
+      expect(result.valid).toBe(false);
     });
 
     it('rejects missing HMAC signature', () => {
       const result = verifyHmacSha256(body, '', secret);
-      assert.equal(result.valid, false);
+      expect(result.valid).toBe(false);
     });
   });
 
@@ -234,42 +215,42 @@ describe('2. Webhook Signature Verification — cryptographic validation', () =>
 
     it('accepts valid PayPal headers', () => {
       const result = verifyPayPalHeaders(makePayPalHeaders());
-      assert.equal(result.valid, true);
+      expect(result.valid).toBe(true);
     });
 
     it('rejects missing transmission-id', () => {
       const result = verifyPayPalHeaders(makePayPalHeaders({ 'paypal-transmission-id': undefined }));
-      assert.equal(result.valid, false);
-      assert.ok(result.error?.includes('transmission-id'));
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('transmission-id');
     });
 
     it('rejects missing transmission-time', () => {
       const result = verifyPayPalHeaders(makePayPalHeaders({ 'paypal-transmission-time': undefined }));
-      assert.equal(result.valid, false);
+      expect(result.valid).toBe(false);
     });
 
     it('rejects missing transmission-sig', () => {
       const result = verifyPayPalHeaders(makePayPalHeaders({ 'paypal-transmission-sig': undefined }));
-      assert.equal(result.valid, false);
+      expect(result.valid).toBe(false);
     });
 
     it('rejects cert URL not from PayPal domain (SSRF protection)', () => {
       const result = verifyPayPalHeaders(makePayPalHeaders({ 'paypal-cert-url': 'https://evil.com/cert.pem' }));
-      assert.equal(result.valid, false);
-      assert.ok(result.error?.includes('PayPal domain'));
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('PayPal domain');
     });
 
     it('rejects cert URL using HTTP (not HTTPS)', () => {
       const result = verifyPayPalHeaders(makePayPalHeaders({ 'paypal-cert-url': 'http://api.paypal.com/cert.pem' }));
-      assert.equal(result.valid, false);
-      assert.ok(result.error?.includes('HTTPS'));
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('HTTPS');
     });
 
     it('rejects expired transmission time', () => {
       const old = new Date(Date.now() - 700_000).toISOString(); // 11+ min ago
       const result = verifyPayPalHeaders(makePayPalHeaders({ 'paypal-transmission-time': old }), 600);
-      assert.equal(result.valid, false);
-      assert.ok(result.error?.includes('tolerance'));
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('tolerance');
     });
   });
 });
@@ -285,38 +266,32 @@ describe('3. Rate Limiter — file-backed persistence', () => {
   it('gateway imports and registers file-backed store', async () => {
     const gatewaySource = await readFile(join(GATEWAY_DIR, 'src', 'index.ts'), 'utf-8');
 
-    assert.ok(
-      gatewaySource.includes('FileBackedRateLimitStore'),
-      'gateway should import FileBackedRateLimitStore',
-    );
-    assert.ok(
-      gatewaySource.includes('store: FileBackedRateLimitStore'),
-      'gateway should pass store class to rate limit plugin',
-    );
+    expect(gatewaySource).toContain('FileBackedRateLimitStore');
+    expect(gatewaySource).toContain('store: FileBackedRateLimitStore');
   });
 
   it('file-backed store module exports required interface', async () => {
     const storeSource = await readFile(join(GATEWAY_DIR, 'src', 'rateLimitStore.ts'), 'utf-8');
 
-    assert.ok(storeSource.includes('export class FileBackedRateLimitStore'), 'exports store class');
-    assert.ok(storeSource.includes('constructor('), 'has constructor');
-    assert.ok(storeSource.includes('incr('), 'has incr method');
-    assert.ok(storeSource.includes('child('), 'has child method');
+    expect(storeSource).toContain('export class FileBackedRateLimitStore');
+    expect(storeSource).toContain('constructor(');
+    expect(storeSource).toContain('incr(');
+    expect(storeSource).toContain('child(');
   });
 
   it('store persists to NDJSON file', async () => {
     const storeSource = await readFile(join(GATEWAY_DIR, 'src', 'rateLimitStore.ts'), 'utf-8');
 
-    assert.ok(storeSource.includes('rate-limits.ndjson'), 'persists to NDJSON file');
-    assert.ok(storeSource.includes('appendFile'), 'uses append for writes');
-    assert.ok(storeSource.includes('replayFromFile'), 'replays on startup');
+    expect(storeSource).toContain('rate-limits.ndjson');
+    expect(storeSource).toContain('appendFile');
+    expect(storeSource).toContain('replayFromFile');
   });
 
   it('store implements compaction to prevent unbounded growth', async () => {
     const storeSource = await readFile(join(GATEWAY_DIR, 'src', 'rateLimitStore.ts'), 'utf-8');
 
-    assert.ok(storeSource.includes('compact'), 'has compaction function');
-    assert.ok(storeSource.includes('setInterval'), 'schedules periodic compaction');
+    expect(storeSource).toContain('compact');
+    expect(storeSource).toContain('setInterval');
   });
 
   it('store uses timing-safe comparison for keys', async () => {
@@ -324,7 +299,7 @@ describe('3. Rate Limiter — file-backed persistence', () => {
     // But it SHOULD prune expired entries to prevent memory leaks
     const storeSource = await readFile(join(GATEWAY_DIR, 'src', 'rateLimitStore.ts'), 'utf-8');
 
-    assert.ok(storeSource.includes('filter(t => t > cutoff)'), 'prunes expired entries');
+    expect(storeSource).toContain('filter(t => t > cutoff)');
   });
 });
 
@@ -380,17 +355,17 @@ describe('4. Full-Stack Integration Flow', () => {
 
         // Step 2: Verify JWT (gateway layer)
         const claims = verifyJwt(token, JWT_SECRET);
-        assert.equal(claims.sub, user.id);
-        assert.equal(claims.org_id, user.org);
+        expect(claims.sub).toBe(user.id);
+        expect(claims.org_id).toBe(user.org);
 
         // Step 3: Parse command (kitz_os layer)
         const cmd = parseWhatsAppCommand(user.msg);
-        assert.ok(cmd, `"${user.msg}" should parse`);
-        assert.equal(cmd.action, user.expect);
+        expect(cmd).toBeTruthy();
+        expect(cmd!.action).toBe(user.expect);
 
         // Step 4: MCP would receive userId for RLS
         const effectiveUserId = user.id || '8787fee9-d06a-442f-91ba-fd082b134ccf';
-        assert.equal(effectiveUserId, user.id, 'user ID flows to MCP, not GOD_MODE');
+        expect(effectiveUserId).toBe(user.id);
       }
     });
 
@@ -410,7 +385,7 @@ describe('4. Full-Stack Integration Flow', () => {
       ));
 
       const after = getBatteryStatus().todayCalls;
-      assert.ok(after >= before + 10, `expected 10 new calls, got ${after - before}`);
+      expect(after).toBeGreaterThanOrEqual(before + 10);
     });
 
     it('webhook verification blocks bad signatures in production flow', () => {
@@ -421,11 +396,11 @@ describe('4. Full-Stack Integration Flow', () => {
       const ts = Math.floor(Date.now() / 1000);
       const sig = createHmac('sha256', secret).update(`${ts}.${body}`).digest('hex');
       const validResult = verifyStripeSignature(body, `t=${ts},v1=${sig}`, secret);
-      assert.equal(validResult.valid, true);
+      expect(validResult.valid).toBe(true);
 
       // Bad signature blocks
       const badResult = verifyStripeSignature(body, `t=${ts},v1=deadbeef`, secret);
-      assert.equal(badResult.valid, false);
+      expect(badResult.valid).toBe(false);
     });
 
     it('cross-user org isolation: different users cannot share org claims', () => {
@@ -435,8 +410,8 @@ describe('4. Full-Stack Integration Flow', () => {
       const claims1 = verifyJwt(token1, JWT_SECRET);
       const claims2 = verifyJwt(token2, JWT_SECRET);
 
-      assert.notEqual(claims1.org_id, claims2.org_id, 'different users should have different orgs');
-      assert.notEqual(claims1.sub, claims2.sub, 'different users should have different IDs');
+      expect(claims1.org_id).not.toBe(claims2.org_id);
+      expect(claims1.sub).not.toBe(claims2.sub);
     });
   });
 
@@ -444,15 +419,15 @@ describe('4. Full-Stack Integration Flow', () => {
     it('Stripe webhook processes payment without secret in dev mode', () => {
       // In dev mode (no STRIPE_WEBHOOK_SECRET env var), webhooks pass through
       // This is intentional: keeps dev/test workflow simple
-      assert.equal(process.env.STRIPE_WEBHOOK_SECRET, undefined, 'test should run without webhook secrets');
+      expect(process.env.STRIPE_WEBHOOK_SECRET).toBeUndefined();
     });
 
     it('Yappy webhook processes payment without secret in dev mode', () => {
-      assert.equal(process.env.YAPPY_WEBHOOK_SECRET, undefined, 'test should run without Yappy secret');
+      expect(process.env.YAPPY_WEBHOOK_SECRET).toBeUndefined();
     });
 
     it('BAC webhook processes payment without secret in dev mode', () => {
-      assert.equal(process.env.BAC_WEBHOOK_SECRET, undefined, 'test should run without BAC secret');
+      expect(process.env.BAC_WEBHOOK_SECRET).toBeUndefined();
     });
   });
 });
@@ -464,13 +439,6 @@ describe('4. Full-Stack Integration Flow', () => {
 describe('Integration Summary', () => {
   it('all critical production paths validated', () => {
     const status = getBatteryStatus();
-    console.log('\n── Integration MVP Hardening Summary ──');
-    console.log('  [1] RLS: 5 tables × 3 policy layers (user + service + org)');
-    console.log('  [2] Webhooks: Stripe (HMAC-SHA256), PayPal (header verify), Yappy/BAC (HMAC-SHA256)');
-    console.log('  [3] Rate limiter: file-backed NDJSON, survives restarts');
-    console.log(`  [4] Full-stack: ${status.todayCalls}+ calls tracked, battery at ${status.todayCredits.toFixed(2)} credits`);
-    console.log('  [5] Mock payments: dev passthrough preserved');
-    console.log('──────────────────────────────────────\n');
-    assert.ok(true);
+    expect(status.todayCalls).toBeGreaterThan(0);
   });
 });

@@ -64,10 +64,13 @@ async function runMigrations(): Promise<void> {
       }
 
       const sql = readFileSync(join(migrationsDir, file), 'utf-8').trim();
-      if (!sql || sql.startsWith('-- TODO')) {
-        log.info(`Skipping ${file} (empty/TODO)`);
-        // Mark as applied so we don't check again
+      if (!sql) {
+        log.info(`Skipping ${file} (empty)`);
         await client.query('INSERT INTO _migrations (filename) VALUES ($1) ON CONFLICT DO NOTHING', [file]);
+        continue;
+      }
+      if (sql.startsWith('-- TODO')) {
+        log.warn(`Migration ${file} is incomplete (starts with "-- TODO") — skipping but NOT marking applied`);
         continue;
       }
 
