@@ -615,6 +615,7 @@ export async function routeWithAI(
   userId?: string,
   channel: OutputChannel = 'whatsapp',
   chatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
+  senderJid?: string,
 ): Promise<{ response: string; toolsUsed: string[]; creditsConsumed: number; toolResults: Record<string, unknown>[] }> {
 
   cleanExpiredDrafts();
@@ -690,7 +691,7 @@ export async function routeWithAI(
   } else if (userId) {
     // Fall back to backend memory manager (better for WhatsApp where frontend doesn't send history)
     try {
-      const stored = getConversationHistory(userId, 'unknown', MAX_HISTORY);
+      const stored = getConversationHistory(userId, senderJid || 'unknown', MAX_HISTORY);
       historyMessages = stored.map(m => ({
         role: m.role as 'user' | 'assistant',
         content: m.content,
@@ -950,6 +951,7 @@ export async function brainFirstRoute(
   userId?: string,
   channel: OutputChannel = 'whatsapp',
   chatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
+  senderJid?: string,
 ): Promise<RouteResult> {
 
   // 1. Call kitz-brain POST /decide
@@ -1016,7 +1018,7 @@ export async function brainFirstRoute(
       }
     }
 
-    return routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+    return routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid);
   }
 
   // 3. Execute based on brain strategy
@@ -1025,14 +1027,14 @@ export async function brainFirstRoute(
   switch (decision.strategy) {
     case 'direct_tool': {
       // Use existing 5-phase pipeline — brain says it's a simple request
-      result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+      result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid);
       break;
     }
 
     case 'single_agent': {
       const agentName = decision.agents?.[0];
       if (!agentName) {
-        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid);
         break;
       }
 
@@ -1047,7 +1049,7 @@ export async function brainFirstRoute(
       // If agent not found or offline, fall back to routeWithAI
       if (execResult.iterations === 0 && execResult.response.startsWith('Agent "')) {
         log.info('agent_fallback', { trace_id: traceId });
-        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid);
       } else {
         result = adaptExecutionResult(execResult);
       }
@@ -1057,7 +1059,7 @@ export async function brainFirstRoute(
     case 'multi_agent': {
       const agents = decision.agents || [];
       if (agents.length === 0) {
-        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid);
         break;
       }
 
@@ -1091,7 +1093,7 @@ export async function brainFirstRoute(
 
       if (!finalResponse) {
         // All agents failed, fall back
-        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid);
       } else {
         result = {
           response: finalResponse,
@@ -1131,7 +1133,7 @@ export async function brainFirstRoute(
         };
       } catch (err) {
         log.info('swarm_error', { trace_id: traceId });
-        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid);
       }
       break;
     }
@@ -1147,7 +1149,7 @@ export async function brainFirstRoute(
     }
 
     default: {
-      result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory);
+      result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid);
     }
   }
 

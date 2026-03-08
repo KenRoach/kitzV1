@@ -172,6 +172,8 @@ export function getConversationHistory(
   initMemory();
   return conversations
     .filter(m => m.userId === userId && m.senderJid === senderJid)
+    .filter(m => !m.content.startsWith('[SWARM:'))
+    .filter(m => m.role !== 'system')
     .slice(-limit);
 }
 
@@ -449,4 +451,24 @@ export function getMemoryStats(): {
     uniqueUsers: users.size,
     oldestMessageAge: oldest,
   };
+}
+
+/**
+ * Purge swarm/system noise from conversation history.
+ * One-time cleanup — removes [SWARM:...] and [MISSED WhatsApp...] messages.
+ */
+export async function purgeSwarmMessages(): Promise<{ removed: number; remaining: number }> {
+  initMemory();
+  const before = conversations.length;
+  conversations = conversations.filter(
+    m => !m.content.startsWith('[SWARM:') && !m.content.startsWith('[MISSED WhatsApp'),
+  );
+  const removed = before - conversations.length;
+  if (removed > 0) {
+    ensureDataDir();
+    const lines = conversations.map(m => JSON.stringify(m)).join('\n') + '\n';
+    await writeFile(CONVERSATIONS_FILE, lines);
+    log.info('purgeSwarmMessages', { removed, remaining: conversations.length });
+  }
+  return { removed, remaining: conversations.length };
 }

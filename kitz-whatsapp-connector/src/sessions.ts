@@ -1182,6 +1182,16 @@ class SessionManager {
       await session.socket.sendMessage(jid, { text });
       const outPhone = jid.replace(/@.*/, '');
       storeMessage({ userId, jid, phone: outPhone, direction: 'outbound', content: text });
+
+      // Persist outbound message to kitz_os conversation store (fire-and-forget)
+      const kitzOsUrl = process.env['KITZ_OS_URL'] || 'http://localhost:3012';
+      fetch(`${kitzOsUrl}/api/kitz/memory/store`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, senderJid: jid, role: 'assistant', content: text, channel: 'whatsapp' }),
+        signal: AbortSignal.timeout(5000),
+      }).catch(() => { /* best-effort — don't block send */ });
+
       return { ok: true };
     } catch (err) {
       const msg = (err as Error).message || 'unknown error';

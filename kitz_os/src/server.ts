@@ -296,10 +296,14 @@ export async function createServer(kernel: KitzKernel) {
       const userId = user_id || 'default';
       const senderJid = sender || 'unknown';
 
-      // Store inbound message in memory
-      try {
-        storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'user', content: message, traceId });
-      } catch { /* non-blocking */ }
+      // Store inbound message in memory (skip swarm/system messages)
+      const isSwarmMessage = message.startsWith('[SWARM:');
+      const isSystemSource = reqChannel === 'system' || user_id === 'swarm-bridge';
+      if (!isSwarmMessage && !isSystemSource) {
+        try {
+          storeMessage({ userId, senderJid, channel: channel as 'whatsapp' | 'email', role: 'user', content: message, traceId });
+        } catch { /* non-blocking */ }
+      }
 
       // 0. First-time user onboarding check (before any routing)
       if (senderJid !== 'unknown' && source !== 'self_chat') {
@@ -562,7 +566,7 @@ export async function createServer(kernel: KitzKernel) {
           });
         }
         try {
-          const result = await brainFirstRoute(message, kernel.tools, traceId, undefined, userId, channel, chat_history);
+          const result = await brainFirstRoute(message, kernel.tools, traceId, undefined, userId, channel, chat_history, senderJid);
           // Store AI response in memory
           try {
             storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'assistant', content: result.response, traceId });
@@ -1685,6 +1689,41 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
     }
     kernel.aos.knowledgeBridge.clear();
     return { cleared: true };
+  });
+
+  // ── Knowledge Ingest — swarm findings go here instead of /api/kitz ──
+  app.post('/api/kitz/knowledge', async (req, reply) => {
+    const { source, category, content, title } = req.body as Record<string, string> || {};
+    if (!content) return reply.code(400).send({ error: 'content required' });
+    const { upsertKnowledge } = await import('./memory/manager.js');
+    upsertKnowledge({ source: source || 'unknown', category: category || 'general', content, title });
+    return { ok: true };
+  });
+
+  // ── Memory Store — persist messages from external services (e.g. WA connector outbound) ──
+  app.post('/api/kitz/memory/store', async (req, reply) => {
+    const { userId, senderJid, role, content, channel: ch, traceId: tid } = req.body as Record<string, string> || {};
+    if (!content) return reply.code(400).send({ error: 'content required' });
+    storeMessage({
+      userId: userId || 'default',
+      senderJid: senderJid || 'unknown',
+      channel: (ch as 'whatsapp' | 'email') || 'whatsapp',
+      role: (role as 'user' | 'assistant') || 'user',
+      content,
+      traceId: tid,
+    });
+    return { ok: true };
+  });
+
+  // ── Memory Purge — remove swarm noise from conversation history ──
+  app.post('/api/kitz/memory/purge-swarm', async (req, reply) => {
+    const secret = req.headers['x-dev-secret'];
+    if (secret !== process.env.DEV_TOKEN_SECRET) {
+      return reply.code(401).send({ error: 'unauthorized' });
+    }
+    const { purgeSwarmMessages } = await import('./memory/manager.js');
+    const result = await purgeSwarmMessages();
+    return result;
   });
 
   // ── n8n Webhook Receiver — events FROM n8n workflows ──

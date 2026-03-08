@@ -65,19 +65,20 @@ export class KnowledgeBridge {
     })
   }
 
-  /** Forward a knowledge entry to kitz_os memory manager */
+  /** Forward a knowledge entry to kitz_os knowledge store (NOT conversation history) */
   private async forwardToBrain(entry: KnowledgeEntry): Promise<void> {
     try {
-      await fetch(`${BRAIN_URL}/api/kitz`, {
+      await fetch(`${BRAIN_URL}/api/kitz/knowledge`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-service-secret': process.env['SERVICE_SECRET'] ?? '',
         },
         body: JSON.stringify({
-          message: `[SWARM:${entry.team}:${entry.agent}] ${entry.content}`,
-          channel: 'system',
-          userId: 'swarm-bridge',
+          source: `swarm:${entry.team}:${entry.agent}`,
+          category: 'swarm-findings',
+          content: entry.content,
+          traceId: entry.traceId,
         }),
       })
     } catch {
