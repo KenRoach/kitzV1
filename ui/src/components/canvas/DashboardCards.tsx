@@ -65,20 +65,20 @@ export function DashboardCards() {
   return (
     <div className="space-y-6">
       {/* Metric cards */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-2.5 md:gap-4">
         {cards.map((card) => {
           const Icon = card.icon
           return (
             <button
               key={card.label}
               onClick={card.onClick}
-              className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:shadow-md hover:border-purple-200"
+              className="flex flex-col items-start gap-2 rounded-xl border border-gray-200 bg-white p-3.5 md:flex-row md:items-start md:gap-4 md:p-5 text-left shadow-sm transition hover:shadow-md hover:border-purple-200"
             >
               <Icon className={cn('h-5 w-5 shrink-0', card.color)} />
               <div className="min-w-0">
-                <p className="text-xs font-medium text-gray-500">{card.label}</p>
-                <p className="mt-0.5 text-xl font-bold text-gray-900">{card.value}</p>
-                <p className="mt-0.5 text-xs text-gray-400">{card.sub}</p>
+                <p className="text-[11px] md:text-xs font-medium text-gray-500">{card.label}</p>
+                <p className="mt-0.5 text-lg md:text-xl font-bold text-gray-900">{card.value}</p>
+                <p className="mt-0.5 text-[10px] md:text-xs text-gray-400 leading-tight">{card.sub}</p>
               </div>
             </button>
           )
@@ -86,7 +86,7 @@ export function DashboardCards() {
       </div>
 
       {/* Today's tasks */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5">
+      <div className="rounded-xl border border-gray-200 bg-white p-3.5 md:p-5">
         <h3 className="text-sm font-semibold text-gray-900">{t('dashboard.todaysTasks')}</h3>
         {tasks.length === 0 ? (
           <p className="mt-3 text-xs text-gray-400">{t('dashboard.askKitzCreate')}</p>
@@ -120,7 +120,7 @@ export function DashboardCards() {
       </div>
 
       {/* Recent activity */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5">
+      <div className="rounded-xl border border-gray-200 bg-white p-3.5 md:p-5">
         <h3 className="text-sm font-semibold text-gray-900">{t('dashboard.recentActivity')}</h3>
         {orders.length === 0 && payments.length === 0 ? (
           <p className="mt-3 text-xs text-gray-400">{t('dashboard.noActivityYet')}</p>
