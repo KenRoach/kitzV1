@@ -11,6 +11,7 @@ import {
   HelpCircle,
   GraduationCap,
   Gamepad2,
+  type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useCanvasStore, type CanvasTab } from '@/stores/canvasStore'
@@ -164,5 +165,42 @@ export function NavRail() {
         </div>
       </div>
     </aside>
+  )
+}
+
+/* ── Mobile bottom navigation bar ── */
+const mobileNavItems: { id: CanvasTab; icon: LucideIcon; labelKey: string }[] = [
+  { id: 'dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
+  { id: 'workspace', icon: Briefcase, labelKey: 'nav.workspace' },
+  { id: 'knowledge', icon: BookOpen, labelKey: 'nav.knowledge' },
+  { id: 'automations', icon: Zap, labelKey: 'nav.automations' },
+  { id: 'activity', icon: Activity, labelKey: 'nav.activity' },
+]
+
+export function MobileBottomNav() {
+  const activeTab = useCanvasStore((s) => s.activeTab)
+  const setActiveTab = useCanvasStore((s) => s.setActiveTab)
+  const { t } = useTranslation()
+
+  return (
+    <nav className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] md:hidden">
+      {mobileNavItems.map((item) => {
+        const isActive = activeTab === item.id
+        const Icon = item.icon
+        return (
+          <button
+            key={item.id}
+            onClick={() => setActiveTab(item.id)}
+            className={cn(
+              'flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors',
+              isActive ? 'text-purple-600' : 'text-gray-400',
+            )}
+          >
+            <Icon className="h-5 w-5" />
+            <span className="truncate">{t(item.labelKey)}</span>
+          </button>
+        )
+      })}
+    </nav>
   )
 }

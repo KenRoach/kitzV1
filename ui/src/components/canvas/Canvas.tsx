@@ -75,13 +75,13 @@ export function Canvas() {
       <div className="flex-1 overflow-y-auto">
         <ErrorBoundary key={activeTab}>
           {activeTab === 'dashboard' && (
-            <div className="mx-auto max-w-4xl p-6">
+            <div className="mx-auto max-w-4xl px-3 py-4 md:p-6">
               <DashboardCards />
             </div>
           )}
           {activeTab === 'preview' && <CanvasPreview />}
           {activeTab === 'workspace' && (
-            <div className="mx-auto max-w-6xl p-6">
+            <div className="mx-auto max-w-6xl px-3 py-4 md:p-6">
               <WorkspaceTabs />
             </div>
           )}
