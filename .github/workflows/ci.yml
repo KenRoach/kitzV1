@@ -51,7 +51,7 @@ jobs:
         working-directory: kitz_os
       - run: npx tsc --noEmit
         working-directory: kitz_os
-      - run: node --import tsx --test src/aiBattery.test.ts
+      - run: npx vitest run
         working-directory: kitz_os
 
   kitz-payments:
