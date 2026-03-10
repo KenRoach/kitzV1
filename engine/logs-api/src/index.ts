@@ -19,13 +19,16 @@ app.addHook('onRequest', async (req, reply) => {
   const path = req.url.split('?')[0]
   if (path === '/health') return
 
-  if (SERVICE_SECRET) {
-    const secret = req.headers['x-service-secret'] as string | undefined
-    const devSecret = req.headers['x-dev-secret'] as string | undefined
-    if (secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
-      const traceId = String(req.headers['x-trace-id'] || randomUUID())
-      return reply.code(401).send({ code: 'AUTH_REQUIRED', message: 'Missing or invalid service secret', traceId })
+  const secret = req.headers['x-service-secret'] as string | undefined
+  const devSecret = req.headers['x-dev-secret'] as string | undefined
+  if (!SERVICE_SECRET) {
+    // No secret configured — reject in production, warn in dev
+    if (process.env.NODE_ENV === 'production') {
+      return reply.code(503).send({ error: 'Service not configured' })
     }
+  } else if (secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
+    const traceId = String(req.headers['x-trace-id'] || randomUUID())
+    return reply.code(401).send({ code: 'AUTH_REQUIRED', message: 'Missing or invalid service secret', traceId })
   }
 })
 

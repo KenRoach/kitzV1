@@ -310,6 +310,10 @@ export async function createServer(kernel: KitzKernel) {
     const devSecret = req.headers['x-dev-secret'] as string | undefined;
     if (SERVICE_SECRET && secret === SERVICE_SECRET) return;
     if (process.env.DEV_TOKEN_SECRET && devSecret === process.env.DEV_TOKEN_SECRET) return;
+    // If no secrets configured at all and no JWT, reject in production
+    if (!SERVICE_SECRET && !process.env.DEV_TOKEN_SECRET && !JWT_SECRET && process.env.NODE_ENV === 'production') {
+      return reply.code(503).send({ error: 'Service not configured' });
+    }
 
     // 2. Bearer JWT from UI (same JWT_SECRET as gateway)
     const authHeader = req.headers.authorization as string | undefined;
@@ -363,7 +367,14 @@ export async function createServer(kernel: KitzKernel) {
 
       const traceId = trace_id || crypto.randomUUID();
       const userId = user_id || 'default';
+      // CRITICAL: Always use sender JID when available — memory lookup keys on (userId, senderJid).
+      // Falling to 'unknown' makes conversation history unretrievable.
       const senderJid = sender || 'unknown';
+
+      // Memory identity resolution: if senderJid is a real WhatsApp JID, also look up
+      // history with that JID under ALL known userIds (handles userId inconsistencies
+      // across sessions — e.g., 'dev' vs UUID vs 'default' for the same person)
+      const effectiveUserId = userId;
 
       // Store inbound message in memory (skip swarm/system messages)
       const isSwarmMessage = message.startsWith('[SWARM:');
@@ -680,9 +691,7 @@ export async function createServer(kernel: KitzKernel) {
           // ── Artifact Preview Generation ──
           // Generate branded HTML artifact for every meaningful AI response
           try {
-            const baseUrl = process.env.NODE_ENV === 'production'
-              ? 'https://kitz.services'
-              : `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers['x-forwarded-host'] || req.headers.host || `localhost:${PORT}`}`;
+            const baseUrl = process.env.KITZ_DOMAIN || 'https://workspace.kitz.services';
 
             const artifact = createArtifactFromToolResult(
               result.toolResults || [],
@@ -791,9 +800,7 @@ export async function createServer(kernel: KitzKernel) {
       const { contentId } = req.params;
       const item = getContent(contentId);  // returns undefined if expired
       if (!item) {
-        const base = process.env.NODE_ENV === 'production'
-          ? 'https://kitz.services'
-          : `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers['x-forwarded-host'] || req.headers.host || `localhost:${PORT}`}`;
+        const base = process.env.KITZ_DOMAIN || 'https://workspace.kitz.services';
         reply.code(410).type('text/html').send(buildExpiredArtifactHtml(base));
         return;
       }
@@ -2388,9 +2395,7 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
       const { slug } = req.params;
       const item = getContentBySlug(slug);
       if (!item) {
-        const base = process.env.NODE_ENV === 'production'
-          ? 'https://kitz.services'
-          : `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers['x-forwarded-host'] || req.headers.host || `localhost:${PORT}`}`;
+        const base = process.env.KITZ_DOMAIN || 'https://workspace.kitz.services';
         reply.code(410).type('text/html').send(buildExpiredArtifactHtml(base));
         return;
       }

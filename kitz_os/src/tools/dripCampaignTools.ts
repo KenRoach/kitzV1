@@ -75,7 +75,7 @@ function seedDefaults(): void {
     touches: [
       { touchNumber: 1, dayOffset: 0, channel: 'whatsapp', messageTemplate: 'Hola {{name}}! Bienvenido a KITZ. Tu negocio merece infraestructura. Pregunta lo que necesites.' },
       { touchNumber: 2, dayOffset: 2, channel: 'email', subject: 'Tu negocio con KITZ', messageTemplate: 'Hola {{name}},\n\nGracias por unirte a KITZ. Tu {{business}} tiene todo el potencial.\n\nAsí es como otros negocios como el tuyo están creciendo con KITZ:\n- CRM gratis para organizar clientes\n- Pedidos y pagos desde WhatsApp\n- IA que trabaja para ti 24/7\n\n¿Listo para empezar? Responde a este email.\n\n— KITZ' },
-      { touchNumber: 3, dayOffset: 5, channel: 'sms', messageTemplate: '{{name}}, ¿ya probaste tu workspace KITZ? workspace.kitz.services — es gratis. Tu CRM + pedidos en un solo lugar.' },
+      { touchNumber: 3, dayOffset: 5, channel: 'sms', messageTemplate: '{{name}}, ¿ya probaste tu workspace KITZ? https://workspace.kitz.services — es gratis. Tu CRM + pedidos en un solo lugar.' },
       { touchNumber: 4, dayOffset: 10, channel: 'voice', messageTemplate: 'Hola {{name}}, soy KITZ. Solo quería saber cómo va tu {{business}}. Estamos aquí para ayudarte a crecer. Si necesitas algo, escríbenos por WhatsApp.' },
     ],
   };
@@ -91,8 +91,8 @@ function seedDefaults(): void {
     createdAt: new Date().toISOString(),
     touches: [
       { touchNumber: 1, dayOffset: 0, channel: 'whatsapp', messageTemplate: '{{name}}, te extrañamos. ¿Cómo va tu {{business}}? Tenemos novedades para ti.' },
-      { touchNumber: 2, dayOffset: 3, channel: 'email', subject: '{{name}}, vuelve a KITZ', messageTemplate: 'Hola {{name}},\n\nNotamos que no has estado activo últimamente.\n\nDesde tu última visita, agregamos:\n- Facturación automática\n- Campañas por WhatsApp\n- Reportes de ventas con IA\n\nTu workspace sigue activo: workspace.kitz.services\n\n— KITZ' },
-      { touchNumber: 3, dayOffset: 7, channel: 'sms', messageTemplate: '{{name}}, tu workspace KITZ sigue activo. Entra y ve tus datos: workspace.kitz.services' },
+      { touchNumber: 2, dayOffset: 3, channel: 'email', subject: '{{name}}, vuelve a KITZ', messageTemplate: 'Hola {{name}},\n\nNotamos que no has estado activo últimamente.\n\nDesde tu última visita, agregamos:\n- Facturación automática\n- Campañas por WhatsApp\n- Reportes de ventas con IA\n\nTu workspace sigue activo: https://workspace.kitz.services\n\n— KITZ' },
+      { touchNumber: 3, dayOffset: 7, channel: 'sms', messageTemplate: '{{name}}, tu workspace KITZ sigue activo. Entra y ve tus datos: https://workspace.kitz.services' },
       { touchNumber: 4, dayOffset: 14, channel: 'voice', messageTemplate: 'Hola {{name}}, soy KITZ. Quería saber si hay algo en lo que podamos ayudarte con tu {{business}}. Tu cuenta sigue activa y lista.' },
     ],
   };

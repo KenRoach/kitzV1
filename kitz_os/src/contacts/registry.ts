@@ -149,7 +149,8 @@ async function supaGet(query: string): Promise<DbContact[]> {
     });
     if (!res.ok) return [];
     return await res.json() as DbContact[];
-  } catch {
+  } catch (err) {
+    log.warn('supabase_get_failed', { error: (err as Error).message });
     return [];
   }
 }
@@ -256,7 +257,7 @@ export async function loadContacts(): Promise<void> {
       if (hasDB && contacts.size > 0) {
         log.info('syncing file contacts to Supabase...', { count: contacts.size });
         for (const c of contacts.values()) {
-          supaUpsert(toDb(c)).catch(() => {});  // fire-and-forget
+          supaUpsert(toDb(c)).catch((err) => { log.warn('contact_sync_to_supabase_failed', { error: (err as Error).message }); });  // fire-and-forget
         }
       }
     }
@@ -270,7 +271,7 @@ export async function loadContacts(): Promise<void> {
 function persistContact(contact: Contact): void {
   dirty = true;
   // Supabase (async, non-blocking)
-  supaUpsert(toDb(contact)).catch(() => {});
+  supaUpsert(toDb(contact)).catch((err) => { log.warn('contact_persist_to_supabase_failed', { error: (err as Error).message }); });
   // File backup
   saveContactsToFile();
 }

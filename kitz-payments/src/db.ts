@@ -37,14 +37,14 @@ async function persistLedgerEntry(entry: AIBatteryLedgerEntry): Promise<void> {
   try {
     await ensureDataDir();
     await appendFile(LEDGER_FILE, JSON.stringify(entry) + '\n', 'utf-8');
-  } catch { /* non-blocking */ }
+  } catch (err) { console.warn('[kitz-payments] ledger_entry_persist_failed', (err as Error).message); }
 }
 
 async function persistSubscription(record: SubscriptionRecord): Promise<void> {
   try {
     await ensureDataDir();
     await appendFile(SUBS_FILE, JSON.stringify(record) + '\n', 'utf-8');
-  } catch { /* non-blocking */ }
+  } catch (err) { console.warn('[kitz-payments] subscription_persist_failed', (err as Error).message); }
 }
 
 export async function restoreLedger(): Promise<number> {
@@ -57,11 +57,11 @@ export async function restoreLedger(): Promise<number> {
       try {
         const entry = JSON.parse(line) as AIBatteryLedgerEntry;
         if (entry.orgId && entry.ts) { memLedger.push(entry); count++; }
-      } catch { /* skip malformed */ }
+      } catch (err) { console.warn('[kitz-payments] ledger_line_parse_failed', (err as Error).message); }
     }
     if (memLedger.length > MAX_MEM) memLedger.splice(0, memLedger.length - MAX_MEM);
     return count;
-  } catch { return 0; }
+  } catch (err) { console.warn('[kitz-payments] ledger_restore_failed', (err as Error).message); return 0; }
 }
 
 export async function restoreSubscriptions(): Promise<number> {
@@ -74,15 +74,15 @@ export async function restoreSubscriptions(): Promise<number> {
       try {
         const record = JSON.parse(line) as SubscriptionRecord;
         if (record.orgId) { memSubscriptions.set(record.orgId, record); count++; }
-      } catch { /* skip malformed */ }
+      } catch (err) { console.warn('[kitz-payments] subscription_line_parse_failed', (err as Error).message); }
     }
     return count;
-  } catch { return 0; }
+  } catch (err) { console.warn('[kitz-payments] subscriptions_restore_failed', (err as Error).message); return 0; }
 }
 
 export async function insertLedgerEntry(entry: AIBatteryLedgerEntry): Promise<void> {
   memLedger.push(entry);
-  persistLedgerEntry(entry).catch(() => {});
+  persistLedgerEntry(entry).catch((err) => { console.warn('[kitz-payments] ledger_entry_file_persist_failed', (err as Error).message); });
   if (memLedger.length > MAX_MEM) memLedger.splice(0, memLedger.length - MAX_MEM);
 
   if (!DATABASE_URL) return;
@@ -97,7 +97,7 @@ export async function insertLedgerEntry(entry: AIBatteryLedgerEntry): Promise<vo
       trace_id: entry.traceId,
       ts: entry.ts,
     }),
-  }).catch(() => {});
+  }).catch((err) => { console.warn('[kitz-payments] ledger_entry_db_write_failed', (err as Error).message); });
 }
 
 export function getLedger(): AIBatteryLedgerEntry[] {
@@ -121,7 +121,7 @@ export async function queryLedger(orgId?: string): Promise<AIBatteryLedgerEntry[
           ts: String(r.ts),
         }));
       }
-    } catch { /* fall through to mem */ }
+    } catch (err) { console.warn('[kitz-payments] ledger_query_failed', (err as Error).message); }
   }
 
   if (orgId) return memLedger.filter((e) => e.orgId === orgId);
@@ -141,7 +141,7 @@ const memSubscriptions = new Map<string, SubscriptionRecord>();
 
 export async function upsertSubscription(record: SubscriptionRecord): Promise<void> {
   memSubscriptions.set(record.orgId, record);
-  persistSubscription(record).catch(() => {});
+  persistSubscription(record).catch((err) => { console.warn('[kitz-payments] subscription_file_persist_failed', (err as Error).message); });
 
   if (!DATABASE_URL) return;
 
@@ -154,7 +154,7 @@ export async function upsertSubscription(record: SubscriptionRecord): Promise<vo
       status: record.status,
       trace_id: record.traceId,
     }),
-  }).catch(() => {});
+  }).catch((err) => { console.warn('[kitz-payments] subscription_db_upsert_failed', (err as Error).message); });
 }
 
 export async function getSubscription(orgId: string): Promise<SubscriptionRecord | null> {
@@ -182,7 +182,7 @@ export async function getSubscription(orgId: string): Promise<SubscriptionRecord
         return record;
       }
     }
-  } catch { /* fall through */ }
+  } catch (err) { console.warn('[kitz-payments] subscription_fetch_failed', (err as Error).message); }
 
   return null;
 }

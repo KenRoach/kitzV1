@@ -95,7 +95,7 @@ const EMAIL_TEMPLATES: Record<string, { name: string; description: string; struc
 <div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:28px 24px">
 <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
 <td><table cellpadding="0" cellspacing="0" border="0"><tr>
-<td style="width:36px;height:36px"><img src="https://kitz.services/kitz-logo.png" alt="KITZ" width="36" height="36" style="display:block;border-radius:8px"></td>
+<td style="width:36px;height:36px"><img src="https://workspace.kitz.services/kitz-logo.png" alt="KITZ" width="36" height="36" style="display:block;border-radius:8px"></td>
 <td style="padding-left:12px"><span style="color:#ffffff;font-size:20px;font-weight:700;display:block;line-height:1.2">{{businessName}}</span><span style="color:rgba(255,255,255,0.75);font-size:12px">{{tagline}}</span></td>
 </tr></table></td>
 <td style="text-align:right"><span style="background:rgba(255,255,255,0.2);color:#fff;font-size:11px;padding:4px 12px;border-radius:20px;font-weight:600">{{emailType}}</span></td>
@@ -113,7 +113,7 @@ const EMAIL_TEMPLATES: Record<string, { name: string; description: string; struc
 </div>
 <div style="padding:20px 24px;text-align:center">
 <p style="color:#999;font-size:11px;line-height:1.5;margin:0 0 8px">This content was created by AI. Please review thoroughly before taking action.</p>
-<p style="color:#bbb;font-size:11px;margin:0 0 4px">{{businessName}} &middot; Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none">KITZ</a></p>
+<p style="color:#bbb;font-size:11px;margin:0 0 4px">{{businessName}} &middot; Powered by <a href="https://workspace.kitz.services" style="color:#A855F7;text-decoration:none">KITZ</a></p>
 <p style="color:#bbb;font-size:11px;margin:0"><a href="{{unsubscribeUrl}}" style="color:#999;text-decoration:underline">Unsubscribe</a> &middot; <a href="mailto:{{contactEmail}}" style="color:#999;text-decoration:underline">Contact</a></p>
 </div>
 </div>`,
@@ -125,7 +125,7 @@ const EMAIL_TEMPLATES: Record<string, { name: string; description: string; struc
 <div style="background:linear-gradient(135deg,#A855F7,#7C3AED);padding:28px 24px">
 <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
 <td><table cellpadding="0" cellspacing="0" border="0"><tr>
-<td style="width:36px;height:36px"><img src="https://kitz.services/kitz-logo.png" alt="KITZ" width="36" height="36" style="display:block;border-radius:8px"></td>
+<td style="width:36px;height:36px"><img src="https://workspace.kitz.services/kitz-logo.png" alt="KITZ" width="36" height="36" style="display:block;border-radius:8px"></td>
 <td style="padding-left:12px"><span style="color:#ffffff;font-size:20px;font-weight:700;display:block;line-height:1.2">{{businessName}}</span><span style="color:rgba(255,255,255,0.75);font-size:12px">Your document is ready</span></td>
 </tr></table></td>
 </tr></table>
@@ -140,7 +140,7 @@ const EMAIL_TEMPLATES: Record<string, { name: string; description: string; struc
 <span style="margin-left:auto;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;padding:3px 8px;border-radius:12px">{{artifactCategory}}</span>
 </div>
 <div style="background:#faf9ff;padding:20px 16px;text-align:center;color:#7C3AED;font-size:13px">
-Preview available at kitz.services
+Preview available at workspace.kitz.services
 </div>
 </div>
 <div style="text-align:center">
@@ -150,7 +150,7 @@ Preview available at kitz.services
 </div>
 <div style="padding:20px 24px;text-align:center">
 <p style="color:#999;font-size:11px;line-height:1.5;margin:0 0 8px">This content was created by AI. Please review thoroughly before taking action.</p>
-<p style="color:#bbb;font-size:11px;margin:0 0 4px">{{businessName}} &middot; Powered by <a href="https://kitz.services" style="color:#A855F7;text-decoration:none">KITZ</a></p>
+<p style="color:#bbb;font-size:11px;margin:0 0 4px">{{businessName}} &middot; Powered by <a href="https://workspace.kitz.services" style="color:#A855F7;text-decoration:none">KITZ</a></p>
 <p style="color:#bbb;font-size:11px;margin:0"><a href="{{unsubscribeUrl}}" style="color:#999;text-decoration:underline">Unsubscribe</a></p>
 </div>
 </div>`,

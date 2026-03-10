@@ -58,12 +58,15 @@ app.addHook('onRequest', async (req, reply) => {
     path.startsWith('/webhooks/');
   if (skipAuth) return;
 
-  if (SERVICE_SECRET) {
-    const secret = req.headers['x-service-secret'] as string | undefined;
-    const devSecret = req.headers['x-dev-secret'] as string | undefined;
-    if (secret !== SERVICE_SECRET && devSecret !== SERVICE_SECRET) {
-      return reply.code(401).send({ error: 'Missing or invalid service secret' });
+  const secret = req.headers['x-service-secret'] as string | undefined;
+  const devSecret = req.headers['x-dev-secret'] as string | undefined;
+  if (!SERVICE_SECRET) {
+    // No secret configured — reject in production, warn in dev
+    if (process.env.NODE_ENV === 'production') {
+      return reply.code(503).send({ error: 'Service not configured' });
     }
+  } else if (secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
+    return reply.code(401).send({ error: 'Unauthorized' });
   }
 });
 

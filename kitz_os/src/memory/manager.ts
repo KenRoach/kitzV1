@@ -208,6 +208,13 @@ async function persistMessageToSupabase(msg: ConversationMessage): Promise<void>
 
 /**
  * Get recent conversation history for a specific user+sender pair.
+ *
+ * Resilient lookup strategy:
+ * 1. Try exact (userId, senderJid) match first
+ * 2. If senderJid is a real JID (not 'unknown'), also search across ALL userIds
+ *    for that JID — handles userId inconsistency across sessions (e.g., 'dev' vs UUID)
+ * 3. If userId is not 'default'/'unknown', also search for that userId with 'unknown' senderJid
+ *    — recovers messages stored before senderJid was properly propagated
  */
 export function getConversationHistory(
   userId: string,
@@ -215,11 +222,38 @@ export function getConversationHistory(
   limit = MAX_CONTEXT_MESSAGES,
 ): ConversationMessage[] {
   initMemory();
-  return conversations
+
+  // Strategy 1: Exact match (fastest, most common)
+  let results = conversations
     .filter(m => m.userId === userId && m.senderJid === senderJid)
     .filter(m => !m.content.startsWith('[SWARM:'))
-    .filter(m => m.role !== 'system')
-    .slice(-limit);
+    .filter(m => m.role !== 'system');
+
+  // Strategy 2: If senderJid is a real WhatsApp JID, find ALL messages for that JID
+  // regardless of userId (handles dev/UUID/default inconsistencies)
+  if (results.length < 3 && senderJid !== 'unknown' && senderJid.includes('@')) {
+    const jidResults = conversations
+      .filter(m => m.senderJid === senderJid)
+      .filter(m => !m.content.startsWith('[SWARM:'))
+      .filter(m => m.role !== 'system');
+    if (jidResults.length > results.length) {
+      results = jidResults;
+    }
+  }
+
+  // Strategy 3: If we have a userId but got 'unknown' senderJid, also check
+  // messages stored under that userId with 'unknown' senderJid
+  if (results.length < 3 && userId !== 'default' && senderJid === 'unknown') {
+    const userResults = conversations
+      .filter(m => m.userId === userId)
+      .filter(m => !m.content.startsWith('[SWARM:'))
+      .filter(m => m.role !== 'system');
+    if (userResults.length > results.length) {
+      results = userResults;
+    }
+  }
+
+  return results.slice(-limit);
 }
 
 /**

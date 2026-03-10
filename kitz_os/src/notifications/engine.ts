@@ -261,7 +261,7 @@ export function startNotificationEngine(): void {
     scheduledTasks.push(
       cron.schedule('30 7 * * *', () => {
         const brief = generateMorningBrief();
-        sendWhatsApp(OWNER_PHONE, brief).catch(() => {});
+        sendWhatsApp(OWNER_PHONE, brief).catch((err) => { log.warn('morning_brief_send_failed', { error: (err as Error).message }); });
       }, { timezone: 'America/Panama' })
     );
   }
@@ -271,7 +271,7 @@ export function startNotificationEngine(): void {
     scheduledTasks.push(
       cron.schedule('30 8 * * 1', () => {
         const insight = generateWeeklyInsight();
-        sendWhatsApp(OWNER_PHONE, insight).catch(() => {});
+        sendWhatsApp(OWNER_PHONE, insight).catch((err) => { log.warn('weekly_insight_send_failed', { error: (err as Error).message }); });
       }, { timezone: 'America/Panama' })
     );
   }
