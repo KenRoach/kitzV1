@@ -54,7 +54,7 @@ async function persistUser(user: UserRecord): Promise<void> {
   try {
     await ensureDataDir();
     await appendFile(USERS_FILE, JSON.stringify(user) + '\n', 'utf-8');
-  } catch { /* non-blocking */ }
+  } catch (err) { console.warn('[kitz-gateway] user_persist_failed', (err as Error).message); }
 }
 
 export async function restoreUsers(): Promise<number> {
@@ -70,10 +70,10 @@ export async function restoreUsers(): Promise<number> {
           const key = user.email.toLowerCase();
           if (!memoryUsers.has(key)) { memoryUsers.set(key, user); count++; }
         }
-      } catch { /* skip malformed */ }
+      } catch (err) { console.warn('[kitz-gateway] user_line_parse_failed', (err as Error).message); }
     }
     return count;
-  } catch { return 0; }
+  } catch (err) { console.warn('[kitz-gateway] users_restore_failed', (err as Error).message); return 0; }
 }
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
@@ -103,7 +103,7 @@ async function pgQuery<T extends Record<string, unknown>>(sql: string, params: u
         const data = await res.json() as T[];
         return Array.isArray(data) ? data : [];
       }
-    } catch { /* fall through to direct approach */ }
+    } catch (err) { console.warn('[kitz-gateway] supabase_rpc_query_failed', (err as Error).message); }
   }
 
   // Fallback: Try direct PostgREST queries (simpler, no RPC needed)
@@ -150,7 +150,7 @@ export async function findUserByEmail(email: string): Promise<UserRecord | null>
           if (rows.length > 0) return rowToUser(rows[0]);
           return null;
         }
-      } catch { /* fall through to memory */ }
+      } catch (err) { console.warn('[kitz-gateway] find_user_by_email_failed', (err as Error).message); }
     }
   }
 
@@ -208,13 +208,13 @@ export async function createUser(
           const rows = await res.json() as Record<string, unknown>[];
           if (rows.length > 0) return rowToUser(rows[0]);
         }
-      } catch { /* fall through to memory */ }
+      } catch (err) { console.warn('[kitz-gateway] create_user_db_failed', (err as Error).message); }
     }
   }
 
   // Always save to memory as backup
   memoryUsers.set(normalized, user);
-  persistUser(user).catch(() => {});
+  persistUser(user).catch((err) => { console.warn('[kitz-gateway] user_file_persist_failed', (err as Error).message); });
   return user;
 }
 
@@ -246,7 +246,7 @@ export async function updateUser(email: string, updates: Partial<Pick<UserRecord
             signal: AbortSignal.timeout(5_000),
           },
         );
-      } catch { /* best effort */ }
+      } catch (err) { console.warn('[kitz-gateway] update_user_failed', (err as Error).message); }
     }
   }
 
@@ -260,7 +260,7 @@ export async function updateUser(email: string, updates: Partial<Pick<UserRecord
 
   // Persist updated user to NDJSON (full overwrite entry — latest wins on restore)
   const updated = memoryUsers.get(normalized);
-  if (updated) persistUser(updated).catch(() => {});
+  if (updated) persistUser(updated).catch((err) => { console.warn('[kitz-gateway] updated_user_persist_failed', (err as Error).message); });
 }
 
 /** Verify password — supports scrypt (new) and SHA256 (legacy, auto-migrates) */
@@ -271,7 +271,7 @@ export function verifyPassword(user: UserRecord, password: string): boolean {
     const newHash = hashPassword(password);
     user.passwordHash = newHash;
     // Fire-and-forget: persist upgraded hash
-    upgradePasswordHash(user.email, newHash).catch(() => {});
+    upgradePasswordHash(user.email, newHash).catch((err) => { console.warn('[kitz-gateway] password_upgrade_persist_failed', (err as Error).message); });
   }
   return ok;
 }
@@ -288,7 +288,7 @@ async function upgradePasswordHash(email: string, newHash: string): Promise<void
       body: JSON.stringify({ password_hash: newHash }),
       signal: AbortSignal.timeout(5_000),
     });
-  } catch { /* best-effort upgrade */ }
+  } catch (err) { console.warn('[kitz-gateway] password_hash_upgrade_failed', (err as Error).message); }
   // Also update memory
   const memUser = memoryUsers.get(email.toLowerCase());
   if (memUser) memUser.passwordHash = newHash;
@@ -320,7 +320,7 @@ export async function listUsers(): Promise<Omit<UserRecord, 'passwordHash'>[]> {
             return rest;
           });
         }
-      } catch { /* fall through */ }
+      } catch (err) { console.warn('[kitz-gateway] list_users_db_failed', (err as Error).message); }
     }
   }
 

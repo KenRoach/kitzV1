@@ -1,14 +1,19 @@
-import { useEffect } from 'react'
-import { DollarSign, ShoppingCart, MessageSquare, ListTodo } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { DollarSign, ShoppingCart, MessageSquare, ListTodo, Share2, Copy, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useCanvasStore } from '@/stores/canvasStore'
+import { useAuthStore } from '@/stores/authStore'
 import { useTranslation } from '@/lib/i18n'
+
+const INVITE_DOMAIN = 'https://workspace.kitz.services'
 
 export function DashboardCards() {
   const { payments, orders, tasks, leads, fetchPayments, fetchOrders, fetchTasks, fetchLeads } = useWorkspaceStore()
   const setActiveTab = useCanvasStore((s) => s.setActiveTab)
+  const user = useAuthStore((s) => s.user)
   const { t } = useTranslation()
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     void fetchPayments()
@@ -148,6 +153,92 @@ export function DashboardCards() {
           </ul>
         )}
       </div>
+
+      {/* Invite a friend */}
+      <InviteCard userId={user?.id} copied={copied} setCopied={setCopied} />
+    </div>
+  )
+}
+
+// ── Invite Card ──
+
+function InviteCard({
+  userId,
+  copied,
+  setCopied,
+}: {
+  userId?: string
+  copied: boolean
+  setCopied: (v: boolean) => void
+}) {
+  const inviteLink = userId
+    ? `${INVITE_DOMAIN}/?ref=${userId}`
+    : INVITE_DOMAIN
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(inviteLink)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // Fallback for older browsers
+      const input = document.createElement('input')
+      input.value = inviteLink
+      document.body.appendChild(input)
+      input.select()
+      document.execCommand('copy')
+      document.body.removeChild(input)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  const handleShareWhatsApp = () => {
+    const msg = encodeURIComponent(
+      `Te invito a probar Kitz — tu asistente AI de negocios. 🟣\n\nGratis por 7 dias, sin tarjeta.\n\n👉 ${inviteLink}`
+    )
+    window.open(`https://wa.me/?text=${msg}`, '_blank')
+  }
+
+  return (
+    <div className="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-white p-4 md:p-5">
+      <div className="flex items-center gap-2.5">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100">
+          <Share2 className="h-4 w-4 text-purple-600" />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900">Invita a un amigo</h3>
+          <p className="text-[11px] text-gray-500">Comparte Kitz con otros emprendedores</p>
+        </div>
+      </div>
+
+      {/* Invite link */}
+      <div className="mt-3 flex items-center gap-2">
+        <div className="flex-1 truncate rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
+          {inviteLink}
+        </div>
+        <button
+          onClick={handleCopy}
+          className={cn(
+            'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition',
+            copied
+              ? 'border-green-300 bg-green-50 text-green-600'
+              : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50',
+          )}
+          title="Copiar enlace"
+        >
+          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+        </button>
+      </div>
+
+      {/* Share via WhatsApp */}
+      <button
+        onClick={handleShareWhatsApp}
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-500 active:scale-[0.98]"
+      >
+        <MessageSquare className="h-4 w-4" />
+        Compartir por WhatsApp
+      </button>
     </div>
   )
 }

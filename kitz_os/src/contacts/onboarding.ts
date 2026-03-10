@@ -25,6 +25,7 @@ import {
 import { notifyNewLead } from '../notifications/engine.js';
 
 const log = createSubsystemLogger('onboarding');
+const KITZ_DOMAIN = process.env.KITZ_DOMAIN || 'https://workspace.kitz.services';
 
 export interface OnboardingResult {
   response: string;
@@ -58,8 +59,13 @@ export function handleOnboarding(
   // Touch — increment message count
   touchContact(identifier, channel);
 
-  // If onboarding is complete or user is active/trial, skip
+  // If onboarding is complete or user is active/trial, check for expired trial
   if (contact.onboardingStep === 'complete' || contact.onboardingStep === 'trial_started') {
+    // Intercept expired trial users with upgrade prompt
+    if (contact.status === 'expired') {
+      const expiredResponse = handleExpiredTrial(contact, messageText, locale);
+      if (expiredResponse) return expiredResponse;
+    }
     return null; // Let normal router handle
   }
 
@@ -196,6 +202,98 @@ function extractNameAndBusiness(text: string): { name: string | null; businessCo
   const name = cleaned.replace(/\b\w/g, c => c.toUpperCase());
 
   return { name, businessContext: businessPart };
+}
+
+// ── Expired Trial Handler ──
+
+/** Keywords that signal upgrade intent (Spanish + English) */
+const UPGRADE_KEYWORDS = /\b(quiero continuar|continuar|upgrade|pricing|precios|creditos|credits|pagar|pay|comprar|buy|suscribir|subscribe|planes|plans)\b/i;
+
+/** Handle messages from users whose trial has expired */
+function handleExpiredTrial(
+  contact: Contact,
+  messageText: string,
+  locale: string,
+): OnboardingResult | null {
+  const text = messageText.trim().toLowerCase();
+
+  // If user expresses upgrade intent, show pricing
+  if (UPGRADE_KEYWORDS.test(text)) {
+    log.info('expired trial user requesting upgrade', { phone: contact.phone, name: contact.name });
+    return {
+      response: getUpgradeMessage(contact.name || '', locale),
+      isOnboarding: true,
+      contact,
+    };
+  }
+
+  // For first message after expiry, give a gentle nudge (only once per day)
+  const lastContact = contact.lastContactAt || 0;
+  const hoursSinceLastMsg = (Date.now() - lastContact) / (60 * 60 * 1000);
+  if (hoursSinceLastMsg > 24) {
+    return {
+      response: getExpiredNudgeMessage(contact.name || '', locale),
+      isOnboarding: true,
+      contact,
+    };
+  }
+
+  // If they messaged recently, let normal router handle (so they can still chat)
+  return null;
+}
+
+function getUpgradeMessage(name: string, locale: string): string {
+  const greeting = name ? `*${name}*` : 'amigo/a';
+  if (locale === 'en') {
+    return `Hey ${greeting}! 🟣 Ready to keep building?
+
+*Kitz AI Credit Packs:*
+
+💜 *100 credits* — $5 ($0.05/use)
+💎 *500 credits* — $20 ($0.04/use)
+🚀 *2,000 credits* — $60 ($0.03/use)
+
+1 credit = 1 AI action (email, message, report, etc.)
+
+👉 Get started: ${KITZ_DOMAIN}/pricing
+
+Or just write "I want 100 credits" and I'll set it up for you.`;
+  }
+
+  return `${greeting}, 🟣 listo/a para seguir construyendo?
+
+*Paquetes de Creditos AI de Kitz:*
+
+💜 *100 creditos* — $5 ($0.05/uso)
+💎 *500 creditos* — $20 ($0.04/uso)
+🚀 *2,000 creditos* — $60 ($0.03/uso)
+
+1 credito = 1 accion AI (email, mensaje, reporte, etc.)
+
+👉 Empieza aqui: ${KITZ_DOMAIN}/pricing
+
+O solo escribe "quiero 100 creditos" y te lo configuro.`;
+}
+
+function getExpiredNudgeMessage(name: string, locale: string): string {
+  const greeting = name ? `*${name}*` : '';
+  if (locale === 'en') {
+    return `Hey${greeting ? ` ${greeting}` : ''}! 👋 Your free trial ended, but your business didn't stop.
+
+I can still help you — just grab a credit pack and we're back in action.
+
+Write *"pricing"* to see options, or visit: ${KITZ_DOMAIN}/pricing
+
+$5 = 100 AI actions. That's about 2 hours of work saved. 💪`;
+  }
+
+  return `${greeting ? `${greeting}, ` : ''}👋 tu trial gratis termino, pero tu negocio no para.
+
+Todavia puedo ayudarte — solo necesitas un paquete de creditos y volvemos a la accion.
+
+Escribe *"precios"* para ver opciones, o visita: ${KITZ_DOMAIN}/pricing
+
+$5 = 100 acciones AI. Eso son como 2 horas de trabajo ahorradas. 💪`;
 }
 
 // ── Message Templates ──

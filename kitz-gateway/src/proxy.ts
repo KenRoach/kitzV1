@@ -56,3 +56,12 @@ export const SERVICE_URLS = {
   comms: process.env.COMMS_URL || 'http://localhost:3013',
   logs: process.env.LOGS_URL || 'http://localhost:3014',
 } as const;
+
+// Warn about localhost fallbacks in production
+if (process.env.NODE_ENV === 'production') {
+  for (const [name, url] of Object.entries(SERVICE_URLS)) {
+    if (url.includes('localhost')) {
+      console.warn(`PROXY WARNING: ${name} using localhost fallback in production: ${url}`);
+    }
+  }
+}

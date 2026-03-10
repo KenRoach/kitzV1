@@ -3,7 +3,10 @@
  *
  * Detects first-time contacts across channels (WhatsApp, email).
  * Manages onboarding lifecycle: new → onboarding → trial → active → expired.
- * File-based JSON persistence at data/contacts.json.
+ *
+ * Persistence: Supabase (kitz_contacts table) with in-memory + file fallback.
+ * On boot: loads from Supabase first, falls back to data/contacts.json.
+ * Every write: updates Supabase AND in-memory. File save as tertiary backup.
  */
 
 import { createSubsystemLogger } from 'kitz-schemas';
@@ -18,6 +21,18 @@ const log = createSubsystemLogger('contacts');
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, '..', '..', 'data');
 const CONTACTS_FILE = join(DATA_DIR, 'contacts.json');
+
+// ── Supabase Config ──
+
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.WORKSPACE_SUPABASE_URL || '';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.WORKSPACE_SUPABASE_SERVICE_KEY || '';
+const hasDB = !!(SUPABASE_URL && SUPABASE_KEY);
+
+if (hasDB) {
+  log.info('Contact Registry: Supabase persistence enabled');
+} else {
+  log.info('Contact Registry: No Supabase config — using file + in-memory fallback');
+}
 
 // ── Types ──
 
@@ -37,6 +52,8 @@ export interface Contact {
   trialStartedAt?: number;  // unix ms
   trialExpiresAt?: number;  // unix ms
   trialCredits: number;     // remaining trial credits
+  paidAt?: number;          // unix ms — when user first paid for credits
+  referredBy?: string;      // userId of the person who referred this contact
   totalMessages: number;
   firstContactAt: number;   // unix ms
   lastContactAt: number;    // unix ms
@@ -44,7 +61,126 @@ export interface Contact {
   locale: string;           // 'es' | 'en'
 }
 
-// ── In-memory store with file persistence ──
+// ── Supabase row shape (snake_case) ──
+
+interface DbContact {
+  id: string;
+  phone: string | null;
+  email: string | null;
+  name: string | null;
+  business_name: string | null;
+  business_type: string | null;
+  status: string;
+  onboarding_step: string;
+  channel: string;
+  trial_started_at: number | null;
+  trial_expires_at: number | null;
+  trial_credits: number;
+  paid_at: number | null;
+  referred_by: string | null;
+  total_messages: number;
+  first_contact_at: number;
+  last_contact_at: number;
+  tags: string[];
+  locale: string;
+}
+
+/** Convert DB row to Contact */
+function fromDb(row: DbContact): Contact {
+  return {
+    id: row.id,
+    phone: row.phone ?? undefined,
+    email: row.email ?? undefined,
+    name: row.name ?? undefined,
+    businessName: row.business_name ?? undefined,
+    businessType: row.business_type ?? undefined,
+    status: row.status as ContactStatus,
+    onboardingStep: row.onboarding_step as OnboardingStep,
+    channel: row.channel as Contact['channel'],
+    trialStartedAt: row.trial_started_at ?? undefined,
+    trialExpiresAt: row.trial_expires_at ?? undefined,
+    trialCredits: row.trial_credits,
+    paidAt: row.paid_at ?? undefined,
+    referredBy: row.referred_by ?? undefined,
+    totalMessages: row.total_messages,
+    firstContactAt: row.first_contact_at,
+    lastContactAt: row.last_contact_at,
+    tags: row.tags || [],
+    locale: row.locale,
+  };
+}
+
+/** Convert Contact to DB row */
+function toDb(c: Contact): DbContact {
+  return {
+    id: c.id,
+    phone: c.phone ?? null,
+    email: c.email ?? null,
+    name: c.name ?? null,
+    business_name: c.businessName ?? null,
+    business_type: c.businessType ?? null,
+    status: c.status,
+    onboarding_step: c.onboardingStep,
+    channel: c.channel,
+    trial_started_at: c.trialStartedAt ?? null,
+    trial_expires_at: c.trialExpiresAt ?? null,
+    trial_credits: c.trialCredits,
+    paid_at: c.paidAt ?? null,
+    referred_by: c.referredBy ?? null,
+    total_messages: c.totalMessages,
+    first_contact_at: c.firstContactAt,
+    last_contact_at: c.lastContactAt,
+    tags: c.tags,
+    locale: c.locale,
+  };
+}
+
+// ── Supabase REST helpers ──
+
+async function supaGet(query: string): Promise<DbContact[]> {
+  if (!hasDB) return [];
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/kitz_contacts?${query}`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+      },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return [];
+    return await res.json() as DbContact[];
+  } catch (err) {
+    log.warn('supabase_get_failed', { error: (err as Error).message });
+    return [];
+  }
+}
+
+async function supaUpsert(row: DbContact): Promise<boolean> {
+  if (!hasDB) return false;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/kitz_contacts`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify({ ...row, updated_at: new Date().toISOString() }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) {
+      const errText = await res.text().catch(() => 'unknown');
+      log.error('Supabase upsert failed', { status: res.status, detail: errText.slice(0, 200) });
+    }
+    return res.ok;
+  } catch (err) {
+    log.error('Supabase upsert error', { error: (err as Error).message });
+    return false;
+  }
+}
+
+// ── In-memory store ──
 
 const contacts = new Map<string, Contact>();
 let dirty = false;
@@ -63,26 +199,11 @@ function contactKey(identifier: string, channel: 'whatsapp' | 'email' | 'web'): 
   return `email:${identifier.toLowerCase()}`;
 }
 
-/** Load contacts from disk */
-export function loadContacts(): void {
-  try {
-    if (existsSync(CONTACTS_FILE)) {
-      const raw = readFileSync(CONTACTS_FILE, 'utf-8');
-      const data: Contact[] = JSON.parse(raw);
-      for (const c of data) {
-        const key = c.phone ? `wa:${normalizePhone(c.phone)}` : `email:${c.email}`;
-        contacts.set(key, c);
-      }
-      log.info('contacts loaded', { count: contacts.size });
-    }
-  } catch (err) {
-    log.error('failed to load contacts', { err });
-  }
-}
+// ── File persistence (fallback) ──
 
 /** Persist contacts to disk (debounced) */
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
-async function saveContacts(): Promise<void> {
+async function saveContactsToFile(): Promise<void> {
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
     try {
@@ -91,10 +212,71 @@ async function saveContacts(): Promise<void> {
       await writeFile(CONTACTS_FILE, JSON.stringify(data, null, 2));
       dirty = false;
     } catch (err) {
-      log.error('failed to save contacts', { err });
+      log.error('failed to save contacts to file', { err });
     }
   }, 1000);
 }
+
+// ── Load ──
+
+/** Load contacts from Supabase (primary) or file (fallback) */
+export async function loadContacts(): Promise<void> {
+  // Try Supabase first
+  if (hasDB) {
+    try {
+      const rows = await supaGet('order=last_contact_at.desc&limit=5000');
+      if (rows.length > 0) {
+        for (const row of rows) {
+          const contact = fromDb(row);
+          const key = contact.phone ? `wa:${normalizePhone(contact.phone)}` : `email:${contact.email}`;
+          contacts.set(key, contact);
+        }
+        log.info('contacts loaded from Supabase', { count: contacts.size });
+        // Also write to file as backup
+        saveContactsToFile();
+        return;
+      }
+      log.info('Supabase kitz_contacts table empty, checking file fallback');
+    } catch (err) {
+      log.error('failed to load contacts from Supabase, falling back to file', { err });
+    }
+  }
+
+  // Fallback: load from file
+  try {
+    if (existsSync(CONTACTS_FILE)) {
+      const raw = readFileSync(CONTACTS_FILE, 'utf-8');
+      const data: Contact[] = JSON.parse(raw);
+      for (const c of data) {
+        const key = c.phone ? `wa:${normalizePhone(c.phone)}` : `email:${c.email}`;
+        contacts.set(key, c);
+      }
+      log.info('contacts loaded from file', { count: contacts.size });
+
+      // If we have Supabase now, sync file contacts up to DB
+      if (hasDB && contacts.size > 0) {
+        log.info('syncing file contacts to Supabase...', { count: contacts.size });
+        for (const c of contacts.values()) {
+          supaUpsert(toDb(c)).catch((err) => { log.warn('contact_sync_to_supabase_failed', { error: (err as Error).message }); });  // fire-and-forget
+        }
+      }
+    }
+  } catch (err) {
+    log.error('failed to load contacts from file', { err });
+  }
+}
+
+// ── Persist helper (write to Supabase + file) ──
+
+function persistContact(contact: Contact): void {
+  dirty = true;
+  // Supabase (async, non-blocking)
+  supaUpsert(toDb(contact)).catch((err) => { log.warn('contact_persist_to_supabase_failed', { error: (err as Error).message }); });
+  // File backup
+  saveContactsToFile();
+}
+
+// ── Public API ──
 
 /** Check if a contact is first-time (never seen before) */
 export function isFirstContact(identifier: string, channel: 'whatsapp' | 'email' | 'web'): boolean {
@@ -138,8 +320,7 @@ export function registerContact(
   };
 
   contacts.set(key, contact);
-  dirty = true;
-  saveContacts();
+  persistContact(contact);
   log.info('new contact registered', { key, channel, locale });
   return contact;
 }
@@ -148,7 +329,7 @@ export function registerContact(
 export function updateContact(
   identifier: string,
   channel: 'whatsapp' | 'email' | 'web',
-  patch: Partial<Pick<Contact, 'name' | 'businessName' | 'businessType' | 'status' | 'onboardingStep' | 'trialStartedAt' | 'trialExpiresAt' | 'trialCredits' | 'tags' | 'locale'>>,
+  patch: Partial<Pick<Contact, 'name' | 'businessName' | 'businessType' | 'status' | 'onboardingStep' | 'trialStartedAt' | 'trialExpiresAt' | 'trialCredits' | 'tags' | 'locale' | 'paidAt' | 'referredBy'>>,
 ): Contact | undefined {
   const key = contactKey(identifier, channel);
   const contact = contacts.get(key);
@@ -156,8 +337,7 @@ export function updateContact(
 
   Object.assign(contact, patch);
   contact.lastContactAt = Date.now();
-  dirty = true;
-  saveContacts();
+  persistContact(contact);
   return contact;
 }
 
@@ -169,8 +349,7 @@ export function touchContact(identifier: string, channel: 'whatsapp' | 'email' |
 
   contact.totalMessages++;
   contact.lastContactAt = Date.now();
-  dirty = true;
-  saveContacts();
+  persistContact(contact);
   return contact;
 }
 
@@ -222,4 +401,30 @@ export function getTrialStats(): { total: number; active: number; expired: numbe
     else if (c.status === 'active') converted++;
   }
   return { total: contacts.size, active, expired, converted };
+}
+
+/** Activate a paid tier for an expired-trial contact */
+export function activatePaid(identifier: string, channel: 'whatsapp' | 'email' | 'web'): Contact | undefined {
+  const contact = getContact(identifier, channel);
+  if (!contact) return undefined;
+  return updateContact(identifier, channel, {
+    status: 'active',
+    paidAt: Date.now(),
+    tags: [...(contact.tags || []).filter(t => t !== 'expired-trial'), 'paid-user'],
+  });
+}
+
+/** Get contacts whose trials expired recently (within given ms window) */
+export function getExpiredTrials(withinMs: number = 24 * 60 * 60 * 1000): Contact[] {
+  const now = Date.now();
+  return [...contacts.values()].filter(c =>
+    c.status === 'expired' &&
+    c.trialExpiresAt &&
+    now - c.trialExpiresAt < withinMs
+  );
+}
+
+/** Get contacts by status */
+export function getContactsByStatus(status: ContactStatus): Contact[] {
+  return [...contacts.values()].filter(c => c.status === status);
 }

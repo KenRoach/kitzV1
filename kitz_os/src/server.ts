@@ -46,7 +46,7 @@ import { dirname, join } from 'path';
 import { existsSync } from 'fs';
 import type { KitzKernel } from './kernel.js';
 import { verifyJwt as gatewayVerifyJwt, signJwt as gatewaySignJwt } from './auth/gatewayJwt.js';
-import { findUserByEmail, createUser as createGatewayUser, updateUser as updateGatewayUser, verifyPassword, findUserByPhone, createUserByPhone, createMagicLinkToken, verifyMagicLinkToken } from './auth/gatewayDb.js';
+import { findUserByEmail, createUser as createGatewayUser, updateUser as updateGatewayUser, verifyPassword, findUserByPhone, createUserByPhone, createMagicLinkToken, verifyMagicLinkToken, linkWhatsAppToUser } from './auth/gatewayDb.js';
 import { isGoogleLoginConfigured as isGatewayGoogleConfigured, getLoginAuthUrl, exchangeLoginCode } from './auth/gatewayGoogleAuth.js';
 import { parseWhatsAppCommand } from './interfaces/whatsapp/commandParser.js';
 import { routeWithAI, brainFirstRoute, getDraftQueue, approveDraft, rejectDraft } from './interfaces/whatsapp/semanticRouter.js';
@@ -193,6 +193,42 @@ function buildExpiredArtifactHtml(baseUrl: string): string {
 </html>`;
 }
 
+// ── CEO / Owner account auto-provision ──
+
+const OWNER_EMAIL = process.env.OWNER_EMAIL || '';
+const OWNER_PASSWORD = process.env.OWNER_PASSWORD || '';
+const OWNER_NAME = process.env.OWNER_NAME || 'Kenneth';
+const OWNER_PHONE_ENV = process.env.CADENCE_PHONE || '';
+
+/**
+ * Auto-create the CEO/owner user account on first boot.
+ * Uses OWNER_EMAIL + OWNER_PASSWORD env vars. If not set, skips silently.
+ * If the account already exists, just logs it.
+ */
+async function seedOwnerAccount(): Promise<void> {
+  if (!OWNER_EMAIL || !OWNER_PASSWORD) {
+    log.info('Owner account seed: OWNER_EMAIL or OWNER_PASSWORD not set, skipping');
+    return;
+  }
+
+  const existing = await findUserByEmail(OWNER_EMAIL);
+  if (existing) {
+    log.info('Owner account exists', { email: OWNER_EMAIL, userId: existing.id });
+    return;
+  }
+
+  const user = await createGatewayUser(OWNER_EMAIL, OWNER_PASSWORD, OWNER_NAME);
+  log.info('Owner account created', { email: user.email, userId: user.id, orgId: user.orgId });
+
+  // Link phone if CADENCE_PHONE is set
+  if (OWNER_PHONE_ENV) {
+    const phone = OWNER_PHONE_ENV.startsWith('+') ? OWNER_PHONE_ENV : `+${OWNER_PHONE_ENV}`;
+    const jid = OWNER_PHONE_ENV.replace(/\+/g, '') + '@s.whatsapp.net';
+    await linkWhatsAppToUser(user.id, phone, jid);
+    log.info('Owner WhatsApp linked', { phone, userId: user.id });
+  }
+}
+
 export async function createServer(kernel: KitzKernel) {
   const app = Fastify({ logger: false, bodyLimit: 20_000_000, requestTimeout: 120_000 });  // 20MB for media, 2min for AI calls
   const PORT = Number(process.env.PORT) || 3012;
@@ -274,6 +310,10 @@ export async function createServer(kernel: KitzKernel) {
     const devSecret = req.headers['x-dev-secret'] as string | undefined;
     if (SERVICE_SECRET && secret === SERVICE_SECRET) return;
     if (process.env.DEV_TOKEN_SECRET && devSecret === process.env.DEV_TOKEN_SECRET) return;
+    // If no secrets configured at all and no JWT, reject in production
+    if (!SERVICE_SECRET && !process.env.DEV_TOKEN_SECRET && !JWT_SECRET && process.env.NODE_ENV === 'production') {
+      return reply.code(503).send({ error: 'Service not configured' });
+    }
 
     // 2. Bearer JWT from UI (same JWT_SECRET as gateway)
     const authHeader = req.headers.authorization as string | undefined;
@@ -327,7 +367,14 @@ export async function createServer(kernel: KitzKernel) {
 
       const traceId = trace_id || crypto.randomUUID();
       const userId = user_id || 'default';
+      // CRITICAL: Always use sender JID when available — memory lookup keys on (userId, senderJid).
+      // Falling to 'unknown' makes conversation history unretrievable.
       const senderJid = sender || 'unknown';
+
+      // Memory identity resolution: if senderJid is a real WhatsApp JID, also look up
+      // history with that JID under ALL known userIds (handles userId inconsistencies
+      // across sessions — e.g., 'dev' vs UUID vs 'default' for the same person)
+      const effectiveUserId = userId;
 
       // Store inbound message in memory (skip swarm/system messages)
       const isSwarmMessage = message.startsWith('[SWARM:');
@@ -644,9 +691,7 @@ export async function createServer(kernel: KitzKernel) {
           // ── Artifact Preview Generation ──
           // Generate branded HTML artifact for every meaningful AI response
           try {
-            const baseUrl = process.env.NODE_ENV === 'production'
-              ? 'https://kitz.services'
-              : `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers['x-forwarded-host'] || req.headers.host || `localhost:${PORT}`}`;
+            const baseUrl = process.env.KITZ_DOMAIN || 'https://workspace.kitz.services';
 
             const artifact = createArtifactFromToolResult(
               result.toolResults || [],
@@ -755,9 +800,7 @@ export async function createServer(kernel: KitzKernel) {
       const { contentId } = req.params;
       const item = getContent(contentId);  // returns undefined if expired
       if (!item) {
-        const base = process.env.NODE_ENV === 'production'
-          ? 'https://kitz.services'
-          : `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers['x-forwarded-host'] || req.headers.host || `localhost:${PORT}`}`;
+        const base = process.env.KITZ_DOMAIN || 'https://workspace.kitz.services';
         reply.code(410).type('text/html').send(buildExpiredArtifactHtml(base));
         return;
       }
@@ -2352,9 +2395,7 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
       const { slug } = req.params;
       const item = getContentBySlug(slug);
       if (!item) {
-        const base = process.env.NODE_ENV === 'production'
-          ? 'https://kitz.services'
-          : `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers['x-forwarded-host'] || req.headers.host || `localhost:${PORT}`}`;
+        const base = process.env.KITZ_DOMAIN || 'https://workspace.kitz.services';
         reply.code(410).type('text/html').send(buildExpiredArtifactHtml(base));
         return;
       }
@@ -2375,6 +2416,9 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
 
   await app.listen({ port: PORT, host: '0.0.0.0' });
   log.info('KITZ OS listening', { port: PORT });
+
+  // Auto-provision CEO/owner account if configured
+  await seedOwnerAccount().catch(err => log.warn('Owner account seed failed', { err }));
 
   // Clean expired artifacts every hour to prevent memory leaks
   setInterval(() => {

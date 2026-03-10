@@ -270,8 +270,9 @@ export function getAllPaymentTools(): ToolSchema[] {
           body.append('line_items[0][price_data][unit_amount]', String(amount));
           body.append('line_items[0][quantity]', '1');
           body.append('mode', 'payment');
-          body.append('success_url', String(args.success_url || 'https://kitz.services/payment-success'));
-          body.append('cancel_url', 'https://kitz.services/payment-cancelled');
+          const kitzDomain = process.env.KITZ_DOMAIN || 'https://workspace.kitz.services';
+          body.append('success_url', String(args.success_url || `${kitzDomain}/payment-success`));
+          body.append('cancel_url', `${kitzDomain}/payment-cancelled`);
           if (args.customer_email) {
             body.append('customer_email', String(args.customer_email));
           }

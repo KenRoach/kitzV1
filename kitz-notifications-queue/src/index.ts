@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { EventEnvelope, StandardError } from 'kitz-schemas';
-import { persistJob, updateJobStatus, getJobById, getMetrics } from './db.js';
+import { persistJob, updateJobStatus, getJobById, getMetrics, persistJobNdjson, updateJobNdjson, restoreQueueFromNdjson } from './db.js';
 
 export const health = { status: 'ok' };
 
@@ -69,13 +69,16 @@ app.addHook('onRequest', async (req, reply) => {
   const path = req.url.split('?')[0];
   if (path === '/health') return;
 
-  if (SERVICE_SECRET) {
-    const secret = req.headers['x-service-secret'] as string | undefined;
-    const devSecret = req.headers['x-dev-secret'] as string | undefined;
-    if (secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
-      const traceId = String(req.headers['x-trace-id'] || randomUUID());
-      return reply.code(401).send({ code: 'AUTH_REQUIRED', message: 'Missing or invalid service secret', traceId });
+  const secret = req.headers['x-service-secret'] as string | undefined;
+  const devSecret = req.headers['x-dev-secret'] as string | undefined;
+  if (!SERVICE_SECRET) {
+    // No secret configured — reject in production, warn in dev
+    if (process.env.NODE_ENV === 'production') {
+      return reply.code(503).send({ error: 'Service not configured' });
     }
+  } else if (secret !== SERVICE_SECRET && devSecret !== process.env.DEV_TOKEN_SECRET) {
+    const traceId = String(req.headers['x-trace-id'] || randomUUID());
+    return reply.code(401).send({ code: 'AUTH_REQUIRED', message: 'Missing or invalid service secret', traceId });
   }
 });
 
@@ -122,6 +125,8 @@ app.post('/enqueue', async (req: any, reply) => {
 
   // Persist to DB (fire-and-forget)
   persistJob({ ...job, status: 'queued' }).catch(() => {});
+  // Persist to NDJSON (fire-and-forget durability layer)
+  persistJobNdjson({ ...job, status: 'queued' }).catch(() => {});
 
   emitAudit('notifications.enqueued', incoming, traceId);
   return { queued: true, id, traceId };
@@ -185,6 +190,7 @@ setInterval(async () => {
 
   if (delivered) {
     updateJobStatus(job.id, 'delivered', job.attempts).catch(() => {});
+    updateJobNdjson(job.id, 'delivered', job.attempts).catch(() => {});
     emitAudit('notifications.delivered', { channel: job.channel, attempts: job.attempts }, job.traceId);
     return;
   }
@@ -192,16 +198,35 @@ setInterval(async () => {
   if (job.attempts >= 3) {
     deadLetter.push(job);
     updateJobStatus(job.id, 'dead_letter', job.attempts).catch(() => {});
+    updateJobNdjson(job.id, 'dead_letter', job.attempts).catch(() => {});
     emitAudit('notifications.deadletter', job, job.traceId);
     return;
   }
 
   queue.push(job);
   updateJobStatus(job.id, 'queued', job.attempts).catch(() => {});
+  updateJobNdjson(job.id, 'queued', job.attempts).catch(() => {});
   emitAudit('notifications.retry', { idempotencyKey: job.idempotencyKey, attempts: job.attempts }, job.traceId);
 }, 1000);
 
 app.get('/queue', async () => ({ queued: queue.length, deadLetter: deadLetter.length }));
 app.get('/dead-letter', async () => ({ deadLetter }));
 
-app.listen({ port: Number(process.env.PORT || 3008), host: '0.0.0.0' });
+// ── Restore queue from NDJSON on startup, then listen ──
+(async () => {
+  try {
+    const restored = await restoreQueueFromNdjson();
+    for (const job of restored.queue) queue.push(job);
+    for (const job of restored.deadLetter) deadLetter.push(job);
+    for (const key of restored.seenKeys) seenKeys.add(key);
+    if (restored.queue.length || restored.deadLetter.length) {
+      app.log.info(
+        { queued: restored.queue.length, deadLetter: restored.deadLetter.length, seenKeys: restored.seenKeys.size },
+        'Restored notification queue from NDJSON',
+      );
+    }
+  } catch (err) {
+    app.log.warn({ error: (err as Error).message }, 'Failed to restore queue from NDJSON — starting empty');
+  }
+  app.listen({ port: Number(process.env.PORT || 3008), host: '0.0.0.0' });
+})();

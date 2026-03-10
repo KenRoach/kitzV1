@@ -64,7 +64,7 @@ function seedDefaults(): void {
       name: 'Email Onboarding',
       channel: 'email',
       subject: '{{name}}, tu workspace KITZ está listo',
-      body: 'Hola {{name}},\n\nTu workspace está activo en workspace.kitz.services.\n\nCon KITZ tu {{business}} tiene:\n- CRM para organizar clientes\n- Pedidos y checkout links\n- IA que trabaja 24/7\n\nEntra y empieza: workspace.kitz.services\n\n— KITZ',
+      body: 'Hola {{name}},\n\nTu workspace está activo en https://workspace.kitz.services.\n\nCon KITZ tu {{business}} tiene:\n- CRM para organizar clientes\n- Pedidos y checkout links\n- IA que trabaja 24/7\n\nEntra y empieza: https://workspace.kitz.services\n\n— KITZ',
       language: 'es',
     },
     {

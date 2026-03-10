@@ -11,7 +11,7 @@
 
 import { createServer } from './server.js';
 import { OsToolRegistry } from './tools/registry.js';
-import { getBatteryStatus, initBattery, type BatteryStatus } from './aiBattery.js';
+import { getBatteryStatus, initBattery, hasBudget, type BatteryStatus } from './aiBattery.js';
 import { initSOPStore } from './sops/store.js';
 import { loadStarterSOPs } from './sops/loader.js';
 import { CadenceEngine } from './cadence/engine.js';
@@ -86,8 +86,8 @@ export class KitzKernel {
       log.warn('Starter SOP load failed', { error: (err as Error).message });
     });
 
-    // 2.7. Load contact registry
-    loadContacts();
+    // 2.7. Load contact registry (Supabase primary, file fallback)
+    await loadContacts();
 
     // 3. Register all tools
     await this.tools.registerDefaults();
@@ -195,6 +195,19 @@ export class KitzKernel {
   async run(opts: { goal: string; agent?: string; mode?: string; context?: Record<string, unknown> }): Promise<RunResult> {
     if (this.status === 'killed') {
       return { runId: '', response: 'System is killed. Disengage kill switch first.', toolsUsed: [], creditsConsumed: 0 };
+    }
+
+    // Enforce daily AI Battery limit (skip for god-mode admin)
+    const isGodMode = opts.context?.userId === process.env.GOD_MODE_USER_ID;
+    if (!isGodMode && !hasBudget(1)) {
+      const battery = getBatteryStatus();
+      log.warn('battery_depleted_kernel_run', { todayCredits: battery.todayCredits, dailyLimit: battery.dailyLimit });
+      return {
+        runId: crypto.randomUUID(),
+        response: `Daily AI limit reached (${battery.todayCredits}/${battery.dailyLimit} today). Recharge or wait until tomorrow.`,
+        toolsUsed: [],
+        creditsConsumed: 0,
+      };
     }
 
     const runId = crypto.randomUUID();
