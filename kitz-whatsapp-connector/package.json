@@ -24,6 +24,7 @@
     "@whiskeysockets/baileys": "^7.0.0-rc.9",
     "fastify": "^4.26.2",
     "kitz-schemas": "file:../kitz-schemas",
+    "link-preview-js": "^3.2.0",
     "pino": "^10.3.1",
     "qrcode-terminal": "^0.12.0"
   }

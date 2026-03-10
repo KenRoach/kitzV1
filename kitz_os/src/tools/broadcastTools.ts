@@ -8,15 +8,35 @@
  *   - autoreply_get        (low)    — Get current auto-reply config
  *   - autoreply_set        (medium) — Update auto-reply settings
  */
+import { createSubsystemLogger } from 'kitz-schemas';
 import { callWorkspaceMcp } from './mcpClient.js';
 import type { ToolSchema } from './registry.js';
 
+const log = createSubsystemLogger('broadcast');
 const WA_CONNECTOR_URL = process.env.WA_CONNECTOR_URL || 'http://localhost:3006';
 const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
 const serviceHeaders: Record<string, string> = {
   'Content-Type': 'application/json',
   ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET } : {}),
 };
+
+/** Resolve Baileys userId — same logic as outboundTools */
+async function resolveUserId(argsUserId?: string): Promise<string> {
+  if (argsUserId && argsUserId !== 'default') return argsUserId;
+  const godMode = process.env.GOD_MODE_USER_ID;
+  if (godMode) return godMode;
+  try {
+    const res = await fetch(`${WA_CONNECTOR_URL}/whatsapp/sessions`, {
+      method: 'GET', headers: serviceHeaders, signal: AbortSignal.timeout(5_000),
+    });
+    if (res.ok) {
+      const data = await res.json() as { sessions?: Array<{ userId: string; isConnected: boolean }> };
+      const connected = data.sessions?.find(s => s.isConnected);
+      if (connected) return connected.userId;
+    }
+  } catch { /* fall through */ }
+  return 'default';
+}
 
 // In-memory broadcast log (capped at 100 entries)
 interface BroadcastLogEntry {
@@ -139,7 +159,7 @@ export function getAllBroadcastTools(): ToolSchema[] {
         const status = args.status ? String(args.status) : undefined;
         const tags = args.tags ? String(args.tags).split(',').map(t => t.trim()).filter(Boolean) : [];
         const delayMs = Math.max(Number(args.delay_ms) || 1500, 1000);
-        const userId = String(args._userId || 'default');
+        const userId = await resolveUserId(args._userId ? String(args._userId) : undefined);
 
         // Fetch contacts from CRM
         const mcpArgs: Record<string, unknown> = { limit: 200 };
@@ -264,7 +284,7 @@ export function getAllBroadcastTools(): ToolSchema[] {
       },
       riskLevel: 'low',
       execute: async (args) => {
-        const userId = String(args._userId || 'default');
+        const userId = await resolveUserId(args._userId ? String(args._userId) : undefined);
         try {
           const res = await fetch(`${WA_CONNECTOR_URL}/whatsapp/sessions/${userId}/auto-reply`, {
             headers: serviceHeaders,
@@ -307,7 +327,7 @@ export function getAllBroadcastTools(): ToolSchema[] {
       },
       riskLevel: 'medium',
       execute: async (args) => {
-        const userId = String(args._userId || 'default');
+        const userId = await resolveUserId(args._userId ? String(args._userId) : undefined);
         const body: Record<string, unknown> = {};
         if (typeof args.enabled === 'boolean') body.enabled = args.enabled;
         if (args.message) body.message = String(args.message);

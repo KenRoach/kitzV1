@@ -203,7 +203,11 @@ app.post('/outbound/send', async (req: any, reply) => {
     // If userId specified, send through that specific session
     if (userId) {
       const result = await sessionManager.sendMessage(userId, jid, message);
-      return { ok: result.ok, provider: 'baileys', userId, traceId, ...(result.error ? { error: result.error } : {}) };
+      if (!result.ok) {
+        // Return 503 so callers know the send failed — previously returned 200 silently
+        return reply.code(503).send({ ok: false, provider: 'baileys', userId, traceId, error: result.error || 'Send failed' });
+      }
+      return { ok: true, provider: 'baileys', userId, traceId };
     }
 
     // Otherwise use legacy (first connected session)
@@ -252,10 +256,13 @@ app.post('/outbound/send-voice', async (req: any) => {
   // If userId specified, send through that session
   if (userId) {
     const sent = await sessionManager.sendAudio(userId, jid, audio_base64, mime_type || 'audio/mpeg');
-    if (sent && caption) {
+    if (!sent) {
+      return { ok: false, provider: 'baileys', userId, traceId, error: 'Audio send failed — no session or disconnected' };
+    }
+    if (caption) {
       await sessionManager.sendMessage(userId, jid, caption);
     }
-    return { ok: sent, provider: 'baileys', userId, traceId };
+    return { ok: true, provider: 'baileys', userId, traceId };
   }
 
   const sent = await sendWhatsAppAudio(jid, audio_base64, mime_type || 'audio/mpeg');

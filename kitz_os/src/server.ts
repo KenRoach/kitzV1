@@ -938,16 +938,64 @@ export async function createServer(kernel: KitzKernel) {
     async (req) => {
       const { media_base64, mime_type, caption, user_id, trace_id } = req.body || {};
       if (!media_base64) return { error: 'media_base64 required' };
-      // Route through semantic router with media context
       const traceId = trace_id || crypto.randomUUID();
       const userId = user_id || 'default';
-      const mediaPrompt = caption || `[MEDIA:${mime_type}] Process this ${mime_type.startsWith('audio') ? 'voice note' : 'document/image'}`;
       const hasAI = !!(process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.AI_API_KEY);
-      if (hasAI) {
-        const result = await routeWithAI(mediaPrompt, kernel.tools, traceId, { media_base64, mime_type }, userId);
-        return { response: result.response };
+      if (!hasAI) return { error: 'AI not configured' };
+
+      // ── Audio: transcribe first, then route the transcript as text ──
+      if (mime_type?.startsWith('audio/')) {
+        const OPENAI_KEY = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
+        if (!OPENAI_KEY) {
+          return { response: 'Voice note received, but transcription is not configured (OPENAI_API_KEY missing).' };
+        }
+        try {
+          log.info('transcribing audio for media endpoint', { mime_type, audioSizeKB: Math.round(media_base64.length * 0.75 / 1024), trace_id: traceId });
+          const audioBuffer = Buffer.from(media_base64, 'base64');
+          const boundary = '----KitzWhisperBoundary' + Date.now();
+          // Detect format from mime_type
+          const formatMap: Record<string, string> = { 'audio/ogg': 'ogg', 'audio/mpeg': 'mp3', 'audio/mp4': 'm4a', 'audio/webm': 'webm', 'audio/wav': 'wav' };
+          const ext = formatMap[mime_type.split(';')[0]] || 'ogg';
+          const mime = mime_type.split(';')[0] || 'audio/ogg';
+          const parts: Buffer[] = [
+            Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="audio.${ext}"\r\nContent-Type: ${mime}\r\n\r\n`),
+            audioBuffer,
+            Buffer.from('\r\n'),
+            Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="model"\r\n\r\nwhisper-1\r\n`),
+            Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="response_format"\r\n\r\njson\r\n`),
+            Buffer.from(`--${boundary}--\r\n`),
+          ];
+          const whisperRes = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${OPENAI_KEY}`, 'Content-Type': `multipart/form-data; boundary=${boundary}` },
+            body: Buffer.concat(parts),
+            signal: AbortSignal.timeout(30_000),
+          });
+          if (!whisperRes.ok) {
+            const errText = await whisperRes.text().catch(() => '');
+            log.error('Whisper transcription failed', { status: whisperRes.status, error: errText.slice(0, 200), trace_id: traceId });
+            return { response: 'Could not transcribe voice note. Try again.' };
+          }
+          const whisperData = await whisperRes.json() as { text: string };
+          const transcript = whisperData.text?.trim();
+          if (!transcript) return { response: 'Voice note was empty or could not be understood.' };
+          log.info('audio transcribed', { transcriptLen: transcript.length, preview: transcript.slice(0, 80), trace_id: traceId });
+          // Route the transcript as a regular text message (with caption context if any)
+          const voicePrompt = caption
+            ? `[Voice note transcript]: ${transcript}\n\nOriginal caption: ${caption}`
+            : `[Voice note transcript]: ${transcript}`;
+          const result = await routeWithAI(voicePrompt, kernel.tools, traceId, undefined, userId);
+          return { response: result.response, transcript };
+        } catch (err) {
+          log.error('audio transcription pipeline failed', { error: (err as Error).message, trace_id: traceId });
+          return { response: 'Could not process that voice note. Try again.' };
+        }
       }
-      return { error: 'AI not configured' };
+
+      // ── Non-audio media (images, documents): route with media context ──
+      const mediaPrompt = caption || `[MEDIA:${mime_type}] Process this document/image`;
+      const result = await routeWithAI(mediaPrompt, kernel.tools, traceId, { media_base64, mime_type }, userId);
+      return { response: result.response };
     }
   );
 
@@ -1864,7 +1912,13 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
       const team = teamConfig?.name;
 
       const traceId = crypto.randomUUID();
-      const result = await bridge.invoke(name, tier, team, tool, args || {}, traceId);
+      // Inject _userId for outbound tools — from header, body, or GOD_MODE fallback
+      const enrichedArgs = { ...(args || {}) };
+      if (!enrichedArgs._userId) {
+        const headerUserId = req.headers['x-user-id'] as string | undefined;
+        enrichedArgs._userId = headerUserId || process.env.GOD_MODE_USER_ID || undefined;
+      }
+      const result = await bridge.invoke(name, tier, team, tool, enrichedArgs, traceId);
       return result;
     }
   );

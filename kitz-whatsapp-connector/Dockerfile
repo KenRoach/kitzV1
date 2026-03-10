@@ -37,4 +37,5 @@ EXPOSE 3006
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3006/health || exit 1
 
-CMD ["npx", "tsx", "src/index.ts"]
+# Heap limit prevents OOM from reconnect storms creating Signal protocol sessions
+CMD ["node", "--max-old-space-size=512", "--import", "tsx/esm", "src/index.ts"]

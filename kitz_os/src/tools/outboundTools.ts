@@ -27,6 +27,56 @@ const serviceHeaders: Record<string, string> = {
   ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET, 'x-dev-secret': SERVICE_SECRET } : {}),
 };
 
+/**
+ * Resolve the Baileys userId for outbound sends.
+ *
+ * Priority:
+ *   1. Explicit _userId from args (set by semantic router from session context)
+ *   2. GOD_MODE_USER_ID from env (admin fallback)
+ *   3. Query connector /whatsapp/sessions for the first connected session
+ *   4. 'default' as last resort (will likely fail but surfaces the error)
+ */
+let _cachedActiveUserId: string | null = null;
+let _cachedActiveUserIdTs = 0;
+
+async function resolveUserId(argsUserId?: string): Promise<string> {
+  // 1. Explicit userId from semantic router
+  if (argsUserId && argsUserId !== 'default') return argsUserId;
+
+  // 2. GOD_MODE_USER_ID — admin's session
+  const godMode = process.env.GOD_MODE_USER_ID;
+  if (godMode) return godMode;
+
+  // 3. Cache active session lookup (TTL: 60s to avoid hammering connector)
+  const now = Date.now();
+  if (_cachedActiveUserId && now - _cachedActiveUserIdTs < 60_000) {
+    return _cachedActiveUserId;
+  }
+
+  try {
+    const res = await fetch(`${WA_CONNECTOR_URL}/whatsapp/sessions`, {
+      method: 'GET',
+      headers: serviceHeaders,
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (res.ok) {
+      const data = await res.json() as { sessions?: Array<{ userId: string; isConnected: boolean }> };
+      const connected = data.sessions?.find(s => s.isConnected);
+      if (connected) {
+        _cachedActiveUserId = connected.userId;
+        _cachedActiveUserIdTs = now;
+        log.info('resolved active userId from connector', { userId: connected.userId });
+        return connected.userId;
+      }
+    }
+  } catch {
+    log.warn('failed to query connector sessions for userId resolution');
+  }
+
+  // 4. Fallback — will surface "no socket" error downstream
+  return 'default';
+}
+
 export function getAllOutboundTools(): ToolSchema[] {
   return [
     {
@@ -44,11 +94,13 @@ export function getAllOutboundTools(): ToolSchema[] {
       execute: async (args, traceId) => {
         const phone = String(args.phone || '').replace(/[\s\-()]/g, '');
         const message = String(args.message || '').trim();
-        const userId = String(args._userId || 'default');
+        const userId = await resolveUserId(args._userId ? String(args._userId) : undefined);
 
         if (!phone || !message) {
           return { error: 'Both phone and message are required.' };
         }
+
+        log.info('outbound_sendWhatsApp', { phone, userId, messageLen: message.length, trace_id: traceId });
 
         // Strategy: Try Baileys first, fall back to Twilio WhatsApp, then Twilio SMS
         // 1. Try Baileys connector
@@ -60,13 +112,18 @@ export function getAllOutboundTools(): ToolSchema[] {
             signal: AbortSignal.timeout(10_000),
           });
 
-          if (res.ok) {
-            const data = await res.json() as Record<string, unknown>;
-            if (data.ok) {
-              return { status: 'sent', provider: 'baileys', message: `✅ WhatsApp sent to ${phone}: "${message.slice(0, 100)}"` };
-            }
+          const data = await res.json() as Record<string, unknown>;
+          if (res.ok && data.ok) {
+            return { status: 'sent', provider: 'baileys', message: `✅ WhatsApp sent to ${phone}: "${message.slice(0, 100)}"` };
           }
-        } catch { /* Baileys unavailable — fall through */ }
+
+          // Connector returned an error — log it before falling through
+          if (data.error) {
+            log.warn('baileys send failed', { phone, userId, error: data.error, httpStatus: res.status, trace_id: traceId });
+          }
+        } catch (err) {
+          log.warn('baileys connector unreachable', { phone, userId, error: (err as Error).message, trace_id: traceId });
+        }
 
         // 2. Try Twilio WhatsApp Business API
         try {
@@ -219,7 +276,7 @@ export function getAllOutboundTools(): ToolSchema[] {
       execute: async (args, traceId) => {
         const phone = String(args.phone || '').trim();
         const text = String(args.text || '').trim();
-        const userId = String(args._userId || 'default');
+        const userId = await resolveUserId(args._userId ? String(args._userId) : undefined);
 
         if (!phone || !text) {
           return { error: 'Both phone and text are required.' };
@@ -237,6 +294,8 @@ export function getAllOutboundTools(): ToolSchema[] {
           };
         }
 
+        log.info('outbound_sendVoiceNote generating TTS', { phone, userId, textLen: text.length, trace_id: traceId });
+
         try {
           // 1. Generate TTS audio in OGG Opus format (native WhatsApp voice note format)
           const audioResult = await textToSpeechOgg({
@@ -244,16 +303,16 @@ export function getAllOutboundTools(): ToolSchema[] {
             outputFormat: 'mp3_22050_32', // Base format before OGG conversion
           });
 
-          log.info('executed', { trace_id: traceId });
+          log.info('TTS generated, sending via connector', { phone, userId, audioSize: audioResult.audioBase64.length, trace_id: traceId });
 
-          // 2. Send via WhatsApp connector
-          // Draft-first in alpha mode — store the audio for approval
+          // 2. Send via WhatsApp connector with resolved userId
           try {
             const sendRes = await fetch(`${WA_CONNECTOR_URL}/outbound/send-voice`, {
               method: 'POST',
               headers: serviceHeaders,
               body: JSON.stringify({
                 phone,
+                userId,
                 audio_base64: audioResult.audioBase64,
                 mime_type: 'audio/ogg; codecs=opus',
                 caption: text.slice(0, 200),
@@ -262,15 +321,19 @@ export function getAllOutboundTools(): ToolSchema[] {
               signal: AbortSignal.timeout(15_000),
             });
 
-            if (sendRes.ok) {
+            const sendData = await sendRes.json() as Record<string, unknown>;
+            if (sendRes.ok && sendData.ok) {
               return {
                 status: 'sent',
                 message: `🎙️ Voice note sent to ${phone} (${audioResult.characterCount} chars, ${Math.round(audioResult.audioBase64.length * 0.75 / 1024)}KB)`,
                 voice_id: audioResult.voiceId,
               };
             }
-          } catch {
-            // WhatsApp connector not available — return draft with audio
+
+            // Connector returned error
+            log.warn('voice note send failed at connector', { phone, userId, error: sendData.error, httpStatus: sendRes.status, trace_id: traceId });
+          } catch (err) {
+            log.warn('connector unreachable for voice note', { phone, userId, error: (err as Error).message, trace_id: traceId });
           }
 
           return {
@@ -324,7 +387,7 @@ export function getAllOutboundTools(): ToolSchema[] {
       execute: async (args, traceId) => {
         const phone = String(args.phone || '').trim();
         const purpose = String(args.purpose || '').trim();
-        const userId = String(args._userId || 'default');
+        const userId = await resolveUserId(args._userId ? String(args._userId) : undefined);
         const script = args.script ? String(args.script) : undefined;
         const language = String(args.language || 'es');
         const maxDuration = Math.min(Number(args.max_duration_minutes) || 5, 15);
