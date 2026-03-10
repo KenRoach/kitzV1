@@ -146,13 +146,14 @@ services:
         condition: service_healthy
 
   # ── WhatsApp Connector (port 3006) — Baileys bridge (must be separate: stateful TCP) ──
+  # Uses its own Dockerfile (Debian slim + git SSH→HTTPS rewrite for Baileys + heap limit)
   kitz-whatsapp-connector:
-    <<: *service-defaults
+    restart: unless-stopped
+    networks:
+      - kitz-net
     build:
       context: .
-      dockerfile: Dockerfile.service
-      args:
-        SERVICE_DIR: kitz-whatsapp-connector
+      dockerfile: kitz-whatsapp-connector/Dockerfile
     ports:
       - "3006:3006"
     environment:

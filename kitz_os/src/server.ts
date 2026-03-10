@@ -63,11 +63,11 @@ import { APPROVAL_MATRIX, getMatrixByRisk, getMatrixByCategory } from './approva
 import { createArtifactFromToolResult } from './tools/artifactPreview.js';
 import { getContent, getContentBySlug, getBrandKit, approveContent, extendContent, cleanExpiredContent } from './tools/contentEngine.js';
 import type { OutputChannel } from 'kitz-schemas';
-import { createLogger } from './logger.js';
+import { createSubsystemLogger } from 'kitz-schemas';
 import { loadContacts, isFirstContact, getContact, touchContact } from './contacts/registry.js';
 import { handleOnboarding } from './contacts/onboarding.js';
 
-const log = createLogger('server');
+const log = createSubsystemLogger('server');
 
 /** Auto-detect language from message text — defaults to Spanish for LatAm market */
 function detectLanguage(text: string): string {

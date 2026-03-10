@@ -68,6 +68,8 @@ jobs:
         working-directory: kitz-payments
       - run: npm run typecheck
         working-directory: kitz-payments
+      - run: npm test
+        working-directory: kitz-payments
 
   kitz-whatsapp-connector:
     needs: kitz-schemas
@@ -82,6 +84,8 @@ jobs:
       - run: npm install
         working-directory: kitz-whatsapp-connector
       - run: npm run typecheck
+        working-directory: kitz-whatsapp-connector
+      - run: npm test
         working-directory: kitz-whatsapp-connector
 
   kitz-notifications-queue:
@@ -112,6 +116,8 @@ jobs:
       - run: npm install
         working-directory: workspace
       - run: npm run typecheck
+        working-directory: workspace
+      - run: npm test
         working-directory: workspace
 
   ui:
@@ -155,3 +161,98 @@ jobs:
         working-directory: engine/comms-api
       - run: npx tsc --noEmit
         working-directory: engine/comms-api
+
+  # ── New CI jobs (previously missing) ──
+
+  kitz-services:
+    needs: kitz-schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+        working-directory: kitz-schemas
+      - run: npm install
+        working-directory: kitz-services
+      - run: npm run typecheck
+        working-directory: kitz-services
+      - run: npm test
+        working-directory: kitz-services
+
+  kitz-llm-hub:
+    needs: kitz-schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+        working-directory: kitz-schemas
+      - run: npm install
+        working-directory: kitz-llm-hub
+      - run: npm run typecheck
+        working-directory: kitz-llm-hub
+      - run: npm test
+        working-directory: kitz-llm-hub
+
+  kitz-brain:
+    needs: kitz-schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+        working-directory: kitz-schemas
+      - run: npm install
+        working-directory: kitz-brain
+      - run: npm run typecheck
+        working-directory: kitz-brain
+
+  admin-kitz-services:
+    needs: kitz-schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+        working-directory: kitz-schemas
+      - run: npm install
+        working-directory: admin-kitz-services
+      - run: npm run typecheck
+        working-directory: admin-kitz-services
+
+  kitz-email-connector:
+    needs: kitz-schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+        working-directory: kitz-schemas
+      - run: npm install
+        working-directory: kitz-email-connector
+      - run: npm run typecheck
+        working-directory: kitz-email-connector
+
+  aos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+        working-directory: aos
+      - run: npm run typecheck
+        working-directory: aos
+      - run: npm test
+        working-directory: aos

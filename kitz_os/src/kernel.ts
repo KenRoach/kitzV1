@@ -18,13 +18,13 @@ import { CadenceEngine } from './cadence/engine.js';
 import { routeWithAI, brainFirstRoute } from './interfaces/whatsapp/semanticRouter.js';
 import { createAOS, type AOSRuntime, createAllAgents, createCoreAgents, registerAgent, dispatchToAgent } from '../../aos/src/index.js';
 import type { LaunchContext, AOSEvent, AgentMessage } from '../../aos/src/types.js';
-import { createLogger } from './logger.js';
+import { createSubsystemLogger } from 'kitz-schemas';
 import { loadCustomTools } from './tools/customToolLoader.js';
 import { setToolFactoryRegistry } from './tools/toolFactoryTools.js';
 import { loadContacts } from './contacts/registry.js';
 import { startNotificationEngine, stopNotificationEngine } from './notifications/engine.js';
 
-const log = createLogger('kernel');
+const log = createSubsystemLogger('kernel');
 
 /** Database connection pool configuration */
 export const DB_POOL_CONFIG = {

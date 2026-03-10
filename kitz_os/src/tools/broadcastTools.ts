@@ -10,6 +10,7 @@
  */
 import { createSubsystemLogger } from 'kitz-schemas';
 import { callWorkspaceMcp } from './mcpClient.js';
+import { resolveUserId } from './shared/resolveUserId.js';
 import type { ToolSchema } from './registry.js';
 
 const log = createSubsystemLogger('broadcast');
@@ -19,24 +20,6 @@ const serviceHeaders: Record<string, string> = {
   'Content-Type': 'application/json',
   ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET } : {}),
 };
-
-/** Resolve Baileys userId — same logic as outboundTools */
-async function resolveUserId(argsUserId?: string): Promise<string> {
-  if (argsUserId && argsUserId !== 'default') return argsUserId;
-  const godMode = process.env.GOD_MODE_USER_ID;
-  if (godMode) return godMode;
-  try {
-    const res = await fetch(`${WA_CONNECTOR_URL}/whatsapp/sessions`, {
-      method: 'GET', headers: serviceHeaders, signal: AbortSignal.timeout(5_000),
-    });
-    if (res.ok) {
-      const data = await res.json() as { sessions?: Array<{ userId: string; isConnected: boolean }> };
-      const connected = data.sessions?.find(s => s.isConnected);
-      if (connected) return connected.userId;
-    }
-  } catch { /* fall through */ }
-  return 'default';
-}
 
 // In-memory broadcast log (capped at 100 entries)
 interface BroadcastLogEntry {
