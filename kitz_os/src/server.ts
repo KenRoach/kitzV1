@@ -932,22 +932,92 @@ export async function createServer(kernel: KitzKernel) {
     }
   );
 
+  // ── Whisper transcription helper (shared by /media and /voice/transcribe) ──
+  async function transcribeAudio(audio_base64: string, format?: string, language?: string): Promise<{ transcript?: string; error?: string }> {
+    const OPENAI_KEY = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
+    if (!OPENAI_KEY) return { error: 'OpenAI API key not configured. Set OPENAI_API_KEY for speech-to-text.' };
+
+    const audioBuffer = Buffer.from(audio_base64, 'base64');
+    const boundary = '----KitzWhisperBoundary' + Date.now();
+    const ext = format || 'ogg';
+    const mimeMap: Record<string, string> = {
+      webm: 'audio/webm', wav: 'audio/wav', mp3: 'audio/mpeg',
+      m4a: 'audio/m4a', ogg: 'audio/ogg', flac: 'audio/flac',
+    };
+    const mime = mimeMap[ext] || 'audio/ogg';
+
+    const parts: Buffer[] = [];
+    parts.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="audio.${ext}"\r\nContent-Type: ${mime}\r\n\r\n`));
+    parts.push(audioBuffer);
+    parts.push(Buffer.from('\r\n'));
+    parts.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="model"\r\n\r\nwhisper-1\r\n`));
+    if (language) {
+      parts.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="language"\r\n\r\n${language}\r\n`));
+    }
+    parts.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="response_format"\r\n\r\njson\r\n`));
+    parts.push(Buffer.from(`--${boundary}--\r\n`));
+
+    const body = Buffer.concat(parts);
+    const whisperRes = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_KEY}`,
+        'Content-Type': `multipart/form-data; boundary=${boundary}`,
+      },
+      body,
+      signal: AbortSignal.timeout(30_000),
+    });
+
+    if (!whisperRes.ok) {
+      const errText = await whisperRes.text().catch(() => '');
+      return { error: `Whisper API error: ${errText.slice(0, 200)}` };
+    }
+
+    const data = await whisperRes.json() as { text: string };
+    return { transcript: data.text };
+  }
+
   // ── Media endpoint (for doc scan / brain dump voice) ──
   app.post<{ Body: { media_base64: string; mime_type: string; caption?: string; sender_jid?: string; user_id?: string; trace_id?: string } }>(
     '/api/kitz/media',
     async (req) => {
-      const { media_base64, mime_type, caption, user_id, trace_id } = req.body || {};
+      const { media_base64, mime_type, caption, sender_jid, user_id, trace_id } = req.body || {};
       if (!media_base64) return { error: 'media_base64 required' };
-      // Route through semantic router with media context
       const traceId = trace_id || crypto.randomUUID();
       const userId = user_id || 'default';
-      const mediaPrompt = caption || `[MEDIA:${mime_type}] Process this ${mime_type.startsWith('audio') ? 'voice note' : 'document/image'}`;
+      const senderJid = sender_jid || 'unknown';
       const hasAI = !!(process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.AI_API_KEY);
-      if (hasAI) {
-        const result = await routeWithAI(mediaPrompt, kernel.tools, traceId, { media_base64, mime_type }, userId);
+      if (!hasAI) return { error: 'AI not configured' };
+
+      // ── Auto-transcribe voice notes before routing ──
+      if (mime_type && mime_type.startsWith('audio/')) {
+        const ext = mime_type.split('/')[1]?.replace('ogg; codecs=opus', 'ogg') || 'ogg';
+        const txResult = await transcribeAudio(media_base64, ext, 'es');
+        if (txResult.error || !txResult.transcript) {
+          return { error: txResult.error || 'Transcription returned empty' };
+        }
+        // Store voice transcript in conversation history
+        try { storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'user', content: `[Voice note] ${txResult.transcript}`, traceId }); } catch { /* non-blocking */ }
+
+        // Route transcript as plain text — no mediaContext needed
+        const voicePrompt = `Voice note transcript: "${txResult.transcript}". Interpret and respond to what was said.`;
+        const result = await routeWithAI(voicePrompt, kernel.tools, traceId, undefined, userId);
+
+        // Store AI response in conversation history
+        try { storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'assistant', content: result.response, traceId }); } catch { /* non-blocking */ }
         return { response: result.response };
       }
-      return { error: 'AI not configured' };
+
+      // Non-audio media (documents, images) — route with media context
+      const mediaPrompt = caption || `[MEDIA:${mime_type}] Process this document/image`;
+      // Store inbound media message
+      try { storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'user', content: mediaPrompt, traceId }); } catch { /* non-blocking */ }
+
+      const result = await routeWithAI(mediaPrompt, kernel.tools, traceId, { media_base64, mime_type }, userId);
+
+      // Store AI response
+      try { storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'assistant', content: result.response, traceId }); } catch { /* non-blocking */ }
+      return { response: result.response };
     }
   );
 
@@ -1219,69 +1289,16 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
   app.post<{ Body: { audio_base64: string; language?: string; format?: string } }>(
     '/api/kitz/voice/transcribe',
     async (req, reply) => {
-      const OPENAI_KEY = process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '';
-      if (!OPENAI_KEY) {
-        return reply.code(503).send({ error: 'OpenAI API key not configured. Set OPENAI_API_KEY for speech-to-text.' });
-      }
-
       const { audio_base64, language, format } = req.body || {};
       if (!audio_base64) return reply.code(400).send({ error: 'audio_base64 required' });
 
       try {
-        // Decode base64 to buffer
-        const audioBuffer = Buffer.from(audio_base64, 'base64');
-
-        // Build multipart form data for Whisper API
-        const boundary = '----KitzWhisperBoundary' + Date.now();
-        const ext = format || 'webm';
-        const mimeMap: Record<string, string> = {
-          webm: 'audio/webm', wav: 'audio/wav', mp3: 'audio/mpeg',
-          m4a: 'audio/m4a', ogg: 'audio/ogg', flac: 'audio/flac',
-        };
-        const mime = mimeMap[ext] || 'audio/webm';
-
-        const parts: Buffer[] = [];
-        // File part
-        parts.push(Buffer.from(
-          `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="audio.${ext}"\r\nContent-Type: ${mime}\r\n\r\n`
-        ));
-        parts.push(audioBuffer);
-        parts.push(Buffer.from('\r\n'));
-        // Model part
-        parts.push(Buffer.from(
-          `--${boundary}\r\nContent-Disposition: form-data; name="model"\r\n\r\nwhisper-1\r\n`
-        ));
-        // Language part (optional — helps accuracy)
-        if (language) {
-          parts.push(Buffer.from(
-            `--${boundary}\r\nContent-Disposition: form-data; name="language"\r\n\r\n${language}\r\n`
-          ));
+        const result = await transcribeAudio(audio_base64, format || 'webm', language);
+        if (result.error) {
+          const status = result.error.includes('not configured') ? 503 : 500;
+          return reply.code(status).send({ error: result.error });
         }
-        // Response format
-        parts.push(Buffer.from(
-          `--${boundary}\r\nContent-Disposition: form-data; name="response_format"\r\n\r\njson\r\n`
-        ));
-        parts.push(Buffer.from(`--${boundary}--\r\n`));
-
-        const body = Buffer.concat(parts);
-
-        const whisperRes = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${OPENAI_KEY}`,
-            'Content-Type': `multipart/form-data; boundary=${boundary}`,
-          },
-          body,
-          signal: AbortSignal.timeout(30_000),
-        });
-
-        if (!whisperRes.ok) {
-          const errText = await whisperRes.text().catch(() => '');
-          return reply.code(whisperRes.status).send({ error: `Whisper API error: ${errText.slice(0, 200)}` });
-        }
-
-        const data = await whisperRes.json() as { text: string };
-        return { transcript: data.text, language: language || 'auto' };
+        return { transcript: result.transcript, language: language || 'auto' };
       } catch (err) {
         return reply.code(500).send({ error: `Transcription failed: ${(err as Error).message}` });
       }

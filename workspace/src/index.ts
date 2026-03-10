@@ -2,7 +2,7 @@ import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import formbody from '@fastify/formbody';
 import { randomUUID, createHash } from 'node:crypto';
-import { createTraceId, type StandardError, extractAuthFromHeaders, signJwt } from 'kitz-schemas';
+import { createTraceId, type StandardError, extractAuthFromHeaders, signJwt, verifyJwt } from 'kitz-schemas';
 import {
   listLeads as dbListLeads, createLead as dbCreateLead, updateLead as dbUpdateLead, deleteLead as dbDeleteLead,
   listOrders as dbListOrders, createOrder as dbCreateOrder, updateOrder as dbUpdateOrder, deleteOrder as dbDeleteOrder,
@@ -45,10 +45,11 @@ function hashPw(pw: string): string { return createHash('sha256').update(pw).dig
 
 const SERVICE_SECRET = process.env.SERVICE_SECRET || '';
 
-function mintJwt(userId: string, orgId: string): string {
+function mintJwt(userId: string, orgId: string, email?: string, name?: string): string {
   const now = Math.floor(Date.now() / 1000);
   return signJwt({
     sub: userId, org_id: orgId,
+    email, name,
     scopes: ['battery:read', 'payments:write', 'tools:invoke', 'events:write', 'notifications:write', 'messages:write'],
     iat: now, exp: now + 604800,
   }, JWT_SECRET);
@@ -128,9 +129,27 @@ app.addHook('onResponse', async (req, reply) => {
 /* ── Session Helpers ── */
 
 function getSession(req: any): Session | null {
-  const sid = req.cookies?.[COOKIE_NAME];
-  if (!sid) return null;
-  return sessions.get(sid) || null;
+  const cookieVal = req.cookies?.[COOKIE_NAME];
+  if (!cookieVal) return null;
+
+  // Legacy: check in-memory sessions Map (for sessions created before JWT cookie migration)
+  const legacy = sessions.get(cookieVal);
+  if (legacy) return legacy;
+
+  // Stateless: cookie contains the JWT itself — decode it
+  try {
+    const payload = verifyJwt(cookieVal, JWT_SECRET);
+    if (!payload.sub || !payload.org_id) return null;
+    return {
+      userId: payload.sub as string,
+      email: (payload.email as string) || '',
+      name: (payload.name as string) || '',
+      token: cookieVal,
+      orgId: payload.org_id as string,
+    };
+  } catch {
+    return null; // Invalid/expired JWT — force re-login
+  }
 }
 
 function requireSession(req: any, reply: any): Session | null {
@@ -569,11 +588,9 @@ app.post('/auth/start-register', async (req: any, reply: any) => {
   const userId = randomUUID();
   const orgId = randomUUID();
   registeredUsers.set(key, { id: userId, email: key, name, passwordHash: hashPw(password), orgId });
-  const token = mintJwt(userId, orgId);
-  const sessionId = randomUUID();
-  sessions.set(sessionId, { userId, email: key, name, token, orgId });
+  const token = mintJwt(userId, orgId, key, name);
   funnel.signup += 1;
-  reply.setCookie(COOKIE_NAME, sessionId, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
+  reply.setCookie(COOKIE_NAME, token, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
   return reply.redirect('/whatsapp');
 });
 
@@ -585,10 +602,8 @@ app.post('/auth/start-login', async (req: any, reply: any) => {
     authFailures += 1;
     return reply.redirect('/start?mode=login&error=invalid');
   }
-  const token = mintJwt(user.id, user.orgId);
-  const sessionId = randomUUID();
-  sessions.set(sessionId, { userId: user.id, email: user.email, name: user.name, token, orgId: user.orgId });
-  reply.setCookie(COOKIE_NAME, sessionId, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
+  const token = mintJwt(user.id, user.orgId, user.email, user.name);
+  reply.setCookie(COOKIE_NAME, token, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
   return reply.redirect('/whatsapp');
 });
 
@@ -662,11 +677,11 @@ app.post('/auth/register', async (req: any, reply: any) => {
   }
 
   registeredUsers.set(key, { id: userId, email: key, name, passwordHash: hashPw(password), orgId });
-  const sessionId = randomUUID();
-  sessions.set(sessionId, { userId, email: key, name, token, orgId });
+  // Re-mint JWT with email+name claims for stateless sessions (gateway token may lack them)
+  const sessionToken = mintJwt(userId, orgId, key, name);
   funnel.signup += 1;
 
-  reply.setCookie(COOKIE_NAME, sessionId, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
+  reply.setCookie(COOKIE_NAME, sessionToken, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
   return reply.redirect('/leads');
 });
 
@@ -713,10 +728,10 @@ app.post('/auth/login', async (req: any, reply: any) => {
   }
 
   registeredUsers.set(key, { id: userId, email: key, name: userName, passwordHash: hashPw(password), orgId });
-  const sessionId = randomUUID();
-  sessions.set(sessionId, { userId, email: key, name: userName, token, orgId });
+  // Re-mint JWT with email+name claims for stateless sessions
+  const sessionToken = mintJwt(userId, orgId, key, userName);
 
-  reply.setCookie(COOKIE_NAME, sessionId, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
+  reply.setCookie(COOKIE_NAME, sessionToken, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 604800 });
   return reply.redirect('/leads');
 });
 

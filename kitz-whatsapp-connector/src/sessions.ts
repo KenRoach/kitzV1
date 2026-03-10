@@ -58,6 +58,7 @@ const WATCHDOG_INTERVAL_MS = 30 * 60 * 1000;  // 30 minutes
 const HEARTBEAT_INTERVAL_MS = 60 * 1000;       // 60 seconds
 const BACKOFF_RESET_MS = 60 * 1000;            // Reset attempts after 60s of healthy connection
 const ACCESS_MODE: AccessMode = 'open';         // Default: allow all senders
+const MAX_ACTIVE_SESSIONS = Number(process.env.MAX_WA_SESSIONS || 30); // LRU eviction cap for 100 DAU
 
 const baileysLogger = P({ level: 'warn' });
 
@@ -152,7 +153,7 @@ export interface StoredMessage {
 }
 
 const messageStore = new Map<string, StoredMessage[]>();
-const MAX_MESSAGES_PER_USER = 500;
+const MAX_MESSAGES_PER_USER = 200; // Reduced from 500 for 100 DAU memory headroom
 
 function storeMessage(msg: Omit<StoredMessage, 'id' | 'timestamp'>): void {
   const full: StoredMessage = {
@@ -334,6 +335,41 @@ class SessionManager {
     }
   }
 
+  /** LRU eviction: if we're at capacity, disconnect the least-recently-active session.
+   *  Auth creds stay on disk so reconnect is automatic (no new QR scan needed). */
+  private evictLeastActive(): void {
+    const activeSessions = Array.from(this.sessions.values())
+      .filter(s => s.socket !== null);
+
+    if (activeSessions.length < MAX_ACTIVE_SESSIONS) return;
+
+    // Sort by lastMessageAtMs ascending — oldest activity first
+    activeSessions.sort((a, b) => a.lastMessageAtMs - b.lastMessageAtMs);
+
+    const victim = activeSessions[0];
+    if (!victim) return;
+
+    log.info('LRU eviction — disconnecting idle session', {
+      userId: victim.userId,
+      phone: victim.phoneNumber,
+      lastActivityMin: Math.round((Date.now() - victim.lastMessageAtMs) / 60000),
+      activeSessions: activeSessions.length,
+      cap: MAX_ACTIVE_SESSIONS,
+    });
+
+    // Disconnect socket but keep session entry + auth creds on disk
+    this.clearTimers(victim);
+    if (victim.socket) {
+      try { victim.socket.ws?.close(); } catch {}
+      victim.socket = null;
+    }
+    victim.isConnected = false;
+    victim.lastQr = null;
+    victim.lastEmittedQr = null;
+    this.emit(victim, 'evicted', JSON.stringify({ reason: 'lru_capacity' }));
+    // Don't delete session entry — allows lazy reconnect when user messages again
+  }
+
   /** Start (or restart) a Baileys session for a user */
   async startSession(userId: string, opts?: StartSessionOpts): Promise<UserSession> {
     // If session already exists and is connected, return it
@@ -349,6 +385,9 @@ class SessionManager {
       try { existing.socket.ws?.close(); } catch {}
       existing.socket = null;
     }
+
+    // Evict least-active session if at capacity before allocating a new socket
+    this.evictLeastActive();
 
     const authDir = join(AUTH_ROOT, userId);
     await mkdir(authDir, { recursive: true });
@@ -1102,6 +1141,30 @@ class SessionManager {
     if (session) session.listeners.delete(listener);
   }
 
+  /** Lazy reconnect: if session was LRU-evicted (socket=null, auth on disk), reconnect it.
+   *  Returns the session if reconnect was initiated, undefined if no session exists. */
+  async reconnectIfEvicted(userId: string): Promise<UserSession | undefined> {
+    const session = this.sessions.get(userId);
+    if (!session) return undefined;
+    if (session.isConnected && session.socket) return session; // already connected
+
+    // Session exists but socket is null — was evicted or disconnected.
+    // Check if auth creds exist on disk (no QR scan needed).
+    const authDir = join(AUTH_ROOT, userId);
+    try {
+      const { readdir } = await import('node:fs/promises');
+      const files = await readdir(authDir);
+      if (files.length === 0) return undefined; // no creds — needs fresh QR
+    } catch {
+      return undefined; // no auth dir — needs fresh QR
+    }
+
+    log.info('lazy reconnect — restoring evicted session', { userId, phone: session.phoneNumber });
+    this.evictLeastActive(); // Make room
+    await this.connectBaileys(session);
+    return session;
+  }
+
   /** Get a session by userId */
   getSession(userId: string): UserSession | undefined {
     return this.sessions.get(userId);
@@ -1169,7 +1232,17 @@ class SessionManager {
 
   /** Send a text message through a specific user's session */
   async sendMessage(userId: string, jid: string, text: string): Promise<{ ok: boolean; error?: string }> {
-    const session = this.sessions.get(userId);
+    let session = this.sessions.get(userId);
+
+    // Lazy reconnect: if session was evicted but auth creds exist, reconnect
+    if (session && !session.socket) {
+      session = await this.reconnectIfEvicted(userId);
+      // Give it a moment to establish connection
+      if (session && !session.isConnected) {
+        await new Promise(r => setTimeout(r, 3000));
+      }
+    }
+
     if (!session?.socket) {
       log.warn('sendMessage: no socket', { userId, jid });
       return { ok: false, error: 'No WhatsApp session found. Please reconnect via QR.' };
