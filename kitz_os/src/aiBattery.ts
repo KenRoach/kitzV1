@@ -1,11 +1,13 @@
 /**
- * AI Usage Tracking — Simple per-user free tier for KITZ OS
+ * AI Usage Tracking — Daily per-user credit system for KITZ OS
  *
- * Model: Each user gets 10 FREE AI uses. After that, they pay.
+ * Model: Each user gets AI_BATTERY_DAILY_LIMIT uses per UTC day (default: 5).
  * 1 AI call = 1 use (regardless of tokens, TTS chars, etc.)
+ * Recharges add extra credits on top of the daily allowance.
+ * Limits reset at midnight UTC each day.
  *
  * Multi-user: Every use is scoped by orgId so different users
- * get independent free-tier counters.
+ * get independent daily counters.
  *
  * Storage layers:
  *   1. In-memory ledger (always available, resets on restart)
@@ -30,8 +32,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, '..', 'data');
 const LEDGER_FILE = join(DATA_DIR, 'battery-ledger.ndjson');
 
-// Free tier: 10 AI uses per user (configurable via env)
-const FREE_USES = Number(process.env.AI_FREE_USES) || 10;
+// Daily limit: 5 AI uses per day per user (configurable via env)
+// Supports both AI_BATTERY_DAILY_LIMIT (documented) and AI_FREE_USES (legacy)
+const DAILY_LIMIT = Number(process.env.AI_BATTERY_DAILY_LIMIT)
+  || Number(process.env.AI_FREE_USES)
+  || 5;
 
 // Default org for backwards compatibility
 const DEFAULT_ORG = 'default';
@@ -110,6 +115,25 @@ async function ensureDataDir(): Promise<void> {
 /** Filter ledger entries for a specific org */
 function orgEntries(orgId: string): SpendEntry[] {
   return ledger.filter(e => e.orgId === orgId);
+}
+
+/** Get the start of the current UTC day as ISO string */
+function utcDayStart(): string {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString();
+}
+
+/**
+ * Sum credits used by an org since midnight UTC today.
+ * Only counts positive-credit entries (usage, not recharges).
+ */
+export function getSpendToday(orgId?: string): number {
+  const effectiveOrgId = orgId || DEFAULT_ORG;
+  const todayStart = utcDayStart();
+  const entries = effectiveOrgId === 'global' ? ledger : orgEntries(effectiveOrgId);
+  return entries
+    .filter(e => e.ts >= todayStart && e.category !== 'recharge')
+    .reduce((sum, e) => sum + e.credits, 0);
 }
 
 // ── Core Functions ────────────────────────────────────────
@@ -226,7 +250,8 @@ export async function recordRecharge(credits: number, traceId: string, orgId?: s
 
 /**
  * Get current usage status for a specific user/org.
- * Counts TOTAL uses (not daily) — free tier is lifetime, not per-day.
+ * Enforces DAILY limits — credits reset at midnight UTC each day.
+ * Recharges add extra credits on top of the daily allowance.
  */
 export function getBatteryStatus(orgId?: string): BatteryStatus {
   const effectiveOrgId = orgId || DEFAULT_ORG;
@@ -234,56 +259,57 @@ export function getBatteryStatus(orgId?: string): BatteryStatus {
   // Get entries for this org (or all entries if orgId is 'global')
   const orgLedger = effectiveOrgId === 'global' ? ledger : orgEntries(effectiveOrgId);
 
-  // Total uses (exclude recharges)
-  const usageEntries = orgLedger.filter(e => e.category !== 'recharge');
-  const rechargeEntries = orgLedger.filter(e => e.category === 'recharge');
+  // All-time totals (for display / audit)
+  const allUsageEntries = orgLedger.filter(e => e.category !== 'recharge');
+  const totalUsesAllTime = allUsageEntries.reduce((sum, e) => sum + e.credits, 0);
 
-  const totalUses = usageEntries.reduce((sum, e) => sum + e.credits, 0);
-  const totalRecharged = rechargeEntries.reduce((sum, e) => sum + Math.abs(e.credits), 0);
+  // Today's entries — daily limit enforcement uses UTC day boundary
+  const todayStart = utcDayStart();
+  const todayUsageEntries = allUsageEntries.filter(e => e.ts >= todayStart);
+  const todayRechargeEntries = orgLedger.filter(e => e.category === 'recharge' && e.ts >= todayStart);
 
-  // Today's entries (for display)
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-  const todayEntries = usageEntries.filter(e => e.ts >= todayStart);
+  const todayUses = todayUsageEntries.reduce((sum, e) => sum + e.credits, 0);
+  const todayRecharged = todayRechargeEntries.reduce((sum, e) => sum + Math.abs(e.credits), 0);
 
-  // By-provider breakdown (total)
+  // By-provider breakdown (today only for actionable insight)
   const byProvider: Record<SpendProvider, number> = {
     openai: 0,
     claude: 0,
     elevenlabs: 0,
   };
-  for (const e of usageEntries) {
+  for (const e of todayUsageEntries) {
     byProvider[e.provider] += e.credits;
   }
 
-  // Token/character counts (total)
-  const todayTokens = usageEntries
+  // Token/character counts (today)
+  const todayTokens = todayUsageEntries
     .filter(e => e.category === 'llm_tokens')
     .reduce((sum, e) => sum + e.units, 0);
-  const todayTtsChars = usageEntries
+  const todayTtsChars = todayUsageEntries
     .filter(e => e.category === 'tts_characters')
     .reduce((sum, e) => sum + e.units, 0);
 
-  const effectiveUses = Math.max(0, totalUses - totalRecharged);
-  const remaining = Math.max(0, FREE_USES + totalRecharged - totalUses);
+  // Daily budget = base daily limit + any recharges purchased today
+  const effectiveDailyBudget = DAILY_LIMIT + todayRecharged;
+  const remaining = Math.max(0, effectiveDailyBudget - todayUses);
 
   return {
     orgId: effectiveOrgId,
-    todayCredits: todayEntries.reduce((sum, e) => sum + e.credits, 0),
-    totalCredits: Math.round(effectiveUses),
-    dailyLimit: FREE_USES,
+    todayCredits: todayUses,
+    totalCredits: totalUsesAllTime,
+    dailyLimit: DAILY_LIMIT,
     remaining: Math.round(remaining),
     depleted: remaining <= 0,
     byProvider,
     todayTokens,
     todayTtsChars,
-    todayCalls: usageEntries.length,
+    todayCalls: todayUsageEntries.length,
   };
 }
 
 /**
- * Check if the user has free uses remaining.
- * Returns false if free tier exhausted and no purchased credits.
+ * Check if the user has daily AI uses remaining.
+ * Returns false if today's daily limit is exhausted (resets at midnight UTC).
  */
 export function hasBudget(estimatedCredits = 1, orgId?: string): boolean {
   // Usage enforcement is ON by default. Set AI_BATTERY_ENABLED=false to explicitly disable.
@@ -371,7 +397,7 @@ async function restoreFromFile(): Promise<number> {
 
 async function restoreFromSupabase(): Promise<number> {
   try {
-    // Fetch all spend entries from Supabase (all orgs — for free tier lifetime count)
+    // Fetch recent spend entries from Supabase (all orgs — for daily limit enforcement)
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/agent_audit_log?action=like.spend.*&order=created_at.asc&limit=1000`,
       {

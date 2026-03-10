@@ -17,10 +17,14 @@ app.addHook('onSend', async (_req, reply) => {
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
 const YAPPY_WEBHOOK_SECRET = process.env.YAPPY_WEBHOOK_SECRET || '';
 const BAC_WEBHOOK_SECRET = process.env.BAC_WEBHOOK_SECRET || '';
+const PAYPAL_WEBHOOK_ID = process.env.PAYPAL_WEBHOOK_ID || '';
 
 // ── Launch safety checks ──
 if (!STRIPE_WEBHOOK_SECRET) {
   app.log.warn('⚠ STRIPE_WEBHOOK_SECRET not set — Stripe webhooks will fail verification');
+}
+if (!PAYPAL_WEBHOOK_ID) {
+  app.log.warn('⚠ PAYPAL_WEBHOOK_ID not set — PayPal webhook verification degraded (header-only check)');
 }
 if (!process.env.STRIPE_SECRET_KEY) {
   app.log.warn('⚠ STRIPE_SECRET_KEY not set — checkout link creation disabled');
@@ -125,6 +129,7 @@ app.post('/checkout-session', async (req: any, reply) => {
 app.get('/health', async () => {
   const checks: Record<string, string> = { service: 'ok' };
   checks.stripe = STRIPE_WEBHOOK_SECRET ? 'configured' : 'missing';
+  checks.paypal = PAYPAL_WEBHOOK_ID ? 'configured' : 'missing';
   checks.yappy = YAPPY_WEBHOOK_SECRET ? 'configured' : 'missing';
   checks.bac = BAC_WEBHOOK_SECRET ? 'configured' : 'missing';
   checks.database = hasDB() ? 'configured' : 'in-memory';
@@ -214,35 +219,61 @@ app.post('/webhooks/stripe', async (req: any, reply) => {
 });
 
 // ── PayPal Webhook ──
+// TODO: implement full crypto verification via PayPal API POST /v1/notifications/verify-webhook-signature
+// Full verification requires calling PayPal's API with the webhook_id, transmission_id, transmission_time,
+// cert_url, auth_algo, transmission_sig, and the raw webhook body. PayPal returns { verification_status: "SUCCESS" }.
 app.post('/webhooks/paypal', async (req: any, reply) => {
   const traceId = String(req.headers['x-trace-id'] || randomUUID());
 
-  // PayPal uses certificate-based signing — verify required headers
-  const txId = req.headers['paypal-transmission-id'];
-  const txTime = req.headers['paypal-transmission-time'];
-  const txSig = req.headers['paypal-transmission-sig'];
-  const certUrl = req.headers['paypal-cert-url'];
+  // In production, PAYPAL_WEBHOOK_ID must be configured for any verification to proceed
+  if (process.env.NODE_ENV === 'production' && !PAYPAL_WEBHOOK_ID) {
+    app.log.error({ traceId, provider: 'paypal' }, 'webhook.rejected — PAYPAL_WEBHOOK_ID not configured');
+    return reply.code(503).send({ ok: false, message: 'PayPal webhook verification not configured', traceId });
+  }
 
-  if (!txId || !txTime) {
-    return reply.code(401).send({ ok: false, message: 'Missing PayPal transmission headers', traceId });
+  // PayPal uses certificate-based signing — all 5 transmission headers are required
+  const authAlgo = req.headers['paypal-auth-algo'];
+  const certUrl = req.headers['paypal-cert-url'];
+  const txId = req.headers['paypal-transmission-id'];
+  const txSig = req.headers['paypal-transmission-sig'];
+  const txTime = req.headers['paypal-transmission-time'];
+
+  const missingHeaders: string[] = [];
+  if (!authAlgo) missingHeaders.push('paypal-auth-algo');
+  if (!certUrl) missingHeaders.push('paypal-cert-url');
+  if (!txId) missingHeaders.push('paypal-transmission-id');
+  if (!txSig) missingHeaders.push('paypal-transmission-sig');
+  if (!txTime) missingHeaders.push('paypal-transmission-time');
+
+  if (missingHeaders.length > 0) {
+    app.log.warn({ traceId, provider: 'paypal', missingHeaders }, 'webhook.missing_headers');
+    return reply.code(401).send({ ok: false, message: `Missing PayPal headers: ${missingHeaders.join(', ')}`, traceId });
   }
 
   // Validate cert URL is from PayPal (prevent SSRF)
-  if (certUrl) {
-    try {
-      const url = new URL(String(certUrl));
-      if (!url.hostname.endsWith('.paypal.com') && !url.hostname.endsWith('.symantec.com')) {
-        return reply.code(401).send({ ok: false, message: 'Certificate URL not from PayPal domain', traceId });
-      }
-    } catch {
-      return reply.code(401).send({ ok: false, message: 'Invalid certificate URL', traceId });
+  try {
+    const url = new URL(String(certUrl));
+    if (!url.hostname.endsWith('.paypal.com') && !url.hostname.endsWith('.symantec.com')) {
+      return reply.code(401).send({ ok: false, message: 'Certificate URL not from PayPal domain', traceId });
     }
+    if (url.protocol !== 'https:') {
+      return reply.code(401).send({ ok: false, message: 'Certificate URL must use HTTPS', traceId });
+    }
+  } catch {
+    return reply.code(401).send({ ok: false, message: 'Invalid certificate URL', traceId });
   }
 
   // Timestamp tolerance: 10 minutes
   const ts = new Date(String(txTime)).getTime();
-  if (!isNaN(ts) && Math.abs(Date.now() - ts) > 600_000) {
+  if (isNaN(ts)) {
+    return reply.code(401).send({ ok: false, message: 'Invalid PayPal transmission timestamp', traceId });
+  }
+  if (Math.abs(Date.now() - ts) > 600_000) {
     return reply.code(401).send({ ok: false, message: 'PayPal timestamp outside tolerance', traceId });
+  }
+
+  if (!PAYPAL_WEBHOOK_ID) {
+    app.log.warn({ traceId, provider: 'paypal' }, 'webhook.no_webhook_id — header-only verification (degraded)');
   }
 
   const event = req.body as PaymentWebhookEvent;

@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { recordLLMSpend, recordTTSSpend, recordRecharge, getBatteryStatus, hasBudget, getLedger } from './aiBattery.js';
+import { recordLLMSpend, recordTTSSpend, recordRecharge, getBatteryStatus, hasBudget, getLedger, getSpendToday } from './aiBattery.js';
 
 describe('AI Battery', () => {
   // Note: since the ledger is module-level, tests are additive.
   // We test the behavior, not absolute values.
+  // Default daily limit is 5 (AI_BATTERY_DAILY_LIMIT env not set in tests).
 
   it('records LLM spend and updates status', async () => {
     const before = getBatteryStatus();
@@ -82,5 +83,28 @@ describe('AI Battery', () => {
     const status = getBatteryStatus();
     expect(status.byProvider.openai).toBeGreaterThanOrEqual(1);
     expect(status.byProvider.elevenlabs).toBeGreaterThanOrEqual(1);
+  });
+
+  it('getSpendToday returns daily credits used (not lifetime)', () => {
+    // All entries in this test run have today's timestamp, so they count as today
+    const todaySpend = getSpendToday();
+    expect(todaySpend).toBeGreaterThanOrEqual(2); // at least the LLM + TTS calls above
+    // todayCredits on the status should match getSpendToday
+    const status = getBatteryStatus();
+    expect(status.todayCredits).toBe(todaySpend);
+  });
+
+  it('daily limit enforcement: remaining is based on today not lifetime', () => {
+    const status = getBatteryStatus();
+    // remaining = dailyLimit + todayRecharges - todayUses
+    // Since we recharged 10 credits today: remaining = 5 + 10 - todayUses
+    expect(status.remaining).toBe(Math.max(0, status.dailyLimit + 10 - status.todayCredits));
+  });
+
+  it('per-org daily isolation: separate org has full daily budget', () => {
+    const isolatedStatus = getBatteryStatus('test-isolated-org');
+    expect(isolatedStatus.todayCredits).toBe(0);
+    expect(isolatedStatus.remaining).toBe(isolatedStatus.dailyLimit);
+    expect(isolatedStatus.depleted).toBe(false);
   });
 });
