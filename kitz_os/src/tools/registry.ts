@@ -232,6 +232,17 @@ export class OsToolRegistry {
       import('./latamBankingTools.js'),
       // KitZ Tools Ecosystem (16 tools/products)
       import('./kitzToolsEcosystemTools.js'),
+      // KitZ Agent Tools (sales, outreach, sequences, battlecards, demand gen)
+      import('./prospectOutreachTools.js'),
+      import('./whatsappSequenceTools.js'),
+      import('./battlecardTools.js'),
+      import('./demandGenTools.js'),
+      import('./salesTeamTools.js'),
+      // User Intelligence, Partner Reseller, Onboarding Assistant, Content Engine Enhanced
+      import('./userIntelligenceTools.js'),
+      import('./partnerResellerTools.js'),
+      import('./onboardingAssistantTools.js'),
+      import('./contentEngineEnhanced.js'),
     ]);
 
     const getterNames = [
@@ -387,6 +398,17 @@ export class OsToolRegistry {
       'getAllLatamBankingTools',
       // KitZ Tools Ecosystem
       'getAllKitzToolsEcosystemTools',
+      // KitZ Agent Tools
+      'getAllProspectOutreachTools',
+      'getAllWhatsappSequenceTools',
+      'getAllBattlecardTools',
+      'getAllDemandGenTools',
+      'getAllSalesTeamTools',
+      // User Intelligence, Partner Reseller, Onboarding Assistant, Content Engine Enhanced
+      'getAllUserIntelligenceTools',
+      'getAllPartnerResellerTools',
+      'getAllOnboardingAssistantTools',
+      'getAllContentEngineEnhancedTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {
