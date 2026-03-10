@@ -12,6 +12,7 @@ const WhatsAppPage = lazy(() => import('@/pages/WhatsAppPage').then(m => ({ defa
 const LearnPage = lazy(() => import('@/pages/LearnPage').then(m => ({ default: m.LearnPage })))
 const GamePage = lazy(() => import('@/pages/GamePage').then(m => ({ default: m.GamePage })))
 const UIPreviewPage = lazy(() => import('@/pages/UIPreviewPage'))
+const PricingPage = lazy(() => import('@/pages/PricingPage').then(m => ({ default: m.PricingPage })))
 
 export default function App() {
   const hydrate = useAuthStore((s) => s.hydrate)
@@ -37,6 +38,7 @@ export default function App() {
             <Route path="/learn" element={<LearnPage />} />
             <Route path="/game" element={<GamePage />} />
             <Route path="/ui" element={<UIPreviewPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

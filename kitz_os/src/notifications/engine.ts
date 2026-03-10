@@ -17,9 +17,10 @@
 
 import { createSubsystemLogger } from 'kitz-schemas';
 import cron from 'node-cron';
-import { listContacts, getTrialStats, type Contact } from '../contacts/registry.js';
+import { listContacts, getTrialStats, getExpiredTrials, type Contact } from '../contacts/registry.js';
 
 const log = createSubsystemLogger('notifications');
+const KITZ_DOMAIN = process.env.KITZ_DOMAIN || 'https://workspace.kitz.services';
 
 const WA_CONNECTOR_URL = process.env.WA_CONNECTOR_URL || 'http://localhost:3006';
 const KITZ_PHONE = process.env.KITZ_WHATSAPP_NUMBER || '';
@@ -173,6 +174,46 @@ function checkTrialReminders(): void {
         recipient: contact.phone,
         message: `⏰ ${name}, tu trial con Kitz termina mañana.\n\nTienes ${contact.trialCredits} créditos restantes. ¡Aprovéchalos!\n\nPara seguir usando Kitz después del trial, escríbeme "quiero continuar". 💪`,
         priority: 'high',
+      });
+    }
+  }
+
+  // ── Post-trial expiry notifications (sent to expired users) ──
+  checkExpiredTrialNotifications();
+}
+
+/** Send upgrade nudges to recently expired trial users */
+function checkExpiredTrialNotifications(): void {
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+  const SEVEN_DAYS_MS = 7 * ONE_DAY_MS;
+  const FOURTEEN_DAYS_MS = 14 * ONE_DAY_MS;
+  const now = Date.now();
+
+  // Get all expired contacts (within 15 days)
+  const expired = getExpiredTrials(15 * ONE_DAY_MS);
+
+  for (const contact of expired) {
+    if (!contact.phone || !contact.trialExpiresAt) continue;
+    const sinceExpiry = now - contact.trialExpiresAt;
+    const name = contact.name || 'amigo/a';
+
+    // Day 7: Trial just expired (0-24h after expiry)
+    if (sinceExpiry >= 0 && sinceExpiry < ONE_DAY_MS) {
+      queueNotification({
+        type: 'trial_reminder',
+        recipient: contact.phone,
+        message: `${name}, tu trial de 7 dias con Kitz termino. 🟣\n\nPero tu negocio no para — y yo tampoco.\n\n$5 = 100 acciones AI (emails, reportes, CRM, y mas).\n\n👉 ${KITZ_DOMAIN}/pricing\n\nO escribe "quiero continuar" y te ayudo.`,
+        priority: 'high',
+      });
+    }
+
+    // Day 14: Win-back (7 days after expiry)
+    if (sinceExpiry >= SEVEN_DAYS_MS && sinceExpiry < SEVEN_DAYS_MS + ONE_DAY_MS) {
+      queueNotification({
+        type: 'trial_reminder',
+        recipient: contact.phone,
+        message: `Hola ${name} 👋 Hace una semana que terminaste tu trial con Kitz.\n\nTodavia puedo ayudarte con tu negocio:\n• Gestionar clientes y leads\n• Redactar emails y mensajes\n• Crear reportes y facturas\n\n$5 = 100 creditos AI. Eso son ~2 horas de trabajo ahorradas.\n\n👉 ${KITZ_DOMAIN}/pricing`,
+        priority: 'medium',
       });
     }
   }

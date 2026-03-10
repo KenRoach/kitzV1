@@ -86,8 +86,8 @@ export class KitzKernel {
       log.warn('Starter SOP load failed', { error: (err as Error).message });
     });
 
-    // 2.7. Load contact registry
-    loadContacts();
+    // 2.7. Load contact registry (Supabase primary, file fallback)
+    await loadContacts();
 
     // 3. Register all tools
     await this.tools.registerDefaults();

@@ -46,7 +46,7 @@ import { dirname, join } from 'path';
 import { existsSync } from 'fs';
 import type { KitzKernel } from './kernel.js';
 import { verifyJwt as gatewayVerifyJwt, signJwt as gatewaySignJwt } from './auth/gatewayJwt.js';
-import { findUserByEmail, createUser as createGatewayUser, updateUser as updateGatewayUser, verifyPassword, findUserByPhone, createUserByPhone, createMagicLinkToken, verifyMagicLinkToken } from './auth/gatewayDb.js';
+import { findUserByEmail, createUser as createGatewayUser, updateUser as updateGatewayUser, verifyPassword, findUserByPhone, createUserByPhone, createMagicLinkToken, verifyMagicLinkToken, linkWhatsAppToUser } from './auth/gatewayDb.js';
 import { isGoogleLoginConfigured as isGatewayGoogleConfigured, getLoginAuthUrl, exchangeLoginCode } from './auth/gatewayGoogleAuth.js';
 import { parseWhatsAppCommand } from './interfaces/whatsapp/commandParser.js';
 import { routeWithAI, brainFirstRoute, getDraftQueue, approveDraft, rejectDraft } from './interfaces/whatsapp/semanticRouter.js';
@@ -191,6 +191,42 @@ function buildExpiredArtifactHtml(baseUrl: string): string {
   </footer>
 </body>
 </html>`;
+}
+
+// ── CEO / Owner account auto-provision ──
+
+const OWNER_EMAIL = process.env.OWNER_EMAIL || '';
+const OWNER_PASSWORD = process.env.OWNER_PASSWORD || '';
+const OWNER_NAME = process.env.OWNER_NAME || 'Kenneth';
+const OWNER_PHONE_ENV = process.env.CADENCE_PHONE || '';
+
+/**
+ * Auto-create the CEO/owner user account on first boot.
+ * Uses OWNER_EMAIL + OWNER_PASSWORD env vars. If not set, skips silently.
+ * If the account already exists, just logs it.
+ */
+async function seedOwnerAccount(): Promise<void> {
+  if (!OWNER_EMAIL || !OWNER_PASSWORD) {
+    log.info('Owner account seed: OWNER_EMAIL or OWNER_PASSWORD not set, skipping');
+    return;
+  }
+
+  const existing = await findUserByEmail(OWNER_EMAIL);
+  if (existing) {
+    log.info('Owner account exists', { email: OWNER_EMAIL, userId: existing.id });
+    return;
+  }
+
+  const user = await createGatewayUser(OWNER_EMAIL, OWNER_PASSWORD, OWNER_NAME);
+  log.info('Owner account created', { email: user.email, userId: user.id, orgId: user.orgId });
+
+  // Link phone if CADENCE_PHONE is set
+  if (OWNER_PHONE_ENV) {
+    const phone = OWNER_PHONE_ENV.startsWith('+') ? OWNER_PHONE_ENV : `+${OWNER_PHONE_ENV}`;
+    const jid = OWNER_PHONE_ENV.replace(/\+/g, '') + '@s.whatsapp.net';
+    await linkWhatsAppToUser(user.id, phone, jid);
+    log.info('Owner WhatsApp linked', { phone, userId: user.id });
+  }
 }
 
 export async function createServer(kernel: KitzKernel) {
@@ -2375,6 +2411,9 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
 
   await app.listen({ port: PORT, host: '0.0.0.0' });
   log.info('KITZ OS listening', { port: PORT });
+
+  // Auto-provision CEO/owner account if configured
+  await seedOwnerAccount().catch(err => log.warn('Owner account seed failed', { err }));
 
   // Clean expired artifacts every hour to prevent memory leaks
   setInterval(() => {
