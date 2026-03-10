@@ -8,9 +8,12 @@
  *   - autoreply_get        (low)    — Get current auto-reply config
  *   - autoreply_set        (medium) — Update auto-reply settings
  */
+import { createSubsystemLogger } from 'kitz-schemas';
 import { callWorkspaceMcp } from './mcpClient.js';
+import { resolveUserId } from './shared/resolveUserId.js';
 import type { ToolSchema } from './registry.js';
 
+const log = createSubsystemLogger('broadcast');
 const WA_CONNECTOR_URL = process.env.WA_CONNECTOR_URL || 'http://localhost:3006';
 const SERVICE_SECRET = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
 const serviceHeaders: Record<string, string> = {
@@ -139,7 +142,7 @@ export function getAllBroadcastTools(): ToolSchema[] {
         const status = args.status ? String(args.status) : undefined;
         const tags = args.tags ? String(args.tags).split(',').map(t => t.trim()).filter(Boolean) : [];
         const delayMs = Math.max(Number(args.delay_ms) || 1500, 1000);
-        const userId = String(args._userId || 'default');
+        const userId = await resolveUserId(args._userId ? String(args._userId) : undefined);
 
         // Fetch contacts from CRM
         const mcpArgs: Record<string, unknown> = { limit: 200 };
@@ -264,7 +267,7 @@ export function getAllBroadcastTools(): ToolSchema[] {
       },
       riskLevel: 'low',
       execute: async (args) => {
-        const userId = String(args._userId || 'default');
+        const userId = await resolveUserId(args._userId ? String(args._userId) : undefined);
         try {
           const res = await fetch(`${WA_CONNECTOR_URL}/whatsapp/sessions/${userId}/auto-reply`, {
             headers: serviceHeaders,
@@ -307,7 +310,7 @@ export function getAllBroadcastTools(): ToolSchema[] {
       },
       riskLevel: 'medium',
       execute: async (args) => {
-        const userId = String(args._userId || 'default');
+        const userId = await resolveUserId(args._userId ? String(args._userId) : undefined);
         const body: Record<string, unknown> = {};
         if (typeof args.enabled === 'boolean') body.enabled = args.enabled;
         if (args.message) body.message = String(args.message);

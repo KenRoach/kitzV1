@@ -70,8 +70,29 @@ export function handleOnboarding(
     case 'welcome_sent':
     case 'awaiting_name': {
       // User responded to welcome — capture name
-      const name = extractName(messageText);
+      const { name, businessContext } = extractNameAndBusiness(messageText);
       if (name) {
+        // If the user also mentioned their business in the same message, skip to trial
+        if (businessContext) {
+          log.info('extracted name + business from single message', { identifier, name, businessContext });
+          updateContact(identifier, channel, {
+            name,
+            businessType: businessContext,
+            businessName: businessContext,
+          });
+          const trialContact = startTrial(identifier, channel);
+          if (trialContact) {
+            updateContact(identifier, channel, { onboardingStep: 'complete' });
+            notifyNewLead(trialContact);
+            return {
+              response: getTrialStartedMessage(name, businessContext, locale),
+              isOnboarding: true,
+              contact: { ...trialContact, onboardingStep: 'complete' },
+            };
+          }
+        }
+
+        // Name only — ask for business
         updateContact(identifier, channel, {
           name,
           onboardingStep: 'awaiting_business',
@@ -117,19 +138,64 @@ export function handleOnboarding(
   }
 }
 
-/** Extract a name from user text — simple heuristic */
-function extractName(text: string): string | null {
+/**
+ * Extract name and optionally business context from user text.
+ *
+ * Handles messages like:
+ *   "Jonathan" → name only
+ *   "Me llamo Jonathan" → name only
+ *   "Me llamo Jonathan, tengo un negocio de alfombras personalizadas" → name + business
+ *   "Soy Maria y vendo ropa online" → name + business
+ *   "Hi I'm Alex, I run a restaurant" → name + business
+ */
+function extractNameAndBusiness(text: string): { name: string | null; businessContext: string | null } {
   const trimmed = text.trim();
-  // Skip if it looks like a question or command
-  if (trimmed.includes('?') || trimmed.length > 60 || trimmed.length < 2) return null;
-  // Remove common prefixes
-  const cleaned = trimmed
+  if (trimmed.includes('?') || trimmed.length < 2) return { name: null, businessContext: null };
+
+  // Business context indicators (Spanish + English)
+  const businessSplitPatterns = [
+    /[,\.]\s*(?:tengo|vendo|hago|trabajo|me dedico|mi negocio|mi empresa|soy\s+\w+\s+(?:de|en))/i,
+    /[,\.]\s*(?:i\s+(?:have|sell|make|run|own|work)|my\s+(?:business|company|shop|store))/i,
+    /\s+y\s+(?:tengo|vendo|hago|trabajo|me dedico)/i,
+    /\s+and\s+(?:i\s+(?:have|sell|make|run|own))/i,
+  ];
+
+  // Try to split name from business context
+  let namePart = trimmed;
+  let businessPart: string | null = null;
+
+  for (const pattern of businessSplitPatterns) {
+    const match = trimmed.match(pattern);
+    if (match && match.index !== undefined) {
+      namePart = trimmed.slice(0, match.index).trim();
+      businessPart = trimmed.slice(match.index).replace(/^[,.\s]+/, '').trim();
+      break;
+    }
+  }
+
+  // If message is very long (>120 chars) and no business split found, it might still contain both
+  // But just extract name from the first part
+  if (!businessPart && trimmed.length > 60) {
+    // Try splitting on first comma, period, or newline
+    const simpleSplit = trimmed.match(/^([^,.\n]{2,50})[,.\n]\s*(.{10,})$/);
+    if (simpleSplit) {
+      namePart = simpleSplit[1].trim();
+      businessPart = simpleSplit[2].trim();
+    }
+  }
+
+  // Extract name from the name part
+  const cleaned = namePart
     .replace(/^(me llamo|mi nombre es|soy|i'm|my name is|hey,?\s*)/i, '')
     .replace(/^(hola,?\s*soy|hi,?\s*i'm)\s*/i, '')
     .trim();
-  if (cleaned.length < 2 || cleaned.length > 40) return null;
+
+  if (cleaned.length < 2 || cleaned.length > 40) return { name: null, businessContext: null };
+
   // Capitalize first letter of each word
-  return cleaned.replace(/\b\w/g, c => c.toUpperCase());
+  const name = cleaned.replace(/\b\w/g, c => c.toUpperCase());
+
+  return { name, businessContext: businessPart };
 }
 
 // ── Message Templates ──

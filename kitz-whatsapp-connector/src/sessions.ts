@@ -229,8 +229,24 @@ export interface UserSession {
   watchdogTimer: ReturnType<typeof setInterval> | null;
   heartbeatTimer: ReturnType<typeof setInterval> | null;
   backoffResetTimer: ReturnType<typeof setTimeout> | null;
+  /** Timestamps of recent close events — used for conflict:replaced circuit breaker */
+  recentCloseTimestamps: number[];
   /** Listeners waiting for QR/connection updates (SSE clients) */
   listeners: Set<SessionListener>;
+}
+
+// ── Conflict Circuit Breaker ──
+// If 5+ close events happen within 60s, it's a conflict storm (e.g. WhatsApp Web open elsewhere).
+// Stop reconnecting to prevent OOM from rapid Signal protocol session creation.
+const CONFLICT_WINDOW_MS = 60_000;
+const CONFLICT_MAX_CLOSES = 5;
+
+function isConflictStorm(session: UserSession): boolean {
+  const now = Date.now();
+  // Prune old timestamps
+  session.recentCloseTimestamps = session.recentCloseTimestamps.filter(t => now - t < CONFLICT_WINDOW_MS);
+  session.recentCloseTimestamps.push(now);
+  return session.recentCloseTimestamps.length >= CONFLICT_MAX_CLOSES;
 }
 
 // ── Forward message to KITZ OS ──
@@ -368,6 +384,7 @@ class SessionManager {
       watchdogTimer: null,
       heartbeatTimer: null,
       backoffResetTimer: null,
+      recentCloseTimestamps: [],
       listeners: new Set(),
     };
 
@@ -505,10 +522,19 @@ class SessionManager {
           // 408/428 is QR timeout ONLY if the session was never connected
           // If we were already connected, treat 408 as a transient disconnect → reconnect
           const isQrTimeout = (statusCode === 428 || statusCode === 408) && !wasConnected;
-          // Self-healing: always reconnect if we were previously connected (except logout)
-          const shouldReconnect = wasConnected && !isLoggedOut && !isQrTimeout && !is515Restart;
+          // Circuit breaker: detect conflict:replaced storms (rapid disconnect/reconnect loops)
+          const conflictStorm = isConflictStorm(session);
+          // Self-healing: always reconnect if we were previously connected (except logout, conflict storms)
+          const shouldReconnect = wasConnected && !isLoggedOut && !isQrTimeout && !is515Restart && !conflictStorm;
 
-          log.info('connection closed', { userId, statusCode, shouldReconnect, wasConnected, is515Restart });
+          log.info('connection closed', { userId, statusCode, shouldReconnect, wasConnected, is515Restart, conflictStorm });
+
+          if (conflictStorm) {
+            log.warn('CONFLICT STORM detected — stopping reconnect to prevent OOM. ' +
+              'This usually means WhatsApp Web is open elsewhere or the phone is actively managing linked devices. ' +
+              'Session will remain idle until next /whatsapp/connect request.',
+              { userId, closesInWindow: session.recentCloseTimestamps.length });
+          }
 
           this.emit(session, 'disconnected', JSON.stringify({ statusCode }));
 
