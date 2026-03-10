@@ -230,6 +230,8 @@ export class OsToolRegistry {
       import('./latamTaxTools.js'),
       import('./latamCreditTools.js'),
       import('./latamBankingTools.js'),
+      // KitZ Tools Ecosystem (16 tools/products)
+      import('./kitzToolsEcosystemTools.js'),
     ]);
 
     const getterNames = [
@@ -383,6 +385,8 @@ export class OsToolRegistry {
       'getAllLatamTaxTools',
       'getAllLatamCreditTools',
       'getAllLatamBankingTools',
+      // KitZ Tools Ecosystem
+      'getAllKitzToolsEcosystemTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {
