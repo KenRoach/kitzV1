@@ -981,10 +981,11 @@ export async function createServer(kernel: KitzKernel) {
   app.post<{ Body: { media_base64: string; mime_type: string; caption?: string; sender_jid?: string; user_id?: string; trace_id?: string } }>(
     '/api/kitz/media',
     async (req) => {
-      const { media_base64, mime_type, caption, user_id, trace_id } = req.body || {};
+      const { media_base64, mime_type, caption, sender_jid, user_id, trace_id } = req.body || {};
       if (!media_base64) return { error: 'media_base64 required' };
       const traceId = trace_id || crypto.randomUUID();
       const userId = user_id || 'default';
+      const senderJid = sender_jid || 'unknown';
       const hasAI = !!(process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.AI_API_KEY);
       if (!hasAI) return { error: 'AI not configured' };
 
@@ -995,15 +996,27 @@ export async function createServer(kernel: KitzKernel) {
         if (txResult.error || !txResult.transcript) {
           return { error: txResult.error || 'Transcription returned empty' };
         }
+        // Store voice transcript in conversation history
+        try { storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'user', content: `[Voice note] ${txResult.transcript}`, traceId }); } catch { /* non-blocking */ }
+
         // Route transcript as plain text — no mediaContext needed
         const voicePrompt = `Voice note transcript: "${txResult.transcript}". Interpret and respond to what was said.`;
         const result = await routeWithAI(voicePrompt, kernel.tools, traceId, undefined, userId);
+
+        // Store AI response in conversation history
+        try { storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'assistant', content: result.response, traceId }); } catch { /* non-blocking */ }
         return { response: result.response };
       }
 
       // Non-audio media (documents, images) — route with media context
       const mediaPrompt = caption || `[MEDIA:${mime_type}] Process this document/image`;
+      // Store inbound media message
+      try { storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'user', content: mediaPrompt, traceId }); } catch { /* non-blocking */ }
+
       const result = await routeWithAI(mediaPrompt, kernel.tools, traceId, { media_base64, mime_type }, userId);
+
+      // Store AI response
+      try { storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'assistant', content: result.response, traceId }); } catch { /* non-blocking */ }
       return { response: result.response };
     }
   );
