@@ -135,7 +135,7 @@ export const createApp = () => {
       return reply.code(400).send({ code: 'INVALID_COUNTRY', message: 'Only Panama is configured currently.' });
     }
 
-    const updates = await readLatest('Panama');
+    const updates = await readLatest('Panama').catch(() => []);
     return { country: 'Panama', updates };
   });
 
