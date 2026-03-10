@@ -83,6 +83,46 @@ export async function getJobById(id: string): Promise<JobRow | null> {
   return rows[0] ?? null;
 }
 
+/** Fetch all queued jobs from DB — used for boot recovery */
+export async function getQueuedJobs(): Promise<JobRow[]> {
+  if (!DATABASE_URL) return [];
+  try {
+    const res = await fetch(
+      `${DATABASE_URL}/rest/v1/notification_jobs?status=eq.queued&select=*&order=created_at.asc&limit=500`,
+      { headers: supabaseHeaders() },
+    );
+    if (!res.ok) return [];
+    return (await res.json()) as JobRow[];
+  } catch { return []; }
+}
+
+/** Fetch all dead-lettered jobs from DB — used for boot recovery */
+export async function getDeadLetterJobs(): Promise<JobRow[]> {
+  if (!DATABASE_URL) return [];
+  try {
+    const res = await fetch(
+      `${DATABASE_URL}/rest/v1/notification_jobs?status=eq.dead_letter&select=*&order=created_at.asc&limit=500`,
+      { headers: supabaseHeaders() },
+    );
+    if (!res.ok) return [];
+    return (await res.json()) as JobRow[];
+  } catch { return []; }
+}
+
+/** Fetch all idempotency keys from DB — used for boot recovery of seenKeys Set */
+export async function getSeenKeys(): Promise<string[]> {
+  if (!DATABASE_URL) return [];
+  try {
+    const res = await fetch(
+      `${DATABASE_URL}/rest/v1/notification_jobs?select=idempotency_key&limit=5000`,
+      { headers: supabaseHeaders() },
+    );
+    if (!res.ok) return [];
+    const rows = (await res.json()) as Array<{ idempotency_key: string }>;
+    return rows.map(r => r.idempotency_key);
+  } catch { return []; }
+}
+
 export async function getMetrics(): Promise<{
   total: number;
   queued: number;

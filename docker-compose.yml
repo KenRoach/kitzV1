@@ -161,6 +161,7 @@ services:
       KITZ_OS_URL: http://kitz-os:3012
       DEV_TOKEN_SECRET: ${DEV_TOKEN_SECRET}
       SERVICE_SECRET: ${DEV_TOKEN_SECRET}
+      MAX_WA_SESSIONS: ${MAX_WA_SESSIONS:-30}
     volumes:
       - whatsapp_auth:/app/kitz-whatsapp-connector/auth_info_baileys
     healthcheck:
@@ -171,7 +172,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 1G
     depends_on:
       migrate:
         condition: service_completed_successfully

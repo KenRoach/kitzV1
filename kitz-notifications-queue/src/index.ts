@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { EventEnvelope, StandardError } from 'kitz-schemas';
-import { persistJob, updateJobStatus, getJobById, getMetrics } from './db.js';
+import { persistJob, updateJobStatus, getJobById, getMetrics, getQueuedJobs, getDeadLetterJobs, getSeenKeys } from './db.js';
 
 export const health = { status: 'ok' };
 
@@ -175,11 +175,10 @@ app.get('/metrics', async () => {
   };
 });
 
-// ── Process queue on 1-second interval ──
-setInterval(async () => {
-  const job = queue.shift();
-  if (!job) return;
+// ── Process queue in batches (up to 10/tick) for 100 DAU throughput ──
+const BATCH_SIZE = 10;
 
+async function processSingleJob(job: NotificationJob): Promise<void> {
   job.attempts += 1;
   const delivered = await processJob(job);
 
@@ -199,9 +198,69 @@ setInterval(async () => {
   queue.push(job);
   updateJobStatus(job.id, 'queued', job.attempts).catch(() => {});
   emitAudit('notifications.retry', { idempotencyKey: job.idempotencyKey, attempts: job.attempts }, job.traceId);
+}
+
+setInterval(async () => {
+  const batch = queue.splice(0, BATCH_SIZE);
+  if (!batch.length) return;
+  await Promise.allSettled(batch.map(processSingleJob));
 }, 1000);
 
 app.get('/queue', async () => ({ queued: queue.length, deadLetter: deadLetter.length }));
 app.get('/dead-letter', async () => ({ deadLetter }));
 
-app.listen({ port: Number(process.env.PORT || 3008), host: '0.0.0.0' });
+// ── Boot recovery: rebuild in-memory state from Supabase ──
+async function restoreFromDb(): Promise<void> {
+  try {
+    const [queuedRows, dlRows, keys] = await Promise.all([
+      getQueuedJobs(),
+      getDeadLetterJobs(),
+      getSeenKeys(),
+    ]);
+
+    for (const row of queuedRows) {
+      const job: NotificationJob = {
+        id: row.id,
+        idempotencyKey: row.idempotency_key,
+        channel: row.channel as NotificationJob['channel'],
+        draftOnly: row.draft_only,
+        orgId: row.org_id,
+        traceId: row.trace_id,
+        payload: row.payload,
+        attempts: row.attempts,
+      };
+      queue.push(job);
+      seenKeys.add(row.idempotency_key);
+    }
+
+    for (const row of dlRows) {
+      const job: NotificationJob = {
+        id: row.id,
+        idempotencyKey: row.idempotency_key,
+        channel: row.channel as NotificationJob['channel'],
+        draftOnly: row.draft_only,
+        orgId: row.org_id,
+        traceId: row.trace_id,
+        payload: row.payload,
+        attempts: row.attempts,
+      };
+      deadLetter.push(job);
+      seenKeys.add(row.idempotency_key);
+    }
+
+    for (const key of keys) {
+      seenKeys.add(key);
+    }
+
+    if (queuedRows.length || dlRows.length || keys.length) {
+      app.log.info({ queued: queuedRows.length, deadLetter: dlRows.length, seenKeys: keys.length }, 'boot recovery complete');
+    }
+  } catch (err) {
+    app.log.warn({ error: (err as Error).message }, 'boot recovery failed — starting fresh');
+  }
+}
+
+// Restore then listen
+restoreFromDb().then(() => {
+  app.listen({ port: Number(process.env.PORT || 3008), host: '0.0.0.0' });
+});
