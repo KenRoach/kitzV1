@@ -30,19 +30,49 @@ if (!process.env.JWT_SECRET && !process.env.DEV_TOKEN_SECRET) {
   app.log.warn('⚠ JWT_SECRET not set — auth tokens cannot be verified');
 }
 
+// ── Rate limiting ──
+// Global: 120 req/min per IP; auth endpoints get stricter limits below
 await app.register(rateLimit, { max: 120, timeWindow: '1 minute', store: FileBackedRateLimitStore });
+
+// Request body size limit (1MB max — prevents payload abuse)
+app.addContentTypeParser('application/json', { bodyLimit: 1_048_576 }, function (_req, body, done) {
+  let data = '';
+  body.on('data', (chunk: Buffer) => { data += chunk.toString(); });
+  body.on('end', () => {
+    try { done(null, JSON.parse(data)); }
+    catch (err) { done(err as Error, undefined); }
+  });
+});
+
+// ── CORS origin allowlist ──
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000,http://localhost:5173').split(',').map(o => o.trim());
+
+function isAllowedOrigin(origin: string | undefined): string | false {
+  if (!origin) return false;
+  if (ALLOWED_ORIGINS.includes(origin)) return origin;
+  // Allow any *.railway.app and *.renewflow.io in production
+  if (/^https:\/\/[\w-]+\.up\.railway\.app$/.test(origin)) return origin;
+  if (/^https:\/\/(www\.)?renewflow\.io$/.test(origin)) return origin;
+  return false;
+}
 
 // CORS + Security headers
 app.addHook('onSend', async (req, reply) => {
-  const origin = req.headers.origin || '*';
-  reply.header('Access-Control-Allow-Origin', origin);
-  reply.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-org-id, x-trace-id, x-service-secret, x-admin-secret, x-user-role');
-  reply.header('Access-Control-Allow-Credentials', 'true');
+  const origin = req.headers.origin;
+  const allowed = isAllowedOrigin(origin);
+  if (allowed) {
+    reply.header('Access-Control-Allow-Origin', allowed);
+    reply.header('Access-Control-Allow-Credentials', 'true');
+  }
+  reply.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-org-id, x-trace-id');
   reply.header('X-Frame-Options', 'DENY');
   reply.header('X-Content-Type-Options', 'nosniff');
   reply.header('X-XSS-Protection', '1; mode=block');
-  reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  reply.header('X-Permitted-Cross-Domain-Policies', 'none');
+  reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+  reply.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 });
 
 // CORS preflight
@@ -219,7 +249,10 @@ app.post('/proxy/payments/webhook', { preHandler: requireScope('payments:webhook
 
 /* ── Auth Endpoints (public — no token required) ── */
 
-app.post('/auth/signup', async (req, reply) => {
+// Auth rate limits: 10 attempts/min per IP (brute-force protection)
+const authRateLimit = { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } };
+
+app.post('/auth/signup', authRateLimit, async (req, reply) => {
   const { email, password, name } = (req.body || {}) as { email?: string; password?: string; name?: string };
   const traceId = getTraceId(req);
 
@@ -261,7 +294,7 @@ app.post('/auth/signup', async (req, reply) => {
   return { token, userId: user.id, orgId: user.orgId, name: user.name, role: user.role, expiresIn: TOKEN_EXPIRY_SECONDS };
 });
 
-app.post('/auth/token', async (req, reply) => {
+app.post('/auth/token', authRateLimit, async (req, reply) => {
   const { email, password } = (req.body || {}) as { email?: string; password?: string };
   const traceId = getTraceId(req);
 
@@ -290,7 +323,7 @@ app.post('/auth/token', async (req, reply) => {
 
 /* ── Forgot Password Endpoints (public — no token required) ── */
 
-app.post('/auth/forgot-password', async (req, reply) => {
+app.post('/auth/forgot-password', authRateLimit, async (req, reply) => {
   const { email } = (req.body || {}) as { email?: string };
   const traceId = getTraceId(req);
 

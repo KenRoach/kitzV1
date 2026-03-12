@@ -526,6 +526,106 @@ const toolHandlers: Record<string, ToolHandler> = {
     return getRewards(orgId);
   },
 
+  async ai_chat(input, orgId) {
+    const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
+    if (!ANTHROPIC_API_KEY) {
+      return { reply: 'AI chat is not configured on this server.' };
+    }
+
+    const userMessage = String(input.message || '');
+    const history = (input.history || []) as { role: string; text: string }[];
+
+    if (!userMessage.trim()) {
+      return { reply: 'Please enter a message.' };
+    }
+
+    // Input length validation (enterprise security)
+    if (userMessage.length > 4000) {
+      return { reply: 'Message is too long. Please keep it under 4000 characters.' };
+    }
+
+    // Load org context for AI — assets, orders, tickets
+    const assets = await getAssets(orgId);
+    const orders = await getOrders(orgId);
+    const tickets = await getTickets(orgId);
+
+    const criticalAssets = assets.filter(a => a.daysLeft <= 30 && a.daysLeft >= 0);
+    const lapsedAssets = assets.filter(a => a.daysLeft < 0);
+    const totalPortfolio = assets.reduce((s, a) => s + a.tpm, 0);
+    const clients = [...new Set(assets.map(a => a.client))];
+
+    const systemPrompt = `You are RenewFlow AI — the intelligent warranty renewal assistant for LATAM IT channel partners. You have access to this organization's real data.
+
+PORTFOLIO SUMMARY:
+- ${assets.length} total devices across ${clients.length} clients: ${clients.join(', ')}
+- ${criticalAssets.length} devices expiring within 30 days (URGENT)
+- ${lapsedAssets.length} lapsed warranties needing recovery
+- Total TPM portfolio value: $${totalPortfolio.toLocaleString()}
+
+CRITICAL DEVICES (expiring ≤30 days):
+${criticalAssets.slice(0, 8).map(a => `  • ${a.brand} ${a.model} (${a.client}) — ${a.daysLeft} days left, TPM: $${a.tpm}, OEM: $${a.oem ?? 'N/A'}`).join('\n') || '  None'}
+
+LAPSED WARRANTIES:
+${lapsedAssets.slice(0, 5).map(a => `  • ${a.brand} ${a.model} (${a.client}) — ${Math.abs(a.daysLeft)} days expired, TPM recovery: $${a.tpm}`).join('\n') || '  None'}
+
+OPEN ORDERS: ${orders.filter(o => o.status !== 'fulfilled').length} pending
+OPEN TICKETS: ${tickets.filter(t => t.status !== 'resolved').length} active
+
+RULES:
+- Always present TPM first for Standard/Low-use tiers (30-60% savings over OEM)
+- Recommend OEM first for Critical tier devices
+- Communication is email-only (no WhatsApp or messaging)
+- Be concise (max 200 words). Use data from the portfolio above.
+- If asked about specific devices or clients, reference actual data.`;
+
+    // Build messages for Anthropic API
+    const apiMessages = [
+      ...history
+        .filter(m => m.role !== 'system')
+        .slice(-10) // Keep last 10 messages for context window management
+        .map(m => ({
+          role: m.role === 'ai' ? 'assistant' as const : 'user' as const,
+          content: m.text,
+        })),
+      { role: 'user' as const, content: userMessage },
+    ];
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: systemPrompt,
+          messages: apiMessages,
+        }),
+        signal: AbortSignal.timeout(30_000),
+      });
+
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => '');
+        console.error('[kitz-gateway] anthropic_api_error', res.status, errBody);
+        return { reply: 'AI service temporarily unavailable. Please try again.' };
+      }
+
+      const data = await res.json() as { content?: { type: string; text: string }[] };
+      const reply = data.content
+        ?.filter(b => b.type === 'text')
+        .map(b => b.text)
+        .join('\n') || 'Unable to generate a response.';
+
+      return { reply };
+    } catch (err) {
+      console.error('[kitz-gateway] anthropic_request_failed', (err as Error).message);
+      return { reply: 'AI service timed out. Please try again.' };
+    }
+  },
+
   async send_quote_email(input, _orgId) {
     const recipients = (input.recipients || []) as string[];
     const quoteData = input.quote as Record<string, unknown> | undefined;
@@ -584,6 +684,7 @@ const TOOL_PERMISSIONS: Record<string, UserRole[]> = {
   list_tickets:      ['var', 'support', 'delivery-partner'],
   get_rewards:       ['var', 'support'],
   send_quote_email:  ['var', 'support', 'delivery-partner'],
+  ai_chat:           ['var', 'support', 'delivery-partner'],
 };
 
 // ─── Router ───
