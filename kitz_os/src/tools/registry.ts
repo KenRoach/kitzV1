@@ -97,6 +97,7 @@ export class OsToolRegistry {
       import('./mediaUnderstandingTools.js'),
       import('./memoryTools.js'),
       import('./webTools.js'),
+      import('./webBrowsingTools.js'),
       import('./sopTools.js'),
       import('./broadcastTools.js'),
       import('./llmTools.js'),
@@ -243,6 +244,18 @@ export class OsToolRegistry {
       import('./partnerResellerTools.js'),
       import('./onboardingAssistantTools.js'),
       import('./contentEngineEnhanced.js'),
+      // === Power Skills (new integrations) ===
+      import('./openaiPowerTools.js'),
+      import('./googleMapsTools.js'),
+      import('./resendEmailTools.js'),
+      import('./youtubeTools.js'),
+      import('./googleTrendsTools.js'),
+      import('./replicateAITools.js'),
+      import('./notionTools.js'),
+      import('./googleMyBusinessTools.js'),
+      import('./facebookBusinessTools.js'),
+      // Claude Power Tools (web search, code exec, extended thinking, batch, vision, PDF, summarize)
+      import('./claudePowerTools.js'),
     ]);
 
     const getterNames = [
@@ -263,6 +276,7 @@ export class OsToolRegistry {
       'getAllMediaUnderstandingTools',
       'getAllMemoryTools',
       'getAllWebTools',
+      'getAllWebBrowsingTools',
       'getAllSOPTools',
       'getAllBroadcastTools',
       'getAllLlmTools',
@@ -409,6 +423,18 @@ export class OsToolRegistry {
       'getAllPartnerResellerTools',
       'getAllOnboardingAssistantTools',
       'getAllContentEngineEnhancedTools',
+      // === Power Skills (new integrations) ===
+      'getAllOpenaiPowerTools',
+      'getAllGoogleMapsTools',
+      'getAllResendEmailTools',
+      'getAllYoutubeTools',
+      'getAllGoogleTrendsTools',
+      'getAllReplicateAiTools',
+      'getAllNotionTools',
+      'getAllGoogleMyBusinessTools',
+      'getAllFacebookBusinessTools',
+      // Claude Power Tools
+      'getAllClaudePowerTools',
     ];
 
     for (let i = 0; i < modules.length; i++) {

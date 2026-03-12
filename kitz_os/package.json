@@ -30,7 +30,8 @@
     "node-cron": "^3.0.0",
     "pdfkit": "^0.17.2",
     "qrcode-terminal": "^0.12.0",
-    "remotion": "^4.0.431"
+    "remotion": "^4.0.431",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

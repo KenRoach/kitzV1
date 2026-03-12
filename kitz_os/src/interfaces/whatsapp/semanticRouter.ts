@@ -26,6 +26,7 @@ import { getConversationHistory } from '../../memory/manager.js';
 import { createSubsystemLogger, type OutputChannel } from 'kitz-schemas';
 import { getIntelligenceContext } from '../../tools/ragPipelineTools.js';
 import { isBlocked, getToolRisk, getApprovalSummaryForPrompt } from '../../approvals/approvalMatrix.js';
+import { getContact, type Contact } from '../../contacts/registry.js';
 import { dispatchToAgent } from '../../../../aos/src/runtime/taskDispatcher.js';
 import { runSwarm, type SwarmConfig } from '../../../../aos/src/swarm/swarmRunner.js';
 import type { TeamName } from '../../../../aos/src/types.js';
@@ -212,7 +213,7 @@ function formatDraftSummary(drafts: DraftAction[]): string {
 }
 
 // ── System Prompt ──
-function buildSystemPrompt(toolCount: number, channel: OutputChannel = 'whatsapp', sopContext?: string, intelligenceContext?: string): string {
+function buildSystemPrompt(toolCount: number, channel: OutputChannel = 'whatsapp', sopContext?: string, intelligenceContext?: string, contactInfo?: Contact): string {
   const sopSection = sopContext
     ? `\n\nRELEVANT SOPS (follow these procedures when applicable):\n${sopContext}`
     : '';
@@ -225,8 +226,9 @@ function buildSystemPrompt(toolCount: number, channel: OutputChannel = 'whatsapp
   // Channel-specific formatting instructions
   const formatRulesMap: Record<OutputChannel, string> = {
     terminal: `RESPONSE FORMAT (Terminal CLI):
-- Respond in Spanish by default. Match user's language if they write in English.
+- ALWAYS respond in the SAME LANGUAGE the user writes in. If they write English, respond in English. If Spanish, respond in Spanish. Mirror their language exactly.
 - You are running inside the KITZ Command Center terminal.
+- You CAN learn and remember things about the user. You have a persistent memory system (/remember, /forget, /memories).
 - You CAN see system status: kitz_os health, WhatsApp connection, AI Battery, tools loaded, agents online.
 - You have full access to ${toolCount} tools, 140 agents across 19 teams, and the entire KITZ monorepo.
 - Keep responses concise — 1-3 sentences for simple queries, structured sections for complex ones.
@@ -314,11 +316,18 @@ You exist to make a small business run like a Fortune 500 company at a fraction 
 You have ${toolCount} tools available. You are responding via ${channelLabel[channel] || 'WhatsApp'}.
 
 LANGUAGE:
-- ALWAYS respond in Spanish by default. You are a Latin American business OS.
-- If the user writes in English, respond in English. Match the user's language.
+${channel === 'terminal' ? `- ALWAYS respond in the SAME LANGUAGE the user writes in. Mirror their language exactly.
+- If they write in English, respond fully in English. If Spanish, respond in Spanish.` : `- ALWAYS respond in Spanish by default. You are a Latin American business OS.
+- If the user writes in English, respond in English. Match the user's language.`}
 - If the user writes in Spanglish, respond in Spanish with natural English terms for business/tech words.
-- Use Latin American Spanish (tú, not vosotros). Natural, not academic.
+- Use Latin American Spanish when responding in Spanish (tú, not vosotros). Natural, not academic.
 - For business terms with no clean Spanish equivalent, use the English term (CRM, dashboard, ROI, leads, etc.)
+${contactInfo ? `
+USER CONTEXT (who you're talking to):
+- Name: ${contactInfo.name || 'Unknown'}${contactInfo.businessName ? `\n- Business: ${contactInfo.businessName}` : ''}${contactInfo.businessType ? `\n- Business Type: ${contactInfo.businessType}` : ''}
+- Phone: ${contactInfo.phone || 'Unknown'}
+- Status: ${contactInfo.status}${contactInfo.totalMessages ? `\n- Total messages: ${contactInfo.totalMessages}` : ''}${contactInfo.locale ? `\n- Preferred language: ${contactInfo.locale === 'en' ? 'English' : 'Spanish'}` : ''}
+- USE THEIR NAME naturally in conversation when appropriate (not every message). If you know their name, never ask for it again.` : ''}
 
 IDENTITY & TONE:
 - Gen Z clarity + disciplined founder energy. Direct, concise, no corporate fluff.
@@ -735,7 +744,14 @@ export async function routeWithAI(
     intelligenceContext = await getIntelligenceContext(userMessage, 2);
   } catch { /* non-blocking — proceed without intelligence context */ }
 
-  const systemPrompt = buildSystemPrompt(registry.count(), channel, sopContext, intelligenceContext);
+  // ── Contact Lookup — inject user's name and business into AI context ──
+  let contactInfo: Contact | undefined;
+  if (senderJid && senderJid !== 'unknown') {
+    const waChannel = channel === 'email' ? 'email' as const : 'whatsapp' as const;
+    contactInfo = getContact(senderJid, waChannel) ?? undefined;
+  }
+
+  const systemPrompt = buildSystemPrompt(registry.count(), channel, sopContext, intelligenceContext, contactInfo);
 
   // ── Build conversation context ──
   // Priority: frontend chat history > backend memory manager > empty

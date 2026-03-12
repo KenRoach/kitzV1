@@ -13,6 +13,10 @@
  *       kitz (if installed globally)
  */
 
+import dotenv from 'dotenv'
+// Load .env from CWD (repo root) first, then kitz_os/.env as fallback
+dotenv.config()
+dotenv.config({ path: new URL('../.env', import.meta.url).pathname, override: false })
 import * as readline from 'node:readline'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
@@ -20,6 +24,7 @@ import * as os from 'node:os'
 import * as http from 'node:http'
 import { execSync } from 'node:child_process'
 import chalk from 'chalk'
+import { callLLM } from './tools/shared/callLLM.js'
 
 // ── Types ──────────────────────────────────────────────
 
@@ -106,7 +111,7 @@ const MODE_INFO: Record<KitzMode, { label: string; color: (s: string) => string;
 interface SlashCommand {
   name: string
   aliases: string[]
-  category: 'mode' | 'draft' | 'chat' | 'agents' | 'system' | 'code' | 'preview' | 'channel' | 'content' | 'util'
+  category: 'mode' | 'draft' | 'chat' | 'agents' | 'system' | 'code' | 'preview' | 'channel' | 'content' | 'memory' | 'util'
   description: string
   takesArg?: boolean
   argHint?: string
@@ -150,7 +155,7 @@ const SLASH_COMMANDS: SlashCommand[] = [
   { name: 'files', aliases: ['ls'], category: 'code', description: 'List source files', takesArg: true, argHint: '[path]' },
   { name: 'read', aliases: ['cat'], category: 'code', description: 'Read a file', takesArg: true, argHint: '<path>' },
   { name: 'explain', aliases: [], category: 'code', description: 'AI-powered file analysis', takesArg: true, argHint: '<path>' },
-  { name: 'audit', aliases: [], category: 'code', description: 'Code health check', takesArg: true, argHint: '[service]' },
+  { name: 'audit', aliases: [], category: 'code', description: 'AI-powered code audit', takesArg: true, argHint: '[service|url]' },
   { name: 'deps', aliases: [], category: 'code', description: 'Dependency graph', takesArg: true, argHint: '[service]' },
   { name: 'diff', aliases: [], category: 'code', description: 'Uncommitted changes', takesArg: true, argHint: '[service]' },
   { name: 'map', aliases: ['arch', 'architecture'], category: 'code', description: 'Architecture diagram' },
@@ -159,6 +164,10 @@ const SLASH_COMMANDS: SlashCommand[] = [
   { name: 'preview', aliases: ['render', 'server'], category: 'preview', description: 'Start artifact render server', takesArg: true, argHint: '[stop]' },
   { name: 'open', aliases: [], category: 'preview', description: 'Open last artifact in browser' },
   { name: 'artifact', aliases: ['artifacts'], category: 'preview', description: 'Show last artifact path' },
+  // Memory & Learning
+  { name: 'remember', aliases: ['learn'], category: 'memory', description: 'Teach KITZ a fact', takesArg: true, argHint: '<fact>' },
+  { name: 'forget', aliases: [], category: 'memory', description: 'Remove a learned fact', takesArg: true, argHint: '<key>' },
+  { name: 'memories', aliases: ['memory', 'brain'], category: 'memory', description: 'Show what KITZ remembers' },
   // Utilities
   { name: 'clear', aliases: [], category: 'util', description: 'Clear screen' },
   { name: 'help', aliases: [], category: 'util', description: 'Full command reference' },
@@ -178,6 +187,220 @@ let autoAccept = false
 let currentMode: KitzMode = 'go'
 let orbMood: 'idle' | 'thinking' | 'success' | 'error' | 'swarm' = 'idle'
 let chatHistory: ChatMessage[] = []
+
+// ── Persistent CLI Memory ─────────────────────────────
+// Append-only NDJSON file for facts, preferences, and learned context.
+// Survives CLI restarts. User can teach KITZ via /remember or natural conversation.
+
+interface MemoryEntry {
+  type: 'fact' | 'preference' | 'decision'
+  key: string           // short identifier (e.g. "company_name", "language")
+  value: string         // the learned content
+  source: 'user' | 'inferred'  // explicitly taught or inferred from conversation
+  ts: number
+}
+
+const MEMORY_FILE = path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'data', 'cli', 'memory.jsonl')
+
+/** Load all memories from disk */
+function loadMemories(): MemoryEntry[] {
+  try {
+    if (!fs.existsSync(MEMORY_FILE)) return []
+    const raw = fs.readFileSync(MEMORY_FILE, 'utf-8').trim()
+    if (!raw) return []
+    return raw.split('\n').map(line => JSON.parse(line) as MemoryEntry)
+  } catch { return [] }
+}
+
+/** Save a memory entry (append-only) */
+function saveMemory(entry: MemoryEntry): void {
+  const dir = path.dirname(MEMORY_FILE)
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+  fs.appendFileSync(MEMORY_FILE, JSON.stringify(entry) + '\n')
+  // Update in-memory cache
+  const idx = cliMemories.findIndex(m => m.key === entry.key && m.type === entry.type)
+  if (idx >= 0) cliMemories[idx] = entry
+  else cliMemories.push(entry)
+}
+
+/** Delete a memory by key */
+function deleteMemory(key: string): boolean {
+  const idx = cliMemories.findIndex(m => m.key.toLowerCase() === key.toLowerCase())
+  if (idx < 0) return false
+  cliMemories.splice(idx, 1)
+  // Rewrite file without deleted entry
+  const dir = path.dirname(MEMORY_FILE)
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+  fs.writeFileSync(MEMORY_FILE, cliMemories.map(m => JSON.stringify(m)).join('\n') + (cliMemories.length ? '\n' : ''))
+  return true
+}
+
+/** Get all active memories as context string for AI */
+function getMemoryContext(): string {
+  if (cliMemories.length === 0) return ''
+  const facts = cliMemories.filter(m => m.type === 'fact')
+  const prefs = cliMemories.filter(m => m.type === 'preference')
+  const lines: string[] = []
+  if (facts.length > 0) {
+    lines.push('Known facts about the user:')
+    for (const f of facts) lines.push(`- ${f.key}: ${f.value}`)
+  }
+  if (prefs.length > 0) {
+    lines.push('User preferences:')
+    for (const p of prefs) lines.push(`- ${p.key}: ${p.value}`)
+  }
+  return lines.join('\n')
+}
+
+/** Try to detect facts or preferences from user messages */
+async function detectAndLearn(message: string): Promise<string | null> {
+  // Quick pattern matching for common teaching phrases
+  const patterns: Array<{ regex: RegExp; type: 'fact' | 'preference'; keyGen: (m: RegExpMatchArray) => string }> = [
+    { regex: /my (?:company|business|startup|brand) (?:is|name is|called) ["']?(.+?)["']?$/i, type: 'fact', keyGen: () => 'company_name' },
+    { regex: /(?:i am|i'm|my name is|call me) ["']?(\w[\w\s]+?)["']?$/i, type: 'fact', keyGen: () => 'user_name' },
+    { regex: /(?:i sell|we sell|i offer|we offer) (.+)$/i, type: 'fact', keyGen: () => 'products_services' },
+    { regex: /(?:i'm based in|i live in|i'm from|we're in|located in) (.+)$/i, type: 'fact', keyGen: () => 'location' },
+    { regex: /(?:my (?:target )?(?:market|audience|customers?) (?:is|are)) (.+)$/i, type: 'fact', keyGen: () => 'target_market' },
+    { regex: /(?:always |please )?(respond|reply|answer|speak|talk) (?:in |to me in )(.+)/i, type: 'preference', keyGen: () => 'language' },
+    { regex: /(?:i prefer|use) (bullet ?points?|lists?|short answers?|detailed answers?)/i, type: 'preference', keyGen: () => 'response_format' },
+  ]
+
+  for (const p of patterns) {
+    const match = message.match(p.regex)
+    if (match) {
+      const value = match[match.length - 1].trim()
+      const key = p.keyGen(match)
+      // Check if we already know this
+      const existing = cliMemories.find(m => m.key === key)
+      if (existing && existing.value.toLowerCase() === value.toLowerCase()) return null
+
+      saveMemory({ type: p.type, key, value, source: 'user', ts: Date.now() })
+      return `📝 Learned: ${key.replace(/_/g, ' ')} = "${value}"`
+    }
+  }
+  return null
+}
+
+// Load memories at startup
+let cliMemories: MemoryEntry[] = loadMemories()
+
+/** /remember <fact> — teach KITZ something via AI-powered extraction */
+async function cmdRemember(input: string): Promise<string> {
+  if (!input.trim()) {
+    return chalk.yellow('\n  ⚠ Usage: /remember <fact>\n  Example: /remember my company is RenewFlo\n  Example: /remember always respond in English\n')
+  }
+
+  // Use AI to extract structured key:value from natural language
+  const spinner = showSpinner('Aprendiendo...')
+  try {
+    const result = await callLLM(
+      `Extract a key-value fact or preference from the user's statement.
+Return ONLY a JSON object: {"type":"fact"|"preference","key":"short_snake_case_key","value":"the value"}
+Examples:
+- "my company is RenewFlo" → {"type":"fact","key":"company_name","value":"RenewFlo"}
+- "I sell warranty renewals to IT channel partners" → {"type":"fact","key":"products_services","value":"warranty renewals to IT channel partners"}
+- "always respond in English" → {"type":"preference","key":"language","value":"English"}
+- "I'm based in Panama City" → {"type":"fact","key":"location","value":"Panama City"}
+- "my email is ken@renewflo.com" → {"type":"fact","key":"email","value":"ken@renewflo.com"}
+Return ONLY the JSON, nothing else.`,
+      input,
+      { maxTokens: 200, temperature: 0.1 },
+    )
+    stopSpinner(spinner)
+
+    try {
+      const parsed = JSON.parse(result) as { type: 'fact' | 'preference'; key: string; value: string }
+      if (parsed.key && parsed.value) {
+        saveMemory({ type: parsed.type || 'fact', key: parsed.key, value: parsed.value, source: 'user', ts: Date.now() })
+        return [
+          '',
+          purpleBold('  🧠 Learned'),
+          `  ${line(40)}`,
+          `  ${chalk.cyan(parsed.key.replace(/_/g, ' '))}: ${chalk.white(parsed.value)}`,
+          `  ${dim(`(${parsed.type} · ${cliMemories.length} total memories)`)}`,
+          '',
+        ].join('\n')
+      }
+    } catch { /* fallback below */ }
+
+    // Fallback: store as raw fact
+    const key = input.slice(0, 30).toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+    saveMemory({ type: 'fact', key, value: input, source: 'user', ts: Date.now() })
+    return [
+      '',
+      purpleBold('  🧠 Learned'),
+      `  ${chalk.cyan(key)}: ${chalk.white(input)}`,
+      '',
+    ].join('\n')
+  } catch {
+    stopSpinner(spinner)
+    // Store raw without AI
+    const key = input.slice(0, 30).toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+    saveMemory({ type: 'fact', key, value: input, source: 'user', ts: Date.now() })
+    return `\n  ${chalk.green('📝')} Remembered: ${input}\n`
+  }
+}
+
+/** /forget <key> — remove a learned memory */
+function cmdForget(input: string): string {
+  if (!input.trim()) {
+    return chalk.yellow('\n  ⚠ Usage: /forget <key>\n  Use /memories to see all keys.\n')
+  }
+  const success = deleteMemory(input.trim())
+  if (success) {
+    return `\n  ${chalk.green('✔')} Forgot: ${input.trim()}\n`
+  }
+  return chalk.red(`\n  ❌ No memory found with key: ${input.trim()}\n  Use /memories to see all keys.\n`)
+}
+
+/** /memories — show everything KITZ remembers */
+function cmdMemories(): string {
+  if (cliMemories.length === 0) {
+    return [
+      '',
+      purpleBold('  🧠 KITZ Memory'),
+      `  ${line(40)}`,
+      dim('  No memories yet. Teach me with /remember <fact>'),
+      dim('  Example: /remember my company is called RenewFlo'),
+      '',
+    ].join('\n')
+  }
+
+  const facts = cliMemories.filter(m => m.type === 'fact')
+  const prefs = cliMemories.filter(m => m.type === 'preference')
+  const decisions = cliMemories.filter(m => m.type === 'decision')
+
+  const lines = ['', purpleBold('  🧠 KITZ Memory'), `  ${line(40)}`, '']
+
+  if (facts.length > 0) {
+    lines.push(chalk.bold('  Facts:'))
+    for (const f of facts) {
+      lines.push(`    ${chalk.cyan(f.key.replace(/_/g, ' ').padEnd(20))} ${chalk.white(f.value)}  ${dim(f.source)}`)
+    }
+    lines.push('')
+  }
+
+  if (prefs.length > 0) {
+    lines.push(chalk.bold('  Preferences:'))
+    for (const p of prefs) {
+      lines.push(`    ${chalk.cyan(p.key.replace(/_/g, ' ').padEnd(20))} ${chalk.white(p.value)}  ${dim(p.source)}`)
+    }
+    lines.push('')
+  }
+
+  if (decisions.length > 0) {
+    lines.push(chalk.bold('  Decisions:'))
+    for (const d of decisions) {
+      lines.push(`    ${chalk.cyan(d.key.replace(/_/g, ' ').padEnd(20))} ${chalk.white(d.value)}  ${dim(new Date(d.ts).toLocaleDateString())}`)
+    }
+    lines.push('')
+  }
+
+  lines.push(dim(`  ${cliMemories.length} memories · /forget <key> to remove · /remember <fact> to add`))
+  lines.push('')
+  return lines.join('\n')
+}
+
 let lastSwarm: SwarmResult | null = null
 let lastDraftToken: string | null = null
 let lastArtifactPath: string | null = null
@@ -397,7 +620,8 @@ function renderBootScreen(): string {
     `  ${purpleBold('Qué')}   ${chalk.white('Sistema operativo de negocios con IA')}`,
     `  ${purpleBold('Cómo')}  ${chalk.white('Chatea aquí o en WhatsApp — KITZ maneja tus ops')}`,
     `  ${waStatus}`,
-  ]
+    cliMemories.length > 0 ? `  ${chalk.magenta('🧠')} ${dim(`${cliMemories.length} memoria${cliMemories.length !== 1 ? 's' : ''} cargada${cliMemories.length !== 1 ? 's' : ''}`)}  ${dim(`— /remember · /forget · /memories`)}` : '',
+  ].filter(Boolean)
 
   if (killSwitch) {
     lines.push(`  ${chalk.bgRed.white.bold(' ⛔ KILL SWITCH ACTIVO ')} ${chalk.red('— Ejecución de IA detenida. Set KILL_SWITCH=false para reactivar.')}`)
@@ -468,16 +692,312 @@ function showThinking(steps: ThinkingStep[]): string {
 
 // ── Commands ───────────────────────────────────────────
 
+// ── Local File Reading ────────────────────────────────
+
+const SPREADSHEET_EXTS = new Set(['.xlsx', '.xls', '.csv', '.numbers', '.tsv'])
+const IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.tiff', '.svg'])
+const TEXT_EXTS = new Set(['.txt', '.md', '.json', '.ts', '.tsx', '.js', '.jsx', '.py', '.html', '.css', '.yml', '.yaml', '.toml', '.xml', '.sql', '.sh', '.env', '.log', '.cfg', '.ini', '.conf'])
+
+/** Detect file path(s) in user input. Returns { filePath, question } or null */
+function detectFilePath(input: string): { filePath: string; question: string } | null {
+  // Match absolute paths: /Users/..., ~/..., or C:\...
+  const absMatch = input.match(/((?:\/[\w.\-@]+)+(?:\.\w+)?|~\/[\w.\-@/]+(?:\.\w+)?)/)
+  if (absMatch) {
+    const raw = absMatch[1]
+    const expanded = raw.replace(/^~/, os.homedir())
+    if (fs.existsSync(expanded)) {
+      const question = input.replace(raw, '').trim()
+      return { filePath: expanded, question: question || 'Analyze this file and tell me the key points, trends, and insights.' }
+    }
+  }
+  return null
+}
+
+/** Read spreadsheet file (.xlsx, .xls, .csv, .numbers) and return text table */
+async function readSpreadsheet(filePath: string): Promise<string> {
+  const xlsxModule = await import('xlsx')
+  const XLSX = xlsxModule.default || xlsxModule
+  const workbook = XLSX.readFile(filePath, { type: 'file' })
+  const sheets: string[] = []
+
+  for (const sheetName of workbook.SheetNames) {
+    const sheet = workbook.Sheets[sheetName]
+    if (!sheet) continue
+    const data = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as unknown[][]
+    if (data.length === 0) continue
+
+    sheets.push(`### Sheet: ${sheetName} (${data.length} rows)`)
+
+    // Show all rows up to 200, then summarize
+    const maxRows = Math.min(data.length, 200)
+    for (let i = 0; i < maxRows; i++) {
+      const row = data[i] as unknown[]
+      sheets.push(row.map(cell => cell ?? '').join('\t'))
+    }
+    if (data.length > maxRows) {
+      sheets.push(`... and ${data.length - maxRows} more rows`)
+    }
+  }
+
+  return sheets.join('\n') || 'Empty spreadsheet'
+}
+
+/** Read a text-based file and return content (truncated to limit) */
+function readTextFile(filePath: string, maxChars = 15000): string {
+  const content = fs.readFileSync(filePath, 'utf-8')
+  if (content.length > maxChars) {
+    return content.slice(0, maxChars) + `\n\n... (truncated, ${content.length} chars total)`
+  }
+  return content
+}
+
+/** Read an image file and return base64 for Claude Vision */
+function readImageAsBase64(filePath: string): { base64: string; mediaType: string } {
+  const ext = path.extname(filePath).toLowerCase()
+  const mediaTypes: Record<string, string> = {
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+    '.bmp': 'image/bmp',
+  }
+  const mediaType = mediaTypes[ext] || 'image/png'
+  const data = fs.readFileSync(filePath)
+  return { base64: data.toString('base64'), mediaType }
+}
+
+/** Send image to Claude Vision API for analysis */
+async function analyzeImageWithVision(
+  base64: string,
+  mediaType: string,
+  question: string,
+): Promise<string | null> {
+  const apiKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || ''
+  if (!apiKey) return null
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+            { type: 'text', text: question },
+          ],
+        }],
+      }),
+      signal: AbortSignal.timeout(30000),
+    })
+    if (!res.ok) return null
+    const d = await res.json() as { content: Array<{ type: string; text?: string }> }
+    return d.content?.find(c => c.type === 'text')?.text || null
+  } catch {
+    return null
+  }
+}
+
+/** Handle a user message that contains a file path — read and analyze */
+async function cmdFileAnalysis(filePath: string, question: string): Promise<string> {
+  const ext = path.extname(filePath).toLowerCase()
+  const fileName = path.basename(filePath)
+
+  orbMood = 'thinking'
+  const startMs = Date.now()
+
+  // Image files → Claude Vision
+  if (IMAGE_EXTS.has(ext)) {
+    const spinner = showSpinner('Analizando imagen...')
+    try {
+      const { base64, mediaType } = readImageAsBase64(filePath)
+      const fileSizeMB = (fs.statSync(filePath).size / (1024 * 1024)).toFixed(1)
+      const analysis = await analyzeImageWithVision(base64, mediaType, question)
+      stopSpinner(spinner)
+
+      if (!analysis) {
+        orbMood = 'error'
+        setTimeout(() => { orbMood = 'idle' }, 3000)
+        return chalk.red('\n  ❌ No AI API key configured for image analysis. Set ANTHROPIC_API_KEY.\n')
+      }
+
+      orbMood = 'success'
+      const elapsed = Date.now() - startMs
+      const formatted = formatReplyForTerminal(analysis)
+
+      chatHistory.push({ role: 'user', content: `[Analyzed image: ${fileName}] ${question}`, ts: Date.now() })
+      chatHistory.push({ role: 'assistant', content: analysis, ts: Date.now() })
+
+      setTimeout(() => { orbMood = 'idle' }, 3000)
+      return [
+        '',
+        purpleBold(`  📸 ${fileName}`) + dim(` (${fileSizeMB} MB · ${ext.slice(1).toUpperCase()})`),
+        `  ${line(50)}`,
+        '',
+        `  ${purpleBold('Kitz:')}`,
+        chalk.white(formatted),
+        '',
+        `  ${dim(`${elapsed}ms`)}`,
+        '',
+      ].join('\n')
+    } catch (err) {
+      stopSpinner(spinner)
+      orbMood = 'error'
+      setTimeout(() => { orbMood = 'idle' }, 3000)
+      return chalk.red(`\n  ❌ Failed to read image: ${(err as Error).message}\n`)
+    }
+  }
+
+  // Spreadsheet files → xlsx parse + LLM analysis
+  if (SPREADSHEET_EXTS.has(ext)) {
+    const spinner = showSpinner('Leyendo datos...')
+    try {
+      const tableContent = await readSpreadsheet(filePath)
+      stopSpinner(spinner)
+
+      const fileHeader = [
+        '',
+        purpleBold(`  📊 ${fileName}`) + dim(` (${ext.slice(1).toUpperCase()})`),
+        `  ${line(50)}`,
+        '',
+      ].join('\n')
+      process.stdout.write(fileHeader)
+
+      // Show preview of the data
+      const previewLines = tableContent.split('\n').slice(0, 8)
+      for (const pl of previewLines) {
+        process.stdout.write(dim(`    ${pl.slice(0, 100)}\n`))
+      }
+      if (tableContent.split('\n').length > 8) {
+        process.stdout.write(dim(`    ... (${tableContent.split('\n').length} total rows)\n`))
+      }
+      process.stdout.write('\n')
+
+      // AI analysis
+      const aiSpinner = showSpinner('Analizando...')
+      const aiResult = await callLLM(
+        `You are KITZ, an AI business analyst. Analyze the spreadsheet data provided. Be specific about numbers, trends, patterns, and actionable insights. Reference actual data points. Use markdown formatting. Keep response under 500 words.`,
+        `File: ${fileName}\nUser question: ${question}\n\nSpreadsheet data:\n${tableContent.slice(0, 12000)}`,
+        { maxTokens: 2000, temperature: 0.3, timeoutMs: 30000 },
+      )
+      stopSpinner(aiSpinner)
+
+      orbMood = 'success'
+      const elapsed = Date.now() - startMs
+
+      if (aiResult && !aiResult.includes('"error"')) {
+        const formatted = formatReplyForTerminal(aiResult)
+        chatHistory.push({ role: 'user', content: `[Analyzed spreadsheet: ${fileName}] ${question}`, ts: Date.now() })
+        chatHistory.push({ role: 'assistant', content: aiResult, ts: Date.now() })
+
+        setTimeout(() => { orbMood = 'idle' }, 3000)
+        const out = [
+          `  ${purpleBold('Kitz:')}`,
+          chalk.white(formatted),
+          '',
+          `  ${dim(`${elapsed}ms`)}`,
+          '',
+        ].join('\n')
+        await typewriterPrint(out)
+        return ''
+      }
+
+      setTimeout(() => { orbMood = 'idle' }, 3000)
+      return dim('\n  💡 Set ANTHROPIC_API_KEY or OPENAI_API_KEY for AI analysis\n')
+    } catch (err) {
+      stopSpinner(spinner)
+      orbMood = 'error'
+      setTimeout(() => { orbMood = 'idle' }, 3000)
+      return chalk.red(`\n  ❌ Failed to read spreadsheet: ${(err as Error).message}\n`)
+    }
+  }
+
+  // Text/code files → read + LLM analysis
+  if (TEXT_EXTS.has(ext) || ext === '') {
+    const spinner = showSpinner('Leyendo archivo...')
+    try {
+      const content = readTextFile(filePath)
+      stopSpinner(spinner)
+
+      const fileHeader = [
+        '',
+        purpleBold(`  📄 ${fileName}`) + dim(` (${content.length.toLocaleString()} chars)`),
+        `  ${line(50)}`,
+        '',
+      ].join('\n')
+      process.stdout.write(fileHeader)
+
+      // AI analysis
+      const aiSpinner = showSpinner('Analizando...')
+      const aiResult = await callLLM(
+        `You are KITZ, an AI assistant. Analyze the file provided and answer the user's question. Be specific and reference actual content. Use markdown formatting. Keep response under 500 words.`,
+        `File: ${fileName}\nUser question: ${question}\n\nFile content:\n${content.slice(0, 12000)}`,
+        { maxTokens: 2000, temperature: 0.3, timeoutMs: 30000 },
+      )
+      stopSpinner(aiSpinner)
+
+      orbMood = 'success'
+      const elapsed = Date.now() - startMs
+
+      if (aiResult && !aiResult.includes('"error"')) {
+        const formatted = formatReplyForTerminal(aiResult)
+        chatHistory.push({ role: 'user', content: `[Analyzed file: ${fileName}] ${question}`, ts: Date.now() })
+        chatHistory.push({ role: 'assistant', content: aiResult, ts: Date.now() })
+
+        setTimeout(() => { orbMood = 'idle' }, 3000)
+        const out = [
+          `  ${purpleBold('Kitz:')}`,
+          chalk.white(formatted),
+          '',
+          `  ${dim(`${elapsed}ms`)}`,
+          '',
+        ].join('\n')
+        await typewriterPrint(out)
+        return ''
+      }
+
+      setTimeout(() => { orbMood = 'idle' }, 3000)
+      return dim('\n  💡 Set ANTHROPIC_API_KEY or OPENAI_API_KEY for AI analysis\n')
+    } catch (err) {
+      stopSpinner(spinner)
+      orbMood = 'error'
+      setTimeout(() => { orbMood = 'idle' }, 3000)
+      return chalk.red(`\n  ❌ Failed to read file: ${(err as Error).message}\n`)
+    }
+  }
+
+  // Unknown extension — try as text
+  return chalk.yellow(`\n  ⚠ Unsupported file type: ${ext}\n  Supported: spreadsheets (.xlsx, .csv, .numbers), images (.png, .jpg, .gif, .webp), text (.txt, .md, .json, .ts, .py)\n`)
+}
+
 async function cmdChat(message: string): Promise<string> {
   orbMood = 'thinking'
   const startMs = Date.now()
   const spinner = showSpinner('Thinking...')
 
   try {
-    const history = chatHistory.slice(-10).map(m => ({ role: m.role, content: m.content }))
+    const history = chatHistory.slice(-20).map(m => ({ role: m.role, content: m.content }))
     // Inject mode prefix for plan/ask modes
     const modePrefix = MODE_INFO[currentMode].chatPrefix
-    const fullMessage = modePrefix ? `${modePrefix}\n\nUser message: ${message}` : message
+    // Inject KITZ identity, learning capabilities, and remembered context
+    const memoryCtx = getMemoryContext()
+    const parts: string[] = []
+    parts.push(`[KITZ System Context]
+You are KITZ, an AI-powered business operating system. You CAN learn and remember things about the user across sessions.
+The user can teach you facts with /remember, remove them with /forget, and see what you know with /memories.
+You also auto-detect facts from conversation (name, company, location, products, preferences).
+When asked if you can learn: YES, you can. You have a persistent memory system.${cliMemories.length > 0 ? ` You currently remember ${cliMemories.length} thing${cliMemories.length !== 1 ? 's' : ''} about this user.` : ''}
+Always respond in the same language the user writes in.`)
+    if (memoryCtx) parts.push(`[KITZ Memory — what I know about this user]\n${memoryCtx}`)
+    if (modePrefix) parts.push(modePrefix)
+    const fullMessage = `${parts.join('\n\n')}\n\nUser message: ${message}`
 
     const res = await kitzFetch<{
       response?: string; reply?: string; message?: string
@@ -498,6 +1018,11 @@ async function cmdChat(message: string): Promise<string> {
 
     chatHistory.push({ role: 'user', content: message, ts: Date.now() })
     chatHistory.push({ role: 'assistant', content: reply, ts: Date.now() })
+
+    // Auto-learn facts from user messages (non-blocking)
+    detectAndLearn(message).then(learned => {
+      if (learned) process.stdout.write(`\n  ${dim(learned)}\n`)
+    }).catch(() => { /* silent */ })
 
     // Track draft token for approve/reject workflow
     if (res.draft_token) {
@@ -557,6 +1082,10 @@ async function cmdChat(message: string): Promise<string> {
     setTimeout(() => { orbMood = 'idle' }, 3000)
     const errMsg = err instanceof Error ? err.message : 'Failed to reach KITZ'
     if (errMsg.includes('API 404') || errMsg.includes('fetch')) {
+      const now = Date.now()
+      // Suppress repeated "not reachable" errors within 5 seconds (e.g. multiline paste)
+      if (now - lastUnreachableTs < 5000) return ''
+      lastUnreachableTs = now
       return chalk.yellow(`\n  ⚠ kitz_os no alcanzable en ${KITZ_OS_URL}\n  Inicia con: ${dim('cd kitz_os && npm run dev')}\n`)
     }
     return chalk.red(`\n  ❌ ${errMsg}\n`)
@@ -832,6 +1361,49 @@ function formatReplyForTerminal(reply: string): string {
   }
 
   return formatted
+}
+
+// ── Audit AI Analysis Formatting ──────────────────────
+
+/** Format AI audit analysis with KITZ branding and health score color coding */
+function formatAuditAnalysis(raw: string): string {
+  let formatted = formatReplyForTerminal(raw)
+
+  // Color-code health score
+  formatted = formatted.replace(
+    /Health Score[:\s]*(\d+)\/10/i,
+    (_match: string, score: string) => {
+      const n = parseInt(score, 10)
+      const color = n >= 8 ? chalk.green : n >= 5 ? chalk.yellow : chalk.red
+      return `Health Score: ${color(`${n}/10`)}`
+    }
+  )
+
+  const lines = [
+    '',
+    purpleBold('  🧠 KITZ AI ANALYSIS'),
+    `  ${line(50)}`,
+    '',
+    formatted,
+    '',
+    `  ${line(50)}`,
+    dim('  Powered by KITZ · Claude Haiku'),
+    '',
+  ]
+  return lines.join('\n')
+}
+
+// ── Typewriter Print (natural pacing) ─────────────────
+
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
+
+/** Print text line-by-line with pacing for a natural feel */
+async function typewriterPrint(text: string, delayMs = 35): Promise<void> {
+  const lines = text.split('\n')
+  for (const ln of lines) {
+    process.stdout.write(ln + '\n')
+    await sleep(delayMs)
+  }
 }
 
 // ── Artifact Extraction & Saving ──────────────────────
@@ -1977,10 +2549,299 @@ async function cmdExplain(filePath?: string): Promise<string> {
   }
 }
 
-/** audit [service] — code health check for a service */
+// ── AI Audit Analysis ─────────────────────────────────
+
+/** Feed structured audit data to the LLM for expert analysis */
+async function analyzeAuditWithAI(
+  auditData: Record<string, unknown>,
+  auditType: 'github' | 'local',
+): Promise<string | null> {
+  if (process.env.KILL_SWITCH === 'true') return null
+
+  const systemPrompt = `You are KITZ, an AI-powered Business Operating System. You are performing a code audit.
+Analyze the repository data and give a concise expert assessment.
+
+Your response MUST follow this structure:
+
+## Health Score: X/10
+
+## Key Strengths
+- (2-3 bullets)
+
+## Risks & Concerns
+- (2-4 bullets, most critical first)
+
+## Recommendations
+- (3-5 actionable items, ordered by priority)
+
+## Architecture Notes
+- (1-3 observations about structure, patterns, or tech stack)
+
+Rules:
+- Be direct, specific, and reference actual data from the audit
+- Score honestly: 8+ solid, 5-7 needs work, below 5 concerning
+- For GitHub audits: comment on repo hygiene (README, license, CI config, tests)
+- For local audits: focus on type safety, test coverage, code debt markers
+- Keep total response under 400 words
+- Use markdown formatting`
+
+  const userPrompt = `Audit type: ${auditType}\n\nAudit data:\n${JSON.stringify(auditData, null, 2)}`
+
+  try {
+    const result = await callLLM(systemPrompt, userPrompt, {
+      maxTokens: 1500,
+      temperature: 0.3,
+      timeoutMs: 25_000,
+    })
+    if (!result || result.includes('"error"') || result.includes('No AI available')) return null
+    return result
+  } catch {
+    return null
+  }
+}
+
+/** audit a GitHub repo remotely via API */
+async function cmdAuditGitHub(url: string): Promise<string> {
+  const GH_API = 'https://api.github.com'
+  const GH_TOKEN = process.env.GITHUB_TOKEN || ''
+  const ghHeaders: Record<string, string> = {
+    'Accept': 'application/vnd.github.v3+json',
+    'User-Agent': 'KitzBot/1.0',
+    ...(GH_TOKEN ? { 'Authorization': `token ${GH_TOKEN}` } : {}),
+  }
+
+  // Parse owner/repo from URL
+  try {
+    const parsed = new URL(url.startsWith('http') ? url : `https://${url}`)
+    const parts = parsed.pathname.replace(/^\//, '').replace(/\/$/, '').split('/')
+    if (parts.length < 2) return chalk.red('\n  ❌ Invalid GitHub URL. Use: github.com/owner/repo\n')
+    const owner = parts[0]
+    const repo = parts[1]
+
+    const lines = ['', purpleBold(`  🔬 REMOTE AUDIT: ${owner}/${repo}`), `  ${line(50)}`, '']
+
+    // Fetch repo metadata
+    const repoRes = await fetch(`${GH_API}/repos/${owner}/${repo}`, {
+      headers: ghHeaders, signal: AbortSignal.timeout(10000),
+    })
+    if (!repoRes.ok) return chalk.red(`\n  ❌ GitHub API error: ${repoRes.status} — ${repoRes.statusText}\n`)
+    const repoData = await repoRes.json() as any
+
+    lines.push(`  Name:          ${chalk.white(repoData.full_name)}`)
+    lines.push(`  Description:   ${chalk.white(repoData.description || '(none)')}`)
+    lines.push(`  Language:      ${chalk.white(repoData.language || '?')}`)
+    lines.push(`  Stars:         ${chalk.white(String(repoData.stargazers_count))}`)
+    lines.push(`  Forks:         ${chalk.white(String(repoData.forks_count))}`)
+    lines.push(`  Open issues:   ${chalk.white(String(repoData.open_issues_count))}`)
+    lines.push(`  License:       ${chalk.white(repoData.license?.name || 'None')}`)
+    lines.push(`  Last updated:  ${chalk.white(new Date(repoData.updated_at).toLocaleDateString())}`)
+    lines.push(`  Default branch:${chalk.white(` ${repoData.default_branch}`)}`)
+    lines.push(`  Size:          ${chalk.white(`${repoData.size} KB`)}`)
+
+    // Fetch root tree to analyze structure
+    lines.push('')
+    lines.push(chalk.bold('  Repository Structure:'))
+    const treeRes = await fetch(`${GH_API}/repos/${owner}/${repo}/contents/`, {
+      headers: ghHeaders, signal: AbortSignal.timeout(10000),
+    })
+    if (treeRes.ok) {
+      const items = await treeRes.json() as any[]
+      const dirs = items.filter((i: any) => i.type === 'dir').sort((a: any, b: any) => a.name.localeCompare(b.name))
+      const files = items.filter((i: any) => i.type !== 'dir').sort((a: any, b: any) => a.name.localeCompare(b.name))
+      for (const d of dirs) lines.push(`    ${chalk.cyan('📁')} ${d.name}/`)
+      for (const f of files) lines.push(`    ${dim('📄')} ${f.name}  ${dim(`(${f.size} B)`)}`)
+    }
+
+    // Check for package.json
+    lines.push('')
+    lines.push(chalk.bold('  Package Info:'))
+    const pkgRes = await fetch(`${GH_API}/repos/${owner}/${repo}/contents/package.json`, {
+      headers: ghHeaders, signal: AbortSignal.timeout(10000),
+    })
+    if (pkgRes.ok) {
+      const pkgFile = await pkgRes.json() as any
+      if (pkgFile.content) {
+        const pkgContent = Buffer.from(pkgFile.content, 'base64').toString('utf-8')
+        const pkg = JSON.parse(pkgContent)
+        const deps = Object.keys(pkg.dependencies || {})
+        const devDeps = Object.keys(pkg.devDependencies || {})
+        lines.push(`    Version:      ${chalk.white(pkg.version || '?')}`)
+        lines.push(`    Dependencies: ${chalk.white(String(deps.length))} prod · ${chalk.white(String(devDeps.length))} dev`)
+        if (deps.length > 0) {
+          lines.push(`    ${chalk.bold('Prod deps:')} ${deps.slice(0, 10).join(', ')}${deps.length > 10 ? ` +${deps.length - 10} more` : ''}`)
+        }
+        if (pkg.scripts) {
+          const scripts = Object.keys(pkg.scripts)
+          lines.push(`    ${chalk.bold('Scripts:')}   ${scripts.join(', ')}`)
+        }
+      }
+    } else {
+      lines.push(dim('    No package.json found'))
+    }
+
+    // Check for key config files
+    lines.push('')
+    lines.push(chalk.bold('  Config Files:'))
+    const configFiles = ['tsconfig.json', '.env.example', 'CLAUDE.md', 'README.md', 'Dockerfile', 'docker-compose.yml', 'vitest.config.ts', 'eslint.config.js']
+    for (const cf of configFiles) {
+      const cfRes = await fetch(`${GH_API}/repos/${owner}/${repo}/contents/${cf}`, {
+        headers: ghHeaders, signal: AbortSignal.timeout(5000),
+      })
+      const icon = cfRes.ok ? chalk.green('✔') : chalk.red('✖')
+      lines.push(`    ${icon} ${cf}`)
+    }
+
+    // Check src/ structure
+    lines.push('')
+    lines.push(chalk.bold('  Source Layout:'))
+    const srcRes = await fetch(`${GH_API}/repos/${owner}/${repo}/contents/src`, {
+      headers: ghHeaders, signal: AbortSignal.timeout(10000),
+    })
+    if (srcRes.ok) {
+      const srcItems = await srcRes.json() as any[]
+      const srcDirs = srcItems.filter((i: any) => i.type === 'dir')
+      const srcFiles = srcItems.filter((i: any) => i.type === 'file')
+      lines.push(`    ${chalk.white(String(srcDirs.length))} directories · ${chalk.white(String(srcFiles.length))} files in src/`)
+      for (const d of srcDirs) lines.push(`      ${chalk.cyan('📁')} ${d.name}/`)
+    } else {
+      lines.push(dim('    No src/ directory found'))
+    }
+
+    lines.push('')
+    lines.push(dim(`  🔗 ${repoData.html_url}`))
+    lines.push('')
+
+    // Print raw audit data immediately
+    const rawOutput = lines.join('\n')
+    await typewriterPrint(rawOutput)
+
+    // Build structured data for AI analysis
+    const treeItems = treeRes.ok ? await Promise.resolve(undefined) : undefined // already consumed
+    const auditData: Record<string, unknown> = {
+      owner, repo,
+      description: repoData.description,
+      language: repoData.language,
+      stars: repoData.stargazers_count,
+      forks: repoData.forks_count,
+      openIssues: repoData.open_issues_count,
+      license: repoData.license?.name || null,
+      lastUpdated: repoData.updated_at,
+      defaultBranch: repoData.default_branch,
+      sizeKB: repoData.size,
+      hasTests: false,
+      hasCI: false,
+    }
+
+    // Gather file names already displayed
+    const rootDirs: string[] = []
+    const rootFiles: string[] = []
+    // Re-parse from lines since we already consumed the response
+    for (const l of lines) {
+      const dirMatch = l.match(/📁\s+(\S+)\//)
+      const fileMatch = l.match(/📄\s+(\S+)\s/)
+      if (dirMatch) rootDirs.push(dirMatch[1])
+      if (fileMatch) rootFiles.push(fileMatch[1])
+    }
+    auditData.rootDirs = rootDirs
+    auditData.rootFiles = rootFiles
+    auditData.hasTests = rootDirs.includes('tests') || rootDirs.includes('test') || rootDirs.includes('__tests__')
+
+    // Extract package info already parsed
+    const pkgInfoLines = lines.filter(l => l.includes('Prod deps:') || l.includes('Scripts:') || l.includes('Dependencies:') || l.includes('Version:'))
+    if (pkgInfoLines.length > 0) auditData.packageSummary = pkgInfoLines.map(l => l.trim()).join('; ')
+
+    // Extract config file presence from what we displayed
+    const configPresent: Record<string, boolean> = {}
+    for (const cf of ['tsconfig.json', '.env.example', 'CLAUDE.md', 'README.md', 'Dockerfile', 'docker-compose.yml', 'vitest.config.ts', 'eslint.config.js']) {
+      configPresent[cf] = lines.some(l => l.includes('✔') && l.includes(cf))
+    }
+    auditData.configFiles = configPresent
+    auditData.hasCI = configPresent['Dockerfile'] || configPresent['docker-compose.yml']
+
+    // Fetch README content for deeper context (if it exists)
+    if (configPresent['README.md']) {
+      try {
+        const readmeRes = await fetch(`${GH_API}/repos/${owner}/${repo}/contents/README.md`, {
+          headers: ghHeaders, signal: AbortSignal.timeout(5000),
+        })
+        if (readmeRes.ok) {
+          const readmeFile = await readmeRes.json() as any
+          if (readmeFile.content) {
+            auditData.readmeExcerpt = Buffer.from(readmeFile.content, 'base64').toString('utf-8').slice(0, 2000)
+          }
+        }
+      } catch { /* skip */ }
+    }
+
+    // Fetch CLAUDE.md content for project context (if it exists)
+    if (configPresent['CLAUDE.md']) {
+      try {
+        const claudeRes = await fetch(`${GH_API}/repos/${owner}/${repo}/contents/CLAUDE.md`, {
+          headers: ghHeaders, signal: AbortSignal.timeout(5000),
+        })
+        if (claudeRes.ok) {
+          const claudeFile = await claudeRes.json() as any
+          if (claudeFile.content) {
+            auditData.claudeMdExcerpt = Buffer.from(claudeFile.content, 'base64').toString('utf-8').slice(0, 2000)
+          }
+        }
+      } catch { /* skip */ }
+    }
+
+    // Source layout summary
+    if (srcRes.ok) {
+      auditData.srcDirs = lines.filter(l => l.includes('📁') && l.includes('      ')).map(l => {
+        const m = l.match(/📁\s+(\S+)/)
+        return m ? m[1] : ''
+      }).filter(Boolean)
+    }
+
+    // AI analysis phase
+    const spinner = showSpinner('Analizando...')
+    orbMood = 'thinking'
+    const analysis = await analyzeAuditWithAI(auditData, 'github')
+    stopSpinner(spinner)
+
+    if (analysis) {
+      orbMood = 'success'
+      await typewriterPrint(formatAuditAnalysis(analysis))
+    } else {
+      lines.push(dim('  💡 Set ANTHROPIC_API_KEY or OPENAI_API_KEY for AI analysis'))
+      process.stdout.write(dim('  💡 Set ANTHROPIC_API_KEY or OPENAI_API_KEY for AI analysis\n'))
+    }
+    setTimeout(() => { orbMood = 'idle' }, 3000)
+
+    // Inject audit context into chat history for follow-up conversation
+    chatHistory.push({ role: 'user', content: `I just audited the GitHub repo ${owner}/${repo}`, ts: Date.now() })
+    chatHistory.push({
+      role: 'assistant',
+      content: `[Audit of ${owner}/${repo}]: ${JSON.stringify(auditData)}\n\n${analysis || 'No AI analysis available.'}`,
+      ts: Date.now(),
+    })
+
+    return '' // already printed via typewriter
+  } catch (err) {
+    return chalk.red(`\n  ❌ GitHub audit failed: ${(err as Error).message}\n`)
+  }
+}
+
+/** audit [service|path|url] — code health check for a service */
 async function cmdAudit(service?: string): Promise<string> {
   const target = service || 'kitz_os'
-  const servicePath = path.join(REPO_ROOT, target)
+
+  // GitHub URL support — fetch repo info via API
+  if (target.includes('github.com')) {
+    return cmdAuditGitHub(target)
+  }
+
+  // Support absolute paths (e.g. ~/renewflo or /Users/.../renewflo)
+  let servicePath: string
+  const expanded = target.replace(/^~/, os.homedir())
+  if (path.isAbsolute(expanded) || target.startsWith('~')) {
+    servicePath = expanded
+  } else {
+    servicePath = path.join(REPO_ROOT, target)
+  }
   if (!fs.existsSync(servicePath)) return chalk.red(`\n  ❌ Service not found: ${target}\n`)
 
   const lines = ['', purpleBold(`  🔬 AUDIT: ${target}`), `  ${line(50)}`, '']
@@ -2065,7 +2926,66 @@ async function cmdAudit(service?: string): Promise<string> {
   } catch {}
 
   lines.push('')
-  return lines.join('\n')
+
+  // Print raw audit data immediately
+  const rawOutput = lines.join('\n')
+  await typewriterPrint(rawOutput)
+
+  // Build structured data for AI analysis
+  const localAuditData: Record<string, unknown> = { target }
+  // Extract metrics from displayed lines
+  for (const l of lines) {
+    const srcMatch = l.match(/Source files:\s*(\d+)/)
+    const testMatch = l.match(/Test files:\s*(\d+)/)
+    const locMatch = l.match(/Total lines:\s*([\d,]+)/)
+    const depsMatch = l.match(/Dependencies:\s*(\d+)\s*prod\s*·\s*(\d+)\s*dev/)
+    const typeErrMatch = l.match(/(\d+)\s*type error/)
+    const markerMatch = l.match(/(\d+)\s*TODO/)
+    if (srcMatch) localAuditData.tsFileCount = parseInt(srcMatch[1])
+    if (testMatch) localAuditData.testFileCount = parseInt(testMatch[1])
+    if (locMatch) localAuditData.totalLines = parseInt(locMatch[1].replace(/,/g, ''))
+    if (depsMatch) { localAuditData.prodDeps = parseInt(depsMatch[1]); localAuditData.devDeps = parseInt(depsMatch[2]) }
+    if (typeErrMatch) localAuditData.typeErrors = parseInt(typeErrMatch[1])
+    if (markerMatch) localAuditData.todoCount = parseInt(markerMatch[1])
+  }
+  if (lines.some(l => l.includes('No type errors'))) localAuditData.typeErrors = 0
+
+  // Check for key files
+  const hasReadme = fs.existsSync(path.join(servicePath, 'README.md'))
+  const hasDockerfile = fs.existsSync(path.join(servicePath, 'Dockerfile'))
+  const hasTests = (localAuditData.testFileCount as number) > 0
+  localAuditData.configFiles = {
+    'README.md': hasReadme,
+    'Dockerfile': hasDockerfile,
+    'package.json': fs.existsSync(path.join(servicePath, 'package.json')),
+    'tsconfig.json': fs.existsSync(path.join(servicePath, 'tsconfig.json')),
+    '.env.example': fs.existsSync(path.join(servicePath, '.env.example')),
+    'CLAUDE.md': fs.existsSync(path.join(servicePath, 'CLAUDE.md')),
+  }
+
+  // AI analysis phase
+  const spinner = showSpinner('Analizando...')
+  orbMood = 'thinking'
+  const analysis = await analyzeAuditWithAI(localAuditData, 'local')
+  stopSpinner(spinner)
+
+  if (analysis) {
+    orbMood = 'success'
+    await typewriterPrint(formatAuditAnalysis(analysis))
+  } else {
+    process.stdout.write(dim('  💡 Set ANTHROPIC_API_KEY or OPENAI_API_KEY for AI analysis\n'))
+  }
+  setTimeout(() => { orbMood = 'idle' }, 3000)
+
+  // Inject audit context into chat history
+  chatHistory.push({ role: 'user', content: `I just audited ${target}`, ts: Date.now() })
+  chatHistory.push({
+    role: 'assistant',
+    content: `[Local audit of ${target}]: ${JSON.stringify(localAuditData)}\n\n${analysis || 'No AI analysis available.'}`,
+    ts: Date.now(),
+  })
+
+  return '' // already printed via typewriter
 }
 
 /** deps [service] — dependency graph for a service */
@@ -2495,6 +3415,7 @@ function detectCommandHint(message: string): string | null {
 }
 
 const cmdHistory: string[] = []
+let lastUnreachableTs = 0 // cooldown for "not reachable" error
 
 async function handleInput(input: string): Promise<string> {
   let trimmed = input.trim()
@@ -2519,6 +3440,13 @@ async function handleInput(input: string): Promise<string> {
 
   // Just "/" with nothing after = command palette
   if (!trimmed) return cmdPalette()
+
+  // ── File path detection (before command parsing) ──────
+  // Detect local file paths → read and analyze directly
+  const fileDetect = detectFilePath(trimmed)
+  if (fileDetect) {
+    return cmdFileAnalysis(fileDetect.filePath, fileDetect.question)
+  }
 
   const [cmd, ...args] = trimmed.split(/\s+/)
   const arg = args.join(' ')
@@ -2586,6 +3514,11 @@ async function handleInput(input: string): Promise<string> {
     case 'env': return cmdEnv()
     case 'git': return cmdGit(arg || undefined)
 
+    // Memory & Learning
+    case 'remember': case 'learn': return cmdRemember(arg)
+    case 'forget': return cmdForget(arg)
+    case 'memories': case 'memory': case 'brain': return cmdMemories()
+
     // Utilities
     case 'clear': process.stdout.write('\x1B[2J\x1B[H'); return ''
     case '?': return cmdPalette()
@@ -2622,6 +3555,7 @@ function cmdPalette(): string {
     ['preview', '🌐 Preview'],
     ['channel', '📱 Canales'],
     ['content', '📣 Contenido'],
+    ['memory', '🧠 Memoria'],
     ['util', '🛠  Utilidades'],
   ]
 
@@ -2886,14 +3820,40 @@ async function showBootQR(rl: readline.Interface, getPrompt: () => string): Prom
 
 /** Wire up the standard REPL event handlers */
 function wireRepl(rl: readline.Interface, getPrompt: () => string) {
-  rl.on('line', async (input) => {
-    const output = await handleInput(input)
+  // ── Paste buffer: collects rapid multiline pastes into a single message ──
+  let pasteBuffer: string[] = []
+  let pasteTimer: ReturnType<typeof setTimeout> | null = null
+  let processing = false // prevent re-entrance while awaiting response
+
+  const flushPaste = async () => {
+    pasteTimer = null
+    if (pasteBuffer.length === 0) return
+    // Join all buffered lines into a single input
+    const fullInput = pasteBuffer.join('\n').trim()
+    pasteBuffer = []
+    if (!fullInput) { rl.prompt(); return }
+
+    processing = true
+    const output = await handleInput(fullInput)
     if (output) {
       lastOutput = output
       printOutput(output)
     }
+    processing = false
     rl.setPrompt(getPrompt())
     rl.prompt()
+  }
+
+  rl.on('line', (input) => {
+    if (processing) {
+      // Silently buffer lines that arrive while we're waiting for a response
+      pasteBuffer.push(input)
+      return
+    }
+    pasteBuffer.push(input)
+    // Debounce: wait 50ms for more lines before flushing (pastes arrive rapidly)
+    if (pasteTimer) clearTimeout(pasteTimer)
+    pasteTimer = setTimeout(flushPaste, 50)
   })
 
   rl.on('close', () => {

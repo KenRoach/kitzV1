@@ -23,6 +23,8 @@ export interface CallLLMOptions {
   maxTokens?: number;
   temperature?: number;
   timeoutMs?: number;
+  useCache?: boolean;  // enable prompt caching (default: true)
+  betaFeatures?: string[];  // beta feature flags
 }
 
 export async function callLLM(
@@ -35,21 +37,33 @@ export async function callLLM(
   const maxTokens = options?.maxTokens || 1024;
   const temperature = options?.temperature || 0.2;
   const timeoutMs = options?.timeoutMs || 15_000;
+  const useCache = options?.useCache !== false; // default: true (always cache)
 
   if (CLAUDE_API_KEY) {
     try {
+      const betaFlags: string[] = [];
+      if (useCache) betaFlags.push('prompt-caching-2024-07-31');
+      if (options?.betaFeatures?.length) betaFlags.push(...options.betaFeatures);
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'x-api-key': CLAUDE_API_KEY,
+        'anthropic-version': CLAUDE_API_VERSION,
+      };
+      if (betaFlags.length) headers['anthropic-beta'] = betaFlags.join(',');
+
+      callLLMLog.info('claude_request', { model, cached: useCache });
+
       const res = await fetch(CLAUDE_API_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': CLAUDE_API_KEY,
-          'anthropic-version': CLAUDE_API_VERSION,
-        },
+        headers,
         body: JSON.stringify({
           model,
           max_tokens: maxTokens,
           temperature,
-          system: systemPrompt,
+          system: useCache ? [
+            { type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }
+          ] : systemPrompt,
           messages: [{ role: 'user', content: userInput }],
         }),
         signal: AbortSignal.timeout(timeoutMs),
@@ -137,6 +151,7 @@ export async function callLLMWithTools(
   const temperature = options.temperature || 0.3;
   const timeoutMs = options.timeoutMs || 120_000;
   const maxIterations = options.maxIterations ?? 10;
+  const useCache = options.useCache !== false; // default: true (always cache)
 
   const toolCalls: ToolCallEntry[] = [];
 
@@ -145,26 +160,36 @@ export async function callLLMWithTools(
     return { text: JSON.stringify({ error: 'No Claude API key for tool loop' }), toolCalls: [], iterations: 0 };
   }
 
+  // Build headers with optional beta flags for prompt caching
+  const betaFlags: string[] = [];
+  if (useCache) betaFlags.push('prompt-caching-2024-07-31');
+  if (options.betaFeatures?.length) betaFlags.push(...options.betaFeatures);
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'x-api-key': CLAUDE_API_KEY,
+    'anthropic-version': CLAUDE_API_VERSION,
+  };
+  if (betaFlags.length) headers['anthropic-beta'] = betaFlags.join(',');
+
   // Build message history for the loop
   const messages: Array<Record<string, unknown>> = [
     { role: 'user', content: userInput },
   ];
 
   for (let iteration = 0; iteration < maxIterations; iteration++) {
-    callLLMLog.info('tool_loop_iteration', { iteration, messageCount: messages.length });
+    callLLMLog.info('tool_loop_iteration', { iteration, messageCount: messages.length, cached: useCache });
 
     const res = await fetch(CLAUDE_API_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': CLAUDE_API_KEY,
-        'anthropic-version': CLAUDE_API_VERSION,
-      },
+      headers,
       body: JSON.stringify({
         model,
         max_tokens: maxTokens,
         temperature,
-        system: systemPrompt,
+        system: useCache ? [
+          { type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }
+        ] : systemPrompt,
         messages,
         tools: options.tools,
       }),
