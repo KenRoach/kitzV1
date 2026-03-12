@@ -10,8 +10,10 @@ import type {
 } from 'kitz-schemas';
 import { verifyJwt, signJwt } from './jwt.js';
 import { FileBackedRateLimitStore } from './rateLimitStore.js';
-import { isGoogleLoginConfigured, getLoginAuthUrl, exchangeLoginCode } from './googleAuth.js';
-import { findUserByEmail, createUser, updateUser, verifyPassword, listUsers, restoreUsers } from './db.js';
+// Google OAuth removed — email/password only
+import { findUserByEmail, createUser, verifyPassword, listUsers, restoreUsers, setResetToken, findUserByResetToken, clearResetToken, updatePassword } from './db.js';
+import { handleToolCall } from './renewflowTools.js';
+import { sendPasswordResetEmail } from './email.js';
 
 export const health = { status: 'ok' };
 const app = Fastify({ logger: true });
@@ -30,12 +32,22 @@ if (!process.env.JWT_SECRET && !process.env.DEV_TOKEN_SECRET) {
 
 await app.register(rateLimit, { max: 120, timeWindow: '1 minute', store: FileBackedRateLimitStore });
 
-// Security headers
-app.addHook('onSend', async (_req, reply) => {
+// CORS + Security headers
+app.addHook('onSend', async (req, reply) => {
+  const origin = req.headers.origin || '*';
+  reply.header('Access-Control-Allow-Origin', origin);
+  reply.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-org-id, x-trace-id, x-service-secret, x-admin-secret, x-user-role');
+  reply.header('Access-Control-Allow-Credentials', 'true');
   reply.header('X-Frame-Options', 'DENY');
   reply.header('X-Content-Type-Options', 'nosniff');
   reply.header('X-XSS-Protection', '1; mode=block');
   reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+});
+
+// CORS preflight
+app.options('/*', async (_req, reply) => {
+  return reply.code(204).send();
 });
 
 const JWT_SECRET = process.env.JWT_SECRET || process.env.DEV_TOKEN_SECRET || '';
@@ -46,7 +58,7 @@ const getTraceId = (req: FastifyRequest): string => String(req.headers['x-trace-
 const getOrgId = (req: FastifyRequest): string => String(req.headers['x-org-id']);
 
 /** Routes that skip auth */
-const PUBLIC_PATHS = ['/auth/signup', '/auth/token', '/auth/google/url', '/auth/google/callback', '/health'];
+const PUBLIC_PATHS = ['/auth/signup', '/auth/token', '/auth/forgot-password', '/auth/reset-password', '/auth/validate-reset-token', '/health'];
 
 const requireAuth = async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
   if (PUBLIC_PATHS.some(p => req.url.startsWith(p))) return;
@@ -69,6 +81,7 @@ const requireAuth = async (req: FastifyRequest, reply: FastifyReply): Promise<vo
     const claims = verifyJwt(token, JWT_SECRET);
     if (claims.sub) req.headers['x-user-id'] = claims.sub;
     if (claims.org_id) req.headers['x-org-id'] = claims.org_id;
+    if (claims.role) req.headers['x-user-role'] = String(claims.role);
     if (claims.scopes) req.headers['x-scopes'] = claims.scopes.join(',');
   } catch (err) {
     return reply.code(401).send(buildError('AUTH_INVALID', (err as Error).message, getTraceId(req)));
@@ -122,9 +135,15 @@ app.post('/events', { preHandler: requireScope('events:write') }, async (req) =>
 app.post('/tool-calls', { preHandler: requireScope('tools:invoke') }, async (req) => {
   const body = req.body as ToolCallRequest;
   audit('tool.invoked', body, req);
+
+  // Route through RenewFlow tool handlers first
+  const orgId = getOrgId(req);
+  const userRole = String(req.headers['x-user-role'] || 'var');
+  const result = await handleToolCall(body.name, (body.input || {}) as Record<string, unknown>, orgId, userRole);
+
   const response: ToolCallResponse = {
     name: body.name,
-    output: { status: 'routed-via-gateway' },
+    output: result.handled ? result.output : { status: 'routed-via-gateway' },
     riskLevel: body.riskLevel,
     requiredScopes: body.requiredScopes,
     traceId: getTraceId(req)
@@ -222,19 +241,24 @@ app.post('/auth/signup', async (req, reply) => {
     return reply.code(409).send(buildError('USER_EXISTS', 'An account with this email already exists', traceId));
   }
 
-  const user = await createUser(email, password, name);
+  const role = ((req.body as Record<string, unknown>).role as string) || 'var';
+  const validRoles = ['var', 'support', 'delivery-partner'];
+  const userRole = validRoles.includes(role) ? role : 'var';
+
+  const user = await createUser(email, password, name, { role: userRole as 'var' | 'support' | 'delivery-partner' } as any);
 
   const now = Math.floor(Date.now() / 1000);
   const token = signJwt({
     sub: user.id,
     org_id: user.orgId,
+    role: user.role,
     scopes: ['battery:read', 'payments:write', 'tools:invoke', 'events:write', 'notifications:write', 'messages:write'],
     iat: now,
     exp: now + TOKEN_EXPIRY_SECONDS,
   }, JWT_SECRET);
 
-  audit('auth.signup', { userId: user.id, email: user.email, orgId: user.orgId }, req);
-  return { token, userId: user.id, orgId: user.orgId, name: user.name, expiresIn: TOKEN_EXPIRY_SECONDS };
+  audit('auth.signup', { userId: user.id, email: user.email, orgId: user.orgId, role: user.role }, req);
+  return { token, userId: user.id, orgId: user.orgId, name: user.name, role: user.role, expiresIn: TOKEN_EXPIRY_SECONDS };
 });
 
 app.post('/auth/token', async (req, reply) => {
@@ -254,68 +278,98 @@ app.post('/auth/token', async (req, reply) => {
   const token = signJwt({
     sub: user.id,
     org_id: user.orgId,
+    role: user.role || 'var',
     scopes: ['battery:read', 'payments:write', 'tools:invoke', 'events:write', 'notifications:write', 'messages:write'],
     iat: now,
     exp: now + TOKEN_EXPIRY_SECONDS,
   }, JWT_SECRET);
 
-  audit('auth.token', { userId: user.id, email: user.email }, req);
-  return { token, userId: user.id, orgId: user.orgId, name: user.name, expiresIn: TOKEN_EXPIRY_SECONDS };
+  audit('auth.token', { userId: user.id, email: user.email, role: user.role }, req);
+  return { token, userId: user.id, orgId: user.orgId, name: user.name, role: user.role || 'var', expiresIn: TOKEN_EXPIRY_SECONDS };
 });
 
-/* ── Google OAuth Login (public — no token required) ── */
+/* ── Forgot Password Endpoints (public — no token required) ── */
 
-app.get('/auth/google/url', async (_req, reply) => {
-  if (!isGoogleLoginConfigured()) {
-    return reply.code(503).send(buildError('GOOGLE_NOT_CONFIGURED', 'Google OAuth not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.', getTraceId(_req)));
-  }
-  return { url: getLoginAuthUrl() };
-});
-
-app.post('/auth/google/callback', async (req, reply) => {
-  const { code } = (req.body || {}) as { code?: string };
+app.post('/auth/forgot-password', async (req, reply) => {
+  const { email } = (req.body || {}) as { email?: string };
   const traceId = getTraceId(req);
 
-  if (!code) {
-    return reply.code(400).send(buildError('VALIDATION', 'Authorization code is required', traceId));
+  if (!email) {
+    return reply.code(400).send(buildError('VALIDATION', 'email is required', traceId));
   }
 
-  try {
-    const profile = await exchangeLoginCode(code);
+  // Always return success to prevent user enumeration
+  const successResponse = { success: true, message: 'If an account exists with that email, a reset link has been sent' };
 
-    // Find or create user by email
-    let user = await findUserByEmail(profile.email);
-    if (!user) {
-      user = await createUser(profile.email, '', profile.name, {
-        authProvider: 'google',
-        googleId: profile.googleId,
-        picture: profile.picture,
-      });
-    } else {
-      // Update existing user with Google info
-      await updateUser(profile.email, {
-        googleId: profile.googleId,
-        picture: profile.picture,
-        authProvider: user.authProvider || 'google',
-      });
-      user.googleId = profile.googleId;
-      user.picture = profile.picture;
-    }
-
-    const now = Math.floor(Date.now() / 1000);
-    const token = signJwt({
-      sub: user.id,
-      org_id: user.orgId,
-      scopes: ['battery:read', 'payments:write', 'tools:invoke', 'events:write', 'notifications:write', 'messages:write'],
-      iat: now,
-      exp: now + TOKEN_EXPIRY_SECONDS,
-    }, JWT_SECRET);
-
-    audit('auth.google', { userId: user.id, email: user.email, googleId: profile.googleId }, req);
-    return { token, userId: user.id, orgId: user.orgId, name: user.name, picture: user.picture, expiresIn: TOKEN_EXPIRY_SECONDS };
-  } catch (err) {
-    return reply.code(401).send(buildError('GOOGLE_AUTH_FAILED', (err as Error).message, traceId));
+  const user = await findUserByEmail(email);
+  if (!user) {
+    audit('auth.forgot_password.no_user', { email }, req);
+    return successResponse;
   }
+
+  const resetToken = randomUUID();
+  const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString(); // 30 minutes
+
+  await setResetToken(email, resetToken, expiresAt);
+  await sendPasswordResetEmail(email, resetToken);
+
+  audit('auth.forgot_password', { email, tokenExpiry: expiresAt }, req);
+  return successResponse;
+});
+
+app.get('/auth/validate-reset-token/:token', async (req, reply) => {
+  const { token } = req.params as { token: string };
+  const traceId = getTraceId(req);
+
+  if (!token) {
+    return reply.code(400).send(buildError('VALIDATION', 'token is required', traceId));
+  }
+
+  const user = await findUserByResetToken(token);
+  if (!user || !user.resetTokenExpiresAt) {
+    return { valid: false };
+  }
+
+  const isExpired = new Date(user.resetTokenExpiresAt) < new Date();
+  if (isExpired) {
+    await clearResetToken(user.email);
+    return { valid: false };
+  }
+
+  // Mask email: j***@example.com
+  const [local, domain] = user.email.split('@');
+  const maskedEmail = `${local[0]}***@${domain}`;
+
+  return { valid: true, email: maskedEmail };
+});
+
+app.post('/auth/reset-password', async (req, reply) => {
+  const { token, password } = (req.body || {}) as { token?: string; password?: string };
+  const traceId = getTraceId(req);
+
+  if (!token || !password) {
+    return reply.code(400).send(buildError('VALIDATION', 'token and password are required', traceId));
+  }
+  if (password.length < 8) {
+    return reply.code(400).send(buildError('VALIDATION', 'Password must be at least 8 characters', traceId));
+  }
+
+  const user = await findUserByResetToken(token);
+  if (!user || !user.resetTokenExpiresAt) {
+    return reply.code(400).send(buildError('INVALID_TOKEN', 'Invalid or expired reset token', traceId));
+  }
+
+  const isExpired = new Date(user.resetTokenExpiresAt) < new Date();
+  if (isExpired) {
+    await clearResetToken(user.email);
+    return reply.code(400).send(buildError('TOKEN_EXPIRED', 'Reset token has expired — please request a new one', traceId));
+  }
+
+  await updatePassword(user.email, password);
+  await clearResetToken(user.email);
+
+  audit('auth.password_reset', { userId: user.id, email: user.email }, req);
+  return { success: true, message: 'Password reset successfully' };
 });
 
 /* ── Admin Endpoints (protected by DEV_TOKEN_SECRET) ── */

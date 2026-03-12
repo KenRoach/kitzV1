@@ -12,16 +12,21 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, '..', 'data');
 const USERS_FILE = join(DATA_DIR, 'users.ndjson');
 
+export type UserRole = 'var' | 'support' | 'delivery-partner';
+
 export interface UserRecord {
   id: string;
   email: string;
   name: string;
   passwordHash: string;
   orgId: string;
+  role: UserRole;
   createdAt: string;
   authProvider?: 'email' | 'google';
   googleId?: string;
   picture?: string;
+  resetToken?: string;
+  resetTokenExpiresAt?: string;
 }
 
 const SCRYPT_KEYLEN = 64;
@@ -118,6 +123,7 @@ function rowToUser(row: Record<string, unknown>): UserRecord {
     name: String(row.name || ''),
     passwordHash: String(row.password_hash || ''),
     orgId: String(row.org_id || ''),
+    role: (row.role as UserRole) || 'var',
     createdAt: String(row.created_at || ''),
     authProvider: (row.auth_provider as 'email' | 'google') || 'email',
     googleId: row.google_id ? String(row.google_id) : undefined,
@@ -162,7 +168,7 @@ export async function createUser(
   email: string,
   password: string,
   name: string,
-  opts?: { authProvider?: 'email' | 'google'; googleId?: string; picture?: string },
+  opts?: { authProvider?: 'email' | 'google'; googleId?: string; picture?: string; role?: UserRole },
 ): Promise<UserRecord> {
   const normalized = email.toLowerCase();
   const user: UserRecord = {
@@ -171,6 +177,7 @@ export async function createUser(
     name,
     passwordHash: password ? hashPassword(password) : '',
     orgId: randomUUID(),
+    role: opts?.role || 'var',
     createdAt: new Date().toISOString(),
     authProvider: opts?.authProvider || 'email',
     googleId: opts?.googleId,
@@ -197,6 +204,7 @@ export async function createUser(
             name: user.name,
             password_hash: user.passwordHash,
             org_id: user.orgId,
+            role: user.role,
             auth_provider: user.authProvider || 'email',
             google_id: user.googleId || null,
             picture: user.picture || null,
@@ -294,6 +302,143 @@ async function upgradePasswordHash(email: string, newHash: string): Promise<void
   if (memUser) memUser.passwordHash = newHash;
 }
 
+/** Set a password reset token for a user */
+export async function setResetToken(email: string, token: string, expiresAt: string): Promise<boolean> {
+  const normalized = email.toLowerCase();
+
+  if (DATABASE_URL) {
+    const supabaseUrl = process.env.SUPABASE_URL || '';
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+
+    if (supabaseUrl && supabaseKey) {
+      try {
+        await fetch(
+          `${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(normalized)}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': supabaseKey,
+              'Authorization': `Bearer ${supabaseKey}`,
+            },
+            body: JSON.stringify({ reset_token: token, reset_token_expires_at: expiresAt }),
+            signal: AbortSignal.timeout(5_000),
+          },
+        );
+      } catch (err) { console.warn('[kitz-gateway] set_reset_token_db_failed', (err as Error).message); }
+    }
+  }
+
+  const memUser = memoryUsers.get(normalized);
+  if (memUser) {
+    memUser.resetToken = token;
+    memUser.resetTokenExpiresAt = expiresAt;
+    return true;
+  }
+  return false;
+}
+
+/** Find a user by their reset token */
+export async function findUserByResetToken(token: string): Promise<UserRecord | null> {
+  if (DATABASE_URL) {
+    const supabaseUrl = process.env.SUPABASE_URL || '';
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+
+    if (supabaseUrl && supabaseKey) {
+      try {
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/users?reset_token=eq.${encodeURIComponent(token)}&limit=1`,
+          {
+            headers: {
+              'apikey': supabaseKey,
+              'Authorization': `Bearer ${supabaseKey}`,
+            },
+            signal: AbortSignal.timeout(5_000),
+          },
+        );
+        if (res.ok) {
+          const rows = await res.json() as Record<string, unknown>[];
+          if (rows.length > 0) return rowToUser(rows[0]);
+        }
+      } catch (err) { console.warn('[kitz-gateway] find_user_by_reset_token_failed', (err as Error).message); }
+    }
+  }
+
+  for (const user of memoryUsers.values()) {
+    if (user.resetToken === token) return user;
+  }
+  return null;
+}
+
+/** Clear reset token after use */
+export async function clearResetToken(email: string): Promise<void> {
+  const normalized = email.toLowerCase();
+
+  if (DATABASE_URL) {
+    const supabaseUrl = process.env.SUPABASE_URL || '';
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+
+    if (supabaseUrl && supabaseKey) {
+      try {
+        await fetch(
+          `${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(normalized)}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': supabaseKey,
+              'Authorization': `Bearer ${supabaseKey}`,
+            },
+            body: JSON.stringify({ reset_token: null, reset_token_expires_at: null }),
+            signal: AbortSignal.timeout(5_000),
+          },
+        );
+      } catch (err) { console.warn('[kitz-gateway] clear_reset_token_failed', (err as Error).message); }
+    }
+  }
+
+  const memUser = memoryUsers.get(normalized);
+  if (memUser) {
+    memUser.resetToken = undefined;
+    memUser.resetTokenExpiresAt = undefined;
+  }
+}
+
+/** Update a user's password (for password reset) */
+export async function updatePassword(email: string, newPassword: string): Promise<void> {
+  const normalized = email.toLowerCase();
+  const newHash = hashPassword(newPassword);
+
+  if (DATABASE_URL) {
+    const supabaseUrl = process.env.SUPABASE_URL || '';
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+
+    if (supabaseUrl && supabaseKey) {
+      try {
+        await fetch(
+          `${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(normalized)}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': supabaseKey,
+              'Authorization': `Bearer ${supabaseKey}`,
+            },
+            body: JSON.stringify({ password_hash: newHash }),
+            signal: AbortSignal.timeout(5_000),
+          },
+        );
+      } catch (err) { console.warn('[kitz-gateway] update_password_failed', (err as Error).message); }
+    }
+  }
+
+  const memUser = memoryUsers.get(normalized);
+  if (memUser) {
+    memUser.passwordHash = newHash;
+    persistUser(memUser).catch((err) => { console.warn('[kitz-gateway] password_update_persist_failed', (err as Error).message); });
+  }
+}
+
 /** List all users (admin) — DB first, memory fallback */
 export async function listUsers(): Promise<Omit<UserRecord, 'passwordHash'>[]> {
   if (DATABASE_URL) {
@@ -325,7 +470,7 @@ export async function listUsers(): Promise<Omit<UserRecord, 'passwordHash'>[]> {
   }
 
   return Array.from(memoryUsers.values()).map(u => ({
-    id: u.id, email: u.email, name: u.name, orgId: u.orgId, createdAt: u.createdAt,
+    id: u.id, email: u.email, name: u.name, orgId: u.orgId, role: u.role, createdAt: u.createdAt,
     authProvider: u.authProvider, googleId: u.googleId, picture: u.picture,
   }));
 }
