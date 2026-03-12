@@ -16,7 +16,7 @@ import { handleToolCall } from './renewflowTools.js';
 import { sendPasswordResetEmail } from './email.js';
 
 export const health = { status: 'ok' };
-const app = Fastify({ logger: true });
+const app = Fastify({ logger: true, bodyLimit: 1_048_576 }); // 1MB max request body
 
 // ── Launch safety checks ──
 const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT === 'production';
@@ -33,16 +33,6 @@ if (!process.env.JWT_SECRET && !process.env.DEV_TOKEN_SECRET) {
 // ── Rate limiting ──
 // Global: 120 req/min per IP; auth endpoints get stricter limits below
 await app.register(rateLimit, { max: 120, timeWindow: '1 minute', store: FileBackedRateLimitStore });
-
-// Request body size limit (1MB max — prevents payload abuse)
-app.addContentTypeParser('application/json', { bodyLimit: 1_048_576 }, function (_req, body, done) {
-  let data = '';
-  body.on('data', (chunk: Buffer) => { data += chunk.toString(); });
-  body.on('end', () => {
-    try { done(null, JSON.parse(data)); }
-    catch (err) { done(err as Error, undefined); }
-  });
-});
 
 // ── CORS origin allowlist ──
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000,http://localhost:5173').split(',').map(o => o.trim());
