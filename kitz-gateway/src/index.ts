@@ -81,6 +81,7 @@ const getOrgId = (req: FastifyRequest): string => String(req.headers['x-org-id']
 const PUBLIC_PATHS = ['/auth/signup', '/auth/token', '/auth/forgot-password', '/auth/reset-password', '/auth/validate-reset-token', '/health'];
 
 const requireAuth = async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
+  if (req.method === 'OPTIONS') return;
   if (PUBLIC_PATHS.some(p => req.url.startsWith(p))) return;
 
   const authHeader = req.headers.authorization;
@@ -109,6 +110,7 @@ const requireAuth = async (req: FastifyRequest, reply: FastifyReply): Promise<vo
 };
 
 const requireOrg = async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
+  if (req.method === 'OPTIONS') return;
   if (PUBLIC_PATHS.some(p => req.url.startsWith(p))) return;
   if (!req.headers['x-org-id']) {
     return reply.code(400).send(buildError('ORG_REQUIRED', 'x-org-id header required (set in JWT org_id claim or x-org-id header)', getTraceId(req)));
