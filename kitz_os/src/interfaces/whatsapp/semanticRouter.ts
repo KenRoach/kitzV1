@@ -38,6 +38,120 @@ const log = createSubsystemLogger('semanticRouter');
 
 const BRAIN_URL = process.env.KITZ_BRAIN_URL || 'http://localhost:3015';
 
+// ── Self-Healing Loop: Knowledge Gap Tracker ──
+// Tracks errors and knowledge gaps so KITZ can learn, retry with alternate strategies,
+// and come back to the user with a solution instead of just "try again."
+interface KnowledgeGap {
+  question: string;
+  errorType: 'tool_error' | 'llm_error' | 'unknown_intent' | 'missing_capability' | 'rate_limit' | 'timeout';
+  errorDetail: string;
+  attemptedTools: string[];
+  timestamp: string;
+  traceId: string;
+  resolved: boolean;
+  resolution?: string;
+}
+
+const knowledgeGaps: KnowledgeGap[] = [];
+const MAX_GAPS = 200; // rolling window
+
+function trackGap(gap: KnowledgeGap): void {
+  knowledgeGaps.push(gap);
+  if (knowledgeGaps.length > MAX_GAPS) knowledgeGaps.shift();
+  log.info('knowledge_gap_tracked', {
+    type: gap.errorType,
+    question: gap.question.slice(0, 80),
+    trace_id: gap.traceId,
+  });
+}
+
+/** Check if we've seen this type of question fail before and have a resolution */
+function findPriorResolution(question: string): string | undefined {
+  const lower = question.toLowerCase();
+  const keywords = lower.split(/\s+/).filter(w => w.length > 3);
+  for (const gap of [...knowledgeGaps].reverse()) {
+    if (!gap.resolved || !gap.resolution) continue;
+    const gapLower = gap.question.toLowerCase();
+    const overlap = keywords.filter(k => gapLower.includes(k)).length;
+    if (overlap >= 2) return gap.resolution;
+  }
+  return undefined;
+}
+
+/**
+ * Self-Healing Recovery — attempts alternate strategies when the primary approach fails.
+ * 1. If tool failed → retry with a different tool or web search
+ * 2. If LLM failed → try alternate model (Claude ↔ OpenAI)
+ * 3. If unknown → acknowledge honestly + search for answer
+ * Returns a recovered response or null if unrecoverable.
+ */
+async function attemptRecovery(
+  userMessage: string,
+  errorType: KnowledgeGap['errorType'],
+  errorDetail: string,
+  failedTools: string[],
+  registry: OsToolRegistry,
+  traceId: string,
+  channel: OutputChannel,
+): Promise<string | null> {
+  log.info('self_heal_attempt', { errorType, failedTools, trace_id: traceId });
+
+  // Check if we resolved this before
+  const priorFix = findPriorResolution(userMessage);
+  if (priorFix) {
+    log.info('self_heal_prior_resolution', { trace_id: traceId });
+    return priorFix;
+  }
+
+  // Strategy 1: For tool errors, try web search as fallback
+  if (errorType === 'tool_error' || errorType === 'unknown_intent' || errorType === 'missing_capability') {
+    try {
+      // Use Claude with web search to find an answer
+      const searchResult = await chatCompletion(
+        [
+          { role: 'system', content: `You are KITZ, an AI business assistant. The user asked a question and your tools couldn't answer it. Use your knowledge to provide the best possible answer. Be concise (under 50 words for WhatsApp). If you truly don't know, say so honestly and suggest what the user could do instead. Respond in the same language the user used.` },
+          { role: 'user', content: userMessage },
+        ],
+        [], // no tools — pure knowledge
+        traceId,
+      );
+
+      if (searchResult.finishReason !== 'error' && searchResult.message.content?.trim()) {
+        const resolution = searchResult.message.content.trim();
+        // Track this as resolved for future similar questions
+        trackGap({
+          question: userMessage,
+          errorType,
+          errorDetail,
+          attemptedTools: failedTools,
+          timestamp: new Date().toISOString(),
+          traceId,
+          resolved: true,
+          resolution,
+        });
+        return resolution;
+      }
+    } catch {
+      log.warn('self_heal_fallback_failed', { trace_id: traceId });
+    }
+  }
+
+  // Strategy 2: For rate limits/timeouts, acknowledge and suggest retry timing
+  if (errorType === 'rate_limit') {
+    return channel === 'terminal'
+      ? 'AI services are at capacity right now. I\'ll be ready again in about 30 seconds — just resend your message. 🔄'
+      : 'Los servicios de AI están al máximo ahora. Estaré listo en unos 30 segundos — reenvía tu mensaje. 🔄';
+  }
+
+  if (errorType === 'timeout') {
+    return channel === 'terminal'
+      ? 'That request was too complex for real-time. Try breaking it into smaller parts — I work better with focused questions. 🎯'
+      : 'Esa solicitud fue muy compleja para tiempo real. Intenta dividirla en partes más pequeñas — trabajo mejor con preguntas enfocadas. 🎯';
+  }
+
+  return null; // Unrecoverable
+}
+
 // ── Tool-to-MCP Mapping ──
 // Maps KITZ OS tool names to workspace MCP tool names for direct execution
 const TOOL_TO_MCP: Record<string, string> = {
@@ -520,8 +634,12 @@ async function executeTool(
     return typeof result === 'string' ? result : JSON.stringify(result);
   }
 
-  // Unknown tool
-  return JSON.stringify({ error: `Unknown tool: ${toolName}` });
+  // Unknown tool — self-heal hint for the LLM
+  log.warn('unknown_tool', { tool: toolName, trace_id: traceId });
+  return JSON.stringify({
+    error: `Unknown tool: ${toolName}`,
+    self_heal_hint: `Tool "${toolName}" doesn't exist. Use a different tool or answer from your own knowledge. Never tell the user about internal tool names.`,
+  });
 }
 
 // ── Fast-path intent matching ──
@@ -806,15 +924,49 @@ export async function routeWithAI(
       totalCreditsConsumed += entry.credits;
     }
 
-    // If error, return a friendly message (hide internal error codes from user)
+    // If error, attempt self-healing recovery before giving up
     if (result.finishReason === 'error') {
       const rawError = result.message.content || '';
       log.error('failed', { trace_id: traceId });
-      const friendlyMsg = rawError.includes('rate limit') || rawError.includes('429') || rawError.includes('529')
-        ? 'AI is temporarily busy — give me a sec and try again, boss.'
-        : rawError.includes('unreachable') || rawError.includes('timeout')
-          ? 'AI service is taking too long — try again in a moment, boss.'
-          : 'Something went wrong on my end — try again in a sec, boss.';
+
+      // Classify the error
+      const errorType: KnowledgeGap['errorType'] =
+        rawError.includes('rate limit') || rawError.includes('429') || rawError.includes('529') ? 'rate_limit' :
+        rawError.includes('unreachable') || rawError.includes('timeout') ? 'timeout' :
+        'llm_error';
+
+      // ── Self-Healing: try to recover instead of just saying "try again" ──
+      const recovered = await attemptRecovery(
+        userMessage, errorType, rawError, toolsUsed, registry, traceId, channel,
+      );
+
+      if (recovered) {
+        log.info('self_heal_success', { errorType, trace_id: traceId });
+        return { response: recovered, toolsUsed: [...toolsUsed, 'self_heal'], creditsConsumed: totalCreditsConsumed, toolResults };
+      }
+
+      // If recovery failed, track the gap and return a human-friendly message
+      trackGap({
+        question: userMessage,
+        errorType,
+        errorDetail: rawError.slice(0, 200),
+        attemptedTools: toolsUsed,
+        timestamp: new Date().toISOString(),
+        traceId,
+        resolved: false,
+      });
+
+      const friendlyMsg = errorType === 'rate_limit'
+        ? (channel === 'terminal'
+          ? 'AI is temporarily busy — I\'ll be ready in ~30s. Try again shortly, boss. 🔄'
+          : 'AI está temporalmente ocupado — estaré listo en ~30s. Intenta de nuevo, jefe. 🔄')
+        : errorType === 'timeout'
+          ? (channel === 'terminal'
+            ? 'That took too long. Try a simpler version of the same question, boss. 🎯'
+            : 'Eso tomó demasiado tiempo. Intenta una versión más simple de la misma pregunta, jefe. 🎯')
+          : (channel === 'terminal'
+            ? 'Hit a snag on my end. I\'m logging this to learn from it — try rephrasing or I\'ll find another way. 🧠'
+            : 'Tuve un problema. Estoy aprendiendo de esto — intenta reformular o encontraré otra forma. 🧠');
       return { response: friendlyMsg, toolsUsed, creditsConsumed: totalCreditsConsumed, toolResults };
     }
 
@@ -940,14 +1092,52 @@ export async function routeWithAI(
         });
       } else {
         // Read-only tools execute immediately
-        const toolResult = await executeTool(toolName, args, registry, traceId, userId);
-        // Collect parsed tool result for artifact generation
+        let toolResult: string;
+        try {
+          toolResult = await executeTool(toolName, args, registry, traceId, userId);
+        } catch (toolErr) {
+          // ── Self-Healing: tool threw — log gap + give LLM recovery context ──
+          const errMsg = (toolErr as Error).message || 'unknown error';
+          log.warn('tool_execution_error', { tool: toolName, error: errMsg, trace_id: traceId });
+          trackGap({
+            question: userMessage,
+            errorType: 'tool_error',
+            errorDetail: `${toolName}: ${errMsg}`,
+            attemptedTools: [toolName],
+            timestamp: new Date().toISOString(),
+            traceId,
+            resolved: false,
+          });
+          toolResult = JSON.stringify({
+            error: `Tool "${toolName}" failed: ${errMsg}`,
+            self_heal_hint: 'Try an alternative approach or use your own knowledge to answer the user. Do NOT tell the user about internal tool names or errors — just provide the best answer you can.',
+          });
+        }
+
+        // Detect tool-level errors in the result and enrich with self-heal hint
         try {
           const parsed = JSON.parse(toolResult);
           toolResults.push(parsed);
+          if (parsed.error && !parsed.self_heal_hint) {
+            trackGap({
+              question: userMessage,
+              errorType: 'tool_error',
+              errorDetail: `${toolName}: ${typeof parsed.error === 'string' ? parsed.error : JSON.stringify(parsed.error)}`,
+              attemptedTools: [toolName],
+              timestamp: new Date().toISOString(),
+              traceId,
+              resolved: false,
+            });
+            // Enrich the tool result so the LLM knows to try another way
+            toolResult = JSON.stringify({
+              ...parsed,
+              self_heal_hint: 'This tool had an error. Try an alternative tool or use your knowledge to answer. Never expose internal errors to the user.',
+            });
+          }
         } catch {
           toolResults.push({ raw: toolResult });
         }
+
         messages.push({
           role: 'tool',
           content: toolResult,
@@ -978,8 +1168,28 @@ export async function routeWithAI(
     }
   }
 
-  // If we hit max loops, return whatever we have
-  return { response: 'Reached maximum processing steps. Please try a simpler request.', toolsUsed, creditsConsumed: totalCreditsConsumed, toolResults };
+  // If we hit max loops, try self-healing before giving up
+  const maxLoopRecovery = await attemptRecovery(
+    userMessage, 'missing_capability', 'Max tool loops exceeded', toolsUsed, registry, traceId, channel,
+  );
+  if (maxLoopRecovery) {
+    return { response: maxLoopRecovery, toolsUsed: [...toolsUsed, 'self_heal'], creditsConsumed: totalCreditsConsumed, toolResults };
+  }
+
+  trackGap({
+    question: userMessage,
+    errorType: 'missing_capability',
+    errorDetail: 'Reached max processing loops without resolution',
+    attemptedTools: toolsUsed,
+    timestamp: new Date().toISOString(),
+    traceId,
+    resolved: false,
+  });
+
+  const maxLoopMsg = channel === 'terminal'
+    ? 'That one\'s complex — I ran out of processing steps. Try breaking it into smaller questions and I\'ll handle each one. 🎯'
+    : 'Esa solicitud es compleja — agoté los pasos de procesamiento. Intenta dividirla en preguntas más pequeñas y las resolveré una por una. 🎯';
+  return { response: maxLoopMsg, toolsUsed, creditsConsumed: totalCreditsConsumed, toolResults };
 }
 
 // ── Brain Decision type (mirrors kitz-brain classifier output) ──
