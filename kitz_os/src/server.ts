@@ -14,6 +14,11 @@
  *   POST /api/payments/webhook/paypal    — PayPal payment webhook
  *   POST /api/payments/webhook/yappy     — Yappy payment webhook (Panama)
  *   POST /api/payments/webhook/bac       — BAC Compra Click webhook (Central America)
+ *   POST /api/twilio/sms                 — Twilio inbound SMS webhook
+ *   POST /api/twilio/whatsapp            — Twilio inbound WhatsApp webhook
+ *   POST /api/twilio/voice               — Twilio inbound voice call (TwiML)
+ *   POST /api/twilio/voice/respond       — Twilio voice speech gather response
+ *   POST /api/twilio/status              — Twilio delivery status callback
  *   POST /api/kitz/voice/speak           — Text-to-Speech (ElevenLabs)
  *   GET  /api/kitz/voice/config          — Voice configuration
  *   GET  /api/kitz/voice/widget          — Voice widget HTML snippet
@@ -233,6 +238,16 @@ export async function createServer(kernel: KitzKernel) {
   const app = Fastify({ logger: false, bodyLimit: 20_000_000, requestTimeout: 120_000 });  // 20MB for media, 2min for AI calls
   const PORT = Number(process.env.PORT) || 3012;
 
+  // Parse application/x-www-form-urlencoded bodies (Twilio webhooks)
+  app.addContentTypeParser('application/x-www-form-urlencoded', { parseAs: 'string' }, (_req, body, done) => {
+    try {
+      const parsed = Object.fromEntries(new URLSearchParams(body as string));
+      done(null, parsed);
+    } catch (err) {
+      done(err as Error, undefined);
+    }
+  });
+
   // Rate limiting — 120 req/min global, 30 req/min on AI endpoints
   await app.register(rateLimit, { max: 120, timeWindow: '1 minute' });
 
@@ -299,6 +314,7 @@ export async function createServer(kernel: KitzKernel) {
       path === '/api/kitz/channels/health' ||
       path === '/ws' ||
       path.startsWith('/api/payments/webhook/') ||
+      path.startsWith('/api/twilio/') ||
       path.startsWith('/api/kitz/oauth/google/callback') ||
       path.startsWith('/api/whatsapp/') ||
       isArtifactPreview ||
@@ -465,15 +481,28 @@ export async function createServer(kernel: KitzKernel) {
           case 'greeting': {
             const s = kernel.getStatus();
             const hour = new Date().getHours();
-            const timeGreet = hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening';
-            return {
-              command: 'greeting',
-              response:
-                `${timeGreet} boss 👋\n\n` +
-                `KITZ is locked in. ${s.toolCount} tools loaded — CRM, orders, storefronts, payments, the works.\n\n` +
-                `⚡ Battery: unlimited · 🟢 All systems go\n\n` +
-                `What are we building today?`,
-            };
+            const greetLang = (channel === 'terminal') ? detectLanguage(message) : 'es';
+            if (greetLang === 'en') {
+              const timeGreet = hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening';
+              return {
+                command: 'greeting',
+                response:
+                  `${timeGreet} boss 👋\n\n` +
+                  `KITZ is locked in. ${s.toolCount} tools loaded — CRM, orders, storefronts, payments, the works.\n\n` +
+                  `⚡ Battery: unlimited · 🟢 All systems go\n\n` +
+                  `What are we building today?`,
+              };
+            } else {
+              const timeGreet = hour < 12 ? 'Buenos días' : hour < 18 ? 'Buenas tardes' : 'Buenas noches';
+              return {
+                command: 'greeting',
+                response:
+                  `${timeGreet} jefe 👋\n\n` +
+                  `KITZ está listo. ${s.toolCount} herramientas cargadas — CRM, pedidos, pagos, todo.\n\n` +
+                  `⚡ Batería: ilimitada · 🟢 Todo en orden\n\n` +
+                  `¿Qué construimos hoy?`,
+              };
+            }
           }
 
           case 'kill_switch': {
@@ -1234,6 +1263,150 @@ export async function createServer(kernel: KitzKernel) {
       }, traceId);
 
       return { received: true, trace_id: traceId, result };
+    }
+  );
+
+  // ── Twilio Inbound Webhook Endpoints ──
+  // Twilio sends application/x-www-form-urlencoded with fields: From, Body, MessageSid, To, etc.
+  // We parse and forward to the main /api/kitz processing pipeline.
+
+  // ── Twilio Inbound SMS ──
+  app.post<{ Body: Record<string, string> }>(
+    '/api/twilio/sms',
+    async (req) => {
+      const traceId = crypto.randomUUID();
+      const body = req.body || {};
+      const from = String(body.From || '').replace('whatsapp:', '');
+      const message = String(body.Body || '');
+      const messageSid = String(body.MessageSid || '');
+
+      log.info('twilio_sms_inbound', { from: from.slice(0, 8) + '...', messageSid, trace_id: traceId });
+
+      if (!message) {
+        return '<Response></Response>';
+      }
+
+      try {
+        const result = await brainFirstRoute(message, kernel.tools, traceId, undefined, from, 'sms', undefined, from);
+        // Return TwiML response with AI reply
+        const reply = (result.response || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${reply}</Message></Response>`;
+      } catch (err) {
+        log.error('twilio_sms_processing_failed', { error: (err as Error).message, trace_id: traceId });
+        return `<?xml version="1.0" encoding="UTF-8"?><Response><Message>KITZ is temporarily unavailable. Try again shortly.</Message></Response>`;
+      }
+    }
+  );
+
+  // ── Twilio Inbound WhatsApp ──
+  app.post<{ Body: Record<string, string> }>(
+    '/api/twilio/whatsapp',
+    async (req) => {
+      const traceId = crypto.randomUUID();
+      const body = req.body || {};
+      const rawFrom = String(body.From || '');
+      const from = rawFrom.replace('whatsapp:', '');
+      const message = String(body.Body || '');
+      const messageSid = String(body.MessageSid || '');
+      const numMedia = Number(body.NumMedia || 0);
+
+      log.info('twilio_whatsapp_inbound', { from: from.slice(0, 8) + '...', messageSid, numMedia, trace_id: traceId });
+
+      if (!message && numMedia === 0) {
+        return '<Response></Response>';
+      }
+
+      // If media attached, note it in the message
+      const fullMessage = numMedia > 0 && !message
+        ? `[WhatsApp media: ${numMedia} attachment(s)]`
+        : message;
+
+      try {
+        const result = await brainFirstRoute(fullMessage, kernel.tools, traceId, undefined, from, 'whatsapp', undefined, rawFrom);
+        const reply = (result.response || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${reply}</Message></Response>`;
+      } catch (err) {
+        log.error('twilio_whatsapp_processing_failed', { error: (err as Error).message, trace_id: traceId });
+        return `<?xml version="1.0" encoding="UTF-8"?><Response><Message>KITZ is temporarily unavailable. Try again shortly.</Message></Response>`;
+      }
+    }
+  );
+
+  // ── Twilio Inbound Voice Call ──
+  app.post<{ Body: Record<string, string> }>(
+    '/api/twilio/voice',
+    async (req) => {
+      const traceId = crypto.randomUUID();
+      const body = req.body || {};
+      const from = String(body.From || '');
+      const callSid = String(body.CallSid || '');
+
+      log.info('twilio_voice_inbound', { from: from.slice(0, 8) + '...', callSid, trace_id: traceId });
+
+      // Respond with TwiML — greet in Spanish (LatAm market), gather speech input
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say language="es-MX" voice="Polly.Mia">Hola, bienvenido a KITZ. Tu asistente de negocios con inteligencia artificial. ¿En qué te puedo ayudar?</Say>
+  <Gather input="speech" language="es-MX" speechTimeout="3" action="/api/twilio/voice/respond" method="POST">
+    <Say language="es-MX" voice="Polly.Mia">Dime qué necesitas.</Say>
+  </Gather>
+  <Say language="es-MX" voice="Polly.Mia">No escuché nada. Llama de nuevo cuando estés listo. Hasta luego.</Say>
+</Response>`;
+    }
+  );
+
+  // ── Twilio Voice Gather Response ──
+  app.post<{ Body: Record<string, string> }>(
+    '/api/twilio/voice/respond',
+    async (req) => {
+      const traceId = crypto.randomUUID();
+      const body = req.body || {};
+      const speechResult = String(body.SpeechResult || '');
+      const from = String(body.From || '');
+
+      log.info('twilio_voice_speech', { from: from.slice(0, 8) + '...', speechLength: speechResult.length, trace_id: traceId });
+
+      if (!speechResult) {
+        return `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say language="es-MX" voice="Polly.Mia">No entendí. Intenta de nuevo.</Say>
+  <Gather input="speech" language="es-MX" speechTimeout="3" action="/api/twilio/voice/respond" method="POST">
+    <Say language="es-MX" voice="Polly.Mia">Dime qué necesitas.</Say>
+  </Gather>
+</Response>`;
+      }
+
+      try {
+        const result = await brainFirstRoute(speechResult, kernel.tools, traceId, undefined, from, 'voice', undefined, from);
+        const reply = (result.response || 'Procesado.').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say language="es-MX" voice="Polly.Mia">${reply}</Say>
+  <Gather input="speech" language="es-MX" speechTimeout="3" action="/api/twilio/voice/respond" method="POST">
+    <Say language="es-MX" voice="Polly.Mia">¿Algo más?</Say>
+  </Gather>
+  <Say language="es-MX" voice="Polly.Mia">Gracias por usar KITZ. Hasta luego.</Say>
+</Response>`;
+      } catch (err) {
+        log.error('twilio_voice_processing_failed', { error: (err as Error).message, trace_id: traceId });
+        return `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say language="es-MX" voice="Polly.Mia">Tuve un problema procesando tu solicitud. Intenta de nuevo.</Say>
+</Response>`;
+      }
+    }
+  );
+
+  // ── Twilio Delivery Status Callback ──
+  app.post<{ Body: Record<string, string> }>(
+    '/api/twilio/status',
+    async (req) => {
+      const body = req.body || {};
+      const messageSid = body.MessageSid || body.CallSid || '';
+      const status = body.MessageStatus || body.CallStatus || '';
+
+      log.info('twilio_status', { sid: messageSid, status });
+      return { received: true };
     }
   );
 

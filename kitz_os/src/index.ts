@@ -65,6 +65,19 @@ async function main() {
   }
 }
 
+// ── Process-Level Self-Healing ──
+// Stay alive through transient errors — Docker/Railway handles full restarts.
+process.on('uncaughtException', (err) => {
+  console.error('[SELF-HEAL] Uncaught exception (staying alive):', err.message);
+  log.error('uncaughtException — process staying alive', { error: err.message, stack: err.stack });
+});
+
+process.on('unhandledRejection', (reason) => {
+  const msg = reason instanceof Error ? reason.message : String(reason);
+  console.error('[SELF-HEAL] Unhandled rejection (staying alive):', msg);
+  log.error('unhandledRejection — process staying alive', { reason: msg });
+});
+
 // Graceful shutdown
 for (const sig of ['SIGINT', 'SIGTERM'] as const) {
   process.on(sig, async () => {

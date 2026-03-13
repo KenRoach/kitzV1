@@ -19,12 +19,33 @@
  */
 
 // @ts-nocheck — blessed has no proper TypeScript types
+import dotenv from 'dotenv'
+// Load .env from CWD (repo root) first, then kitz_os/.env as fallback
+dotenv.config()
+dotenv.config({ path: new URL('../../.env', import.meta.url).pathname, override: false })
+dotenv.config({ path: new URL('../.env', import.meta.url).pathname, override: false })
 import blessed from 'blessed'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as http from 'node:http'
 import { execSync } from 'node:child_process'
+// Inline LLM call for memory extraction (avoids ESM .js/.ts import issues)
+async function tuiCallLLM(system: string, user: string): Promise<string> {
+  const apiKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || ''
+  if (!apiKey) return JSON.stringify({ error: 'No API key' })
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 200, temperature: 0.1, system, messages: [{ role: 'user', content: user }] }),
+      signal: AbortSignal.timeout(15000),
+    })
+    if (!res.ok) return JSON.stringify({ error: `API ${res.status}` })
+    const d = await res.json() as { content: Array<{ type: string; text?: string }> }
+    return d.content?.find(c => c.type === 'text')?.text || ''
+  } catch { return JSON.stringify({ error: 'LLM failed' }) }
+}
 
 // ── Config ─────────────────────────────────────────────
 
@@ -72,6 +93,79 @@ let previewRunning = false
 let previewServer: http.Server | null = null
 let lastDraftToken: string | null = null
 const artifactRegistry: Array<{ file: string; lang: string; created: Date; sizeKB: number }> = []
+
+// ── Persistent Memory (shared with cli.ts) ────────────
+
+interface MemoryEntry {
+  type: 'fact' | 'preference' | 'decision'
+  key: string
+  value: string
+  source: 'user' | 'inferred'
+  ts: number
+}
+
+const MEMORY_FILE = path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'data', 'cli', 'memory.jsonl')
+
+function loadMemories(): MemoryEntry[] {
+  try {
+    if (!fs.existsSync(MEMORY_FILE)) return []
+    return fs.readFileSync(MEMORY_FILE, 'utf-8')
+      .split('\n').filter(Boolean)
+      .map(line => JSON.parse(line) as MemoryEntry)
+  } catch { return [] }
+}
+
+function getMemoryContext(): string {
+  const memories = loadMemories()
+  if (memories.length === 0) return ''
+  const facts = memories.filter(m => m.type === 'fact')
+  const prefs = memories.filter(m => m.type === 'preference')
+  const lines: string[] = []
+  if (facts.length > 0) {
+    lines.push('Known facts about the user:')
+    for (const f of facts) lines.push(`- ${f.key}: ${f.value}`)
+  }
+  if (prefs.length > 0) {
+    lines.push('User preferences:')
+    for (const p of prefs) lines.push(`- ${p.key}: ${p.value}`)
+  }
+  return lines.join('\n')
+}
+
+function saveMemory(entry: MemoryEntry): void {
+  try {
+    const dir = path.dirname(MEMORY_FILE)
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+    fs.appendFileSync(MEMORY_FILE, JSON.stringify(entry) + '\n')
+  } catch { /* silent */ }
+}
+
+function deleteMemory(key: string): boolean {
+  const memories = loadMemories()
+  const filtered = memories.filter(m => m.key !== key)
+  if (filtered.length === memories.length) return false
+  try {
+    const dir = path.dirname(MEMORY_FILE)
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+    fs.writeFileSync(MEMORY_FILE, filtered.map(m => JSON.stringify(m)).join('\n') + (filtered.length ? '\n' : ''))
+    return true
+  } catch { return false }
+}
+
+function buildKitzContext(message: string, modePrefix: string): string {
+  const memoryCtx = getMemoryContext()
+  const memories = loadMemories()
+  const parts: string[] = []
+  parts.push(`[KITZ System Context]
+You are KITZ, an AI-powered business operating system. You CAN learn and remember things about the user across sessions.
+The user can teach you facts with /remember, remove them with /forget, and see what you know with /memories.
+You also auto-detect facts from conversation (name, company, location, products, preferences).
+When asked if you can learn: YES, you can. You have a persistent memory system.${memories.length > 0 ? ` You currently remember ${memories.length} thing${memories.length !== 1 ? 's' : ''} about this user.` : ''}
+Always respond in the same language the user writes in.`)
+  if (memoryCtx) parts.push(`[KITZ Memory — what I know about this user]\n${memoryCtx}`)
+  if (modePrefix) parts.push(modePrefix)
+  return `${parts.join('\n\n')}\n\nUser message: ${message}`
+}
 
 const bootInfo: BootInfo = {
   toolCount: 155, agentCount: 107, teamCount: 19,
@@ -266,7 +360,7 @@ function createDashboard() {
       fg: 'white',
     },
     tags: true,
-    inputOnFocus: true,
+    inputOnFocus: false,
     keys: true,
     mouse: true,
     padding: { left: 1 },
@@ -308,7 +402,7 @@ function createDashboard() {
 
     try {
       const modePrefix = MODE_INFO[currentMode].chatPrefix
-      const fullMessage = modePrefix ? `${modePrefix}\n\nUser message: ${message}` : message
+      const fullMessage = buildKitzContext(message, modePrefix)
 
       logActivity('{yellow-fg}⟳{/} {bold}COMPREHEND{/}')
       logActivity('  {cyan-fg}Haiku{/} classifying intent')
@@ -462,6 +556,7 @@ function createDashboard() {
       '{bold}System{/}      {cyan-fg}status{/}  {cyan-fg}battery{/}  {cyan-fg}health{/}  {cyan-fg}services{/}  {cyan-fg}tools{/}',
       '{bold}Code{/}        {cyan-fg}search <q>{/}  {cyan-fg}read <path>{/}  {cyan-fg}explain <path>{/}  {cyan-fg}git{/}',
       '{bold}Preview{/}     {cyan-fg}preview{/}  {cyan-fg}open{/}',
+      '{bold}Memory{/}      {cyan-fg}remember <fact>{/}  {cyan-fg}forget <key>{/}  {cyan-fg}memories{/}',
       '{bold}Other{/}       {cyan-fg}daily{/}  {cyan-fg}map{/}  {cyan-fg}env{/}  {cyan-fg}clear{/}  {cyan-fg}quit{/}',
       '',
       '{gray-fg}↑↓ history · Tab scroll · Ctrl-C quit{/}',
@@ -964,6 +1059,66 @@ function createDashboard() {
         break
       case 'git': cmdGit(); break
 
+      // Memory & Learning
+      case 'remember': case 'learn': {
+        if (!arg) { appendChat('{yellow-fg}Usage: /remember <fact>{/}'); break }
+        logActivity('{magenta-fg}🧠{/} learning...')
+        try {
+          const result = await tuiCallLLM(
+            `Extract a key-value fact or preference from the user's statement.
+Return ONLY a JSON object: {"type":"fact"|"preference","key":"short_snake_case_key","value":"the value"}
+Examples:
+- "my company is RenewFlo" → {"type":"fact","key":"company_name","value":"RenewFlo"}
+- "I sell warranty renewals" → {"type":"fact","key":"products_services","value":"warranty renewals"}
+- "always respond in English" → {"type":"preference","key":"language","value":"English"}
+Return ONLY the JSON, nothing else.`,
+            arg,
+          )
+          const parsed = JSON.parse(result)
+          if (parsed.key && parsed.value) {
+            saveMemory({ type: parsed.type || 'fact', key: parsed.key, value: parsed.value, source: 'user', ts: Date.now() })
+            appendChat(`{magenta-fg}🧠 Learned:{/} {white-fg}${parsed.key}{/} = {green-fg}"${parsed.value}"{/}`)
+            logActivity(`{green-fg}✓{/} remembered: ${parsed.key}`)
+          } else {
+            appendChat('{yellow-fg}Could not extract a fact from that.{/}')
+          }
+        } catch {
+          appendChat('{red-fg}Failed to learn — try again.{/}')
+        }
+        break
+      }
+      case 'forget': {
+        if (!arg) { appendChat('{yellow-fg}Usage: /forget <key>{/}'); break }
+        if (deleteMemory(arg.trim())) {
+          appendChat(`{magenta-fg}🧠{/} Forgot: {white-fg}${arg.trim()}{/}`)
+          logActivity(`{yellow-fg}✓{/} forgot: ${arg.trim()}`)
+        } else {
+          appendChat(`{yellow-fg}No memory found for "${arg.trim()}"{/}`)
+        }
+        break
+      }
+      case 'memories': case 'memory': case 'brain': {
+        const memories = loadMemories()
+        if (memories.length === 0) {
+          appendChat('{gray-fg}No memories yet. Teach me with /remember <fact>{/}')
+        } else {
+          let out = '{magenta-fg}{bold}🧠 KITZ Memory{/}\n'
+          const facts = memories.filter(m => m.type === 'fact')
+          const prefs = memories.filter(m => m.type === 'preference')
+          if (facts.length > 0) {
+            out += '{white-fg}{bold}Facts:{/}\n'
+            for (const f of facts) out += `  {cyan-fg}${f.key}{/}: {white-fg}${f.value}{/}\n`
+          }
+          if (prefs.length > 0) {
+            out += '{white-fg}{bold}Preferences:{/}\n'
+            for (const p of prefs) out += `  {cyan-fg}${p.key}{/}: {white-fg}${p.value}{/}\n`
+          }
+          out += `{gray-fg}${memories.length} total — /forget <key> to remove{/}`
+          appendChat(out)
+        }
+        break
+      }
+
       // Utilities
       case 'clear':
         chatPanel.setContent('')
@@ -987,14 +1142,14 @@ function createDashboard() {
   //  INPUT HANDLING & KEY BINDINGS
   // ═══════════════════════════════════════════════════
 
-  inputBox.focus()
+  // Start input mode
+  inputBox.readInput()
 
   inputBox.on('submit', async (value: string) => {
     inputBox.clearValue()
-    inputBox.focus()
     screen.render()
     await handleInput(value)
-    inputBox.focus()
+    inputBox.readInput()
     screen.render()
   })
 
@@ -1017,7 +1172,7 @@ function createDashboard() {
     screen.render()
   })
 
-  screen.key(['escape'], () => { inputBox.focus(); screen.render() })
+  screen.key(['escape'], () => { inputBox.readInput(); screen.render() })
 
   screen.key(['C-c'], () => {
     if (previewServer) previewServer.close()
@@ -1026,7 +1181,7 @@ function createDashboard() {
 
   screen.key(['tab'], () => {
     if (chatPanel.focused) {
-      inputBox.focus()
+      inputBox.readInput()
     } else {
       chatPanel.focus()
     }

@@ -24,7 +24,7 @@ function getMetaConfig() {
   };
 }
 
-const GRAPH_API = 'https://graph.facebook.com/v19.0';
+const GRAPH_API = 'https://graph.facebook.com/v21.0';
 
 const STRATEGY_PROMPT = `You are a social media strategist for small businesses in Latin America.
 Instagram, TikTok, WhatsApp Status, Facebook. Content that drives sales through DMs and WhatsApp.

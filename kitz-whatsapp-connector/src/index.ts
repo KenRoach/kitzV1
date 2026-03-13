@@ -648,6 +648,31 @@ const LOGIN_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
+// ── Process-Level Self-Healing ──
+// Catch uncaught exceptions and unhandled rejections — log them but DON'T crash.
+// Docker/Railway will restart on actual exit, but we try to stay alive for Baileys sessions.
+process.on('uncaughtException', (err) => {
+  console.error('[SELF-HEAL] Uncaught exception (keeping process alive):', err.message);
+  app.log.error({ err: err.message, stack: err.stack }, 'uncaughtException — process staying alive');
+});
+
+process.on('unhandledRejection', (reason) => {
+  const msg = reason instanceof Error ? reason.message : String(reason);
+  console.error('[SELF-HEAL] Unhandled rejection (keeping process alive):', msg);
+  app.log.error({ reason: msg }, 'unhandledRejection — process staying alive');
+});
+
+// Graceful shutdown — close sockets cleanly
+process.on('SIGTERM', () => {
+  console.log('[SHUTDOWN] SIGTERM received — closing gracefully');
+  app.close().then(() => process.exit(0));
+});
+
+process.on('SIGINT', () => {
+  console.log('[SHUTDOWN] SIGINT received — closing gracefully');
+  app.close().then(() => process.exit(0));
+});
+
 // ── Start everything ──
 async function boot() {
   // 1. Start Fastify REST API

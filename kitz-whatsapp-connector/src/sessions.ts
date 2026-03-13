@@ -249,7 +249,10 @@ function isConflictStorm(session: UserSession): boolean {
   return session.recentCloseTimestamps.length >= CONFLICT_MAX_CLOSES;
 }
 
-// ── Forward message to KITZ OS ──
+// ── Forward message to KITZ OS (with self-healing retry) ──
+const KITZ_OS_MAX_RETRIES = 2;
+const KITZ_OS_RETRY_DELAY_MS = 3000;
+
 async function forwardToKitzOs(
   message: string,
   senderJid: string,
@@ -257,37 +260,59 @@ async function forwardToKitzOs(
   traceId: string,
   extra?: { replyContext?: { id: string; body: string | null; sender: string | null }; location?: string; source?: string },
 ): Promise<KitzOsResponse> {
-  try {
-    const res = await fetch(`${KITZ_OS_URL}/api/kitz`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET, 'x-dev-secret': SERVICE_SECRET } : {}) },
-      body: JSON.stringify({
-        message,
-        sender: senderJid,
-        user_id: userId,
-        trace_id: traceId,
-        response_rules: RESPONSE_RULES,
-        reply_context: extra?.replyContext,
-        location: extra?.location,
-        source: extra?.source,
-      }),
-      signal: AbortSignal.timeout(30_000),
-    });
+  const body = JSON.stringify({
+    message,
+    sender: senderJid,
+    user_id: userId,
+    trace_id: traceId,
+    response_rules: RESPONSE_RULES,
+    reply_context: extra?.replyContext,
+    location: extra?.location,
+    source: extra?.source,
+  });
+  const headers = { 'Content-Type': 'application/json', ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET, 'x-dev-secret': SERVICE_SECRET } : {}) };
 
-    if (!res.ok) {
-      log.error('KITZ OS returned error status', { userId, status: res.status });
-      return { response: 'KITZ OS is temporarily unavailable. Try again in a moment.' };
+  // Self-healing retry loop — try up to 3 times with delay between attempts
+  for (let attempt = 0; attempt <= KITZ_OS_MAX_RETRIES; attempt++) {
+    try {
+      const res = await fetch(`${KITZ_OS_URL}/api/kitz`, {
+        method: 'POST',
+        headers,
+        body,
+        signal: AbortSignal.timeout(30_000),
+      });
+
+      if (res.ok) {
+        const data = await res.json() as KitzOsResponse;
+        if (attempt > 0) {
+          log.info('kitz_os_recovered', { userId, attempt, trace_id: traceId });
+        }
+        return { ...data, response: data.response || (data as any).error || 'Done.' };
+      }
+
+      // Server returned error status — log and retry
+      log.error('KITZ OS returned error status', { userId, status: res.status, attempt });
+      if (attempt < KITZ_OS_MAX_RETRIES) {
+        await new Promise(r => setTimeout(r, KITZ_OS_RETRY_DELAY_MS));
+        continue;
+      }
+    } catch (err) {
+      log.error('forward failed', { userId, err, attempt });
+      if (attempt < KITZ_OS_MAX_RETRIES) {
+        await new Promise(r => setTimeout(r, KITZ_OS_RETRY_DELAY_MS));
+        continue;
+      }
     }
-
-    const data = await res.json() as KitzOsResponse;
-    return { ...data, response: data.response || (data as any).error || 'Done.' };
-  } catch (err) {
-    log.error('forward failed', { userId, err });
-    return { response: 'Could not reach KITZ OS. Is it running?' };
   }
+
+  // All retries exhausted — acknowledge the gap honestly
+  log.error('kitz_os_unreachable_all_retries', { userId, retries: KITZ_OS_MAX_RETRIES, trace_id: traceId });
+  return {
+    response: '⚡ Estoy reiniciando mi cerebro AI — dame unos segundos y reenvía tu mensaje. ¡Ya vuelvo! 🔄',
+  };
 }
 
-// ── Forward media to KITZ OS ──
+// ── Forward media to KITZ OS (with self-healing retry) ──
 async function forwardMediaToKitzOs(
   mediaBase64: string,
   mimeType: string,
@@ -296,29 +321,44 @@ async function forwardMediaToKitzOs(
   userId: string,
   traceId: string,
 ): Promise<KitzOsResponse> {
-  try {
-    const res = await fetch(`${KITZ_OS_URL}/api/kitz/media`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET, 'x-dev-secret': SERVICE_SECRET } : {}) },
-      body: JSON.stringify({
-        media_base64: mediaBase64,
-        mime_type: mimeType,
-        caption,
-        sender_jid: senderJid,
-        user_id: userId,
-        trace_id: traceId,
-      }),
-      signal: AbortSignal.timeout(60_000),
-    });
+  const headers = { 'Content-Type': 'application/json', ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET, 'x-dev-secret': SERVICE_SECRET } : {}) };
+  const body = JSON.stringify({
+    media_base64: mediaBase64,
+    mime_type: mimeType,
+    caption,
+    sender_jid: senderJid,
+    user_id: userId,
+    trace_id: traceId,
+  });
 
-    if (!res.ok) return { response: 'Could not process that file right now.' };
+  for (let attempt = 0; attempt <= KITZ_OS_MAX_RETRIES; attempt++) {
+    try {
+      const res = await fetch(`${KITZ_OS_URL}/api/kitz/media`, {
+        method: 'POST',
+        headers,
+        body,
+        signal: AbortSignal.timeout(60_000),
+      });
 
-    const data = await res.json() as KitzOsResponse;
-    return { ...data, response: data.response || (data as any).error || 'Media processed.' };
-  } catch (err) {
-    log.error('media forward failed', { userId, err });
-    return { response: 'Could not process media. Is KITZ OS running?' };
+      if (res.ok) {
+        const data = await res.json() as KitzOsResponse;
+        return { ...data, response: data.response || (data as any).error || 'Media processed.' };
+      }
+
+      if (attempt < KITZ_OS_MAX_RETRIES) {
+        await new Promise(r => setTimeout(r, KITZ_OS_RETRY_DELAY_MS));
+        continue;
+      }
+    } catch (err) {
+      log.error('media forward failed', { userId, err, attempt });
+      if (attempt < KITZ_OS_MAX_RETRIES) {
+        await new Promise(r => setTimeout(r, KITZ_OS_RETRY_DELAY_MS));
+        continue;
+      }
+    }
   }
+
+  return { response: '⚡ No pude procesar ese archivo ahora — reenvíalo en unos segundos. ¡Ya vuelvo! 🔄' };
 }
 
 // ── Auto-reply tracking — one reply per sender per session to avoid spam ──
@@ -636,6 +676,7 @@ class SessionManager {
   }
 
   // ── Force reconnect (used by watchdog) ──
+  // NEVER gives up — if max backoff attempts reached, resets to slower interval and keeps trying.
   private forceReconnect(session: UserSession): void {
     if (session.socket) {
       try { session.socket.ws?.close(); } catch {}
@@ -644,14 +685,17 @@ class SessionManager {
     session.isConnected = false;
     this.clearTimers(session);
     session.reconnectAttempts++;
+
     if (session.reconnectAttempts <= DEFAULT_RECONNECT_POLICY.maxAttempts) {
       const delay = computeBackoff(session.reconnectAttempts - 1);
       log.info('watchdog reconnect scheduled', { userId: session.userId, delaySec: Math.round(delay / 1000), attempt: session.reconnectAttempts, maxAttempts: DEFAULT_RECONNECT_POLICY.maxAttempts });
       setTimeout(() => this.connectBaileys(session), delay);
     } else {
-      log.info('max reconnect attempts after watchdog — removing session', { userId: session.userId });
-      session.listeners.clear();
-      this.sessions.delete(session.userId);
+      // SELF-HEAL: Don't delete the session — reset attempts and retry on a slow cadence (5 min)
+      const SLOW_RETRY_MS = 5 * 60 * 1000;
+      session.reconnectAttempts = 0;
+      log.info('max reconnect exhausted — entering slow self-heal loop (every 5 min)', { userId: session.userId });
+      setTimeout(() => this.connectBaileys(session), SLOW_RETRY_MS);
     }
   }
 
@@ -669,11 +713,19 @@ class SessionManager {
       rm(dir, { recursive: true, force: true }).catch(() => {});
       session.listeners.clear();
       this.sessions.delete(userId);
-    } else if (shouldReconnect && session.reconnectAttempts < DEFAULT_RECONNECT_POLICY.maxAttempts) {
+    } else if (shouldReconnect) {
       session.reconnectAttempts++;
-      const delay = computeBackoff(session.reconnectAttempts - 1);
-      log.info('reconnecting', { userId, delaySec: Math.round(delay / 1000), attempt: session.reconnectAttempts, maxAttempts: DEFAULT_RECONNECT_POLICY.maxAttempts });
-      setTimeout(() => this.connectBaileys(session), delay);
+      if (session.reconnectAttempts <= DEFAULT_RECONNECT_POLICY.maxAttempts) {
+        const delay = computeBackoff(session.reconnectAttempts - 1);
+        log.info('reconnecting', { userId, delaySec: Math.round(delay / 1000), attempt: session.reconnectAttempts, maxAttempts: DEFAULT_RECONNECT_POLICY.maxAttempts });
+        setTimeout(() => this.connectBaileys(session), delay);
+      } else {
+        // SELF-HEAL: Don't delete — enter slow retry loop (5 min)
+        const SLOW_RETRY_MS = 5 * 60 * 1000;
+        session.reconnectAttempts = 0;
+        log.info('max reconnect exhausted — slow self-heal loop (every 5 min)', { userId });
+        setTimeout(() => this.connectBaileys(session), SLOW_RETRY_MS);
+      }
     } else if (isLoggedOut) {
       log.info('logged out — cleaning up session', { userId });
       this.emit(session, 'logged_out', '');
