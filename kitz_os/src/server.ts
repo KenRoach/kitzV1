@@ -397,7 +397,7 @@ export async function createServer(kernel: KitzKernel) {
       const isSystemSource = reqChannel === 'system' || user_id === 'swarm-bridge';
       if (!isSwarmMessage && !isSystemSource) {
         try {
-          storeMessage({ userId, senderJid, channel: channel as 'whatsapp' | 'email', role: 'user', content: message, traceId });
+          storeMessage({ userId, senderJid, channel: channel as 'whatsapp' | 'email' | 'web' | 'terminal', role: 'user', content: message, traceId });
         } catch { /* non-blocking */ }
       }
 
@@ -2242,7 +2242,7 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
     storeMessage({
       userId: userId || 'default',
       senderJid: senderJid || 'unknown',
-      channel: (ch as 'whatsapp' | 'email') || 'whatsapp',
+      channel: (ch as 'whatsapp' | 'email' | 'web' | 'terminal') || 'whatsapp',
       role: (role as 'user' | 'assistant') || 'user',
       content,
       traceId: tid,
