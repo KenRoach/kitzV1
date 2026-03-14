@@ -327,7 +327,7 @@ function formatDraftSummary(drafts: DraftAction[]): string {
 }
 
 // ── System Prompt ──
-function buildSystemPrompt(toolCount: number, channel: OutputChannel = 'whatsapp', sopContext?: string, intelligenceContext?: string, contactInfo?: Contact): string {
+function buildSystemPrompt(toolCount: number, channel: OutputChannel = 'whatsapp', sopContext?: string, intelligenceContext?: string, contactInfo?: Contact, isAdmin?: boolean): string {
   const sopSection = sopContext
     ? `\n\nRELEVANT SOPS (follow these procedures when applicable):\n${sopContext}`
     : '';
@@ -436,7 +436,16 @@ ${channel === 'terminal' ? `- ALWAYS respond in the SAME LANGUAGE the user write
 - If the user writes in Spanglish, respond in Spanish with natural English terms for business/tech words.
 - Use Latin American Spanish when responding in Spanish (tú, not vosotros). Natural, not academic.
 - For business terms with no clean Spanish equivalent, use the English term (CRM, dashboard, ROI, leads, etc.)
-${contactInfo ? `
+${isAdmin ? `
+ADMIN MODE — BOSS ACCESS:
+- You are talking to Kenneth, the founder and CEO. He IS the boss.
+- NO draft-first — execute all operations immediately. No approval queue.
+- Full system access: kill switch, debug info, all tools unrestricted.
+- Be direct, efficient. He knows what he wants.
+- If he says "do it", execute. No confirmation needed.
+- You can share internal metrics, error logs, system status freely.
+- Match his energy — if he's rapid-fire, keep up. If he's strategic, go deep.
+` : ''}${contactInfo ? `
 USER CONTEXT (who you're talking to):
 - Name: ${contactInfo.name || 'Unknown'}${contactInfo.businessName ? `\n- Business: ${contactInfo.businessName}` : ''}${contactInfo.businessType ? `\n- Business Type: ${contactInfo.businessType}` : ''}
 - Phone: ${contactInfo.phone || 'Unknown'}
@@ -803,6 +812,7 @@ export async function routeWithAI(
   channel: OutputChannel = 'whatsapp',
   chatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
   senderJid?: string,
+  isAdmin?: boolean,
 ): Promise<{ response: string; toolsUsed: string[]; creditsConsumed: number; toolResults: Record<string, unknown>[] }> {
 
   cleanExpiredDrafts();
@@ -869,7 +879,7 @@ export async function routeWithAI(
     contactInfo = getContact(senderJid, waChannel) ?? undefined;
   }
 
-  const systemPrompt = buildSystemPrompt(registry.count(), channel, sopContext, intelligenceContext, contactInfo);
+  const systemPrompt = buildSystemPrompt(registry.count(), channel, sopContext, intelligenceContext, contactInfo, isAdmin);
 
   // ── Build conversation context ──
   // Priority: frontend chat history > backend memory manager > empty
@@ -1068,8 +1078,8 @@ export async function routeWithAI(
         continue;
       }
 
-      // Draft-first: write tools are queued, not executed
-      if (isWriteTool(toolName)) {
+      // Draft-first: write tools are queued, not executed (admin bypasses this)
+      if (isWriteTool(toolName) && !isAdmin) {
         const riskLevel = getToolRisk(toolName);
         const draft: DraftAction = {
           toolName,
@@ -1238,6 +1248,7 @@ export async function brainFirstRoute(
   channel: OutputChannel = 'whatsapp',
   chatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
   senderJid?: string,
+  isAdmin?: boolean,
 ): Promise<RouteResult> {
 
   // 1. Call kitz-brain POST /decide
@@ -1304,7 +1315,7 @@ export async function brainFirstRoute(
       }
     }
 
-    return routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid);
+    return routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid, isAdmin);
   }
 
   // 3. Execute based on brain strategy
@@ -1313,14 +1324,14 @@ export async function brainFirstRoute(
   switch (decision.strategy) {
     case 'direct_tool': {
       // Use existing 5-phase pipeline — brain says it's a simple request
-      result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid);
+      result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid, isAdmin);
       break;
     }
 
     case 'single_agent': {
       const agentName = decision.agents?.[0];
       if (!agentName) {
-        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid);
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid, isAdmin);
         break;
       }
 
@@ -1335,7 +1346,7 @@ export async function brainFirstRoute(
       // If agent not found or offline, fall back to routeWithAI
       if (execResult.iterations === 0 && execResult.response.startsWith('Agent "')) {
         log.info('agent_fallback', { trace_id: traceId });
-        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid);
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid, isAdmin);
       } else {
         result = adaptExecutionResult(execResult);
       }
@@ -1345,7 +1356,7 @@ export async function brainFirstRoute(
     case 'multi_agent': {
       const agents = decision.agents || [];
       if (agents.length === 0) {
-        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid);
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid, isAdmin);
         break;
       }
 
@@ -1379,7 +1390,7 @@ export async function brainFirstRoute(
 
       if (!finalResponse) {
         // All agents failed, fall back
-        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid);
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid, isAdmin);
       } else {
         result = {
           response: finalResponse,
@@ -1419,7 +1430,7 @@ export async function brainFirstRoute(
         };
       } catch (err) {
         log.info('swarm_error', { trace_id: traceId });
-        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid);
+        result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid, isAdmin);
       }
       break;
     }
@@ -1435,7 +1446,7 @@ export async function brainFirstRoute(
     }
 
     default: {
-      result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid);
+      result = await routeWithAI(userMessage, registry, traceId, mediaContext, userId, channel, chatHistory, senderJid, isAdmin);
     }
   }
 

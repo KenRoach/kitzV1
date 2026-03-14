@@ -136,6 +136,88 @@ function kitzReply(text: string): string {
   return `${KITZ_PREFIX}${text}`;
 }
 
+// ── Brain Dump Batching (Admin Only) ──
+// Buffers rapid-fire messages from admin, combines them into one payload.
+interface BrainDumpBuffer {
+  messages: Array<{ text: string; timestamp: number; traceId: string }>;
+  timer: ReturnType<typeof setTimeout> | null;
+  ackSent: boolean;
+  resolve: ((combined: string | null) => void) | null;
+}
+const brainDumpBuffers = new Map<string, BrainDumpBuffer>();
+const BRAIN_DUMP_WINDOW_MS = 8_000;  // 8 seconds of silence before forwarding
+const BRAIN_DUMP_THRESHOLD = 2;      // 2+ messages = brain dump mode
+
+/**
+ * Attempt to buffer a message for brain dump batching.
+ * Returns: string (combined text to forward) | null (message buffered, wait) | undefined (not admin, skip batching)
+ */
+function bufferBrainDump(
+  key: string,
+  text: string,
+  traceId: string,
+  isAdmin: boolean,
+  sock: WASocket,
+  replyJid: string,
+): Promise<string | null> | undefined {
+  if (!isAdmin) return undefined; // Non-admin: skip batching entirely
+
+  const existing = brainDumpBuffers.get(key);
+
+  if (!existing) {
+    // First message — start buffer with timer
+    return new Promise<string | null>((resolve) => {
+      const buffer: BrainDumpBuffer = {
+        messages: [{ text, timestamp: Date.now(), traceId }],
+        timer: setTimeout(() => {
+          // Timer fired — flush buffer
+          const buf = brainDumpBuffers.get(key);
+          brainDumpBuffers.delete(key);
+          if (!buf) { resolve(null); return; }
+
+          if (buf.messages.length === 1) {
+            // Single message — forward as-is
+            resolve(buf.messages[0].text);
+          } else {
+            // Multiple messages — combine as brain dump
+            const combined = `[BRAIN DUMP — ${buf.messages.length} messages]\n\n` +
+              buf.messages.map((m, i) => `${i + 1}. ${m.text}`).join('\n\n');
+            resolve(combined);
+          }
+        }, BRAIN_DUMP_WINDOW_MS),
+        ackSent: false,
+        resolve,
+      };
+      brainDumpBuffers.set(key, buffer);
+    });
+  }
+
+  // Subsequent message — add to buffer
+  existing.messages.push({ text, timestamp: Date.now(), traceId });
+
+  // Send ack on 2nd message (only once)
+  if (existing.messages.length === BRAIN_DUMP_THRESHOLD && !existing.ackSent) {
+    existing.ackSent = true;
+    sock.sendMessage(replyJid, { text: kitzReply('Got it, processing your brain dump... 🧠') })
+      .then(sent => { if (sent?.key?.id) trackKitzSent(sent.key.id); })
+      .catch(() => {});
+  }
+
+  // Reset timer — wait for more messages
+  if (existing.timer) clearTimeout(existing.timer);
+  existing.timer = setTimeout(() => {
+    const buf = brainDumpBuffers.get(key);
+    brainDumpBuffers.delete(key);
+    if (!buf || !buf.resolve) return;
+
+    const combined = `[BRAIN DUMP — ${buf.messages.length} messages]\n\n` +
+      buf.messages.map((m, i) => `${i + 1}. ${m.text}`).join('\n\n');
+    buf.resolve(combined);
+  }, BRAIN_DUMP_WINDOW_MS);
+
+  return Promise.resolve(null); // Signal: message buffered, don't forward yet
+}
+
 // ── In-Memory Message Store ──
 // Stores recent inbound and outbound messages for conversation review.
 // Max 500 messages per user, FIFO eviction. Not persisted across restarts.
@@ -258,7 +340,7 @@ async function forwardToKitzOs(
   senderJid: string,
   userId: string,
   traceId: string,
-  extra?: { replyContext?: { id: string; body: string | null; sender: string | null }; location?: string; source?: string },
+  extra?: { replyContext?: { id: string; body: string | null; sender: string | null }; location?: string; source?: string; isAdmin?: boolean },
 ): Promise<KitzOsResponse> {
   const body = JSON.stringify({
     message,
@@ -269,6 +351,7 @@ async function forwardToKitzOs(
     reply_context: extra?.replyContext,
     location: extra?.location,
     source: extra?.source,
+    is_admin: extra?.isAdmin || false,
   });
   const headers = { 'Content-Type': 'application/json', ...(SERVICE_SECRET ? { 'x-service-secret': SERVICE_SECRET, 'x-dev-secret': SERVICE_SECRET } : {}) };
 
@@ -767,15 +850,30 @@ class SessionManager {
     const senderJid = msg.key.remoteJid || '';
     const senderNumber = senderJid.split('@')[0];
 
+    // ── Admin detection via LID JID resolution ──
+    // WhatsApp uses Linked Identity JIDs (e.g., 151260711907468@lid) for cross-device messaging.
+    // We match ADMIN_LID to recognize the admin even when messages arrive as LID JIDs.
+    const ADMIN_PHONE = process.env.ADMIN_PHONE || '';
+    const ADMIN_LID = process.env.ADMIN_LID || '';
+    const isAdminByPhone = !!(ADMIN_PHONE && senderNumber === ADMIN_PHONE);
+    const isAdminByLid = !!(ADMIN_LID && senderNumber === ADMIN_LID);
+
+    // Resolve LID→phone: when LID matches admin, substitute with phone-based JID for downstream
+    const resolvedSenderJid = (senderJid.endsWith('@lid') && isAdminByLid && ADMIN_PHONE)
+      ? `${ADMIN_PHONE}@s.whatsapp.net`
+      : senderJid;
+
     // Log EVERY message that arrives (before any filtering)
-    log.info('raw message received', { userId, fromMe: msg.key.fromMe, remoteJid: senderJid, myNumber, keys: Object.keys(msg.message || {}) });
+    log.info('raw message received', { userId, fromMe: msg.key.fromMe, remoteJid: senderJid, resolvedJid: resolvedSenderJid, myNumber, isAdminByLid, keys: Object.keys(msg.message || {}) });
 
     // ── ACCESS MODEL ──
     // 1. Self-chat ("Me" / "Notes to self") → always process
-    // 2. Group chats → only process if Kitz is mentioned by name
-    // 3. DMs from others → auto-reply + log to CRM
-    // 4. DMs you send to others → ignore
-    const isSelfChat = myNumber && senderNumber === myNumber;
+    // 2. Admin phone/LID → always process (full admin access)
+    // 3. Group chats → only process if Kitz is mentioned by name
+    // 4. DMs from others → route through KITZ AI (wa.me link flow)
+    // 5. DMs you send to others → ignore
+    const isSelfChat = !!(myNumber && senderNumber === myNumber);
+    const isAdminSender = isAdminByPhone || isAdminByLid || isSelfChat;
     const isGroup = senderJid.endsWith('@g.us');
 
     // Extract message text early (needed for group mention check + CRM capture)
@@ -954,13 +1052,13 @@ class SessionManager {
 
     // ── Location-only messages ──
     if (hasLocation && !hasText && !hasImage && !hasDocument && !hasAudio) {
-      const locSenderPhone = senderJid.replace(/@.*/, '');
-      storeMessage({ userId, jid: senderJid, phone: locSenderPhone, direction: 'inbound', content: locationText || '[Location]', traceId });
+      const locSenderPhone = resolvedSenderJid.replace(/@.*/, '');
+      storeMessage({ userId, jid: resolvedSenderJid, phone: locSenderPhone, direction: 'inbound', content: locationText || '[Location]', traceId });
       try { await sock.sendPresenceUpdate('composing', replyJid); } catch {}
       const kitzResponse = await forwardToKitzOs(
         locationText || 'Location shared',
         replyJid, userId, traceId,
-        { location: locationText, source: isDmFromOther ? 'dm' : 'self_chat' },
+        { location: locationText, source: isAdminSender ? 'self_chat' : (isDmFromOther ? 'dm' : 'self_chat'), isAdmin: isAdminSender },
       );
       const response = kitzResponse.response;
       await sleep(typingDelayMs(response));
@@ -979,14 +1077,39 @@ class SessionManager {
     if (text) {
       const fullText = locationText ? `${text}\n${locationText}` : text;
       // Store inbound message
-      const senderPhone = senderJid.replace(/@.*/, '');
-      storeMessage({ userId, jid: senderJid, phone: senderPhone, direction: 'inbound', content: fullText, traceId });
+      const senderPhone = resolvedSenderJid.replace(/@.*/, '');
+      storeMessage({ userId, jid: resolvedSenderJid, phone: senderPhone, direction: 'inbound', content: fullText, traceId });
+
+      // ── Brain dump batching (admin only) ──
+      // Buffer rapid-fire messages, combine into one payload after 8s of silence.
+      const brainDumpKey = `${userId}:${resolvedSenderJid}`;
+      const brainDumpResult = bufferBrainDump(brainDumpKey, fullText, traceId, isAdminSender, sock, replyJid);
+      if (brainDumpResult === null) {
+        // Message buffered (2nd+ message in brain dump) — don't forward yet
+        log.info('brain_dump_buffered', { userId, messageCount: brainDumpBuffers.get(brainDumpKey)?.messages.length });
+        return;
+      }
+      if (brainDumpResult === undefined) {
+        // Not admin — forward immediately (no batching)
+        // Fall through to normal forwarding below
+      }
+
+      // Determine the text to forward: brain dump combined text or original
+      let textToForward = fullText;
+      if (brainDumpResult !== undefined) {
+        // Admin path: wait for buffer to flush (returns combined text or single message)
+        const combined = await brainDumpResult;
+        if (!combined) return; // Buffer returned null — shouldn't happen, but safety net
+        textToForward = combined;
+      }
+
       try { await sock.sendPresenceUpdate('composing', replyJid); } catch {}
-      log.info('forwarding text to kitz_os', { userId, textPreview: fullText.slice(0, 50) });
-      const kitzResponse = await forwardToKitzOs(fullText, replyJid, userId, traceId, {
+      log.info('forwarding text to kitz_os', { userId, textPreview: textToForward.slice(0, 50), isAdmin: isAdminSender });
+      const kitzResponse = await forwardToKitzOs(textToForward, replyJid, userId, traceId, {
         replyContext,
         location: locationText,
-        source: isDmFromOther ? 'dm' : 'self_chat',
+        source: isAdminSender ? 'self_chat' : (isDmFromOther ? 'dm' : 'self_chat'),
+        isAdmin: isAdminSender,
       });
       const response = kitzResponse.response;
       log.info('kitz_os response', { userId, responsePreview: response.slice(0, 80) });
@@ -997,7 +1120,7 @@ class SessionManager {
       try {
         const sent = await sock.sendMessage(replyJid, { text: kitzReply(response) });
         if (sent?.key?.id) trackKitzSent(sent.key.id);
-        log.info('reply sent to self-chat', { userId });
+        log.info('reply sent', { userId });
       } catch (sendErr) {
         log.error('reply failed', { userId, err: sendErr });
       }
@@ -1009,8 +1132,8 @@ class SessionManager {
     const imageMsg = msg.message?.imageMessage;
     if (imageMsg) {
       try {
-        const imgSenderPhone = senderJid.replace(/@.*/, '');
-        storeMessage({ userId, jid: senderJid, phone: imgSenderPhone, direction: 'inbound', content: imageMsg.caption || '[Image]', mediaType: 'image', traceId });
+        const imgSenderPhone = resolvedSenderJid.replace(/@.*/, '');
+        storeMessage({ userId, jid: resolvedSenderJid, phone: imgSenderPhone, direction: 'inbound', content: imageMsg.caption || '[Image]', mediaType: 'image', traceId });
         await sock.sendPresenceUpdate('composing', replyJid);
         const buffer = await downloadMediaMessage(msg, 'buffer', {});
         const base64 = (buffer as Buffer).toString('base64');
@@ -1069,8 +1192,8 @@ class SessionManager {
     const audioMsg = msg.message?.audioMessage;
     if (audioMsg) {
       try {
-        const audioSenderPhone = senderJid.replace(/@.*/, '');
-        storeMessage({ userId, jid: senderJid, phone: audioSenderPhone, direction: 'inbound', content: '[Voice note]', mediaType: 'audio', traceId });
+        const audioSenderPhone = resolvedSenderJid.replace(/@.*/, '');
+        storeMessage({ userId, jid: resolvedSenderJid, phone: audioSenderPhone, direction: 'inbound', content: '[Voice note]', mediaType: 'audio', traceId });
         await sock.sendPresenceUpdate('composing', replyJid);
         const buffer = await downloadMediaMessage(msg, 'buffer', {});
         const base64 = (buffer as Buffer).toString('base64');

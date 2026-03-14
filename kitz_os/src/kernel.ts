@@ -190,6 +190,33 @@ export class KitzKernel {
       registered: registeredCsuite,
       ...(missingCsuite.length > 0 ? { missing: missingCsuite } : {}),
     });
+
+    // 9. Notify admin that KITZ is back online (fire-and-forget)
+    this.sendBackOnlineNotification().catch(() => {});
+  }
+
+  /** Send "back online" WhatsApp notification to admin after boot */
+  private async sendBackOnlineNotification(): Promise<void> {
+    const adminPhone = process.env.ADMIN_PHONE;
+    if (!adminPhone) return;
+    const waUrl = process.env.WA_CONNECTOR_URL || 'http://localhost:3006';
+    const secret = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
+
+    const msg = `KITZ OS back online, jefe.\n\n` +
+      `${this.tools.count()} tools loaded. All systems go.\n\n` +
+      `If you sent anything while I was down, send it again.`;
+
+    try {
+      await fetch(`${waUrl}/outbound/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(secret ? { 'x-service-secret': secret, 'x-dev-secret': secret } : {}) },
+        body: JSON.stringify({ phone: adminPhone, message: msg, draftOnly: false }),
+        signal: AbortSignal.timeout(10_000),
+      });
+      log.info('back-online notification sent', { adminPhone });
+    } catch (err) {
+      log.warn('back-online notification failed', { error: (err as Error).message });
+    }
   }
 
   async run(opts: { goal: string; agent?: string; mode?: string; context?: Record<string, unknown> }): Promise<RunResult> {

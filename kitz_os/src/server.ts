@@ -370,11 +370,11 @@ export async function createServer(kernel: KitzKernel) {
   });
 
   // ── Main WhatsApp webhook ──
-  app.post<{ Body: { message: string; sender?: string; user_id?: string; trace_id?: string; reply_context?: unknown; location?: string; channel?: string; echo_channels?: OutputChannel[]; chat_history?: Array<{ role: 'user' | 'assistant'; content: string }>; source?: string } }>(
+  app.post<{ Body: { message: string; sender?: string; user_id?: string; trace_id?: string; reply_context?: unknown; location?: string; channel?: string; echo_channels?: OutputChannel[]; chat_history?: Array<{ role: 'user' | 'assistant'; content: string }>; source?: string; is_admin?: boolean } }>(
     '/api/kitz',
     { config: { rateLimit: { max: 30, timeWindow: '1 minute' } } },
     async (req, reply) => {
-      const { message, sender, user_id, trace_id, channel: reqChannel, echo_channels, chat_history, source } = req.body || {};
+      const { message, sender, user_id, trace_id, channel: reqChannel, echo_channels, chat_history, source, is_admin } = req.body || {};
       if (!message) return reply.code(400).send({ error: 'message required' });
       const validChannels: OutputChannel[] = ['whatsapp', 'web', 'email', 'sms', 'voice', 'terminal', 'instagram', 'messenger', 'twitter'];
       const channel: OutputChannel = validChannels.includes(reqChannel as OutputChannel)
@@ -509,9 +509,10 @@ export async function createServer(kernel: KitzKernel) {
             const ksDevSecret = req.headers['x-dev-secret'] as string | undefined;
             const ksUserId = req.body.user_id;
             const ksGodMode = process.env.GOD_MODE_USER_ID;
-            const isAdmin = (ksDevSecret && ksDevSecret === process.env.DEV_TOKEN_SECRET) ||
+            const isKsAdmin = is_admin ||
+                            (ksDevSecret && ksDevSecret === process.env.DEV_TOKEN_SECRET) ||
                             (ksUserId && ksGodMode && ksUserId === ksGodMode);
-            if (!isAdmin) {
+            if (!isKsAdmin) {
               return { command: 'kill_switch', response: '🔒 Kill switch requires admin access.' };
             }
             process.env.KILL_SWITCH = String(command.value);
@@ -675,7 +676,7 @@ export async function createServer(kernel: KitzKernel) {
           });
         }
         try {
-          const result = await brainFirstRoute(message, kernel.tools, traceId, undefined, userId, channel, chat_history, senderJid);
+          const result = await brainFirstRoute(message, kernel.tools, traceId, undefined, userId, channel, chat_history, senderJid, is_admin);
           // Store AI response in memory
           try {
             storeMessage({ userId, senderJid, channel: 'whatsapp', role: 'assistant', content: result.response, traceId });
