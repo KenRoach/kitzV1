@@ -19,7 +19,7 @@ export default function UIPreviewPage() {
       <div className="mx-auto max-w-5xl space-y-16">
         <header>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            Kitz Design System
+            KitZ (OS) Design System
           </h1>
           <p className="mt-2 text-sm text-gray-500">
             Component library preview — all variants and states

@@ -51,7 +51,7 @@ function parseMarkdownTable(lines: string[]): { headers: string[]; rows: string[
 }
 
 /**
- * Parse KITZ markdown-style content into React nodes.
+ * Parse KitZ (OS) markdown-style content into React nodes.
  * Handles: **bold**, *italic*, `code`, ```code blocks```, | tables |,
  * ![images](url), bare image URLs, \n, • bullets, numbered lists, links, emojis.
  * No external deps — lightweight inline parser.
@@ -403,7 +403,7 @@ export function MessageBubble({ role, content, variant = 'light', imageUrl, atta
                     </span>
                   </div>
                   <span className="text-[10px] font-medium text-purple-200 bg-white/10 px-2 py-0.5 rounded-full">
-                    KITZ Preview
+                    KitZ (OS) Preview
                   </span>
                 </div>
                 <iframe
@@ -472,7 +472,7 @@ export function MessageBubble({ role, content, variant = 'light', imageUrl, atta
           'opacity-0 group-hover:opacity-100',
           speaking ? 'text-purple-500 animate-pulse' : 'text-gray-400 hover:text-purple-500',
         )}
-        title="Listen to Kitz"
+        title="Listen to KitZ (OS)"
       >
         <Volume2 className="h-3.5 w-3.5" />
       </button>

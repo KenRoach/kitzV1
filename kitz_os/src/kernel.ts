@@ -202,7 +202,7 @@ export class KitzKernel {
     const waUrl = process.env.WA_CONNECTOR_URL || 'http://localhost:3006';
     const secret = process.env.SERVICE_SECRET || process.env.DEV_TOKEN_SECRET || '';
 
-    const msg = `KITZ OS back online, jefe.\n\n` +
+    const msg = `KitZ (OS) back online, jefe.\n\n` +
       `${this.tools.count()} tools loaded. All systems go.\n\n` +
       `If you sent anything while I was down, send it again.`;
 

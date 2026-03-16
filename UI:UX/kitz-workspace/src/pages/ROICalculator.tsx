@@ -20,14 +20,14 @@ export function ROICalculator() {
 
   const chartData = [
     { name: 'Equipo Actual', cost: calc.teamCostMonthly, fill: '#EF4444' },
-    { name: 'KITZ AI Battery', cost: calc.kitzCost, fill: '#22C55E' },
+    { name: 'KitZ (OS) AI Battery', cost: calc.kitzCost, fill: '#22C55E' },
   ];
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold font-mono text-kitz-text">ROI Calculator</h1>
-        <p className="text-sm text-kitz-muted mt-1">Compara tu costo actual vs KITZ AI Battery</p>
+        <p className="text-sm text-kitz-muted mt-1">Compara tu costo actual vs KitZ (OS) AI Battery</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -71,7 +71,7 @@ export function ROICalculator() {
       <div className="bg-kitz-surface border border-kitz-border rounded-xl p-6">
         <h2 className="text-sm font-semibold text-kitz-text uppercase tracking-wider mb-3">Resumen para el CFO</h2>
         <p className="text-sm text-kitz-muted leading-relaxed">
-          Con {messagesPerDay} mensajes diarios y {tasksPerMonth} tareas automatizadas por mes, KITZ reemplaza
+          Con {messagesPerDay} mensajes diarios y {tasksPerMonth} tareas automatizadas por mes, KitZ (OS) reemplaza
           un equipo de {teamSize} persona{teamSize > 1 ? 's' : ''} (${calc.teamCostMonthly.toLocaleString()}/mes) por
           solo <span className="text-kitz-green font-semibold">${calc.kitzCost}/mes</span> en créditos AI Battery.
           Ahorro anual: <span className="text-kitz-green font-semibold">${(calc.savings * 12).toLocaleString()}</span>.

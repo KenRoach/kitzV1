@@ -26,7 +26,7 @@ export function PricingPage() {
   const handleBuy = (pack: CreditPack) => {
     setSelected(pack.credits)
     const msg = encodeURIComponent(
-      `Hola! Quiero comprar ${pack.credits} creditos AI de Kitz ($${pack.price})`
+      `Hola! Quiero comprar ${pack.credits} creditos AI de KitZ (OS) ($${pack.price})`
     )
     window.open(`https://wa.me/${WA_CONTACT}?text=${msg}`, '_blank')
   }
@@ -43,7 +43,7 @@ export function PricingPage() {
         </button>
         <h1 className="text-lg font-bold">
           <span className="bg-gradient-to-r from-white to-purple-300 bg-clip-text text-transparent">
-            KITZ
+            KitZ (OS)
           </span>
           <span className="ml-2 text-sm font-normal text-purple-300/60">
             AI Credits

@@ -12,8 +12,8 @@ export function ModuleSelect({ onSelectCourse }: ModuleSelectProps) {
     <div className="mx-auto max-w-2xl px-4 py-8">
       {/* Header — Level + XP */}
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold text-gray-900">Learn with Kitz</h1>
-        <p className="mt-1 text-sm text-gray-500">Complete courses to power up Kitz</p>
+        <h1 className="text-2xl font-bold text-gray-900">Learn with KitZ (OS)</h1>
+        <p className="mt-1 text-sm text-gray-500">Complete courses to power up KitZ (OS)</p>
         <div className="mt-4 flex items-center justify-center gap-6">
           <div className="rounded-full bg-purple-100 px-4 py-1.5 text-sm font-semibold text-purple-700">
             Level {level}

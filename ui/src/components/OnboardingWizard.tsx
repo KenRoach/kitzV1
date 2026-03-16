@@ -85,7 +85,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-500/20">
                 <User className="h-7 w-7 text-purple-300" />
               </div>
-              <h2 className="text-xl font-extrabold text-white">Bienvenido/a a Kitz</h2>
+              <h2 className="text-xl font-extrabold text-white">Bienvenido/a a KitZ (OS)</h2>
               <p className="mt-2 text-sm text-purple-200/60">Cuentame sobre ti para personalizar tu experiencia</p>
             </div>
 
@@ -182,7 +182,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
             <div>
               <h2 className="text-xl font-extrabold text-white">
-                {name ? `${name}, tu Kitz esta listo!` : 'Tu Kitz esta listo!'}
+                {name ? `${name}, tu KitZ (OS) esta listo!` : 'Tu KitZ (OS) esta listo!'}
               </h2>
               {business && (
                 <p className="mt-1 text-sm text-purple-200/60">

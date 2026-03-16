@@ -248,7 +248,7 @@ export const COURSES: Course[] = [
           'A chatbot that only says pre-written responses',
         ],
         correctIndex: 1,
-        explanation: 'AI assistants like Kitz can understand what customers are asking, help manage orders, and automate repetitive work — like having a smart team member that never sleeps.',
+        explanation: 'AI assistants like KitZ (OS) can understand what customers are asking, help manage orders, and automate repetitive work — like having a smart team member that never sleeps.',
       },
       {
         id: 'ts-5',

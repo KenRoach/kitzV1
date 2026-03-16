@@ -16,7 +16,7 @@ export function TerminalHeader() {
   return (
     <div className="flex items-center justify-between px-4 py-2.5 border-b border-kitz-border bg-kitz-surface/80">
       <div className="flex items-center gap-2">
-        <span className="text-kitz-purple font-bold text-sm tracking-wide font-mono">KITZ OS</span>
+        <span className="text-kitz-purple font-bold text-sm tracking-wide font-mono">KitZ (OS)</span>
         <Badge variant="purple">v0.1</Badge>
       </div>
       <div className="flex items-center gap-3 text-[11px]">

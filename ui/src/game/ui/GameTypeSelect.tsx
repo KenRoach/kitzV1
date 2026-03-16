@@ -51,7 +51,7 @@ export function GameTypeSelect({ onPlayTycoon, onShowLeaderboard }: GameTypeSele
         className="mb-2 text-2xl font-bold tracking-widest text-white"
         style={{ textShadow: '0 0 30px #A855F7, 0 0 60px #7C3AED, 2px 2px 0 #4C1D95' }}
       >
-        KITZ ACADEMY
+        KitZ (OS) ACADEMY
       </h1>
       <div className="mb-2 flex items-center gap-2">
         <div

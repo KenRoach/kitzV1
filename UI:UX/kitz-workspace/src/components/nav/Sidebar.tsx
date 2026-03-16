@@ -37,7 +37,7 @@ export function Sidebar() {
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-4 border-b border-kitz-border">
         {!collapsed && (
-          <span className="font-mono text-sm font-bold text-kitz-purple tracking-wider">KITZ TOOLS</span>
+          <span className="font-mono text-sm font-bold text-kitz-purple tracking-wider">KitZ (OS) TOOLS</span>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}

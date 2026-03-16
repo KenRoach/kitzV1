@@ -50,7 +50,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
             <h1 className="mt-6 text-2xl font-bold text-black">Something went wrong</h1>
             <p className="mt-2 text-sm text-gray-500">
-              KITZ hit an unexpected error. Your data is safe — try refreshing.
+              KitZ (OS) hit an unexpected error. Your data is safe — try refreshing.
             </p>
             {this.state.error && (
               <pre className="mt-4 rounded-xl bg-gray-100 p-4 text-left font-mono text-xs text-gray-600 overflow-x-auto">

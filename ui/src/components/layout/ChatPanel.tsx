@@ -26,7 +26,7 @@ export function CommandCenter() {
   const agentSteps = useAgentThinkingStore((s) => s.steps)
   const isAgentThinking = useAgentThinkingStore((s) => s.isThinking)
 
-  // When Kitz is tapped, focus the chat input
+  // When KitZ (OS) is tapped, focus the chat input
   useEffect(() => {
     if (chatFocused && inputRef.current) {
       inputRef.current.focus()
@@ -104,7 +104,7 @@ export function CommandCenter() {
                 <button
                   key={key}
                   onClick={() => void sendMessage(t(key), user?.id ?? 'default')}
-                  aria-label={`Ask Kitz: ${t(key)}`}
+                  aria-label={`Ask KitZ (OS): ${t(key)}`}
                   className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs text-white/80 transition hover:bg-white/20 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30"
                 >
                   {t(key)}

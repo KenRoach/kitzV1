@@ -87,21 +87,21 @@ const MODE_INFO: Record<KitzMode, { label: string; color: (s: string) => string;
     label: 'PLAN',
     color: chalk.hex('#F59E0B'),
     emoji: '📋',
-    desc: 'Kitz explica lo que haría, paso a paso, antes de actuar. Tú apruebas.',
+    desc: 'KitZ (OS) explica lo que haría, paso a paso, antes de actuar. Tú apruebas.',
     chatPrefix: '[MODE: PLAN — Think step-by-step. Outline what you would do, which tools you would call, and what the expected outcome is. Do NOT execute any tools yet. Present as a numbered plan and ask for approval.]',
   },
   ask: {
     label: 'ASK',
     color: chalk.hex('#3B82F6'),
     emoji: '🤔',
-    desc: 'Kitz pregunta antes de cada acción. Modo seguro — nada pasa sin tu OK.',
+    desc: 'KitZ (OS) pregunta antes de cada acción. Modo seguro — nada pasa sin tu OK.',
     chatPrefix: '[MODE: ASK — Before performing any action or calling any tool, explain what you want to do and ask for explicit permission. Be concise.]',
   },
   go: {
     label: 'GO',
     color: chalk.hex('#22C55E'),
     emoji: '🚀',
-    desc: 'Kitz lo hace. Autonomía total — ejecuta herramientas, decide, y lanza.',
+    desc: 'KitZ (OS) lo hace. Autonomía total — ejecuta herramientas, decide, y lanza.',
     chatPrefix: '',
   },
 }
@@ -165,13 +165,13 @@ const SLASH_COMMANDS: SlashCommand[] = [
   { name: 'open', aliases: [], category: 'preview', description: 'Open last artifact in browser' },
   { name: 'artifact', aliases: ['artifacts'], category: 'preview', description: 'Show last artifact path' },
   // Memory & Learning
-  { name: 'remember', aliases: ['learn'], category: 'memory', description: 'Teach KITZ a fact', takesArg: true, argHint: '<fact>' },
+  { name: 'remember', aliases: ['learn'], category: 'memory', description: 'Teach KitZ (OS) a fact', takesArg: true, argHint: '<fact>' },
   { name: 'forget', aliases: [], category: 'memory', description: 'Remove a learned fact', takesArg: true, argHint: '<key>' },
-  { name: 'memories', aliases: ['memory', 'brain'], category: 'memory', description: 'Show what KITZ remembers' },
+  { name: 'memories', aliases: ['memory', 'brain'], category: 'memory', description: 'Show what KitZ (OS) remembers' },
   // Utilities
   { name: 'clear', aliases: [], category: 'util', description: 'Clear screen' },
   { name: 'help', aliases: [], category: 'util', description: 'Full command reference' },
-  { name: 'quit', aliases: ['exit', 'q'], category: 'util', description: 'Exit KITZ' },
+  { name: 'quit', aliases: ['exit', 'q'], category: 'util', description: 'Exit KitZ (OS)' },
 ]
 
 // Build a fast lookup set of all known command names + aliases
@@ -284,7 +284,7 @@ async function detectAndLearn(message: string): Promise<string | null> {
 // Load memories at startup
 let cliMemories: MemoryEntry[] = loadMemories()
 
-/** /remember <fact> — teach KITZ something via AI-powered extraction */
+/** /remember <fact> — teach KitZ (OS) something via AI-powered extraction */
 async function cmdRemember(input: string): Promise<string> {
   if (!input.trim()) {
     return chalk.yellow('\n  ⚠ Usage: /remember <fact>\n  Example: /remember my company is RenewFlo\n  Example: /remember always respond in English\n')
@@ -353,12 +353,12 @@ function cmdForget(input: string): string {
   return chalk.red(`\n  ❌ No memory found with key: ${input.trim()}\n  Use /memories to see all keys.\n`)
 }
 
-/** /memories — show everything KITZ remembers */
+/** /memories — show everything KitZ (OS) remembers */
 function cmdMemories(): string {
   if (cliMemories.length === 0) {
     return [
       '',
-      purpleBold('  🧠 KITZ Memory'),
+      purpleBold('  🧠 KitZ (OS) Memory'),
       `  ${line(40)}`,
       dim('  No memories yet. Teach me with /remember <fact>'),
       dim('  Example: /remember my company is called RenewFlo'),
@@ -370,7 +370,7 @@ function cmdMemories(): string {
   const prefs = cliMemories.filter(m => m.type === 'preference')
   const decisions = cliMemories.filter(m => m.type === 'decision')
 
-  const lines = ['', purpleBold('  🧠 KITZ Memory'), `  ${line(40)}`, '']
+  const lines = ['', purpleBold('  🧠 KitZ (OS) Memory'), `  ${line(40)}`, '']
 
   if (facts.length > 0) {
     lines.push(chalk.bold('  Facts:'))
@@ -588,7 +588,7 @@ function renderTopBar(): string {
   const autoTag = autoAccept ? chalk.green(' [AUTO]') : ''
 
   // Line 1: Brand + status
-  const line1 = `  ${purpleBold('KITZ')} ${dim(`v${VERSION}`)}  ${kernelDot} ${dim('OS')}  ${waStatus}  ${chalk.hex('#A855F7')('⚡')} ${dim(b.batteryLimit > 0 ? 'Ilimitado' : '—')}  ${modeTag}${autoTag}  ${dim(`${b.toolCount} herramientas · ${b.agentCount} agentes`)}`
+  const line1 = `  ${purpleBold('KitZ (OS)')} ${dim(`v${VERSION}`)}  ${kernelDot} ${dim('OS')}  ${waStatus}  ${chalk.hex('#A855F7')('⚡')} ${dim(b.batteryLimit > 0 ? 'Ilimitado' : '—')}  ${modeTag}${autoTag}  ${dim(`${b.toolCount} herramientas · ${b.agentCount} agentes`)}`
   // Line 2: Separator (responsive to terminal width)
   const barWidth = Math.max((process.stdout.columns || 80) - 4, 40)
   const line2 = `  ${dim('─'.repeat(barWidth))}`
@@ -618,7 +618,7 @@ function renderBootScreen(): string {
     `  ${dim('"Tu Negocio, Resuelto"')}  ${dim(`v${VERSION} · ${lastUpdate}`)}`,
     '',
     `  ${purpleBold('Qué')}   ${chalk.white('Sistema operativo de negocios con IA')}`,
-    `  ${purpleBold('Cómo')}  ${chalk.white('Chatea aquí o en WhatsApp — KITZ maneja tus ops')}`,
+    `  ${purpleBold('Cómo')}  ${chalk.white('Chatea aquí o en WhatsApp — KitZ (OS) maneja tus ops')}`,
     `  ${waStatus}`,
     cliMemories.length > 0 ? `  ${chalk.magenta('🧠')} ${dim(`${cliMemories.length} memoria${cliMemories.length !== 1 ? 's' : ''} cargada${cliMemories.length !== 1 ? 's' : ''}`)}  ${dim(`— /remember · /forget · /memories`)}` : '',
   ].filter(Boolean)
@@ -3617,7 +3617,7 @@ async function main() {
   let frame = 0
   const bootAnim = setInterval(() => {
     const c = chalk.hex(bootPurples[frame % bootPurples.length])
-    process.stdout.write(`\r  ${c(bootFrames[frame % bootFrames.length])} ${c('KITZ')}`)
+    process.stdout.write(`\r  ${c(bootFrames[frame % bootFrames.length])} ${c('KitZ (OS)')}`)
     frame++
   }, 100)
 

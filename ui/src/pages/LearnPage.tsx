@@ -54,7 +54,7 @@ export function LearnPage() {
       <div className="flex min-h-full flex-col items-center justify-center px-4 py-12">
         <h2 className="text-2xl font-bold text-gray-900">Course Complete!</h2>
         <p className="mt-2 text-sm text-gray-500">
-          You finished &ldquo;{currentCourse.title}&rdquo; — Kitz leveled up!
+          You finished &ldquo;{currentCourse.title}&rdquo; — KitZ (OS) leveled up!
         </p>
         <div className="mt-2 rounded-full bg-purple-100 px-4 py-1.5 text-sm font-semibold text-purple-700">
           Now Level {level}

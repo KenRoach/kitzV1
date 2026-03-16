@@ -271,10 +271,10 @@ export function getKitzVoiceConfig(): {
 export function getWidgetSnippet(agentId?: string): string {
   const id = agentId || ELEVENLABS_AGENT_ID;
   if (!id) {
-    return '<!-- KITZ Voice Widget: ELEVENLABS_AGENT_ID not configured -->';
+    return '<!-- KitZ (OS) Voice Widget: ELEVENLABS_AGENT_ID not configured -->';
   }
 
-  return `<!-- KITZ Voice Assistant Widget -->
+  return `<!-- KitZ (OS) Voice Assistant Widget -->
 <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
 <elevenlabs-convai agent-id="${id}"></elevenlabs-convai>`;
 }

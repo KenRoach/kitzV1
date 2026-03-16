@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
-  "description": "KITZ — AI-Powered Business Operating System",
+  "description": "KitZ (OS) — AI-Powered Business Operating System",
   "bin": {
     "kitz": "./bin/kitz"
   },

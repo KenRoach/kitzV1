@@ -14,9 +14,9 @@ export interface AutoReplyConfig {
 
 const DEFAULT_CONFIG: AutoReplyConfig = {
   enabled: false, // Disabled — DMs route through kitz_os onboarding + AI pipeline
-  message: '🟣 *KITZ*\n─────────\nHey! I\'m Kitz, your AI business assistant. Give me a moment to process your message...',
+  message: '🟣 *KitZ (OS)*\n─────────\nHey! I\'m KitZ (OS), your AI business assistant. Give me a moment to process your message...',
   cooldownMs: 4 * 60 * 60 * 1000, // 4 hours
-  ownerName: 'Kitz',
+  ownerName: 'KitZ (OS)',
 };
 
 const configs = new Map<string, AutoReplyConfig>();

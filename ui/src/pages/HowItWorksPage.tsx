@@ -23,7 +23,7 @@ const e2eSteps = [
   {
     phase: 'INPUT',
     title: 'You send a message',
-    description: 'Type in the Command Center (left panel) or send a WhatsApp message. KITZ understands English and Spanish.',
+    description: 'Type in the Command Center (left panel) or send a WhatsApp message. KitZ (OS) understands English and Spanish.',
     icon: MessageCircle,
     detail: 'Web chat, WhatsApp, or voice — all channels feed into the same AI engine.',
   },
@@ -37,7 +37,7 @@ const e2eSteps = [
   {
     phase: 'COMPREHEND',
     title: 'Entity extraction',
-    description: 'KITZ extracts names, amounts, dates, and context from your message. It pulls in your CRM data, order history, and business context.',
+    description: 'KitZ (OS) extracts names, amounts, dates, and context from your message. It pulls in your CRM data, order history, and business context.',
     icon: Layers,
     detail: 'Phase 2. Enriches the request with data from your workspace (contacts, orders, products).',
   },
@@ -65,7 +65,7 @@ const e2eSteps = [
   {
     phase: 'REVIEW',
     title: 'You approve or edit',
-    description: 'Nothing goes out without your say. Review the artifact, click Approve to send, or ask KITZ to edit it. Draft-first, always.',
+    description: 'Nothing goes out without your say. Review the artifact, click Approve to send, or ask KitZ (OS) to edit it. Draft-first, always.',
     icon: Shield,
     detail: 'Draft-first governance. Kill-switch available. Full audit trail on every action.',
   },
@@ -82,7 +82,7 @@ const e2eSteps = [
 const batteryFacts = [
   { label: '1 credit', value: '≈ 1,000 LLM tokens or 500 voice characters' },
   { label: 'Daily limit', value: `${KITZ_MANIFEST.governance.aiBatteryDailyLimit} credits (configurable)` },
-  { label: 'ROI rule', value: `If projected ROI < ${KITZ_MANIFEST.governance.roiMinimum}, KITZ recommends manual mode` },
+  { label: 'ROI rule', value: `If projected ROI < ${KITZ_MANIFEST.governance.roiMinimum}, KitZ (OS) recommends manual mode` },
   { label: 'Pricing', value: '100 credits / $5 — 500 / $20 — 2,000 / $60' },
 ] as const
 
@@ -125,7 +125,7 @@ export function HowItWorksPage() {
   return (
     <div className="mx-auto max-w-6xl px-6 py-8 pb-12">
       <PageHeader
-        title="How KITZ Works"
+        title="How KitZ (OS) Works"
         description="End-to-end: from your message to real business outcomes — every step explained"
       />
 
@@ -177,7 +177,7 @@ export function HowItWorksPage() {
       {/* ── Principles ── */}
       <section className="mt-12">
         <h3 className="text-lg font-bold text-black">Principles</h3>
-        <p className="mt-1 text-sm text-gray-500">What makes KITZ different from other tools</p>
+        <p className="mt-1 text-sm text-gray-500">What makes KitZ (OS) different from other tools</p>
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {principles.map((p) => {

@@ -136,7 +136,7 @@ export function BatteryCalculator() {
       {/* Results */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={Zap} label="Créditos/mes" value={`${calc.totalCredits}`} color="yellow" />
-        <StatCard icon={DollarSign} label="Costo KITZ" value={`$${calc.kitzCost}/mes`} color="green" />
+        <StatCard icon={DollarSign} label="Costo KitZ (OS)" value={`$${calc.kitzCost}/mes`} color="green" />
         <StatCard icon={Users} label="Costo Equipo" value={`$${calc.teamCost.toLocaleString()}/mes`} color="red" />
         <StatCard icon={Calendar} label="Payback" value={`${calc.paybackDays} días`} color="purple" />
       </div>

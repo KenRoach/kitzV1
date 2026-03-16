@@ -44,7 +44,7 @@ export function MobileLandingPage({ onEnter }: MobileLandingPageProps) {
           <div className="absolute -inset-6 rounded-full bg-purple-500/20 blur-2xl" />
           <h1 className="relative text-6xl font-extrabold tracking-tight">
             <span className="bg-gradient-to-r from-white via-purple-200 to-purple-400 bg-clip-text text-transparent">
-              KITZ
+              KitZ (OS)
             </span>
           </h1>
         </div>

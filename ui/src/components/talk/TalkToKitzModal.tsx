@@ -288,9 +288,9 @@ export function TalkToKitzModal() {
   }
 
   const statusText: Record<string, string> = {
-    idle: speaking ? 'Kitz is speaking...' : 'Tap the mic to talk',
+    idle: speaking ? 'KitZ (OS) is speaking...' : 'Tap the mic to talk',
     thinking: 'Thinking...',
-    success: speaking ? 'Kitz is speaking...' : 'Kitz is ready',
+    success: speaking ? 'KitZ (OS) is speaking...' : 'KitZ (OS) is ready',
     error: 'Something went wrong',
   }
 
@@ -310,7 +310,7 @@ export function TalkToKitzModal() {
       ref={overlayRef}
       role="dialog"
       aria-modal="true"
-      aria-label="Talk to Kitz"
+      aria-label="Talk to KitZ (OS)"
       tabIndex={-1}
       onKeyDown={(e) => { if (e.key === 'Escape') close() }}
       className="fixed inset-0 z-50 flex flex-col items-center bg-black/80 backdrop-blur-sm animate-[modal-fade-in_0.3s_ease-out]"
@@ -319,7 +319,7 @@ export function TalkToKitzModal() {
       <div className="flex w-full items-center justify-between px-6 py-4">
         <div className="flex items-center gap-2">
           <Zap className="h-4 w-4 text-purple-400" />
-          <span className="text-sm font-medium text-white/80">Kitz AI</span>
+          <span className="text-sm font-medium text-white/80">KitZ (OS) AI</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -439,7 +439,7 @@ export function TalkToKitzModal() {
       >
         {messages.length === 0 && (
           <p className="py-8 text-center text-sm text-white/30">
-            Hey! I&apos;m Kitz, your AI business assistant.<br />
+            Hey! I&apos;m KitZ (OS), your AI business assistant.<br />
             Tap the mic and talk to me, or type below.
           </p>
         )}
