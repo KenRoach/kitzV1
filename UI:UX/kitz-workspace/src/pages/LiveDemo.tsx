@@ -61,7 +61,7 @@ export function LiveDemo() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold font-mono text-kitz-text">Live Pipeline Demo</h1>
-        <p className="text-sm text-kitz-muted mt-1">60 segundos — mira cómo KITZ procesa un mensaje real</p>
+        <p className="text-sm text-kitz-muted mt-1">60 segundos — mira cómo KitZ (OS) procesa un mensaje real</p>
       </div>
 
       {/* Scenario selector */}

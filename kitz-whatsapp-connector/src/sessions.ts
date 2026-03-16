@@ -131,7 +131,7 @@ function typingDelayMs(response: string): number {
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 // ── Kitz response prefix — purple dot + KITZ branding ──
-const KITZ_PREFIX = '🟣 *KITZ*\n─────────\n';
+const KITZ_PREFIX = '🟣 *KitZ (OS)*\n─────────\n';
 function kitzReply(text: string): string {
   return `${KITZ_PREFIX}${text}`;
 }
@@ -541,7 +541,7 @@ class SessionManager {
       version,
       logger: baileysLogger as any,
       printQRInTerminal: false,
-      browser: ['KITZ', 'Chrome', '4.0.0'],
+      browser: ['KitZ (OS)', 'Chrome', '4.0.0'],
       syncFullHistory: false,
       markOnlineOnConnect: false,
     });
@@ -618,7 +618,7 @@ class SessionManager {
             setTimeout(async () => {
               try {
                 const sent = await sock.sendMessage(selfJid, {
-                  text: 'Kitz connected. You\'re live. 🟢',
+                  text: 'KitZ (OS) connected. You\'re live. 🟢',
                 });
                 if (sent?.key?.id) trackKitzSent(sent.key.id);
                 log.info('confirmation sent', { userId, selfJid });

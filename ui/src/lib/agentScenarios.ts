@@ -5,7 +5,7 @@ export interface AgentAction {
   detail?: string   // e.g., 'Querying CRM for active contacts'
 }
 
-/** Every customer-facing agent's 5-7 word action phrase (KITZ tone) */
+/** Every customer-facing agent's 5-7 word action phrase (KitZ (OS) tone) */
 export const AGENT_ACTIONS: Record<string, string> = {
   // WhatsApp / Comms
   'The Connector': 'Picking the right team',
@@ -75,7 +75,7 @@ const SCENARIOS: ScenarioMatchV2[] = [
     keywords: ['whatsapp', 'message', 'send', 'text', 'chat', 'wa', 'template'],
     chain: [
       { agent: 'The Connector', tool: 'outbound_sendWhatsApp', detail: 'Preparing WhatsApp delivery' },
-      { agent: 'Message Writer', detail: 'Crafting message with KITZ tone' },
+      { agent: 'Message Writer', detail: 'Crafting message with KitZ (OS) tone' },
       { agent: 'Delivery Tracker', detail: 'Confirming message delivery' },
     ],
   },
@@ -147,7 +147,7 @@ const SCENARIOS: ScenarioMatchV2[] = [
     keywords: ['brand', 'voice', 'tone', 'translate', 'spanish'],
     chain: [
       { agent: 'Brand Guardian', detail: 'Checking brand guidelines' },
-      { agent: 'Copy Writer', detail: 'Writing in KITZ voice' },
+      { agent: 'Copy Writer', detail: 'Writing in KitZ (OS) voice' },
       { agent: 'Translator', detail: 'Translating content' },
     ],
   },

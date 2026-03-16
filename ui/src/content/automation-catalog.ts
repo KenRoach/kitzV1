@@ -1,7 +1,7 @@
 /**
- * KITZ Automation Catalog
+ * KitZ (OS) Automation Catalog
  *
- * User-facing automation positions — what KITZ automates for the business.
+ * User-facing automation positions — what KitZ (OS) automates for the business.
  * No internal tool names exposed. Agents MONITOR these automations.
  */
 

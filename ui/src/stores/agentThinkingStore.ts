@@ -163,7 +163,7 @@ export const useAgentThinkingStore = create<AgentThinkingStore>((set, get) => ({
       extraTools.forEach((tool, i) => {
         resolved.push({
           id: `real_${now}_${i}`,
-          agentName: 'KITZ Engine',
+          agentName: 'KitZ (OS) Engine',
           action: 'Tool execution',
           tool,
           detail: 'Executed by backend',

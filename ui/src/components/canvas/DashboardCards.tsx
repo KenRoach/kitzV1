@@ -195,7 +195,7 @@ function InviteCard({
 
   const handleShareWhatsApp = () => {
     const msg = encodeURIComponent(
-      `Te invito a probar Kitz — tu asistente AI de negocios. 🟣\n\nGratis por 7 dias, sin tarjeta.\n\n👉 ${inviteLink}`
+      `Te invito a probar KitZ (OS) — tu asistente AI de negocios. 🟣\n\nGratis por 7 dias, sin tarjeta.\n\n👉 ${inviteLink}`
     )
     window.open(`https://wa.me/?text=${msg}`, '_blank')
   }
@@ -208,7 +208,7 @@ function InviteCard({
         </div>
         <div>
           <h3 className="text-sm font-semibold text-gray-900">Invita a un amigo</h3>
-          <p className="text-[11px] text-gray-500">Comparte Kitz con otros emprendedores</p>
+          <p className="text-[11px] text-gray-500">Comparte KitZ (OS) con otros emprendedores</p>
         </div>
       </div>
 

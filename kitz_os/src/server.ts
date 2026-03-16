@@ -124,7 +124,7 @@ function buildExpiredArtifactHtml(baseUrl: string): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Expired — ${bk.businessName} | KITZ</title>
+  <title>Expired — ${bk.businessName} | KitZ (OS)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -165,7 +165,7 @@ function buildExpiredArtifactHtml(baseUrl: string): string {
 <body>
   <header class="kitz-artifact-header">
     <div class="brand">
-      <img class="logo" src="${baseUrl}/kitz-logo.png" alt="KITZ" onerror="this.style.display='none'">
+      <img class="logo" src="${baseUrl}/kitz-logo.png" alt="KitZ (OS)" onerror="this.style.display='none'">
       <div class="title-group">
         <h1>Artifact Expired</h1>
         <div class="subtitle">${bk.businessName}${bk.tagline ? ` \u2014 ${bk.tagline}` : ''}</div>
@@ -182,9 +182,9 @@ function buildExpiredArtifactHtml(baseUrl: string): string {
         </div>
         <h2>${bk.language === 'es' ? 'Este artefacto ha expirado' : 'This artifact has expired'}</h2>
         <p>${bk.language === 'es'
-          ? 'Los borradores expiran despues de 24 horas si no son aprobados. Pide a KITZ que lo regenere.'
-          : 'Draft artifacts expire after 24 hours if not approved. Ask KITZ to regenerate it.'}</p>
-        <a class="hint" href="${baseUrl}">${bk.language === 'es' ? 'Volver a KITZ' : 'Back to KITZ'}</a>
+          ? 'Los borradores expiran despues de 24 horas si no son aprobados. Pide a KitZ (OS) que lo regenere.'
+          : 'Draft artifacts expire after 24 hours if not approved. Ask KitZ (OS) to regenerate it.'}</p>
+        <a class="hint" href="${baseUrl}">${bk.language === 'es' ? 'Volver a KitZ (OS)' : 'Back to KitZ (OS)'}</a>
         <div class="timer">24h TTL &middot; Draft-first policy</div>
       </div>
     </div>
@@ -192,7 +192,7 @@ function buildExpiredArtifactHtml(baseUrl: string): string {
 
   <footer class="kitz-artifact-footer">
     ${bk.language === 'es' ? 'Este contenido fue creado por IA.' : 'This content was created by AI.'}<br>
-    <a href="${baseUrl}">Powered by KITZ</a> &mdash; ${bk.language === 'es' ? 'Tu negocio merece infraestructura.' : 'Your business deserves infrastructure.'}
+    <a href="${baseUrl}">Powered by KitZ (OS)</a> &mdash; ${bk.language === 'es' ? 'Tu negocio merece infraestructura.' : 'Your business deserves infrastructure.'}
   </footer>
 </body>
 </html>`;
@@ -438,7 +438,7 @@ export async function createServer(kernel: KitzKernel) {
             const b = s.aiBattery;
             return {
               command: 'status',
-              response: `*KITZ OS*\n` +
+              response: `*KitZ (OS)*\n` +
                 `Status: ${s.status}\n` +
                 `Tools: ${s.toolCount}\n` +
                 `Uptime: ${s.uptime}s\n` +
@@ -453,7 +453,7 @@ export async function createServer(kernel: KitzKernel) {
           case 'help': {
             return {
               command: 'help',
-              response: `*KITZ OS Commands*\n\n` +
+              response: `*KitZ (OS) Commands*\n\n` +
                 `• *status* — System health\n` +
                 `• *contacts* — List CRM contacts\n` +
                 `• *orders* — List orders\n` +
@@ -488,7 +488,7 @@ export async function createServer(kernel: KitzKernel) {
                 command: 'greeting',
                 response:
                   `${timeGreet} boss 👋\n\n` +
-                  `KITZ is locked in. ${s.toolCount} tools loaded — CRM, orders, storefronts, payments, the works.\n\n` +
+                  `KitZ (OS) is locked in. ${s.toolCount} tools loaded — CRM, orders, storefronts, payments, the works.\n\n` +
                   `⚡ Battery: unlimited · 🟢 All systems go\n\n` +
                   `What are we building today?`,
               };
@@ -498,7 +498,7 @@ export async function createServer(kernel: KitzKernel) {
                 command: 'greeting',
                 response:
                   `${timeGreet} jefe 👋\n\n` +
-                  `KITZ está listo. ${s.toolCount} herramientas cargadas — CRM, pedidos, pagos, todo.\n\n` +
+                  `KitZ (OS) está listo. ${s.toolCount} herramientas cargadas — CRM, pedidos, pagos, todo.\n\n` +
                   `⚡ Batería: ilimitada · 🟢 Todo en orden\n\n` +
                   `¿Qué construimos hoy?`,
               };
@@ -1294,7 +1294,7 @@ export async function createServer(kernel: KitzKernel) {
         return `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${reply}</Message></Response>`;
       } catch (err) {
         log.error('twilio_sms_processing_failed', { error: (err as Error).message, trace_id: traceId });
-        return `<?xml version="1.0" encoding="UTF-8"?><Response><Message>KITZ is temporarily unavailable. Try again shortly.</Message></Response>`;
+        return `<?xml version="1.0" encoding="UTF-8"?><Response><Message>KitZ (OS) is temporarily unavailable. Try again shortly.</Message></Response>`;
       }
     }
   );
@@ -1328,7 +1328,7 @@ export async function createServer(kernel: KitzKernel) {
         return `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${reply}</Message></Response>`;
       } catch (err) {
         log.error('twilio_whatsapp_processing_failed', { error: (err as Error).message, trace_id: traceId });
-        return `<?xml version="1.0" encoding="UTF-8"?><Response><Message>KITZ is temporarily unavailable. Try again shortly.</Message></Response>`;
+        return `<?xml version="1.0" encoding="UTF-8"?><Response><Message>KitZ (OS) is temporarily unavailable. Try again shortly.</Message></Response>`;
       }
     }
   );
@@ -1347,7 +1347,7 @@ export async function createServer(kernel: KitzKernel) {
       // Respond with TwiML — greet in Spanish (LatAm market), gather speech input
       return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say language="es-MX" voice="Polly.Mia">Hola, bienvenido a KITZ. Tu asistente de negocios con inteligencia artificial. ¿En qué te puedo ayudar?</Say>
+  <Say language="es-MX" voice="Polly.Mia">Hola, bienvenido a KitZ (OS). Tu asistente de negocios con inteligencia artificial. ¿En qué te puedo ayudar?</Say>
   <Gather input="speech" language="es-MX" speechTimeout="3" action="/api/twilio/voice/respond" method="POST">
     <Say language="es-MX" voice="Polly.Mia">Dime qué necesitas.</Say>
   </Gather>
@@ -1386,7 +1386,7 @@ export async function createServer(kernel: KitzKernel) {
   <Gather input="speech" language="es-MX" speechTimeout="3" action="/api/twilio/voice/respond" method="POST">
     <Say language="es-MX" voice="Polly.Mia">¿Algo más?</Say>
   </Gather>
-  <Say language="es-MX" voice="Polly.Mia">Gracias por usar KITZ. Hasta luego.</Say>
+  <Say language="es-MX" voice="Polly.Mia">Gracias por usar KitZ (OS). Hasta luego.</Say>
 </Response>`;
       } catch (err) {
         log.error('twilio_voice_processing_failed', { error: (err as Error).message, trace_id: traceId });
@@ -1459,13 +1459,13 @@ export async function createServer(kernel: KitzKernel) {
     reply.type('text/html');
     return `<!doctype html>
 <html>
-<head><title>KITZ Voice Assistant</title>
+<head><title>KitZ (OS) Voice Assistant</title>
 <style>body{font-family:system-ui;max-width:800px;margin:0 auto;padding:2rem;background:#0a0a0a;color:#e0e0e0;}
 h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
 <body>
-  <h1>🎙️ KITZ Voice Assistant</h1>
-  <p>Click the voice button in the bottom-right corner to talk to KITZ.<br>
-  KITZ speaks with a warm, professional female voice. Multilingual: Spanish, English, Portuguese.</p>
+  <h1>🎙️ KitZ (OS) Voice Assistant</h1>
+  <p>Click the voice button in the bottom-right corner to talk to KitZ (OS).<br>
+  KitZ (OS) speaks with a warm, professional female voice. Multilingual: Spanish, English, Portuguese.</p>
   <p><strong>Try saying:</strong></p>
   <ul>
     <li>"Show me my contacts"</li>
@@ -1625,11 +1625,11 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
       log.info('Google Calendar OAuth completed');
       return reply.type('text/html').send(`
         <!DOCTYPE html>
-        <html><head><title>Kitz — Calendar Connected</title></head>
+        <html><head><title>KitZ (OS) — Calendar Connected</title></head>
         <body style="font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#0a0a0a;color:#fff;">
           <div style="text-align:center;">
             <h1>🟢 Google Calendar Connected</h1>
-            <p>You can now manage your calendar from WhatsApp via Kitz.</p>
+            <p>You can now manage your calendar from WhatsApp via KitZ (OS).</p>
             <p style="color:#888;">Try: "what's on my calendar today?"</p>
             <p style="margin-top:2em;color:#555;">You can close this tab.</p>
           </div>
@@ -1810,7 +1810,7 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             to: phone.replace('+', '') + '@s.whatsapp.net',
-            message: `🔐 Tu link para entrar a KITZ:\n\n${magicUrl}\n\nExpira en 10 minutos.`,
+            message: `🔐 Tu link para entrar a KitZ (OS):\n\n${magicUrl}\n\nExpira en 10 minutos.`,
           }),
           signal: AbortSignal.timeout(10_000),
         });
@@ -2036,8 +2036,8 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
       const d = result.decision;
 
       const header = d.approved
-        ? '🚀 *KITZ OS — LAUNCH APPROVED*'
-        : '🛑 *KITZ OS — LAUNCH BLOCKED*';
+        ? '🚀 *KitZ (OS) — LAUNCH APPROVED*'
+        : '🛑 *KitZ (OS) — LAUNCH BLOCKED*';
 
       const votes = `📊 *Votes:* ${d.totalGo} GO | ${d.totalNoGo} NO-GO | ${d.totalConditional} CONDITIONAL`;
 
@@ -2589,7 +2589,7 @@ h1{color:#fff;}p{color:#999;line-height:1.6;}</style></head>
   }
 
   await app.listen({ port: PORT, host: '0.0.0.0' });
-  log.info('KITZ OS listening', { port: PORT });
+  log.info('KitZ (OS) listening', { port: PORT });
 
   // Auto-provision CEO/owner account if configured
   await seedOwnerAccount().catch(err => log.warn('Owner account seed failed', { err }));

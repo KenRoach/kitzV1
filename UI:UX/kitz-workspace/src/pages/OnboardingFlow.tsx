@@ -94,7 +94,7 @@ export function OnboardingFlow() {
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold font-mono text-kitz-text">Flujo de Onboarding</h1>
-        <p className="text-sm text-kitz-muted mt-1">Mapea tu negocio a los módulos correctos de KITZ</p>
+        <p className="text-sm text-kitz-muted mt-1">Mapea tu negocio a los módulos correctos de KitZ (OS)</p>
       </div>
 
       {/* Progress bar */}
@@ -195,7 +195,7 @@ export function OnboardingFlow() {
             <div className="bg-kitz-surface border border-kitz-border rounded-xl p-6">
               <h2 className="text-sm font-semibold text-kitz-text uppercase tracking-wider mb-3">Mensaje de Bienvenida (WhatsApp)</h2>
               <div className="bg-kitz-dark rounded-lg p-4 text-sm text-kitz-text leading-relaxed font-mono">
-                Hola! 👋 Bienvenido a KITZ. Tu cuenta está activa con{' '}
+                Hola! 👋 Bienvenido a KitZ (OS). Tu cuenta está activa con{' '}
                 {recommended.length} módulo{recommended.length > 1 ? 's' : ''}: {recommended.join(', ')}.
                 Tu primera meta: automatizar tu canal principal en 7 días. ¿Empezamos? 🚀
               </div>

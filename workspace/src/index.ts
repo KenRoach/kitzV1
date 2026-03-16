@@ -149,7 +149,7 @@ const shell = (title: string, body: string, session: Session | null, script = ''
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KITZ \u2014 ${title}</title>
+  <title>KitZ (OS) \u2014 ${title}</title>
   ${extraHead}
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -410,7 +410,7 @@ const shell = (title: string, body: string, session: Session | null, script = ''
 </head>
 <body>
   <div class="topbar">
-    <div style="display:flex;align-items:center;gap:8px"><img src="https://kitz.services/kitz-logo.png" alt="" width="28" height="28" style="display:block"><span class="logo">KITZ</span></div>
+    <div style="display:flex;align-items:center;gap:8px"><img src="https://kitz.services/kitz-logo.png" alt="" width="28" height="28" style="display:block"><span class="logo">KitZ (OS)</span></div>
     ${session
       ? `<div class="user-info"><span class="user-name">${session.name}</span><a href="/auth/logout" class="btn-logout">Log out</a></div>`
       : `<div class="label">Workspace</div>`
@@ -490,8 +490,8 @@ const startPage = (formHtml: string, bottomLink: string, error = '') => `<!DOCTY
     <span class="path">/start</span>
   </div>
   <div class="brand">
-    <div style="margin-bottom:8px"><img src="https://kitz.services/kitz-logo.png" alt="KITZ" width="48" height="48" style="display:inline-block"></div>
-    <div class="brand-logo">KITZ</div>
+    <div style="margin-bottom:8px"><img src="https://kitz.services/kitz-logo.png" alt="KitZ (OS)" width="48" height="48" style="display:inline-block"></div>
+    <div class="brand-logo">KitZ (OS)</div>
     <div class="brand-sub">workspace</div>
     <div class="brand-tagline">Your hustle deserves <strong>infrastructure</strong>.</div>
   </div>
@@ -1152,7 +1152,7 @@ app.get('/whatsapp', async (req: any, reply: any) => {
 
   return shell('WhatsApp', `
     <h1 class="page-title">WhatsApp</h1>
-    <p class="page-desc">Connect your WhatsApp to KITZ. Messages to yourself become AI-powered commands.</p>
+    <p class="page-desc">Connect your WhatsApp to KitZ (OS). Messages to yourself become AI-powered commands.</p>
 
     <div class="stats-row">
       <div class="stat">
@@ -1172,7 +1172,7 @@ app.get('/whatsapp', async (req: any, reply: any) => {
           <span class="card-badge" style="background:#A855F722;color:#A855F7">LIVE</span>
         </div>
         <p style="color:#888;font-size:14px;line-height:1.6;margin-bottom:16px;">
-          Your WhatsApp is connected to KITZ. Open WhatsApp and send a message to yourself (your own chat) to interact with your AI business assistant.
+          Your WhatsApp is connected to KitZ (OS). Open WhatsApp and send a message to yourself (your own chat) to interact with your AI business assistant.
         </p>
         <p style="color:#666;font-size:13px;">Try sending: <strong style="color:#ccc">"show my leads"</strong> or <strong style="color:#ccc">"create order for Maria $25"</strong></p>
       </div>
@@ -1207,7 +1207,7 @@ app.get('/whatsapp', async (req: any, reply: any) => {
     </div>
 
     <div class="alert alert-info" style="margin-top:16px;">
-      KITZ uses the self-chat model: only messages you send to yourself trigger AI. All other chats stay private.
+      KitZ (OS) uses the self-chat model: only messages you send to yourself trigger AI. All other chats stay private.
     </div>
   `, session, `
     var scanView = document.getElementById('scan-view');
@@ -1454,7 +1454,7 @@ app.get('/ai-direction', async (req: any, reply: any) => {
 
   return shell('AI Direction', `
     <h1 class="page-title">AI Direction</h1>
-    <p class="page-desc">Let KITZ AI run tasks for you. Consumes AI Battery credits.</p>
+    <p class="page-desc">Let KitZ (OS) AI run tasks for you. Consumes AI Battery credits.</p>
     <div class="stats-row">
       <div class="stat"><div class="stat-value" id="battery-credits">--</div><div class="stat-label">Credits Left</div></div>
       <div class="stat"><div class="stat-value" id="battery-status">--</div><div class="stat-label">Status</div></div>
@@ -1464,7 +1464,7 @@ app.get('/ai-direction', async (req: any, reply: any) => {
         <span class="card-title">AI Goal Runner</span>
         <span class="card-badge badge-ai">AI</span>
       </div>
-      <div class="form-group"><label class="form-label">What should KITZ do?</label><input id="ai-goal" placeholder="Follow up with all leads who haven\\'t replied in 3 days"/></div>
+      <div class="form-group"><label class="form-label">What should KitZ (OS) do?</label><input id="ai-goal" placeholder="Follow up with all leads who haven\\'t replied in 3 days"/></div>
       <div class="alert alert-warn" id="battery-warn" style="display:none">AI Battery depleted. Recharge or use manual mode.</div>
       <button class="btn btn-primary" id="run-ai" disabled>Run AI Plan</button>
     </div>

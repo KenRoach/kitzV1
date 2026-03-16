@@ -298,7 +298,7 @@ const MODE_INFO: Record<KitzMode, { label: string; emoji: string; color: string;
 function createDashboard() {
   const screen = blessed.screen({
     smartCSR: true,
-    title: 'KITZ',
+    title: 'KitZ (OS)',
     fullUnicode: true,
     forceUnicode: true,
   })

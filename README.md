@@ -1,4 +1,4 @@
-# Kitz
+# KitZ (OS)
 
 AI-powered Business Operating System for small businesses in Latin America.
 TypeScript monorepo with 13+ microservices on Fastify. Deployed to Railway.
@@ -66,6 +66,6 @@ cd <service> && npm test
 
 ## Notes
 
-- Branding and naming in this repo use **Kitz**.
+- Branding and naming in this repo use **KitZ (OS)**.
 - See `CLAUDE.md` for the full development guide.
 - See `kitz-docs/` for architecture, threat model, and specs.

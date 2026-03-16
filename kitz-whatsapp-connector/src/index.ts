@@ -513,8 +513,8 @@ const LOGIN_HTML = `<!DOCTYPE html>
 </head>
 <body>
   <div class="container">
-    <div style="margin-bottom:8px"><img src="https://kitz.services/kitz-logo.png" alt="KITZ" width="48" height="48" style="display:inline-block"></div>
-    <div class="logo">KITZ</div>
+    <div style="margin-bottom:8px"><img src="https://kitz.services/kitz-logo.png" alt="KitZ (OS)" width="48" height="48" style="display:inline-block"></div>
+    <div class="logo">KitZ (OS)</div>
     <div class="subtitle">Connect your WhatsApp to your AI Business OS</div>
 
     <div id="scan-view">

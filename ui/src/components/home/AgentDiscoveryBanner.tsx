@@ -5,7 +5,7 @@ const manifestUrl = typeof window !== 'undefined'
   : '/.well-known/kitz.json'
 
 const jsonPreview = `{
-  "name": "KITZ",
+  "name": "KitZ (OS)",
   "version": "0.1.0",
   "capabilities": {
     "agentTeams": 18,
@@ -27,7 +27,7 @@ export function AgentDiscoveryBanner() {
             <h3 className="text-xl font-bold">Built for AI Agents</h3>
           </div>
           <p className="mt-1 text-sm text-gray-400">
-            External AI agents can discover and integrate with KITZ capabilities
+            External AI agents can discover and integrate with KitZ (OS) capabilities
             through our machine-readable manifest endpoint.
           </p>
           <a

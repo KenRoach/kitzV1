@@ -78,7 +78,7 @@ export function LoginPage() {
         <div className="text-center">
           <h1 className="text-5xl font-extrabold tracking-tight">
             <span className="bg-gradient-to-r from-white to-purple-300 bg-clip-text text-transparent">
-              KITZ
+              KitZ (OS)
             </span>
           </h1>
           <p className="mt-2 text-sm text-purple-300/60">{t('auth.tagline')}</p>

@@ -51,9 +51,9 @@ export async function apiFetch<T>(
   } catch (err) {
     clearTimeout(timeoutId)
     if (err instanceof DOMException && err.name === 'AbortError') {
-      throw new Error('Request timed out — KITZ is still thinking. Try again.')
+      throw new Error('Request timed out — KitZ (OS) is still thinking. Try again.')
     }
-    throw new Error('Could not reach KITZ backend. Is the server running?')
+    throw new Error('Could not reach KitZ (OS) backend. Is the server running?')
   }
   clearTimeout(timeoutId)
 

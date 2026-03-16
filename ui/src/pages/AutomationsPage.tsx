@@ -44,7 +44,7 @@ const guardrails = [
   { icon: Clock, labelKey: 'automations.roiGate', descKey: '' },
 ] as const
 
-/* ── What KITZ Can Do — showcase cards ── */
+/* ── What KitZ (OS) Can Do — showcase cards ── */
 const kitzCapabilities = [
   {
     icon: MessageSquare,
@@ -136,7 +136,7 @@ export function AutomationsPage() {
         description={t('automations.description')}
       />
 
-      {/* ── What KITZ Can Do — Capability Showcase ── */}
+      {/* ── What KitZ (OS) Can Do — Capability Showcase ── */}
       <section className="mt-6 mb-10">
         <div className="mb-5">
           <h3 className="text-lg font-bold text-black">{t('automations.whatKitzCanDo')}</h3>

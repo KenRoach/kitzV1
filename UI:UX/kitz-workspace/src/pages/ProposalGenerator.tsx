@@ -64,7 +64,7 @@ export function ProposalGenerator() {
           <Section num="1" title="Resumen Ejecutivo">
             <p className="text-sm text-kitz-muted leading-relaxed">
               {form.company} enfrenta un desafío crítico: <span className="text-kitz-text">{form.painPoint}</span>.
-              KITZ ofrece una solución de automatización AI diseñada específicamente para empresas
+              KitZ (OS) ofrece una solución de automatización AI diseñada específicamente para empresas
               de {form.industry.toLowerCase()} en Panamá y LATAM, eliminando procesos manuales y
               reduciendo costos operativos desde el día uno.
             </p>
@@ -123,7 +123,7 @@ export function ProposalGenerator() {
           {/* Cumplimiento */}
           <Section num="5" title="Cumplimiento Panameño">
             <p className="text-sm text-kitz-muted leading-relaxed">
-              KITZ incluye un pipeline de cumplimiento panameño integrado (kitz-services) que garantiza
+              KitZ (OS) incluye un pipeline de cumplimiento panameño integrado (kitz-services) que garantiza
               adherencia a regulaciones locales. Esto es un diferenciador clave frente a soluciones
               extranjeras que no contemplan la realidad regulatoria de Panamá.
             </p>

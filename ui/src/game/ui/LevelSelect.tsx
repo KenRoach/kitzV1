@@ -53,7 +53,7 @@ export function LevelSelect({ onSelectLevel, highScores, onShowLeaderboard }: Le
         className="mb-2 text-3xl font-bold tracking-widest text-white"
         style={{ textShadow: '0 0 30px #A855F7, 0 0 60px #7C3AED, 2px 2px 0 #4C1D95' }}
       >
-        KITZ RUN
+        KitZ (OS) RUN
       </h1>
       <p
         className="mb-4 text-[8px] tracking-wider"
